@@ -35,6 +35,11 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Blender backups and transient recovery files (editable .blend sources stay tracked)
+*.blend[0-9]
+*.blend@
+*.blend~
+
 # Private project-planning and agent workflow notes
 /NOTES-FOR-FABLE.md
 /spec/

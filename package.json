@@ -11,6 +11,8 @@
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
+    "asset:mre": "blender --background --factory-startup --python assets/blender/mre_reactor/generate_mre_reactor.py",
+    "asset:equatorial": "blender --background --factory-startup --python assets/blender/equatorial_base/generate_equatorial_base.py",
     "build": "pnpm --filter @selene-isru/engine build && pnpm --filter @selene-isru/app build",
     "dev": "pnpm --filter @selene-isru/app dev",
     "check:constants": "pnpm --filter @selene-isru/engine check:constants",

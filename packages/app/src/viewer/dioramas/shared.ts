@@ -712,10 +712,22 @@ export interface TerrainOpts {
   segments?: number;
 }
 
-export function makeTerrain(opts: TerrainOpts = {}): THREE.Mesh {
+export type TerrainHeightSampler = (x: number, z: number) => number;
+
+/** Deterministic height function shared by terrain geometry and grounded assets. */
+export function makeTerrainHeightSampler(opts: TerrainOpts = {}): TerrainHeightSampler {
   const simplex = new Simplex2(1969);
   const amp = opts.noiseAmp ?? 1.2;
   const scale = opts.noiseScale ?? 0.018;
+  return (x: number, z: number): number => {
+    let h = simplex.fbm(x * scale, z * scale, 4) * amp;
+    h += simplex.fbm(x * scale * 6, z * scale * 6, 2) * amp * 0.18;
+    return opts.carve?.(x, z, h) ?? h;
+  };
+}
+
+export function makeTerrain(opts: TerrainOpts = {}): THREE.Mesh {
+  const sampleHeight = makeTerrainHeightSampler(opts);
   const segments = opts.segments ?? 200;
   const geo = new THREE.PlaneGeometry(240, 240, segments, segments);
   geo.rotateX(-Math.PI / 2);
@@ -724,12 +736,7 @@ export function makeTerrain(opts: TerrainOpts = {}): THREE.Mesh {
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
-    let h = simplex.fbm(x * scale, z * scale, 4) * amp;
-    h += simplex.fbm(x * scale * 6, z * scale * 6, 2) * amp * 0.18;
-    if (opts.carve !== undefined) {
-      h = opts.carve(x, z, h);
-    }
-    pos.setY(i, h);
+    pos.setY(i, sampleHeight(x, z));
   }
   geo.computeVertexNormals();
 

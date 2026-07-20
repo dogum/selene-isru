@@ -19,36 +19,26 @@ import type { TweenManager } from "../tween";
 import {
   disposeObject,
   flatMat,
-  makeBoltRing,
-  makeCableRun,
   makeEarthSphere,
-  makeEquipmentCluster,
   makeGlowTexture,
-  makeHabitat,
-  makeLadder,
-  makeLander,
-  makeMonolithStation,
-  makePanelField,
   makePowerLine,
-  makeRibBands,
-  makeRover,
   makeScuffedRegolith,
   makeTerrain,
   makeTrackLoop,
   materialMaps,
-  materialsOf,
-  TankFarm,
-  type Habitat,
-  type MonolithStation,
-  type PanelField,
-  type Rover,
   makeContactShadow,
-  makeGreebles,
   makeRockScatter,
+  makeTerrainHeightSampler,
+  materialsOf,
   roundedBox
 } from "./shared";
 import { enableBloom } from "../layers";
 import type { Diorama } from "./types";
+import { MreReactorAsset } from "../assets/MreReactorAsset";
+import {
+  EquatorialEquipmentAsset,
+  type EquatorialEquipmentKey
+} from "../assets/EquatorialEquipmentAsset";
 
 const TRENCH_CENTER = new THREE.Vector3(-45, 0, 0);
 const TRENCH_RX = 6;
@@ -59,9 +49,6 @@ const PAD_POS = new THREE.Vector3(30, 0, -18);
 const TANKS_POS = new THREE.Vector3(2, 0, -18);
 const STATION_POS = new THREE.Vector3(-30, 0, -22);
 const HABITAT_POS = new THREE.Vector3(18, 0, 16);
-const SLAG_START = new THREE.Vector3(REACTOR_POS.x + 2.8, 0.42, REACTOR_POS.z + 1.6);
-const SLAG_END = new THREE.Vector3(YARD_POS.x - 3.2, 0.42, YARD_POS.z - 1.4);
-
 const PAD_TILES = 16;
 const FLAG_CAP = 12;
 const SLAG_DROP_CAP = 18;
@@ -117,56 +104,159 @@ class DustBurst {
   }
 }
 
+/** Low-cost cryogenic vapor driven by the calculated boil-off rate. */
+class CryoVapor {
+  readonly group = new THREE.Group();
+  private puffs: THREE.Mesh[] = [];
+  private rate = 0;
+  private count = 1;
+
+  constructor(count: number) {
+    for (let i = 0; i < count; i++) {
+      const puff = new THREE.Mesh(
+        new THREE.SphereGeometry(0.34, 8, 6),
+        new THREE.MeshBasicMaterial({
+          color: 0xb8e9ff,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        })
+      );
+      puff.scale.setScalar(0.38 + (i % 4) * 0.1);
+      this.group.add(puff);
+      this.puffs.push(puff);
+    }
+  }
+
+  setState(count: number, rate: number): void {
+    this.count = Math.max(1, Math.min(8, count));
+    this.rate = THREE.MathUtils.clamp(rate, 0, 1);
+  }
+
+  tick(t: number, reduced: boolean): boolean {
+    const tankXZ = [
+      [-4.6, 2.25],
+      [-1.55, 2.25],
+      [1.55, 2.25],
+      [4.6, 2.25],
+      [-4.6, -2.25],
+      [-1.55, -2.25],
+      [1.55, -2.25],
+      [4.6, -2.25]
+    ];
+    this.puffs.forEach((puff, i) => {
+      const tank = i % this.count;
+      const visible = this.rate > 0.015 && i < Math.max(1, Math.round(this.rate * this.puffs.length * 0.28));
+      puff.visible = visible;
+      if (!visible) {
+        return;
+      }
+      const phase = reduced ? 0.35 : (t * (0.12 + this.rate * 0.2) + i * 0.137) % 1;
+      const [x, z] = tankXZ[tank]!;
+      puff.position.set(
+        x + Math.sin(i * 2.17) * 0.2 + Math.sin(t * 0.45 + i) * 0.12,
+        4.15 + phase * 2.3,
+        z + Math.cos(i * 1.71) * 0.2
+      );
+      const material = puff.material as THREE.MeshBasicMaterial;
+      material.opacity = this.rate * Math.sin(phase * Math.PI) * 0.085;
+      const scale = 0.42 + phase * 0.42;
+      puff.scale.setScalar(scale);
+    });
+    return !reduced && this.rate > 0.015;
+  }
+}
+
 export class EquatorialDiorama implements Diorama {
   readonly group = new THREE.Group();
   readonly assets: Record<string, THREE.Object3D> = {};
 
-  private excavator: Rover;
-  private hauler: Rover;
+  private equipment: Record<EquatorialEquipmentKey, EquatorialEquipmentAsset>;
+  private excavator: EquatorialEquipmentAsset;
+  private hauler: EquatorialEquipmentAsset;
   private haulerLoad: THREE.Mesh;
-  private ringMat: THREE.MeshStandardMaterial;
+  private reactor: MreReactorAsset;
+  private castingAsset: EquatorialEquipmentAsset;
+  private landingAsset: EquatorialEquipmentAsset;
+  private cryoAsset: EquatorialEquipmentAsset;
+  private powerAsset: EquatorialEquipmentAsset;
+  private habitatAsset: EquatorialEquipmentAsset;
   private heatRibbonMat: THREE.ShaderMaterial;
   private bricks: THREE.InstancedMesh;
   private slagDrops: THREE.InstancedMesh;
   private padTiles: THREE.InstancedMesh;
   private flags: THREE.Mesh[] = [];
-  private lander: THREE.Group;
   private landerPlume: THREE.Mesh;
   private landerPlumeMat: THREE.MeshBasicMaterial;
-  private tanks: TankFarm;
-  private monolith: MonolithStation;
-  private panels: PanelField;
-  private habitat: Habitat;
+  private cryoVapor: CryoVapor;
   private lines: THREE.Mesh[] = [];
   private dust: DustBurst;
+  private sampleTerrain: (x: number, z: number) => number;
+  private slagStart = new THREE.Vector3();
+  private slagEnd = new THREE.Vector3();
 
   private loopPeriod = 60;
   private glow = 0.2;
   private departed = false;
   private digPass = -1;
   private architecture: "solar" | "nuclear" | null = null;
+  private currentTankCount = 1;
+  private currentTankFill = 1;
+  private currentWispRate = 0;
+  private currentPanelRacks = 1;
+  private currentRadiatorScale = 1;
+  private currentShieldSections = 1;
+  private landerVisible = false;
+  private solarPhase = 0;
+  private solarDaylight = true;
   private readonly brickCap: number;
   private readonly panelCap: number;
 
-  constructor(quality: QualityProfile) {
+  constructor(quality: QualityProfile, onAssetReady: () => void = () => undefined) {
     this.brickCap = quality.brickCap;
     this.panelCap = quality.panelCap;
     const glowTex = makeGlowTexture();
     const detail = quality.detailLevel;
-    const greebleBudget = quality.greebleCap;
 
-    // terrain with a shallow elliptical trench ring carved at the excavation loop
-    const terrain = makeTerrain({
+    // Terrain and all equipment use the same deterministic height function. Every
+    // fixed facility receives a compact graded bench with natural shoulders.
+    const ungradedHeight = makeTerrainHeightSampler();
+    const grades = [
+      { position: REACTOR_POS, radius: 7.2, y: ungradedHeight(REACTOR_POS.x, REACTOR_POS.z) },
+      { position: YARD_POS, radius: 7.4, y: ungradedHeight(YARD_POS.x, YARD_POS.z) },
+      { position: PAD_POS, radius: 10.2, y: ungradedHeight(PAD_POS.x, PAD_POS.z) },
+      { position: TANKS_POS, radius: 8.0, y: ungradedHeight(TANKS_POS.x, TANKS_POS.z) },
+      { position: STATION_POS, radius: 10.2, y: ungradedHeight(STATION_POS.x, STATION_POS.z) },
+      { position: HABITAT_POS, radius: 7.4, y: ungradedHeight(HABITAT_POS.x, HABITAT_POS.z) }
+    ];
+    const terrainOpts = {
       segments: quality.terrainSegments,
-      carve: (x, z, h) => {
+      carve: (x: number, z: number, h: number) => {
         const e = Math.hypot((x - TRENCH_CENTER.x) / TRENCH_RX, (z - TRENCH_CENTER.z) / TRENCH_RZ);
         const d = Math.abs(e - 1);
         if (d < 0.45) {
-          return h - 0.8 * (1 - d / 0.45);
+          h -= 0.8 * (1 - d / 0.45);
+        }
+        for (const grade of grades) {
+          const distance = Math.hypot(x - grade.position.x, z - grade.position.z);
+          if (distance < grade.radius) {
+            const blend = THREE.MathUtils.smoothstep(grade.radius - distance, 0, 2.2);
+            h = THREE.MathUtils.lerp(h, grade.y, blend);
+          }
         }
         return h;
       }
-    });
+    };
+    this.sampleTerrain = makeTerrainHeightSampler(terrainOpts);
+    const groundAt = (position: THREE.Vector3): number => this.sampleTerrain(position.x, position.z);
+    const reactorGroundY = groundAt(REACTOR_POS);
+    const yardGroundY = groundAt(YARD_POS);
+    const padGroundY = groundAt(PAD_POS);
+    const tanksGroundY = groundAt(TANKS_POS);
+    const stationGroundY = groundAt(STATION_POS);
+    const habitatGroundY = groundAt(HABITAT_POS);
+    const terrain = makeTerrain(terrainOpts);
     this.group.add(terrain);
     this.group.add(
       makeTrackLoop({
@@ -198,15 +288,20 @@ export class EquatorialDiorama implements Diorama {
       })
     );
 
-    /* 1. excavator on its loop */
-    this.excavator = makeRover(SCENE_COLORS.regolith, true);
+    const equipmentReady = (): void => {
+      this.bindLoadedEquipment();
+      onAssetReady();
+    };
+
+    /* 1. excavation fleet — original Blender assets with named articulation. */
+    this.excavator = new EquatorialEquipmentAsset("excavator", equipmentReady);
     this.group.add(this.excavator.group);
     this.assets.excavator = this.excavator.group;
 
     /* 2. hauler */
-    this.hauler = makeRover(SCENE_COLORS.metal, false);
+    this.hauler = new EquatorialEquipmentAsset("hauler", equipmentReady);
     this.haulerLoad = new THREE.Mesh(
-      roundedBox(1.25, 0.48, 0.95, 0.07, 1),
+      roundedBox(2.25, 0.52, 1.42, 0.09, 1),
       flatMat(SCENE_COLORS.regolithDark, {
         ...materialMaps("regolith"),
         roughness: 1,
@@ -214,99 +309,18 @@ export class EquatorialDiorama implements Diorama {
         envMapIntensity: 0.12
       })
     );
-    this.haulerLoad.position.set(-0.2, 0.75, 0);
+    this.haulerLoad.position.set(0, 0.18, 0);
     this.haulerLoad.visible = false;
-    this.hauler.arm.add(this.haulerLoad);
     this.group.add(this.hauler.group);
     this.assets.hauler = this.hauler.group;
 
-    /* 3. MRE reactor: squat cylinder + dome + emissive waist ring */
-    const reactor = new THREE.Group();
-    reactor.position.copy(REACTOR_POS);
-    const shellMat = flatMat(0x596170, {
-      ...materialMaps("metal"),
-      metalness: 0.45,
-      roughness: 0.5,
-      envMapIntensity: 0.55,
-      normalScale: 0.18
-    });
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.9, 3, 48), shellMat);
-    body.position.y = 1.5;
-    body.castShadow = true;
-    reactor.add(body);
-    const dome = new THREE.Mesh(
-      new THREE.SphereGeometry(2.6, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2),
-      shellMat
-    );
-    dome.position.y = 3;
-    dome.castShadow = true;
-    reactor.add(dome);
-    this.ringMat = flatMat(SCENE_COLORS.melt, {
-      emissive: SCENE_COLORS.melt,
-      emissiveIntensity: 0.6,
-      roughness: 0.4
-    });
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.78, 0.18, 16, 64), this.ringMat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 1.5;
-    enableBloom(ring);
-    reactor.add(ring);
-    const hatchMat = flatMat(0x2b3038, {
-      ...materialMaps("metal"),
-      metalness: 0.38,
-      roughness: 0.54,
-      envMapIntensity: 0.46
-    });
-    const hatch = new THREE.Mesh(roundedBox(0.84, 1.05, 0.09, 0.035, 1), hatchMat);
-    hatch.position.set(2.88, 1.45, -0.72);
-    hatch.rotation.y = Math.PI / 2;
-    hatch.castShadow = true;
-    reactor.add(hatch);
-    const footPadGeo = roundedBox(1.18, 0.16, 0.78, 0.05, 1);
-    const footPadMat = flatMat(SCENE_COLORS.metalDark, {
-      ...materialMaps("metal"),
-      metalness: 0.36,
-      roughness: 0.62
-    });
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-      const pad = new THREE.Mesh(footPadGeo, footPadMat);
-      pad.position.set(Math.cos(a) * 3.05, 0.1, Math.sin(a) * 3.05);
-      pad.rotation.y = -a;
-      pad.castShadow = true;
-      reactor.add(pad);
-    }
-    reactor.add(makeRibBands(2.91, 3.1, 2 + detail));
-    reactor.add(makeBoltRing({ radius: 2.88, y: 0.22, count: 24 + detail * 8, size: 0.095 }));
-    reactor.add(makeBoltRing({ radius: 2.55, y: 3.08, count: 20 + detail * 8, size: 0.08 }));
-    const reactorLadder = makeLadder(3.2, 0.64, 7 + detail * 2);
-    reactorLadder.position.set(0.15, 0.2, 2.98);
-    reactor.add(reactorLadder);
-    const reactorDeck = makeEquipmentCluster({
-      count: Math.max(7, Math.round(greebleBudget * 0.07)),
-      width: 4.2,
-      depth: 1.2,
-      seed: 74
-    });
-    reactorDeck.position.set(0, 0.3, -3.0);
-    reactor.add(reactorDeck);
-    reactor.add(
-      makeCableRun(
-        [
-          new THREE.Vector3(-2.4, 0.7, -2.5),
-          new THREE.Vector3(-3.2, 1.2, -1.2),
-          new THREE.Vector3(-3.0, 2.2, 0.8),
-          new THREE.Vector3(-2.3, 2.6, 2.1)
-        ],
-        SCENE_COLORS.metalDark,
-        0.055
-      )
-    );
-    reactor.add(makeGreebles({ count: Math.max(16, Math.round(greebleBudget * 0.2)), radius: 2.95, height: 2.4, seed: 4 }));
-    this.group.add(reactor);
-    this.assets.reactor = reactor;
-    const reactorShadow = makeContactShadow(4.5, 3.8, 0.34);
-    reactorShadow.position.set(REACTOR_POS.x, 0.05, REACTOR_POS.z);
+    /* 3. MRE reactor: reproducible Blender asset with grounded service area. */
+    this.reactor = new MreReactorAsset(onAssetReady);
+    this.reactor.group.position.set(REACTOR_POS.x, reactorGroundY + 0.015, REACTOR_POS.z);
+    this.group.add(this.reactor.group);
+    this.assets.reactor = this.reactor.group;
+    const reactorShadow = makeContactShadow(5.15, 4.8, 0.3);
+    reactorShadow.position.set(REACTOR_POS.x, reactorGroundY + 0.025, REACTOR_POS.z);
     this.group.add(reactorShadow);
 
     // glowing slag channel reactor → casting yard
@@ -316,7 +330,10 @@ export class EquatorialDiorama implements Diorama {
       roundedBox(channelLen, 0.16, 0.7, 0.045, 1),
       flatMat(SCENE_COLORS.meltDeep, { emissive: SCENE_COLORS.meltDeep, emissiveIntensity: 1.1 })
     );
-    channel.position.copy(REACTOR_POS).add(channelDir.multiplyScalar(0.5)).setY(0.32);
+    channel.position
+      .copy(REACTOR_POS)
+      .add(channelDir.multiplyScalar(0.5))
+      .setY((reactorGroundY + yardGroundY) * 0.5 + 0.32);
     channel.rotation.y = -Math.atan2(YARD_POS.z - REACTOR_POS.z, YARD_POS.x - REACTOR_POS.x);
     enableBloom(channel);
     this.group.add(channel);
@@ -368,7 +385,14 @@ export class EquatorialDiorama implements Diorama {
     enableBloom(this.slagDrops);
     this.group.add(this.slagDrops);
 
-    /* 4. casting yard — instanced slag bricks with cooling gradient */
+    this.slagStart.set(REACTOR_POS.x + 2.8, reactorGroundY + 0.42, REACTOR_POS.z + 1.6);
+    this.slagEnd.set(YARD_POS.x - 3.2, yardGroundY + 0.78, YARD_POS.z - 1.4);
+
+    /* 4. casting yard — generated process machinery plus instanced output. */
+    this.castingAsset = new EquatorialEquipmentAsset("castingYard", equipmentReady);
+    this.castingAsset.group.position.set(YARD_POS.x, yardGroundY + 0.015, YARD_POS.z);
+    this.group.add(this.castingAsset.group);
+    this.assets.castingYard = this.castingAsset.group;
     const brickGeo = roundedBox(1.1, 0.45, 0.55, 0.055, 1);
     const brickMat = flatMat(0xffffff, {
       ...materialMaps("regolith"),
@@ -390,7 +414,7 @@ export class EquatorialDiorama implements Diorama {
       const layer = Math.floor(i / (cols * 10));
       m.makeTranslation(
         YARD_POS.x - 6 + col * 1.25 + (row % 2) * 0.3,
-        0.35 + layer * 0.5,
+        yardGroundY + 0.48 + layer * 0.5,
         YARD_POS.z - 3 + row * 0.75
       );
       this.bricks.setMatrixAt(i, m);
@@ -403,12 +427,11 @@ export class EquatorialDiorama implements Diorama {
       this.bricks.instanceColor.needsUpdate = true;
     }
     this.group.add(this.bricks);
-    this.assets.castingYard = this.bricks;
     const yardShadow = makeContactShadow(8, 5.5, 0.28);
-    yardShadow.position.set(YARD_POS.x, 0.05, YARD_POS.z + 1.2);
+    yardShadow.position.set(YARD_POS.x, yardGroundY + 0.025, YARD_POS.z + 1.2);
     this.group.add(yardShadow);
 
-    /* 5. landing pad — ring of wedge tiles + lander + mission flags */
+    /* 5. landing system — generated lander/core apron + scalable tile ring. */
     const tileGeo = roundedBox(3.2, 0.28, 2.4, 0.09, 1);
     const tileMat = flatMat(0x6e6a64, {
       ...materialMaps("regolith"),
@@ -422,7 +445,7 @@ export class EquatorialDiorama implements Diorama {
     const one = new THREE.Vector3(1, 1, 1);
     for (let i = 0; i < PAD_TILES; i++) {
       const a = (i / PAD_TILES) * Math.PI * 2;
-      tilePos.set(PAD_POS.x + Math.cos(a) * 6.4, 0.2, PAD_POS.z + Math.sin(a) * 6.4);
+      tilePos.set(PAD_POS.x + Math.cos(a) * 7.1, padGroundY + 0.2, PAD_POS.z + Math.sin(a) * 7.1);
       tileQ.setFromEuler(new THREE.Euler(0, -a, 0));
       m.compose(tilePos, tileQ, one);
       this.padTiles.setMatrixAt(i, m);
@@ -430,11 +453,11 @@ export class EquatorialDiorama implements Diorama {
     this.padTiles.count = 0;
     this.padTiles.instanceMatrix.needsUpdate = true;
     this.group.add(this.padTiles);
-    this.assets.pad = this.padTiles;
 
-    this.lander = makeLander();
-    this.lander.position.copy(PAD_POS);
-    this.lander.visible = false;
+    this.landingAsset = new EquatorialEquipmentAsset("pad", equipmentReady);
+    this.landingAsset.group.position.set(PAD_POS.x, padGroundY + 0.015, PAD_POS.z);
+    this.group.add(this.landingAsset.group);
+    this.assets.pad = this.landingAsset.group;
     this.landerPlumeMat = new THREE.MeshBasicMaterial({
       color: SCENE_COLORS.melt,
       transparent: true,
@@ -443,13 +466,11 @@ export class EquatorialDiorama implements Diorama {
       blending: THREE.AdditiveBlending
     });
     this.landerPlume = new THREE.Mesh(new THREE.ConeGeometry(0.9, 4.2, 20, 1, true), this.landerPlumeMat);
-    this.landerPlume.position.y = -1.25;
+    this.landerPlume.position.y = -1.45;
     this.landerPlume.visible = false;
     enableBloom(this.landerPlume);
-    this.lander.add(this.landerPlume);
-    this.group.add(this.lander);
     const padShadow = makeContactShadow(8.5, 8.5, 0.24);
-    padShadow.position.set(PAD_POS.x, 0.05, PAD_POS.z);
+    padShadow.position.set(PAD_POS.x, padGroundY + 0.025, PAD_POS.z);
     this.group.add(padShadow);
 
     const flagGeo = roundedBox(0.06, 1.6, 0.06, 0.018, 1);
@@ -464,7 +485,7 @@ export class EquatorialDiorama implements Diorama {
     for (let i = 0; i < FLAG_CAP; i++) {
       const a = (i / FLAG_CAP) * Math.PI * 2;
       const flag = new THREE.Mesh(flagGeo, flagMat);
-      flag.position.set(PAD_POS.x + Math.cos(a) * 9.4, 0.8, PAD_POS.z + Math.sin(a) * 9.4);
+      flag.position.set(PAD_POS.x + Math.cos(a) * 9.4, padGroundY + 0.8, PAD_POS.z + Math.sin(a) * 9.4);
       const banner = new THREE.Mesh(bannerGeo, bannerMat);
       banner.position.set(0.36, 0.55, 0);
       flag.add(banner);
@@ -473,75 +494,45 @@ export class EquatorialDiorama implements Diorama {
       this.flags.push(flag);
     }
 
-    /* 6. cryo tank farm */
-    this.tanks = new TankFarm(8, glowTex);
-    this.tanks.group.position.copy(TANKS_POS);
-    this.group.add(this.tanks.group);
-    this.assets.tanks = this.tanks.group;
+    /* 6. cryogenic farm — eight individually addressable tanks and valves. */
+    this.cryoAsset = new EquatorialEquipmentAsset("tanks", equipmentReady);
+    this.cryoAsset.group.position.set(TANKS_POS.x, tanksGroundY + 0.015, TANKS_POS.z);
+    this.group.add(this.cryoAsset.group);
+    this.assets.tanks = this.cryoAsset.group;
+    this.cryoVapor = new CryoVapor(Math.max(10, Math.round(quality.effectCap * 0.18)));
+    this.cryoVapor.group.position.set(TANKS_POS.x, tanksGroundY, TANKS_POS.z);
+    this.group.add(this.cryoVapor.group);
     const tankShadow = makeContactShadow(12, 6.5, 0.3);
-    tankShadow.position.set(TANKS_POS.x, 0.05, TANKS_POS.z + 2.6);
+    tankShadow.position.set(TANKS_POS.x, tanksGroundY + 0.025, TANKS_POS.z);
     this.group.add(tankShadow);
 
-    /* 7. power station — exclusive per architecture */
-    const station = new THREE.Group();
-    station.position.copy(STATION_POS);
-    this.monolith = makeMonolithStation();
-    this.panels = makePanelField(quality.panelCap, (55 * Math.PI) / 180);
-    this.panels.group.position.z = -4;
-    station.add(this.monolith.group);
-    station.add(this.panels.group);
-    station.add(makeGreebles({ count: Math.max(12, Math.round(greebleBudget * 0.12)), radius: 3.2, height: 2.2, seed: 11 }));
-    const switchgear = makeEquipmentCluster({
-      count: Math.max(8, Math.round(greebleBudget * 0.08)),
-      width: 6.5,
-      depth: 3.6,
-      seed: 118,
-      color: SCENE_COLORS.metal
-    });
-    switchgear.position.set(0, 0.26, 2.2);
-    station.add(switchgear);
-    station.add(
-      makeCableRun(
-        [
-          new THREE.Vector3(-2.8, 0.55, 2.4),
-          new THREE.Vector3(-1.2, 0.8, 1.2),
-          new THREE.Vector3(1.1, 0.8, 1.1),
-          new THREE.Vector3(2.7, 0.55, 2.6)
-        ],
-        SCENE_COLORS.metalDark,
-        0.065
-      )
-    );
-    this.group.add(station);
-    this.assets.station = station;
+    /* 7. power hub — one authored system with solar and nuclear branches. */
+    this.powerAsset = new EquatorialEquipmentAsset("station", equipmentReady);
+    this.powerAsset.group.position.set(STATION_POS.x, stationGroundY + 0.015, STATION_POS.z);
+    this.group.add(this.powerAsset.group);
+    this.assets.station = this.powerAsset.group;
     const stationShadow = makeContactShadow(13, 9, 0.24);
-    stationShadow.position.set(STATION_POS.x, 0.05, STATION_POS.z);
+    stationShadow.position.set(STATION_POS.x, stationGroundY + 0.025, STATION_POS.z);
     this.group.add(stationShadow);
 
-    /* 8. habitat */
-    this.habitat = makeHabitat();
-    this.habitat.group.position.copy(HABITAT_POS);
-    this.habitat.group.add(makeGreebles({ count: Math.max(8, Math.round(greebleBudget * 0.08)), radius: 3.7, height: 1.1, seed: 19 }));
-    const habLadder = makeLadder(2.1, 0.58, 5 + detail);
-    habLadder.position.set(-2.4, 0.1, 2.45);
-    habLadder.rotation.y = 0.45;
-    this.habitat.group.add(habLadder);
-    this.habitat.group.add(
-      makeCableRun(
-        [
-          new THREE.Vector3(2.9, 0.35, 1.7),
-          new THREE.Vector3(3.4, 0.9, 0.2),
-          new THREE.Vector3(2.8, 1.2, -1.8)
-        ],
-        SCENE_COLORS.metalDark,
-        0.05
-      )
-    );
-    this.group.add(this.habitat.group);
-    this.assets.habitat = this.habitat.group;
+    /* 8. pressure habitat with simulator-scaled regolith shielding. */
+    this.habitatAsset = new EquatorialEquipmentAsset("habitat", equipmentReady);
+    this.habitatAsset.group.position.set(HABITAT_POS.x, habitatGroundY + 0.015, HABITAT_POS.z);
+    this.group.add(this.habitatAsset.group);
+    this.assets.habitat = this.habitatAsset.group;
     const habitatShadow = makeContactShadow(5.2, 4.6, 0.28);
-    habitatShadow.position.set(HABITAT_POS.x, 0.05, HABITAT_POS.z);
+    habitatShadow.position.set(HABITAT_POS.x, habitatGroundY + 0.025, HABITAT_POS.z);
     this.group.add(habitatShadow);
+
+    this.equipment = {
+      excavator: this.excavator,
+      hauler: this.hauler,
+      castingYard: this.castingAsset,
+      tanks: this.cryoAsset,
+      station: this.powerAsset,
+      pad: this.landingAsset,
+      habitat: this.habitatAsset
+    };
 
     /* 9. power lines station → reactor → cryo */
     const lineY = 0.5;
@@ -576,6 +567,7 @@ export class EquatorialDiorama implements Diorama {
     tweens.add("eq.glow", this.glow, gridGlowIntensity(result.energy.gridPowerW), ms, (v) => {
       this.glow = v;
     });
+    this.reactor.apply(result, params, gridGlowIntensity(result.energy.gridPowerW));
 
     tweens.add(
       "eq.bricks",
@@ -597,28 +589,44 @@ export class EquatorialDiorama implements Diorama {
       }
     );
 
-    this.lander.visible = result.logistics.nMissions >= 1;
+    this.landerVisible = result.logistics.nMissions >= 1;
     this.flags.forEach((flag, i) => {
       flag.visible = i < Math.min(FLAG_CAP, result.logistics.nMissions);
     });
 
-    this.tanks.setCount(tankCount(params));
-    this.tanks.setFill(tankFillFraction(result));
-    this.tanks.setWispRate(boiloffWispRate(result.cryo.boiloffKgPerDay));
+    this.currentTankCount = tankCount(params);
+    this.currentTankFill = tankFillFraction(result);
+    this.currentWispRate = boiloffWispRate(result.cryo.boiloffKgPerDay);
+    this.cryoVapor.setState(this.currentTankCount, this.currentWispRate);
 
-    // architecture crossfade (600ms)
+    // Generated solar/nuclear branches share the authored switchgear deck.
     const arch = result.power.architecture;
-    if (arch !== this.architecture) {
-      const fadeMs = reduced || this.architecture === null ? 0 : 600;
-      this.architecture = arch;
-      const inGroup = arch === "nuclear" ? this.monolith.group : this.panels.group;
-      const outGroup = arch === "nuclear" ? this.panels.group : this.monolith.group;
-      crossfade(tweens, "eq.arch", outGroup, inGroup, fadeMs);
+    const previousArchitecture = this.architecture;
+    this.architecture = arch;
+    const nuclear = this.powerAsset.node("Power_NuclearRoot");
+    const solar = this.powerAsset.node("Power_SolarRoot");
+    if (nuclear !== null && solar !== null) {
+      if (arch !== previousArchitecture) {
+        const inGroup = arch === "nuclear" ? nuclear : solar;
+        const outGroup = arch === "nuclear" ? solar : nuclear;
+        crossfade(tweens, "eq.arch", outGroup, inGroup, reduced || previousArchitecture === null ? 0 : 600);
+      } else {
+        nuclear.visible = arch === "nuclear";
+        solar.visible = arch === "solar";
+      }
     }
-    this.monolith.setRadiatorScale(radiatorWingScale(result.power.radiatorM2));
-    this.panels.setCount(solarPanelCount(result.power.solarArrayM2, this.panelCap));
+    this.currentRadiatorScale = radiatorWingScale(result.power.radiatorM2);
+    const panelInstances = solarPanelCount(result.power.solarArrayM2, this.panelCap);
+    this.currentPanelRacks = Math.max(
+      1,
+      Math.min(12, Math.ceil(panelInstances / Math.max(1, this.panelCap / 12)))
+    );
 
-    this.habitat.setShieldSteps(habitatShellSteps(result.construction.shieldDesignM));
+    this.currentShieldSections = Math.max(
+      1,
+      Math.min(6, Math.ceil(habitatShellSteps(result.construction.shieldDesignM) / 7))
+    );
+    this.applyEquipmentVisualState(arch === previousArchitecture || nuclear === null || solar === null);
 
     const lineOpacity = powerLineOpacity(result.energy.gridPowerW);
     for (const line of this.lines) {
@@ -632,9 +640,11 @@ export class EquatorialDiorama implements Diorama {
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
     const reserveKg = Math.max(1, params.reserveDays * result.production.targetKgPerDay);
     const fill = Math.min(1, Math.max(0, point.tankFillKg / reserveKg));
-    this.tanks.setFill(fill);
-    this.tanks.setWispRate(boiloffWispRate(point.boiloffKgPerDay));
+    this.currentTankFill = fill;
+    this.currentWispRate = boiloffWispRate(point.boiloffKgPerDay);
+    this.cryoVapor.setState(this.currentTankCount, this.currentWispRate);
     this.glow = gridGlowIntensity(point.loadW);
+    this.reactor.apply(result, params, this.glow);
 
     const lineOpacity = powerLineOpacity(point.loadW);
     for (const line of this.lines) {
@@ -642,10 +652,9 @@ export class EquatorialDiorama implements Diorama {
     }
 
     const phase = ((point.tHours / Math.max(1, cycleHours)) % 1 + 1) % 1;
-    this.panels.group.rotation.y = point.daylight ? phase * Math.PI * 2 : 0;
-    const panelMat = this.panels.mesh.material as THREE.MeshStandardMaterial;
-    panelMat.transparent = !point.daylight;
-    panelMat.opacity = point.daylight ? 1 : 0.32;
+    this.solarPhase = phase;
+    this.solarDaylight = point.daylight;
+    this.applyEquipmentVisualState();
   }
 
   tick(dt: number, t: number, reduced: boolean): boolean {
@@ -653,14 +662,19 @@ export class EquatorialDiorama implements Diorama {
     if (!reduced) {
       // excavator closed loop in the trench
       const a = ((t % this.loopPeriod) / this.loopPeriod) * Math.PI * 2;
-      this.excavator.group.position.set(
-        TRENCH_CENTER.x + Math.cos(a) * TRENCH_RX,
-        0,
-        TRENCH_CENTER.z + Math.sin(a) * TRENCH_RZ
-      );
+      const excavatorX = TRENCH_CENTER.x + Math.cos(a) * TRENCH_RX;
+      const excavatorZ = TRENCH_CENTER.z + Math.sin(a) * TRENCH_RZ;
+      this.excavator.group.position.set(excavatorX, this.sampleTerrain(excavatorX, excavatorZ) + 0.045, excavatorZ);
       this.excavator.group.rotation.y = -a - Math.PI / 2;
       const digStroke = Math.max(0, Math.cos(a));
-      this.excavator.arm.rotation.z = -0.22 - digStroke * 0.32 + Math.sin(t * 9) * 0.035;
+      const boom = this.excavator.node("Excavator_BoomPivot");
+      const bucket = this.excavator.node("Excavator_BucketPivot");
+      if (boom !== null) {
+        boom.rotation.z = -0.08 - digStroke * 0.23 + Math.sin(t * 4.5) * 0.018;
+      }
+      if (bucket !== null) {
+        bucket.rotation.z = 0.1 + digStroke * 0.28;
+      }
       const pass = Math.floor(t / this.loopPeriod);
       if (a < 0.18 && pass !== this.digPass) {
         this.digPass = pass;
@@ -689,15 +703,29 @@ export class EquatorialDiorama implements Diorama {
       const from = new THREE.Vector3(TRENCH_CENTER.x + TRENCH_RX + 1.5, 0, 3);
       const to = new THREE.Vector3(REACTOR_POS.x - 4.5, 0, 3);
       this.hauler.group.position.lerpVectors(from, to, s);
-      this.hauler.group.rotation.y = s > 0 && s < 1 ? 0 : Math.PI;
+      this.hauler.group.position.y = this.sampleTerrain(this.hauler.group.position.x, this.hauler.group.position.z) + 0.045;
+      this.hauler.group.rotation.y = u < 0.5 + PAUSE ? 0 : Math.PI;
       const loadFill =
         u < PAUSE ? u / PAUSE : u < 0.5 ? 1 : u < 0.5 + PAUSE ? 1 - (u - 0.5) / PAUSE : 0;
       this.haulerLoad.visible = loadFill > 0.04;
       this.haulerLoad.scale.set(1, Math.max(0.08, loadFill), 1);
-      this.haulerLoad.position.y = 0.55 + loadFill * 0.22;
+      this.haulerLoad.position.y = 0.12 + loadFill * 0.18;
+      const bed = this.hauler.node("Hauler_BedPivot");
+      if (bed !== null) {
+        const dump = u >= 0.5 && u < 0.5 + PAUSE ? Math.sin(((u - 0.5) / PAUSE) * Math.PI) : 0;
+        bed.rotation.z = -dump * 0.48;
+      }
 
-      // reactor 0.5 Hz pulse around the bound glow level
-      this.ringMat.emissiveIntensity = this.glow * (1 + 0.12 * Math.sin(t * Math.PI));
+      const pour = this.castingAsset.node("Casting_PourPivot");
+      if (pour !== null) {
+        pour.rotation.z = Math.sin(t * 0.65) * 0.16;
+      }
+      const ramp = this.landingAsset.node("Landing_RampPivot");
+      if (ramp !== null) {
+        ramp.rotation.z = -0.08 + Math.sin(t * 0.22) * 0.025;
+      }
+
+      this.reactor.tick(t, false);
       this.heatRibbonMat.uniforms.uTime.value = t;
       this.heatRibbonMat.uniforms.uOpacity.value = 0.16 + 0.07 * Math.sin(t * 1.9) ** 2;
       this.updateSlagStream(t);
@@ -705,17 +733,103 @@ export class EquatorialDiorama implements Diorama {
       this.updateLanderEvent(t);
       active = true;
     } else {
-      this.ringMat.emissiveIntensity = this.glow;
+      this.reactor.tick(t, true);
       this.heatRibbonMat.uniforms.uOpacity.value = 0.12;
       this.landerPlume.visible = false;
     }
     if (this.dust.tick(dt)) {
       active = true;
     }
-    if (this.tanks.tick(t) && !reduced) {
+    if (this.cryoVapor.tick(t, reduced)) {
       active = true;
     }
     return active;
+  }
+
+  private bindLoadedEquipment(): void {
+    const loadAnchor = this.hauler?.node("Hauler_LoadAnchor");
+    if (loadAnchor !== null && loadAnchor !== undefined && this.haulerLoad.parent !== loadAnchor) {
+      loadAnchor.add(this.haulerLoad);
+    }
+    const lander = this.landingAsset?.node("Landing_Lander");
+    if (lander !== null && lander !== undefined && this.landerPlume.parent !== lander) {
+      lander.add(this.landerPlume);
+    }
+    this.applyEquipmentVisualState(true);
+  }
+
+  private applyEquipmentVisualState(applyArchitecture = true): void {
+    if (this.cryoAsset !== undefined) {
+      for (let i = 1; i <= 8; i++) {
+        const suffix = String(i).padStart(2, "0");
+        const tank = this.cryoAsset.node(`Cryo_Tank_${suffix}`);
+        if (tank !== null) {
+          tank.visible = i <= this.currentTankCount;
+        }
+        const fill = this.cryoAsset.node(`Cryo_FillColumn_${suffix}`);
+        if (fill !== null) {
+          fill.scale.y = 0.12 + this.currentTankFill * 0.88;
+        }
+      }
+      for (const material of this.cryoAsset.materials("CRYO_StatusLight")) {
+        material.emissiveIntensity = 0.8 + this.currentTankFill * 2.2;
+      }
+    }
+
+    if (this.powerAsset !== undefined) {
+      const nuclear = this.powerAsset.node("Power_NuclearRoot");
+      const solar = this.powerAsset.node("Power_SolarRoot");
+      if (applyArchitecture && this.architecture !== null) {
+        if (nuclear !== null) {
+          nuclear.visible = this.architecture === "nuclear";
+        }
+        if (solar !== null) {
+          solar.visible = this.architecture === "solar";
+        }
+      }
+      const radiators = this.powerAsset.node("Power_RadiatorRoot");
+      if (radiators !== null) {
+        radiators.scale.x = this.currentRadiatorScale;
+      }
+      for (let i = 1; i <= 12; i++) {
+        const suffix = String(i).padStart(2, "0");
+        const rack = this.powerAsset.node(`Power_SolarRack_${suffix}`);
+        if (rack !== null) {
+          rack.visible = i <= this.currentPanelRacks;
+        }
+        const tracker = this.powerAsset.node(`Power_SolarTracker_${suffix}`);
+        if (tracker !== null) {
+          tracker.rotation.z = this.solarDaylight ? -0.22 + Math.sin(this.solarPhase * Math.PI * 2) * 0.42 : 0;
+        }
+      }
+      for (const material of this.powerAsset.materials("POWER_Photovoltaic")) {
+        material.transparent = !this.solarDaylight;
+        material.opacity = this.solarDaylight ? 1 : 0.42;
+      }
+      for (const material of this.powerAsset.materials("POWER_StatusLight")) {
+        material.emissiveIntensity = 1.1 + this.glow * 1.4;
+      }
+    }
+
+    if (this.habitatAsset !== undefined) {
+      for (let i = 1; i <= 6; i++) {
+        const shield = this.habitatAsset.node(`Habitat_Shield_${String(i).padStart(2, "0")}`);
+        if (shield !== null) {
+          shield.visible = i <= this.currentShieldSections;
+        }
+      }
+    }
+
+    const lander = this.landingAsset?.node("Landing_Lander");
+    if (lander !== null && lander !== undefined) {
+      lander.visible = this.landerVisible;
+    }
+    for (const material of this.landingAsset?.materials("LAND_StatusLight") ?? []) {
+      material.emissiveIntensity = this.landerVisible ? 2.6 : 0.45;
+    }
+    for (const material of this.castingAsset?.materials("CAST_WarmLight") ?? []) {
+      material.emissiveIntensity = 1.4 + this.glow * 0.8;
+    }
   }
 
   private updateSlagStream(t: number): void {
@@ -725,8 +839,8 @@ export class EquatorialDiorama implements Diorama {
     const p = new THREE.Vector3();
     for (let i = 0; i < SLAG_DROP_CAP; i++) {
       const u = ((t * 0.18 + i / SLAG_DROP_CAP) % 1 + 1) % 1;
-      p.lerpVectors(SLAG_START, SLAG_END, u);
-      p.y = 0.38 + Math.sin(u * Math.PI) * 0.16 + Math.sin(t * 3 + i) * 0.018;
+      p.lerpVectors(this.slagStart, this.slagEnd, u);
+      p.y += Math.sin(u * Math.PI) * 0.16 + Math.sin(t * 3 + i) * 0.018;
       q.setFromEuler(new THREE.Euler(t * 0.7 + i, u * Math.PI * 2, Math.sin(t + i) * 0.35));
       const scale = 0.58 + Math.sin(u * Math.PI) * 0.62;
       s.set(scale * (1 + 0.18 * Math.sin(t * 2 + i)), scale * 0.76, scale * 0.82);
@@ -755,7 +869,8 @@ export class EquatorialDiorama implements Diorama {
   }
 
   private updateLanderEvent(t: number): void {
-    if (!this.lander.visible) {
+    const lander = this.landingAsset.node("Landing_Lander");
+    if (lander === null || !this.landerVisible) {
       this.landerPlume.visible = false;
       return;
     }
@@ -771,13 +886,17 @@ export class EquatorialDiorama implements Diorama {
       altitude = 14 * q * q;
       plume = Math.sin(q * Math.PI);
     }
-    this.lander.position.set(PAD_POS.x, PAD_POS.y + altitude, PAD_POS.z);
+    lander.position.y = altitude;
     this.landerPlume.visible = plume > 0.03;
     this.landerPlumeMat.opacity = plume * 0.58;
     this.landerPlume.scale.setScalar(0.75 + plume * 0.85);
   }
 
   dispose(): void {
+    this.reactor.dispose();
+    for (const asset of Object.values(this.equipment)) {
+      asset.dispose();
+    }
     disposeObject(this.group);
   }
 }
@@ -786,8 +905,8 @@ export class EquatorialDiorama implements Diorama {
 function crossfade(
   tweens: TweenManager,
   key: string,
-  outGroup: THREE.Group,
-  inGroup: THREE.Group,
+  outGroup: THREE.Object3D,
+  inGroup: THREE.Object3D,
   ms: number
 ): void {
   const outMats = materialsOf(outGroup);

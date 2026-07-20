@@ -36,13 +36,12 @@ export function AboutModal(): React.JSX.Element | null {
             REL-TOL 1e-9
           </p>
           <p className="modal-badge mono">
-            ✓ PROCEDURAL THREE.JS RENDER · GENERATED PBR MAPS + IBL · ZERO BINARY SCENE ASSETS
+            ✓ HYBRID THREE.JS + REPRODUCIBLE BLENDER ASSETS · GENERATED PBR MAPS + IBL
           </p>
           <p>
-            The 3D scene is still asset-free: regolith textures, hardware roughness, star fields,
-            Earth, bloom, contact occlusion, crater terrain, and beam effects are generated from
-            code at runtime. No image maps, HDRs, models, or GLTF files are required to render the
-            lunar scene.
+            The 3D scene uses a hybrid procedural/Blender pipeline. Regolith textures, star fields,
+            Earth, terrain, lighting, and effects are generated from code; the MRE reactor is an
+            original, reproducibly generated Blender asset with an optimized GLB runtime export.
           </p>
           <h3>Model caveats</h3>
           <ul>

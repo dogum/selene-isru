@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { PRESETS } from "../presets";
 import { TOURS } from "../tours";
 import {
+  GRAPHICS_EVENT,
   loadGraphicsPrefs,
   publishGraphicsPrefs,
   requestPhotoDownload,
@@ -11,6 +12,17 @@ import {
 import { paramsToUrl } from "../lib/url";
 import { useIsMobile } from "../lib/hooks";
 import { useStore } from "../state/store";
+
+const EQUATORIAL_EQUIPMENT = [
+  ["excavator", "Excavation rover"],
+  ["hauler", "Regolith hauler"],
+  ["reactor", "MRE reactor"],
+  ["castingYard", "Casting yard"],
+  ["tanks", "Cryogenic farm"],
+  ["station", "Power hub"],
+  ["pad", "Landing system"],
+  ["habitat", "Surface habitat"]
+] as const;
 
 export function TopBar(): React.JSX.Element {
   const site = useStore((s) => s.params.site);
@@ -54,6 +66,7 @@ export function TopBar(): React.JSX.Element {
 function DesktopActions(): React.JSX.Element {
   return (
     <>
+      <EquipmentDropdown />
       <TourDropdown />
       <PresetsDropdown />
       <GraphicsDropdown />
@@ -65,6 +78,56 @@ function DesktopActions(): React.JSX.Element {
   );
 }
 
+function EquipmentDropdown(): React.JSX.Element | null {
+  const site = useStore((s) => s.params.site);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const onDoc = (e: PointerEvent): void => {
+      if (ref.current !== null && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onDoc);
+    return () => document.removeEventListener("pointerdown", onDoc);
+  }, [open]);
+
+  if (site !== "equatorial") {
+    return null;
+  }
+
+  return (
+    <div className="presets" ref={ref}>
+      <button className="topbar-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        ASSETS ▾
+      </button>
+      {open && (
+        <div className="presets-menu" role="menu">
+          {EQUATORIAL_EQUIPMENT.map(([key, label]) => (
+            <button
+              key={key}
+              role="menuitem"
+              className="presets-item"
+              onClick={() => {
+                const store = useStore.getState();
+                store.setUi({ selectedAsset: key });
+                store.flyTo(key);
+                setOpen(false);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GraphicsDropdown(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [prefs, setPrefs] = useState<GraphicsPrefs>(() => loadGraphicsPrefs());
@@ -73,6 +136,14 @@ function GraphicsDropdown(): React.JSX.Element {
   useEffect(() => {
     document.body.classList.toggle("selene-photo-mode", prefs.photoMode);
   }, [prefs.photoMode]);
+
+  useEffect(() => {
+    const onGraphics = (event: Event): void => {
+      setPrefs((event as CustomEvent<GraphicsPrefs>).detail);
+    };
+    window.addEventListener(GRAPHICS_EVENT, onGraphics);
+    return () => window.removeEventListener(GRAPHICS_EVENT, onGraphics);
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -258,10 +329,19 @@ function MobileMenu(): React.JSX.Element {
   const [prefs, setPrefs] = useState<GraphicsPrefs>(() => loadGraphicsPrefs());
   const ref = useRef<HTMLDivElement | null>(null);
   const applyPatch = useStore((s) => s.applyPatch);
+  const site = useStore((s) => s.params.site);
 
   useEffect(() => {
     document.body.classList.toggle("selene-photo-mode", prefs.photoMode);
   }, [prefs.photoMode]);
+
+  useEffect(() => {
+    const onGraphics = (event: Event): void => {
+      setPrefs((event as CustomEvent<GraphicsPrefs>).detail);
+    };
+    window.addEventListener(GRAPHICS_EVENT, onGraphics);
+    return () => window.removeEventListener(GRAPHICS_EVENT, onGraphics);
+  }, []);
 
   const updateGraphics = (patch: Partial<GraphicsPrefs>): void => {
     const next = { ...prefs, ...patch };
@@ -303,6 +383,26 @@ function MobileMenu(): React.JSX.Element {
               {tour.label}
             </button>
           ))}
+          {site === "equatorial" && (
+            <>
+              <div className="presets-section">ASSETS</div>
+              {EQUATORIAL_EQUIPMENT.map(([key, label]) => (
+                <button
+                  key={key}
+                  role="menuitem"
+                  className="presets-item"
+                  onClick={() => {
+                    const store = useStore.getState();
+                    store.setUi({ selectedAsset: key });
+                    store.flyTo(key);
+                    setOpen(false);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </>
+          )}
           <div className="presets-section">PRESETS</div>
           {PRESETS.map((p) => (
             <button

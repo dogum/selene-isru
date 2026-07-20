@@ -227,7 +227,7 @@ export const CAMERA_POSES: Record<SiteMode, Record<string, CameraPose>> = {
     overview: { position: [42, 30, 58], target: [0, 2, 0] },
     excavator: { position: [-60, 13, 20], target: [-45, 0, 0] },
     hauler: { position: [-44, 9, 18], target: [-32, 1, 2] },
-    reactor: { position: [-31, 11, 17], target: [-20, 3, 0] },
+    reactor: { position: [-37, 14, 26], target: [-20, 2.7, 0] },
     castingYard: { position: [3, 10, 28], target: [-5, 1, 14] },
     pad: { position: [42, 13, -5], target: [30, 1, -18] },
     tanks: { position: [14, 9, -3], target: [5, 2, -16] },

@@ -44,7 +44,9 @@ export function saveGraphicsPrefs(prefs: GraphicsPrefs): void {
   if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  // Photo mode is a transient presentation state. Persisting it can strand a
+  // returning user in a UI-less view after a refresh.
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prefs, photoMode: false }));
 }
 
 export function publishGraphicsPrefs(prefs: GraphicsPrefs): void {
@@ -74,7 +76,7 @@ function normalizeGraphicsPrefs(input: Partial<GraphicsPrefs>): GraphicsPrefs {
         ? input.brightLighting
         : DEFAULT_GRAPHICS_PREFS.brightLighting,
     hud: typeof input.hud === "boolean" ? input.hud : DEFAULT_GRAPHICS_PREFS.hud,
-    photoMode: typeof input.photoMode === "boolean" ? input.photoMode : DEFAULT_GRAPHICS_PREFS.photoMode
+    photoMode: false
   };
 }
 

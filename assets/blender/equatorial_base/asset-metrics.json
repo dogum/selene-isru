@@ -1,0 +1,58 @@
+{
+  "excavator": {
+    "blendBytes": 155664,
+    "rawGlbBytes": 671756,
+    "optimizedGlbBytes": 376792,
+    "meshObjects": 92,
+    "vertices": 6384,
+    "triangles": 12400
+  },
+  "hauler": {
+    "blendBytes": 153730,
+    "rawGlbBytes": 616868,
+    "optimizedGlbBytes": 337964,
+    "meshObjects": 82,
+    "vertices": 5482,
+    "triangles": 10636
+  },
+  "casting-yard": {
+    "blendBytes": 141808,
+    "rawGlbBytes": 190892,
+    "optimizedGlbBytes": 129828,
+    "meshObjects": 33,
+    "vertices": 2936,
+    "triangles": 5740
+  },
+  "cryogenic-farm": {
+    "blendBytes": 212494,
+    "rawGlbBytes": 966600,
+    "optimizedGlbBytes": 533936,
+    "meshObjects": 106,
+    "vertices": 20384,
+    "triangles": 40440
+  },
+  "power-hub": {
+    "blendBytes": 184944,
+    "rawGlbBytes": 597396,
+    "optimizedGlbBytes": 355396,
+    "meshObjects": 87,
+    "vertices": 7366,
+    "triangles": 14388
+  },
+  "landing-system": {
+    "blendBytes": 186753,
+    "rawGlbBytes": 312056,
+    "optimizedGlbBytes": 193012,
+    "meshObjects": 39,
+    "vertices": 5844,
+    "triangles": 11536
+  },
+  "habitat": {
+    "blendBytes": 179798,
+    "rawGlbBytes": 406844,
+    "optimizedGlbBytes": 216180,
+    "meshObjects": 45,
+    "vertices": 5442,
+    "triangles": 10728
+  }
+}

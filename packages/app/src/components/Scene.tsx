@@ -16,7 +16,9 @@ export function Scene(): React.JSX.Element {
     if (el === null) {
       return;
     }
-    const viewer = new Viewer(el, isMobile);
+    const viewer = new Viewer(el, isMobile, {
+      onSelectAsset: (assetKey) => useStore.getState().setUi({ selectedAsset: assetKey })
+    });
     const initial = useStore.getState();
     viewer.apply(initial.result, initial.params);
     viewer.applyTime(
@@ -43,6 +45,9 @@ export function Scene(): React.JSX.Element {
       }
       if (state.ui.pulseRequest !== prev.ui.pulseRequest && state.ui.pulseRequest !== null) {
         viewer.focusAsset(state.ui.pulseRequest.asset, state.ui.pulseRequest.severity);
+      }
+      if (state.ui.selectedAsset !== prev.ui.selectedAsset) {
+        viewer.setSelectedAsset(state.ui.selectedAsset);
       }
     });
 

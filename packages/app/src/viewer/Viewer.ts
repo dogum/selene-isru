@@ -36,9 +36,24 @@ import { TweenManager } from "./tween";
 const IDLE_ORBIT_DELAY_MS = 30_000;
 const IDLE_ORBIT_RATE = (0.4 * Math.PI) / 180; // 0.4°/s
 
+const INTERACTIVE_ASSET_LABELS: Record<string, string> = {
+  excavator: "EXCAVATION ROVER EX-01",
+  hauler: "REGOLITH HAULER HV-01",
+  reactor: "MRE REACTOR MRE-01",
+  castingYard: "CASTING YARD CY-01",
+  tanks: "CRYOGENIC FARM CR-01",
+  station: "HYBRID POWER HUB PW-01",
+  pad: "LANDING SYSTEM LP-01",
+  habitat: "SHIELDED HABITAT HAB-01"
+};
+
 interface Pulse {
   lines: THREE.LineSegments;
   start: number;
+}
+
+export interface ViewerCallbacks {
+  onSelectAsset?: (assetKey: string | null) => void;
 }
 
 /**
@@ -61,6 +76,15 @@ export class Viewer {
   private stars!: THREE.Object3D;
   private diorama: Diorama | null = null;
   private environment: ProceduralEnvironment | null = null;
+  private callbacks: ViewerCallbacks;
+  private raycaster = new THREE.Raycaster();
+  private pointer = new THREE.Vector2();
+  private pointerDown = new THREE.Vector2();
+  private hoveredAssetKey: string | null = null;
+  private selectedAssetKey: string | null = null;
+  private hoverOutline: THREE.Mesh | null = null;
+  private selectionOutline: THREE.Mesh | null = null;
+  private assetTooltip: HTMLDivElement;
 
   private quality: QualityProfile;
   private mobile: boolean;
@@ -88,9 +112,10 @@ export class Viewer {
   private mediaQuery: MediaQueryList;
   private disposed = false;
 
-  constructor(container: HTMLElement, mobile: boolean) {
+  constructor(container: HTMLElement, mobile: boolean, callbacks: ViewerCallbacks = {}) {
     this.container = container;
     this.mobile = mobile;
+    this.callbacks = callbacks;
     this.graphicsPrefs = loadGraphicsPrefs();
     this.activeTier = effectiveTier(this.graphicsPrefs.tier, mobile);
     this.debugHud = new URLSearchParams(window.location.search).get("debug") === "1";
@@ -109,6 +134,12 @@ export class Viewer {
     this.hud.className = "stage-hud";
     container.appendChild(this.hud);
     this.updateHudVisibility();
+
+    this.assetTooltip = document.createElement("div");
+    this.assetTooltip.className = "asset-hover-label";
+    this.assetTooltip.hidden = true;
+    this.assetTooltip.textContent = "CLICK TO INSPECT";
+    container.appendChild(this.assetTooltip);
 
     this.initGL();
 
@@ -137,6 +168,11 @@ export class Viewer {
 
     this.renderer.domElement.addEventListener("webglcontextlost", this.onContextLost, false);
     this.renderer.domElement.addEventListener("webglcontextrestored", this.onContextRestored, false);
+    this.renderer.domElement.addEventListener("pointermove", this.onPointerMove);
+    this.renderer.domElement.addEventListener("pointerleave", this.onPointerLeave);
+    this.renderer.domElement.addEventListener("pointerdown", this.onPointerDown);
+    this.renderer.domElement.addEventListener("pointerup", this.onPointerUp);
+    this.renderer.domElement.addEventListener("contextmenu", this.onContextMenu);
 
     this.scene = new THREE.Scene();
     this.stars = makeStarfield(this.quality.starCount);
@@ -162,7 +198,6 @@ export class Viewer {
     // on the "bright lighting" pref (§ friendly-illumination mode)
     this.fill = new THREE.AmbientLight(0xc4ccd8, 0);
     this.scene.add(this.fill);
-    this.applyLightingMode();
 
     const aspect = Math.max(0.1, this.container.clientWidth / Math.max(1, this.container.clientHeight));
     this.camera = new THREE.PerspectiveCamera(42, aspect, 0.5, 1400);
@@ -189,6 +224,9 @@ export class Viewer {
     });
 
     this.lastInputAt = performance.now();
+    // Apply user lighting after the camera and post stack are ready. Starting
+    // the render loop earlier could leave the first frame in the dark defaults.
+    this.applyLightingMode();
   }
 
   dispose(): void {
@@ -210,6 +248,7 @@ export class Viewer {
     this.renderer.domElement.remove();
     this.hud.remove();
     this.veil.remove();
+    this.assetTooltip.remove();
   }
 
   /* ---------------- public API ---------------- */
@@ -255,6 +294,13 @@ export class Viewer {
     }
   }
 
+  /** Synchronize React inspector state with the scene selection treatment. */
+  setSelectedAsset(assetKey: string | null): void {
+    this.selectedAssetKey = assetKey;
+    this.refreshSelectionOutline();
+    this.wake();
+  }
+
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
     this.applyCycleLighting(point, result.site, cycleHours);
     if (this.diorama !== null) {
@@ -267,13 +313,29 @@ export class Viewer {
   /* ---------------- site handling ---------------- */
 
   private buildSite(site: SiteMode): void {
+    this.setHoveredAsset(null);
+    this.removeOutline("selection");
     if (this.diorama !== null) {
       this.scene.remove(this.diorama.group);
       this.diorama.dispose();
       this.diorama = null;
     }
     this.setEnvironment(site);
-    this.diorama = site === "equatorial" ? new EquatorialDiorama(this.quality) : new PolarDiorama(this.quality);
+    if (site === "equatorial") {
+      const equatorial = new EquatorialDiorama(this.quality, () => {
+        if (this.diorama !== equatorial || this.disposed) {
+          return;
+        }
+        if (this.lastResult !== null && this.lastParams !== null) {
+          equatorial.apply(this.lastResult, this.lastParams, this.tweens, true);
+        }
+        this.refreshSelectionOutline();
+        this.wake();
+      });
+      this.diorama = equatorial;
+    } else {
+      this.diorama = new PolarDiorama(this.quality);
+    }
     this.scene.add(this.diorama.group);
 
     // lighting per site: equatorial high sun, polar raking 2° light (§3.1)
@@ -307,10 +369,10 @@ export class Viewer {
     const az = phase * Math.PI * 2 - Math.PI * 0.25;
     if (site === "equatorial") {
       const dayU = Math.min(1, Math.max(0, phase * 2));
-      const elev = point.daylight ? (12 + 43 * Math.sin(dayU * Math.PI)) * (Math.PI / 180) : -8 * (Math.PI / 180);
+      const elev = point.daylight ? (23 + 32 * Math.sin(dayU * Math.PI)) * (Math.PI / 180) : -8 * (Math.PI / 180);
       const r = 170;
       this.sun.position.set(Math.cos(az) * Math.cos(elev) * r, Math.sin(elev) * r, Math.sin(az) * Math.cos(elev) * r);
-      this.sun.intensity = point.daylight ? 2.4 + 0.8 * Math.sin(dayU * Math.PI) : 0.18;
+      this.sun.intensity = point.daylight ? 2.8 + 0.8 * Math.sin(dayU * Math.PI) : 0.18;
       this.hemi.intensity = point.daylight ? 0.48 : 0.16;
     } else {
       const elev = (point.daylight ? 2 : -1) * (Math.PI / 180);
@@ -324,7 +386,7 @@ export class Viewer {
     // friendly-illumination floor: keep the whole scene legible even at night
     // or under low sun, without erasing the day/night direction & shadows
     if (this.graphicsPrefs.brightLighting) {
-      const hemiFloor = site === "equatorial" ? 0.72 : 0.5;
+      const hemiFloor = site === "equatorial" ? 1.02 : 0.56;
       this.hemi.intensity = Math.max(this.hemi.intensity, point.daylight ? hemiFloor : hemiFloor * 0.82);
     }
     this.lastLight = { point, site, cycleHours };
@@ -333,8 +395,8 @@ export class Viewer {
   /** exposure + ambient fill for the current lighting mode; re-applies floors. */
   private applyLightingMode(): void {
     const bright = this.graphicsPrefs.brightLighting;
-    this.renderer.toneMappingExposure = bright ? 1.42 : 1.1;
-    this.fill.intensity = bright ? 0.34 : 0.02;
+    this.renderer.toneMappingExposure = bright ? 1.62 : 1.1;
+    this.fill.intensity = bright ? 0.82 : 0.02;
     if (this.lastLight !== null) {
       this.applyCycleLighting(this.lastLight.point, this.lastLight.site, this.lastLight.cycleHours);
     }
@@ -536,6 +598,141 @@ export class Viewer {
     this.wake();
   };
 
+  private onPointerMove = (event: PointerEvent): void => {
+    const key = this.pickAsset(event);
+    this.setHoveredAsset(key, event);
+  };
+
+  private onPointerLeave = (): void => {
+    this.setHoveredAsset(null);
+  };
+
+  private onPointerDown = (event: PointerEvent): void => {
+    this.pointerDown.set(event.clientX, event.clientY);
+  };
+
+  private onPointerUp = (event: PointerEvent): void => {
+    if (this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6) {
+      return;
+    }
+    this.selectPickedAsset(this.pickAsset(event));
+  };
+
+  private onContextMenu = (event: MouseEvent): void => {
+    const key = this.pickAsset(event);
+    if (key === null) {
+      return;
+    }
+    event.preventDefault();
+    this.selectPickedAsset(key);
+  };
+
+  private pickAsset(event: MouseEvent | PointerEvent): string | null {
+    if (this.diorama === null || this.lastResult?.site !== "equatorial") {
+      return null;
+    }
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+    const roots = Object.entries(this.diorama.assets)
+      .filter(([key, asset]) => key in INTERACTIVE_ASSET_LABELS && asset.children.length > 0)
+      .map(([, asset]) => asset);
+    const hit = this.raycaster.intersectObjects(roots, true)[0]?.object ?? null;
+    let current: THREE.Object3D | null = hit;
+    while (current !== null) {
+      const assetKey = current.userData.assetKey;
+      if (typeof assetKey === "string" && assetKey in INTERACTIVE_ASSET_LABELS) {
+        return assetKey;
+      }
+      current = current.parent;
+    }
+    return null;
+  }
+
+  private selectPickedAsset(assetKey: string | null): void {
+    this.setHoveredAsset(null);
+    this.callbacks.onSelectAsset?.(assetKey);
+    this.setSelectedAsset(assetKey);
+    if (assetKey !== null) {
+      this.flyTo(assetKey);
+    }
+  }
+
+  private setHoveredAsset(assetKey: string | null, event?: PointerEvent): void {
+    if (this.hoveredAssetKey === assetKey) {
+      if (assetKey !== null && event !== undefined) {
+        this.positionAssetTooltip(event);
+      }
+      return;
+    }
+    this.hoveredAssetKey = assetKey;
+    this.removeOutline("hover");
+    this.renderer.domElement.style.cursor = assetKey === null ? "grab" : "pointer";
+    this.assetTooltip.hidden = assetKey === null;
+    if (assetKey !== null && this.diorama !== null) {
+      this.assetTooltip.textContent = `${INTERACTIVE_ASSET_LABELS[assetKey] ?? assetKey.toUpperCase()} · CLICK TO INSPECT`;
+      const asset = this.diorama.assets[assetKey];
+      if (asset !== undefined) {
+        this.hoverOutline = this.makeOutline(asset, 0xff7e1f, 0.72);
+        this.scene.add(this.hoverOutline);
+      }
+      if (event !== undefined) {
+        this.positionAssetTooltip(event);
+      }
+    }
+    this.wake();
+  }
+
+  private positionAssetTooltip(event: PointerEvent): void {
+    const rect = this.container.getBoundingClientRect();
+    this.assetTooltip.style.transform = `translate(${event.clientX - rect.left + 14}px, ${event.clientY - rect.top + 14}px)`;
+  }
+
+  private refreshSelectionOutline(): void {
+    this.removeOutline("selection");
+    if (this.selectedAssetKey === null || this.diorama === null) {
+      return;
+    }
+    const asset = this.diorama.assets[this.selectedAssetKey];
+    if (asset !== undefined && asset.children.length > 0) {
+      this.selectionOutline = this.makeOutline(asset, 0x74d8ff, 0.86);
+      this.scene.add(this.selectionOutline);
+    }
+  }
+
+  private makeOutline(asset: THREE.Object3D, color: number, opacity: number): THREE.Mesh {
+    const box = new THREE.Box3().setFromObject(asset);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const radius = Math.max(size.x, size.z) * 0.57;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(radius, radius + 0.12, 72),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide })
+    );
+    ring.position.set(center.x, box.min.y + 0.055, center.z);
+    ring.rotation.x = -Math.PI / 2;
+    ring.renderOrder = 20;
+    return ring;
+  }
+
+  private removeOutline(kind: "hover" | "selection"): void {
+    const outline = kind === "hover" ? this.hoverOutline : this.selectionOutline;
+    if (outline === null) {
+      return;
+    }
+    this.scene.remove(outline);
+    outline.geometry.dispose();
+    (outline.material as THREE.Material).dispose();
+    if (kind === "hover") {
+      this.hoverOutline = null;
+    } else {
+      this.selectionOutline = null;
+    }
+  }
+
   private onMotionPref = (e: MediaQueryListEvent): void => {
     this.reducedMotion = e.matches;
     this.wake();
@@ -731,7 +928,7 @@ export class Viewer {
     this.disposeEnvironment();
     this.environment = makeProceduralEnvironment(this.renderer, site);
     this.scene.environment = this.environment.texture;
-    this.scene.environmentIntensity = site === "equatorial" ? 0.24 : 0.16;
+    this.scene.environmentIntensity = site === "equatorial" ? 0.38 : 0.2;
   }
 
   private disposeEnvironment(): void {

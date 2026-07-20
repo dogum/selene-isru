@@ -12,6 +12,8 @@ export interface UiState {
   aboutOpen: boolean;
   dockOpen: boolean;
   presetsOpen: boolean;
+  /** currently inspected scene asset */
+  selectedAsset: string | null;
   /** camera bookmark request — consumed by the Scene component */
   flyRequest: { target: string; nonce: number } | null;
   /** warning pulse request — asset key + severity */
@@ -144,6 +146,7 @@ export const useStore = create<Store>((set, get) => {
       aboutOpen: false,
       dockOpen: false,
       presetsOpen: false,
+      selectedAsset: null,
       flyRequest: null,
       pulseRequest: null,
       sheetDetent: "peek",
@@ -161,7 +164,8 @@ export const useStore = create<Store>((set, get) => {
         timeseries: nextTimeseries,
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
-        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg)
+        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+        ...(key === "site" ? { ui: { ...get().ui, selectedAsset: null } } : {})
       });
     },
 
@@ -176,7 +180,8 @@ export const useStore = create<Store>((set, get) => {
         timeseries: nextTimeseries,
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
-        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg)
+        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+        ui: { ...get().ui, selectedAsset: null }
       });
     },
 

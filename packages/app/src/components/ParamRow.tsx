@@ -6,13 +6,15 @@ import { useStore } from "../state/store";
 
 interface ParamRowProps {
   def: NumericParamDef;
+  /** optional reader-friendly label for contextual inspectors */
+  label?: string;
   /** severity if a current warning implicates this param */
   warnSeverity?: "caution" | "alarm";
   /** warning limit value to mark on the track, in param units */
   warnLimit?: number;
 }
 
-export function ParamRow({ def, warnSeverity, warnLimit }: ParamRowProps): React.JSX.Element {
+export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps): React.JSX.Element {
   const value = useStore((s) => s.params[def.key] as number);
   const setParam = useStore((s) => s.setParam);
   const resetParam = useStore((s) => s.resetParam);
@@ -65,7 +67,7 @@ export function ParamRow({ def, warnSeverity, warnLimit }: ParamRowProps): React
     <div className={`param-row ${warnSeverity ?? ""}`}>
       <div className="param-row-top">
         <label className="param-label" htmlFor={`p-${def.key}`} title={def.description}>
-          {def.key}
+          {label ?? def.key}
         </label>
         <span className="param-value">
           {editing !== null ? (
@@ -88,7 +90,7 @@ export function ParamRow({ def, warnSeverity, warnLimit }: ParamRowProps): React
             <button
               className="param-input num"
               onClick={() => setEditing(formatInputValue(value))}
-              aria-label={`Edit ${def.key}`}
+              aria-label={`Edit ${label ?? def.key}`}
             >
               {formatInputValue(value)}
             </button>

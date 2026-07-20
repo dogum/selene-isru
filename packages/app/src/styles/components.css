@@ -195,7 +195,10 @@ body.selene-photo-mode .dock,
 body.selene-photo-mode .tour-overlay,
 body.selene-photo-mode .chips,
 body.selene-photo-mode .bottom-sheet,
-body.selene-photo-mode .sheet-kpis {
+body.selene-photo-mode .sheet,
+body.selene-photo-mode .sheet-kpis,
+body.selene-photo-mode .reactor-inspector,
+body.selene-photo-mode .asset-hover-label {
   opacity: 0;
   pointer-events: none;
 }
@@ -1415,5 +1418,223 @@ input.param-input {
 
   .sheet-kpis {
     grid-template-columns: repeat(6, 1fr);
+  }
+}
+.photo-mode-exit {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 1000;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 126, 31, 0.8);
+  background: rgba(10, 14, 21, 0.86);
+  color: var(--text-hi);
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.12em;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.photo-mode-exit:hover,
+.photo-mode-exit:focus-visible {
+  background: rgba(255, 126, 31, 0.18);
+  outline: 1px solid var(--melt);
+}
+
+.photo-mode-exit kbd {
+  margin-left: 9px;
+  padding: 3px 5px;
+  border: 1px solid var(--line);
+  color: var(--text-mid);
+  font: inherit;
+}
+
+/* ============ contextual 3D asset interaction ============ */
+
+.asset-hover-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 16;
+  pointer-events: none;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 122, 26, 0.62);
+  background: rgba(9, 13, 19, 0.88);
+  color: var(--text-hi);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(8px);
+}
+
+.reactor-inspector {
+  position: absolute;
+  top: 72px;
+  right: 18px;
+  z-index: 18;
+  width: min(344px, calc(100% - 36px));
+  max-height: calc(100% - 154px);
+  overflow-y: auto;
+  border: 1px solid rgba(116, 216, 255, 0.32);
+  border-top: 2px solid var(--cryo);
+  background: rgba(13, 17, 23, 0.94);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(14px);
+}
+
+.reactor-inspector-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.reactor-eyebrow,
+.reactor-section-title {
+  display: block;
+  color: var(--cryo);
+  font: 500 9px/1.3 var(--font-mono);
+  letter-spacing: 0.12em;
+}
+
+.reactor-inspector h2 {
+  margin-top: 4px;
+  color: var(--text-hi);
+  font: 600 14px/1.2 var(--font-display);
+  letter-spacing: 0.035em;
+}
+
+.reactor-close,
+.reactor-focus {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  padding: 6px 8px;
+  color: var(--text-mid);
+  font: 500 9px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.reactor-close:hover,
+.reactor-focus:hover {
+  border-color: var(--cryo);
+  color: var(--text-hi);
+}
+
+.reactor-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 0;
+}
+
+.reactor-status {
+  color: var(--ok);
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.12em;
+}
+
+.reactor-status::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.reactor-status.caution {
+  color: var(--caution);
+}
+
+.reactor-status.alarm {
+  color: var(--alarm);
+}
+
+.reactor-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin: 10px 14px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.reactor-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px;
+  background: var(--bg-inset);
+}
+
+.reactor-metric span {
+  color: var(--text-low);
+  font: 500 9px/1.2 var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reactor-metric strong {
+  overflow: hidden;
+  color: var(--text-hi);
+  font: 500 13px/1.2 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reactor-state-note {
+  margin: 0 14px 10px;
+  color: var(--text-low);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.reactor-warning {
+  margin: 0 14px 10px;
+  padding: 7px 8px;
+  border-left: 2px solid var(--caution);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--text-mid);
+  font-size: 10px;
+}
+
+.reactor-warning.alarm {
+  border-color: var(--alarm);
+  background: rgba(240, 67, 46, 0.08);
+}
+
+.reactor-controls {
+  padding: 10px 14px 8px;
+  border-top: 1px solid var(--line);
+}
+
+.reactor-controls .reactor-section-title {
+  margin-bottom: 4px;
+  color: var(--text-low);
+}
+
+.reactor-controls .param-row {
+  padding-top: 6px;
+  padding-bottom: 7px;
+}
+
+@media (max-width: 1099px) {
+  .reactor-inspector {
+    top: auto;
+    right: 10px;
+    bottom: calc(164px + env(safe-area-inset-bottom));
+    width: min(360px, calc(100% - 20px));
+    max-height: min(48vh, 430px);
+  }
+
+  .reactor-controls .param-row {
+    min-height: 58px;
   }
 }
