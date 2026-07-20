@@ -22,13 +22,24 @@ rim power towers, nuclear station, and occupied habitat.
 **Live demo:** [dogum.github.io/selene-isru](https://dogum.github.io/selene-isru/)
 (deployed from `main` by GitHub Actions).
 
-| Equatorial MRE plant | Shackleton beamed-power ice camp |
-|---|---|
-| ![Equatorial diorama](docs/screenshots/equatorial.png) | ![Polar beam shot](docs/screenshots/polar-beam.png) |
+## Two sites, one live engineering model
 
-| Energy Sankey | Mobile (stage + bottom sheet) |
+| Equatorial MRE industry | Shackleton ice industry |
 |---|---|
-| ![Energy panel](docs/screenshots/energy-sankey.png) | ![Mobile peek](docs/screenshots/mobile-peek.png) |
+| [![Equatorial lunar ISRU site with MRE reactor, excavation, power, landing, cryogenic, and habitat systems](docs/screenshots/equatorial-assets/base-overview-after-desktop.png)](https://dogum.github.io/selene-isru/) | [![Polar lunar ISRU site with ice excavation, beam receiver, Sabatier plant, cryogenics, power, and habitat systems](docs/screenshots/polar-assets/base-overview-after-desktop.png)](https://dogum.github.io/selene-isru/?site=polar) |
+| Molten-regolith electrolysis, casting, surface power, and reusable logistics. | Ice excavation, sublimation, beamed power, Sabatier processing, and cryogenic storage. |
+
+## Equipment that explains itself
+
+Select a subsystem to focus the camera, inspect its live engineering state, and
+tune the same model inputs that drive the full simulation. The interaction works
+on desktop and as a touch-friendly inspector on mobile.
+
+<p align="center">
+  <img src="docs/screenshots/equatorial-assets/habitat-inspector-after-mobile.png" width="320" alt="Mobile inspector for the equatorial shielded habitat showing live shielding and pressure inputs">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/polar-assets/receiver-inspector-after-mobile.png" width="320" alt="Mobile inspector for the polar beam receiver and Sabatier plant showing live power and process inputs">
+</p>
 
 ## The parity story
 
