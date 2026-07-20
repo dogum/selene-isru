@@ -80,4 +80,14 @@ describe("store wiring (§5)", () => {
     expect(useStore.getState().params.targetKgPerDay).toBe(1500);
     expect(useStore.getState().compareParams.targetKgPerDay).toBe(2500);
   });
+
+  it("keeps names attached to scenario A and B when swapping", () => {
+    useStore.getState().setUi({
+      currentScenarioName: "Live candidate",
+      compareScenarioName: "Reference case"
+    });
+    useStore.getState().swapCompare();
+    expect(useStore.getState().ui.currentScenarioName).toBe("Reference case");
+    expect(useStore.getState().ui.compareScenarioName).toBe("Live candidate");
+  });
 });

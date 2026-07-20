@@ -2,14 +2,14 @@ import { useStore, type ViewTab } from "../state/store";
 import { EnergySankey } from "./panels/EnergySankey";
 import { MassManifest } from "./panels/MassManifest";
 import { PowerTrade } from "./panels/PowerTrade";
-import { ComparePanel } from "./panels/ComparePanel";
+import { TradeStudyPanel } from "./panels/TradeStudyPanel";
 
 const TABS: Array<{ id: ViewTab; label: string }> = [
   { id: "site", label: "SITE" },
   { id: "energy", label: "ENERGY" },
   { id: "mass", label: "MASS" },
   { id: "power", label: "POWER" },
-  { id: "compare", label: "COMPARE" }
+  { id: "study", label: "TRADE STUDY" }
 ];
 
 export function ViewTabs(): React.JSX.Element {
@@ -53,7 +53,7 @@ export function SlideOver(): React.JSX.Element | null {
         {view === "energy" && <EnergySankey />}
         {view === "mass" && <MassManifest />}
         {view === "power" && <PowerTrade />}
-        {view === "compare" && <ComparePanel />}
+        {view === "study" && <TradeStudyPanel />}
       </div>
     </aside>
   );

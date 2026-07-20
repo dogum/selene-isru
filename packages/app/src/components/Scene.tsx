@@ -27,6 +27,7 @@ export function Scene(): React.JSX.Element {
       initial.result,
       initial.timeseries.points.at(-1)?.tHours ?? 708
     );
+    viewer.setLearningState(initial.ui.learningMode, initial.ui.processFlow);
 
     const unsub = useStore.subscribe((state, prev) => {
       if (state.result !== prev.result) {
@@ -48,6 +49,12 @@ export function Scene(): React.JSX.Element {
       }
       if (state.ui.selectedAsset !== prev.ui.selectedAsset) {
         viewer.setSelectedAsset(state.ui.selectedAsset);
+      }
+      if (
+        state.ui.learningMode !== prev.ui.learningMode ||
+        state.ui.processFlow !== prev.ui.processFlow
+      ) {
+        viewer.setLearningState(state.ui.learningMode, state.ui.processFlow);
       }
     });
 

@@ -2,6 +2,8 @@ import { AboutModal } from "./components/AboutModal";
 import { AssetInspector } from "./components/AssetInspector";
 import { ControlRail } from "./components/ControlRail";
 import { KpiStrip } from "./components/KpiStrip";
+import { LearningToolbar } from "./components/LearningToolbar";
+import { MissionBrief } from "./components/MissionBrief";
 import { PhotoModeExit } from "./components/PhotoModeExit";
 import { Scene } from "./components/Scene";
 import { SlideOver, ViewTabs } from "./components/SlideOver";
@@ -28,6 +30,7 @@ export default function App(): React.JSX.Element {
           <Scene />
           <AssetInspector />
           <TimelineStrip />
+          <LearningToolbar />
           <TourOverlay />
           {!isMobile && (
             <>
@@ -46,6 +49,7 @@ export default function App(): React.JSX.Element {
         )}
 
         <AboutModal />
+        <MissionBrief />
       </div>
       <PhotoModeExit />
     </>

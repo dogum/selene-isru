@@ -76,6 +76,8 @@ export function TopBar(): React.JSX.Element {
 function DesktopActions(): React.JSX.Element {
   return (
     <>
+      <LearnButton />
+      <BriefButton />
       <EquipmentDropdown />
       <TourDropdown />
       <PresetsDropdown />
@@ -85,6 +87,41 @@ function DesktopActions(): React.JSX.Element {
         ABOUT
       </button>
     </>
+  );
+}
+
+function LearnButton(): React.JSX.Element {
+  const active = useStore((s) => s.ui.learningMode);
+  const setUi = useStore((s) => s.setUi);
+
+  const toggle = (): void => {
+    const next = !active;
+    setUi({ learningMode: next });
+    if (next) {
+      const prefs = loadGraphicsPrefs();
+      publishGraphicsPrefs({ ...prefs, brightLighting: true, daylightLock: true });
+    }
+  };
+
+  return (
+    <button
+      className={`topbar-btn mode-btn ${active ? "active" : ""}`}
+      aria-pressed={active}
+      onClick={toggle}
+    >
+      LEARN
+    </button>
+  );
+}
+
+function BriefButton(): React.JSX.Element {
+  return (
+    <button
+      className="topbar-btn"
+      onClick={() => useStore.getState().setUi({ missionBriefOpen: true })}
+    >
+      BRIEF
+    </button>
   );
 }
 
@@ -203,7 +240,15 @@ function GraphicsDropdown(): React.JSX.Element {
               checked={prefs.brightLighting}
               onChange={(e) => update({ brightLighting: e.target.checked })}
             />
-            Bright lighting
+            Readability fill
+          </label>
+          <label className="graphics-check">
+            <input
+              type="checkbox"
+              checked={prefs.daylightLock}
+              onChange={(e) => update({ daylightLock: e.target.checked })}
+            />
+            Daylight lock
           </label>
           <label className="graphics-check">
             <input type="checkbox" checked={prefs.hud} onChange={(e) => update({ hud: e.target.checked })} />
@@ -338,6 +383,7 @@ function MobileMenu(): React.JSX.Element {
   const ref = useRef<HTMLDivElement | null>(null);
   const applyPatch = useStore((s) => s.applyPatch);
   const site = useStore((s) => s.params.site);
+  const learningMode = useStore((s) => s.ui.learningMode);
 
   useEffect(() => {
     document.body.classList.toggle("selene-photo-mode", prefs.photoMode);
@@ -426,6 +472,41 @@ function MobileMenu(): React.JSX.Element {
             role="menuitem"
             className="presets-item"
             onClick={() => {
+              const store = useStore.getState();
+              const next = !store.ui.learningMode;
+              store.setUi({ learningMode: next });
+              if (next) {
+                publishGraphicsPrefs({ ...loadGraphicsPrefs(), brightLighting: true, daylightLock: true });
+              }
+              setOpen(false);
+            }}
+          >
+            Learning mode — {learningMode ? "on" : "off"}
+          </button>
+          <button
+            role="menuitem"
+            className="presets-item"
+            onClick={() => {
+              useStore.getState().setUi({ missionBriefOpen: true });
+              setOpen(false);
+            }}
+          >
+            Mission brief
+          </button>
+          <button
+            role="menuitem"
+            className="presets-item"
+            onClick={() => {
+              useStore.getState().setUi({ mobileTab: "study", sheetDetent: "full" });
+              setOpen(false);
+            }}
+          >
+            Trade study
+          </button>
+          <button
+            role="menuitem"
+            className="presets-item"
+            onClick={() => {
               const url = paramsToUrl(useStore.getState().params);
               void navigator.clipboard.writeText(url);
               setOpen(false);
@@ -457,6 +538,13 @@ function MobileMenu(): React.JSX.Element {
             onClick={() => updateGraphics({ bloom: !prefs.bloom })}
           >
             Bloom — {prefs.bloom ? "on" : "off"}
+          </button>
+          <button
+            role="menuitem"
+            className="presets-item"
+            onClick={() => updateGraphics({ daylightLock: !prefs.daylightLock })}
+          >
+            Daylight lock — {prefs.daylightLock ? "on" : "off"}
           </button>
           <button
             role="menuitem"

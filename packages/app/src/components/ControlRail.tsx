@@ -58,6 +58,7 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
 
   return (
     <div className="rail-groups">
+      <ParameterNameToggle />
       {groups.map((g) => (
         <RailGroup
           key={g.id}
@@ -67,6 +68,33 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
           warned={warned}
         />
       ))}
+    </div>
+  );
+}
+
+function ParameterNameToggle(): React.JSX.Element {
+  const mode = useStore((s) => s.ui.parameterNames);
+  const setUi = useStore((s) => s.setUi);
+
+  return (
+    <div className="parameter-name-toggle" role="group" aria-label="Input name style">
+      <span>INPUT NAMES</span>
+      <button
+        type="button"
+        className={mode === "plain" ? "active" : ""}
+        aria-pressed={mode === "plain"}
+        onClick={() => setUi({ parameterNames: "plain" })}
+      >
+        PLAIN
+      </button>
+      <button
+        type="button"
+        className={mode === "code" ? "active" : ""}
+        aria-pressed={mode === "code"}
+        onClick={() => setUi({ parameterNames: "code" })}
+      >
+        CODE
+      </button>
     </div>
   );
 }

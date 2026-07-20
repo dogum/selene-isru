@@ -7,6 +7,8 @@ export interface GraphicsPrefs {
   bloom: boolean;
   /** friendly illumination floor for exploring vs. physically-dark realism */
   brightLighting: boolean;
+  /** hold the scene at a readable daylight angle while simulation time continues */
+  daylightLock: boolean;
   hud: boolean;
   photoMode: boolean;
 }
@@ -20,6 +22,7 @@ export const DEFAULT_GRAPHICS_PREFS: GraphicsPrefs = {
   tier: "auto",
   bloom: true,
   brightLighting: true,
+  daylightLock: false,
   hud: false,
   photoMode: false
 };
@@ -75,6 +78,10 @@ function normalizeGraphicsPrefs(input: Partial<GraphicsPrefs>): GraphicsPrefs {
       typeof input.brightLighting === "boolean"
         ? input.brightLighting
         : DEFAULT_GRAPHICS_PREFS.brightLighting,
+    daylightLock:
+      typeof input.daylightLock === "boolean"
+        ? input.daylightLock
+        : DEFAULT_GRAPHICS_PREFS.daylightLock,
     hud: typeof input.hud === "boolean" ? input.hud : DEFAULT_GRAPHICS_PREFS.hud,
     photoMode: false
   };

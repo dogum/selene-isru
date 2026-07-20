@@ -49,4 +49,9 @@ describe("graphics preferences", () => {
     expect(loadGraphicsPrefs().photoMode).toBe(false);
     window.removeEventListener(GRAPHICS_EVENT, onGraphics);
   });
+
+  it("persists the daylight readability lock independently of Photo mode", () => {
+    saveGraphicsPrefs({ ...DEFAULT_GRAPHICS_PREFS, daylightLock: true, photoMode: true });
+    expect(loadGraphicsPrefs()).toMatchObject({ daylightLock: true, photoMode: false });
+  });
 });

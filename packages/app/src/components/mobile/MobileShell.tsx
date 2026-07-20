@@ -7,7 +7,7 @@ import { WarningsDock } from "../WarningsDock";
 import { EnergySankey } from "../panels/EnergySankey";
 import { MassManifest } from "../panels/MassManifest";
 import { PowerTrade } from "../panels/PowerTrade";
-import { ComparePanel } from "../panels/ComparePanel";
+import { TradeStudyPanel } from "../panels/TradeStudyPanel";
 import { BottomSheet } from "./BottomSheet";
 
 /** §2.1 — subsystem chips floating over the viewport: camera bookmarks. */
@@ -50,7 +50,7 @@ const TABS: Array<{ id: MobileTab; label: string }> = [
   { id: "energy", label: "ENERGY" },
   { id: "mass", label: "MASS" },
   { id: "power", label: "POWER" },
-  { id: "compare", label: "COMPARE" }
+  { id: "study", label: "STUDY" }
 ];
 
 export function MobileSheetContent(): React.JSX.Element {
@@ -89,7 +89,7 @@ export function MobileSheetContent(): React.JSX.Element {
             {tab === "energy" && <EnergySankey vertical />}
             {tab === "mass" && <MassManifest />}
             {tab === "power" && <PowerTrade />}
-            {tab === "compare" && <ComparePanel />}
+            {tab === "study" && <TradeStudyPanel />}
           </div>
         </>
       )}

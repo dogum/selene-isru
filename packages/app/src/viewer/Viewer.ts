@@ -58,9 +58,83 @@ const INTERACTIVE_ASSET_LABELS: Record<SiteMode, Record<string, string>> = {
   }
 };
 
+const MOBILE_ASSET_LABELS: Record<SiteMode, Record<string, string>> = {
+  equatorial: {
+    excavator: "EXCAVATOR",
+    hauler: "HAULER",
+    reactor: "MRE REACTOR",
+    castingYard: "CASTING YARD",
+    tanks: "CRYO FARM",
+    station: "POWER HUB",
+    pad: "LANDING SYSTEM",
+    habitat: "HABITAT"
+  },
+  polar: {
+    excavator: "ICE EXCAVATOR",
+    tents: "SUBLIMATION",
+    receiver: "BEAM RECEIVER",
+    tanks: "CRYO FARM",
+    towers: "RIM TOWERS",
+    station: "NUCLEAR STATION",
+    habitat: "HABITAT"
+  }
+};
+
+const ASSET_LABEL_HEIGHT: Record<SiteMode, Record<string, number>> = {
+  equatorial: {
+    excavator: 4.2,
+    hauler: 3.6,
+    reactor: 8,
+    castingYard: 5.2,
+    tanks: 5.2,
+    station: 6.5,
+    pad: 5.5,
+    habitat: 5.4
+  },
+  polar: {
+    excavator: 4.2,
+    tents: 5.4,
+    receiver: 5.8,
+    tanks: 5.2,
+    towers: 13,
+    station: 7,
+    habitat: 5.4
+  }
+};
+
+interface ProcessEdge {
+  from: string;
+  to: string;
+  label: string;
+}
+
+const PROCESS_EDGES: Record<SiteMode, ProcessEdge[]> = {
+  equatorial: [
+    { from: "excavator", to: "hauler", label: "REGOLITH" },
+    { from: "hauler", to: "reactor", label: "FEED" },
+    { from: "station", to: "reactor", label: "POWER" },
+    { from: "reactor", to: "tanks", label: "O₂" },
+    { from: "reactor", to: "castingYard", label: "SLAG" },
+    { from: "tanks", to: "pad", label: "PRODUCT" }
+  ],
+  polar: [
+    { from: "excavator", to: "tents", label: "ICY FEED" },
+    { from: "tents", to: "receiver", label: "H₂O" },
+    { from: "towers", to: "receiver", label: "BEAM POWER" },
+    { from: "station", to: "receiver", label: "BACKUP POWER" },
+    { from: "receiver", to: "tanks", label: "O₂ / CH₄" },
+    { from: "tanks", to: "habitat", label: "RESERVE" }
+  ]
+};
+
 interface Pulse {
   lines: THREE.LineSegments;
   start: number;
+}
+
+interface ProcessOverlayPath extends ProcessEdge {
+  line: SVGLineElement;
+  text: SVGTextElement;
 }
 
 export interface ViewerCallbacks {
@@ -96,6 +170,13 @@ export class Viewer {
   private hoverOutline: THREE.Mesh | null = null;
   private selectionOutline: THREE.Mesh | null = null;
   private assetTooltip: HTMLDivElement;
+  private learningOverlay: HTMLDivElement;
+  private processSvg: SVGSVGElement;
+  private learningLabels = new Map<string, HTMLButtonElement>();
+  private processPaths: ProcessOverlayPath[] = [];
+  private learningMode = false;
+  private showProcessFlow = false;
+  private overlayPoint = new THREE.Vector3();
 
   private quality: QualityProfile;
   private mobile: boolean;
@@ -151,6 +232,15 @@ export class Viewer {
     this.assetTooltip.hidden = true;
     this.assetTooltip.textContent = "CLICK TO INSPECT";
     container.appendChild(this.assetTooltip);
+
+    this.learningOverlay = document.createElement("div");
+    this.learningOverlay.className = "learning-scene-overlay";
+    this.learningOverlay.hidden = true;
+    this.processSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    this.processSvg.classList.add("process-flow-overlay");
+    this.processSvg.setAttribute("aria-hidden", "true");
+    this.learningOverlay.appendChild(this.processSvg);
+    container.appendChild(this.learningOverlay);
 
     this.initGL();
 
@@ -260,6 +350,7 @@ export class Viewer {
     this.hud.remove();
     this.veil.remove();
     this.assetTooltip.remove();
+    this.learningOverlay.remove();
   }
 
   /* ---------------- public API ---------------- */
@@ -312,6 +403,20 @@ export class Viewer {
     this.wake();
   }
 
+  /** Project explanatory labels and optional process paths over the live scene. */
+  setLearningState(enabled: boolean, showProcessFlow: boolean): void {
+    const siteChanged = this.learningLabels.size === 0 && this.diorama !== null;
+    this.learningMode = enabled;
+    this.showProcessFlow = showProcessFlow;
+    this.learningOverlay.hidden = !enabled;
+    this.processSvg.style.display = enabled && showProcessFlow ? "" : "none";
+    if (enabled && (siteChanged || this.processPaths.length === 0)) {
+      this.rebuildLearningOverlay();
+    }
+    this.updateLearningOverlay();
+    this.wake();
+  }
+
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
     this.applyCycleLighting(point, result.site, cycleHours);
     if (this.diorama !== null) {
@@ -358,6 +463,7 @@ export class Viewer {
       this.diorama = polar;
     }
     this.scene.add(this.diorama.group);
+    this.rebuildLearningOverlay();
 
     // lighting per site: equatorial high sun, polar raking 2° light (§3.1)
     if (site === "equatorial") {
@@ -386,21 +492,28 @@ export class Viewer {
   }
 
   private applyCycleLighting(point: TimeseriesPoint, site: SiteMode, cycleHours: number): void {
-    const phase = ((point.tHours / Math.max(1, cycleHours)) % 1 + 1) % 1;
+    const lightPoint = this.graphicsPrefs.daylightLock
+      ? {
+          ...point,
+          daylight: true,
+          tHours: cycleHours * (site === "equatorial" ? 0.24 : 0.08)
+        }
+      : point;
+    const phase = ((lightPoint.tHours / Math.max(1, cycleHours)) % 1 + 1) % 1;
     const az = phase * Math.PI * 2 - Math.PI * 0.25;
     if (site === "equatorial") {
       const dayU = Math.min(1, Math.max(0, phase * 2));
-      const elev = point.daylight ? (23 + 32 * Math.sin(dayU * Math.PI)) * (Math.PI / 180) : -8 * (Math.PI / 180);
+      const elev = lightPoint.daylight ? (23 + 32 * Math.sin(dayU * Math.PI)) * (Math.PI / 180) : -8 * (Math.PI / 180);
       const r = 170;
       this.sun.position.set(Math.cos(az) * Math.cos(elev) * r, Math.sin(elev) * r, Math.sin(az) * Math.cos(elev) * r);
-      this.sun.intensity = point.daylight ? 2.8 + 0.8 * Math.sin(dayU * Math.PI) : 0.18;
-      this.hemi.intensity = point.daylight ? 0.48 : 0.16;
+      this.sun.intensity = lightPoint.daylight ? 2.8 + 0.8 * Math.sin(dayU * Math.PI) : 0.18;
+      this.hemi.intensity = lightPoint.daylight ? 0.48 : 0.16;
     } else {
-      const elev = (point.daylight ? 2 : -1) * (Math.PI / 180);
+      const elev = (lightPoint.daylight ? 2 : -1) * (Math.PI / 180);
       const r = 240;
       this.sun.position.set(Math.cos(az) * Math.cos(elev) * r, Math.sin(elev) * r, Math.sin(az) * Math.cos(elev) * r);
-      this.sun.intensity = point.daylight ? 3.3 : 0.45;
-      this.hemi.intensity = point.daylight ? 0.14 : 0.07;
+      this.sun.intensity = lightPoint.daylight ? 3.3 : 0.45;
+      this.hemi.intensity = lightPoint.daylight ? 0.14 : 0.07;
     }
     this.sun.target.position.set(0, 0, 0);
 
@@ -408,7 +521,7 @@ export class Viewer {
     // or under low sun, without erasing the day/night direction & shadows
     if (this.graphicsPrefs.brightLighting) {
       const hemiFloor = site === "equatorial" ? 1.02 : 0.56;
-      this.hemi.intensity = Math.max(this.hemi.intensity, point.daylight ? hemiFloor : hemiFloor * 0.82);
+      this.hemi.intensity = Math.max(this.hemi.intensity, lightPoint.daylight ? hemiFloor : hemiFloor * 0.82);
     }
     this.lastLight = { point, site, cycleHours };
   }
@@ -519,6 +632,110 @@ export class Viewer {
     this.wake();
   }
 
+  /* ---------------- learning overlay ---------------- */
+
+  private rebuildLearningOverlay(): void {
+    for (const label of this.learningLabels.values()) {
+      label.remove();
+    }
+    this.learningLabels.clear();
+    this.processSvg.replaceChildren();
+    this.processPaths = [];
+
+    if (this.diorama === null || this.lastResult === null) {
+      return;
+    }
+
+    const site = this.lastResult.site;
+    for (const [key, label] of Object.entries(INTERACTIVE_ASSET_LABELS[site])) {
+      if (this.diorama.assets[key] === undefined) {
+        continue;
+      }
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "learning-asset-label";
+      button.textContent = this.mobile ? MOBILE_ASSET_LABELS[site][key] ?? label : label;
+      button.setAttribute("aria-label", `Inspect ${label}`);
+      button.addEventListener("click", () => this.selectPickedAsset(key));
+      this.learningOverlay.appendChild(button);
+      this.learningLabels.set(key, button);
+    }
+
+    for (const edge of PROCESS_EDGES[site]) {
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.classList.add("process-flow-line");
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.classList.add("process-flow-label");
+      text.textContent = edge.label;
+      text.setAttribute("text-anchor", "middle");
+      this.processSvg.append(line, text);
+      this.processPaths.push({ ...edge, line, text });
+    }
+
+    this.learningOverlay.hidden = !this.learningMode;
+    this.processSvg.style.display = this.learningMode && this.showProcessFlow ? "" : "none";
+  }
+
+  private assetScreenPoint(assetKey: string, height: number): { x: number; y: number } | null {
+    const asset = this.diorama?.assets[assetKey];
+    if (asset === undefined) {
+      return null;
+    }
+    asset.getWorldPosition(this.overlayPoint);
+    this.overlayPoint.y += height;
+    this.overlayPoint.project(this.camera);
+    if (this.overlayPoint.z < -1 || this.overlayPoint.z > 1) {
+      return null;
+    }
+    const width = Math.max(1, this.container.clientWidth);
+    const heightPx = Math.max(1, this.container.clientHeight);
+    const x = (this.overlayPoint.x * 0.5 + 0.5) * width;
+    const y = (-this.overlayPoint.y * 0.5 + 0.5) * heightPx;
+    if (x < -80 || x > width + 80 || y < -40 || y > heightPx + 40) {
+      return null;
+    }
+    return { x, y };
+  }
+
+  private updateLearningOverlay(): void {
+    if (!this.learningMode || this.lastResult === null || this.diorama === null) {
+      return;
+    }
+    const site = this.lastResult.site;
+    const width = Math.max(1, this.container.clientWidth);
+    const height = Math.max(1, this.container.clientHeight);
+    this.processSvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+    for (const [key, label] of this.learningLabels) {
+      const point = this.assetScreenPoint(key, ASSET_LABEL_HEIGHT[site][key] ?? 5);
+      const visible = point !== null && (this.selectedAssetKey === null || this.selectedAssetKey === key);
+      label.hidden = !visible;
+      if (visible && point !== null) {
+        const x = Math.min(width - 96, Math.max(96, point.x));
+        const y = Math.max(42, point.y);
+        label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+      }
+    }
+
+    for (const path of this.processPaths) {
+      const from = this.assetScreenPoint(path.from, 1.4);
+      const to = this.assetScreenPoint(path.to, 1.4);
+      const visible =
+        this.showProcessFlow && this.selectedAssetKey === null && from !== null && to !== null;
+      path.line.style.display = visible ? "" : "none";
+      path.text.style.display = visible ? "" : "none";
+      if (!visible || from === null || to === null) {
+        continue;
+      }
+      path.line.setAttribute("x1", String(from.x));
+      path.line.setAttribute("y1", String(from.y));
+      path.line.setAttribute("x2", String(to.x));
+      path.line.setAttribute("y2", String(to.y));
+      path.text.setAttribute("x", String((from.x + to.x) / 2));
+      path.text.setAttribute("y", String((from.y + to.y) / 2 - 6));
+    }
+  }
+
   /* ---------------- warning pulse outline ---------------- */
 
   private spawnPulse(asset: THREE.Object3D, color: number): void {
@@ -598,6 +815,7 @@ export class Viewer {
     }
 
     this.controls.update();
+    this.updateLearningOverlay();
 
     const rendered = active || this.needsRender;
     if (rendered) {

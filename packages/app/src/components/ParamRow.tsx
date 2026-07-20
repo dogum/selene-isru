@@ -16,10 +16,15 @@ interface ParamRowProps {
 
 export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps): React.JSX.Element {
   const value = useStore((s) => s.params[def.key] as number);
+  const nameMode = useStore((s) => s.ui.parameterNames);
   const setParam = useStore((s) => s.setParam);
   const resetParam = useStore((s) => s.resetParam);
   const [editing, setEditing] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const sliderRef = useRef<HTMLInputElement | null>(null);
+  const plainLabel = label ?? def.label;
+  const displayLabel = nameMode === "plain" ? plainLabel : String(def.key);
+  const rangeUnit = def.unit === "1" ? "" : ` ${def.unit}`;
 
   const span = def.max - def.min;
   const step = span / 200;
@@ -66,9 +71,20 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
   return (
     <div className={`param-row ${warnSeverity ?? ""}`}>
       <div className="param-row-top">
-        <label className="param-label" htmlFor={`p-${def.key}`} title={def.description}>
-          {label ?? def.key}
-        </label>
+        <div className="param-label-wrap">
+          <label className="param-label" htmlFor={`p-${def.key}`} title={def.description}>
+            {displayLabel}
+          </label>
+          <button
+            type="button"
+            className="param-info"
+            aria-label={`Show evidence for ${plainLabel}`}
+            aria-expanded={detailsOpen}
+            onClick={() => setDetailsOpen((open) => !open)}
+          >
+            i
+          </button>
+        </div>
         <span className="param-value">
           {editing !== null ? (
             <input
@@ -90,7 +106,7 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
             <button
               className="param-input num"
               onClick={() => setEditing(formatInputValue(value))}
-              aria-label={`Edit ${label ?? def.key}`}
+              aria-label={`Edit ${displayLabel}`}
             >
               {formatInputValue(value)}
             </button>
@@ -122,6 +138,27 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
           />
         )}
       </div>
+      {detailsOpen && (
+        <div className="param-evidence">
+          {nameMode === "code" && <p>{def.description}</p>}
+          <dl>
+            <div>
+              <dt>Source</dt>
+              <dd>{def.source}</dd>
+            </div>
+            <div>
+              <dt>Supported range</dt>
+              <dd className="num">
+                {formatInputValue(def.min)}–{formatInputValue(def.max)}{rangeUnit}
+              </dd>
+            </div>
+          </dl>
+          <small>
+            Range basis: checked-in engineering/model bounds. Extrapolation outside this
+            interval is unsupported and clamped by the engine.
+          </small>
+        </div>
+      )}
     </div>
   );
 }

@@ -359,7 +359,10 @@ export function AssetInspector(): React.JSX.Element | null {
         ))}
       </div>
 
-      <p className="reactor-state-note">{config.note}</p>
+      <div className="reactor-state-note">
+        <span className="reactor-section-title">PURPOSE + SIMULATED BEHAVIOR</span>
+        <p>{config.note}</p>
+      </div>
 
       {warnings.length > 0 && <div className={`reactor-warning ${status}`}>{warnings[0]?.message}</div>}
 
@@ -368,6 +371,9 @@ export function AssetInspector(): React.JSX.Element | null {
           <div id="asset-controls-title" className="reactor-section-title">
             LIVE SYSTEM INPUTS
           </div>
+          <p className="reactor-control-note">
+            Open <b>i</b> beside an input for its source and supported model range.
+          </p>
           {controls.map((def) => {
             const warning = warnings.find((item) => item.id === "anode-current" && def.key === "jOperating");
             return (

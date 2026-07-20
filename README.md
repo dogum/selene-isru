@@ -41,6 +41,23 @@ on desktop and as a touch-friendly inspector on mobile.
   <img src="docs/screenshots/polar-assets/receiver-inspector-after-mobile.png" width="320" alt="Mobile inspector for the polar beam receiver and Sabatier plant showing live power and process inputs">
 </p>
 
+## Progressive learning and analysis
+
+The default view stays simulator-first. Optional layers add explanation only
+when they are useful:
+
+- **Learn** projects clickable asset labels and leader lines into the 3D scene,
+  adds a reset-camera control and readability lock, and can overlay the material
+  and power paths between equipment.
+- **Trade Study** promotes named A/B scenarios, Pareto exploration, and
+  deterministic uncertainty bands into one visible analysis workspace.
+- **Brief** is an opt-in goal workflow for questions such as a polar water camp,
+  minimum landed mass, or the solar/nuclear crossover. It reports a recommended
+  starting case, bottleneck, feasibility, largest drivers, uncertainty range,
+  and caveats before handing the case into Trade Study.
+- Inputs use plain engineering names by default, can toggle to engine variable
+  names, and expose their source and supported range beside the control.
+
 ## The parity story
 
 Every equation lives twice:

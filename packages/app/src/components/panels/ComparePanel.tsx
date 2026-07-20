@@ -72,22 +72,44 @@ export function ComparePanel(): React.JSX.Element {
   const result = useStore((s) => s.result);
   const compareResult = useStore((s) => s.compareResult);
   const compareParams = useStore((s) => s.compareParams);
+  const currentName = useStore((s) => s.ui.currentScenarioName);
+  const compareName = useStore((s) => s.ui.compareScenarioName);
+  const setUi = useStore((s) => s.setUi);
   const setCompareFromCurrent = useStore((s) => s.setCompareFromCurrent);
   const swapCompare = useStore((s) => s.swapCompare);
 
   return (
     <div className="panel-section">
       <div className="panel-header">
-        A/B COMPARE
+        NAMED SCENARIO COMPARE
         <span className="num">B {compareParams.site.toUpperCase()}</span>
+      </div>
+
+      <div className="scenario-name-grid">
+        <label>
+          <span>CASE A · LIVE</span>
+          <input
+            value={currentName}
+            aria-label="Current scenario name"
+            onChange={(event) => setUi({ currentScenarioName: event.target.value })}
+          />
+        </label>
+        <label>
+          <span>CASE B · SAVED</span>
+          <input
+            value={compareName}
+            aria-label="Comparison scenario name"
+            onChange={(event) => setUi({ compareScenarioName: event.target.value })}
+          />
+        </label>
       </div>
 
       <div className="compare-actions">
         <button className="topbar-btn" onClick={setCompareFromCurrent}>
-          SET B = CURRENT
+          SAVE CURRENT AS B
         </button>
         <button className="topbar-btn" onClick={swapCompare}>
-          SWAP
+          SWAP A / B
         </button>
       </div>
 
@@ -119,12 +141,13 @@ export function ComparePanel(): React.JSX.Element {
         <span className="num">CURRENT / B</span>
       </div>
       <div className="chart-well compare-flow-well">
-        <FlowStack label="CURRENT" result={result} />
-        <FlowStack label="B" result={compareResult} />
+        <FlowStack label={currentName} result={result} />
+        <FlowStack label={compareName} result={compareResult} />
       </div>
 
       <p className="panel-caption">
-        The POWER chart marks the current operating point and the B case on the same trade axes.
+        Case A stays live as you tune the simulator. Save it into B to freeze a named
+        reference, then continue exploring or swap the two cases.
       </p>
     </div>
   );

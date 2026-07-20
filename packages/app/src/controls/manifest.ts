@@ -90,11 +90,13 @@ const EXCLUDED: ReadonlySet<string> = new Set(["site", "enableSabatier"]);
 
 export interface NumericParamDef {
   key: keyof SimParams;
+  label: string;
   unit: string;
   min: number;
   max: number;
   defaultValue: number;
   description: string;
+  source: string;
 }
 
 /** Numeric, user-adjustable params for one engine group (fixed constants with min === max are skipped). */
@@ -112,11 +114,13 @@ export function paramsForGroup(engineGroup: string): NumericParamDef[] {
     }
     defs.push({
       key: key as keyof SimParams,
+      label: meta.description,
       unit: meta.unit,
       min: meta.min,
       max: meta.max,
       defaultValue: meta.value,
-      description: meta.description
+      description: meta.description,
+      source: meta.source
     });
   }
   return defs;

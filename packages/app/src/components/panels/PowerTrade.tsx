@@ -5,8 +5,6 @@ import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
 import { formatQty, formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
-import { FrontierExplorer } from "./FrontierExplorer";
-import { UncertaintyPanel } from "./UncertaintyPanel";
 
 /**
  * §4.3 — solar vs nuclear mass trade on log-log axes, driven only by
@@ -215,9 +213,6 @@ export function PowerTrade(): React.JSX.Element {
           </div>
         )}
       </div>
-
-      <FrontierExplorer />
-      <UncertaintyPanel />
     </div>
   );
 }

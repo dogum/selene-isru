@@ -3,15 +3,29 @@ import type { SimParams, SimResult, TimeseriesPoint, TimeseriesResult } from "@s
 import { create } from "zustand";
 import { parseParams, serializeParams } from "../lib/url";
 
-export type ViewTab = "site" | "energy" | "mass" | "power" | "compare";
+export type ViewTab = "site" | "energy" | "mass" | "power" | "study";
 export type SheetDetent = "peek" | "half" | "full";
-export type MobileTab = "controls" | "energy" | "mass" | "power" | "compare";
+export type MobileTab = "controls" | "energy" | "mass" | "power" | "study";
+export type ParameterNameMode = "plain" | "code";
+export type StudyTab = "scenarios" | "frontier" | "uncertainty";
 
 export interface UiState {
   view: ViewTab;
   aboutOpen: boolean;
   dockOpen: boolean;
   presetsOpen: boolean;
+  /** opt-in explanatory layer for the 3D scene */
+  learningMode: boolean;
+  /** draw material / energy paths between labeled equipment */
+  processFlow: boolean;
+  /** reader-facing input names vs. engine variable names */
+  parameterNames: ParameterNameMode;
+  /** optional goal-first briefing dialog */
+  missionBriefOpen: boolean;
+  /** active workspace inside Trade Study */
+  studyTab: StudyTab;
+  currentScenarioName: string;
+  compareScenarioName: string;
   /** currently inspected scene asset */
   selectedAsset: string | null;
   /** camera bookmark request — consumed by the Scene component */
@@ -146,6 +160,13 @@ export const useStore = create<Store>((set, get) => {
       aboutOpen: false,
       dockOpen: false,
       presetsOpen: false,
+      learningMode: false,
+      processFlow: false,
+      parameterNames: "plain",
+      missionBriefOpen: false,
+      studyTab: "scenarios",
+      currentScenarioName: `${params.site === "polar" ? "Polar" : "Equatorial"} working case`,
+      compareScenarioName: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
       selectedAsset: null,
       flyRequest: null,
       pulseRequest: null,
@@ -165,7 +186,15 @@ export const useStore = create<Store>((set, get) => {
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
         secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
-        ...(key === "site" ? { ui: { ...get().ui, selectedAsset: null } } : {})
+        ...(key === "site"
+          ? {
+              ui: {
+                ...get().ui,
+                selectedAsset: null,
+                currentScenarioName: `${nextParams.site === "polar" ? "Polar" : "Equatorial"} working case`
+              }
+            }
+          : {})
       });
     },
 
@@ -181,7 +210,11 @@ export const useStore = create<Store>((set, get) => {
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
         secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
-        ui: { ...get().ui, selectedAsset: null }
+        ui: {
+          ...get().ui,
+          selectedAsset: null,
+          currentScenarioName: `${nextParams.site === "polar" ? "Polar" : "Equatorial"} working case`
+        }
       });
     },
 
@@ -220,11 +253,18 @@ export const useStore = create<Store>((set, get) => {
 
     setCompareFromCurrent: () => {
       const { params, result } = get();
-      set({ compareParams: { ...params }, compareResult: result });
+      set({
+        compareParams: { ...params },
+        compareResult: result,
+        ui: {
+          ...get().ui,
+          compareScenarioName: `${get().ui.currentScenarioName} snapshot`
+        }
+      });
     },
 
     swapCompare: () => {
-      const { params, result, compareParams, compareResult, time } = get();
+      const { params, result, compareParams, compareResult, time, ui } = get();
       const nextTimeseries = simulateTimeseries(compareParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...time, tHours: time.tHours % cycleHours(nextTimeseries) };
       set({
@@ -235,7 +275,13 @@ export const useStore = create<Store>((set, get) => {
         timeseries: nextTimeseries,
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
-        secHistory: pushHistory(get().secHistory, compareResult.energy.secTotal_kWhPerKg)
+        secHistory: pushHistory(get().secHistory, compareResult.energy.secTotal_kWhPerKg),
+        ui: {
+          ...ui,
+          selectedAsset: null,
+          currentScenarioName: ui.compareScenarioName,
+          compareScenarioName: ui.currentScenarioName
+        }
       });
     },
 
