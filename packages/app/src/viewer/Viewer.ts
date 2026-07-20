@@ -3,6 +3,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { SimParams, SimResult } from "@selene-isru/engine";
 import type { TimeseriesPoint } from "@selene-isru/engine";
 import {
+  connectedAssets,
+  processEdges,
+  type ProcessEdgeView
+} from "../analysis/process";
+import {
   type SiteMode,
   CAMERA_POSES,
   MODULE_ASSET,
@@ -102,37 +107,12 @@ const ASSET_LABEL_HEIGHT: Record<SiteMode, Record<string, number>> = {
   }
 };
 
-interface ProcessEdge {
-  from: string;
-  to: string;
-  label: string;
-}
-
-const PROCESS_EDGES: Record<SiteMode, ProcessEdge[]> = {
-  equatorial: [
-    { from: "excavator", to: "hauler", label: "REGOLITH" },
-    { from: "hauler", to: "reactor", label: "FEED" },
-    { from: "station", to: "reactor", label: "POWER" },
-    { from: "reactor", to: "tanks", label: "O₂" },
-    { from: "reactor", to: "castingYard", label: "SLAG" },
-    { from: "tanks", to: "pad", label: "PRODUCT" }
-  ],
-  polar: [
-    { from: "excavator", to: "tents", label: "ICY FEED" },
-    { from: "tents", to: "receiver", label: "H₂O" },
-    { from: "towers", to: "receiver", label: "BEAM POWER" },
-    { from: "station", to: "receiver", label: "BACKUP POWER" },
-    { from: "receiver", to: "tanks", label: "O₂ / CH₄" },
-    { from: "tanks", to: "habitat", label: "RESERVE" }
-  ]
-};
-
 interface Pulse {
   lines: THREE.LineSegments;
   start: number;
 }
 
-interface ProcessOverlayPath extends ProcessEdge {
+interface ProcessOverlayPath extends ProcessEdgeView {
   line: SVGLineElement;
   text: SVGTextElement;
 }
@@ -149,6 +129,7 @@ export class Viewer {
   private container: HTMLElement;
   private veil: HTMLDivElement;
   private hud: HTMLDivElement;
+  private assetLoadStatus: HTMLDivElement;
   private renderer!: THREE.WebGLRenderer;
   private post!: PostPipeline;
   private scene!: THREE.Scene;
@@ -169,6 +150,7 @@ export class Viewer {
   private selectedAssetKey: string | null = null;
   private hoverOutline: THREE.Mesh | null = null;
   private selectionOutline: THREE.Mesh | null = null;
+  private connectionOutlines: THREE.Mesh[] = [];
   private assetTooltip: HTMLDivElement;
   private learningOverlay: HTMLDivElement;
   private processSvg: SVGSVGElement;
@@ -203,6 +185,8 @@ export class Viewer {
   private resizeObserver: ResizeObserver;
   private mediaQuery: MediaQueryList;
   private disposed = false;
+  private loadedAssetCount = 0;
+  private expectedAssetCount = 0;
 
   constructor(container: HTMLElement, mobile: boolean, callbacks: ViewerCallbacks = {}) {
     this.container = container;
@@ -233,12 +217,34 @@ export class Viewer {
     this.assetTooltip.textContent = "CLICK TO INSPECT";
     container.appendChild(this.assetTooltip);
 
+    this.assetLoadStatus = document.createElement("div");
+    this.assetLoadStatus.className = "asset-load-status";
+    this.assetLoadStatus.setAttribute("role", "status");
+    this.assetLoadStatus.setAttribute("aria-live", "polite");
+    this.assetLoadStatus.hidden = true;
+    container.appendChild(this.assetLoadStatus);
+
     this.learningOverlay = document.createElement("div");
     this.learningOverlay.className = "learning-scene-overlay";
     this.learningOverlay.hidden = true;
     this.processSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     this.processSvg.classList.add("process-flow-overlay");
     this.processSvg.setAttribute("aria-hidden", "true");
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    marker.id = "selene-process-arrow";
+    marker.setAttribute("viewBox", "0 0 8 8");
+    marker.setAttribute("refX", "7");
+    marker.setAttribute("refY", "4");
+    marker.setAttribute("markerWidth", "6");
+    marker.setAttribute("markerHeight", "6");
+    marker.setAttribute("orient", "auto-start-reverse");
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    arrow.setAttribute("d", "M 0 0 L 8 4 L 0 8 z");
+    arrow.setAttribute("class", "process-flow-arrow");
+    marker.appendChild(arrow);
+    defs.appendChild(marker);
+    this.processSvg.appendChild(defs);
     this.learningOverlay.appendChild(this.processSvg);
     container.appendChild(this.learningOverlay);
 
@@ -350,6 +356,7 @@ export class Viewer {
     this.hud.remove();
     this.veil.remove();
     this.assetTooltip.remove();
+    this.assetLoadStatus.remove();
     this.learningOverlay.remove();
   }
 
@@ -369,6 +376,7 @@ export class Viewer {
     } else {
       this.applyToDiorama(result, params, false);
     }
+    this.refreshProcessOverlayData();
     this.pulseNewWarnings(result);
     this.wake();
   }
@@ -386,7 +394,7 @@ export class Viewer {
 
   /** §6 — camera fly + 3-pulse outline on the implicated asset */
   focusAsset(assetKey: string, severity: string): void {
-    if (this.diorama === null || this.lastResult === null) {
+    if (this.diorama === null || this.lastResult === null || this.lastParams === null) {
       return;
     }
     const asset = this.diorama.assets[assetKey];
@@ -400,6 +408,7 @@ export class Viewer {
   setSelectedAsset(assetKey: string | null): void {
     this.selectedAssetKey = assetKey;
     this.refreshSelectionOutline();
+    this.updateLearningOverlay();
     this.wake();
   }
 
@@ -408,8 +417,9 @@ export class Viewer {
     const siteChanged = this.learningLabels.size === 0 && this.diorama !== null;
     this.learningMode = enabled;
     this.showProcessFlow = showProcessFlow;
-    this.learningOverlay.hidden = !enabled;
-    this.processSvg.style.display = enabled && showProcessFlow ? "" : "none";
+    this.learningOverlay.hidden = !enabled && this.selectedAssetKey === null;
+    this.processSvg.style.display =
+      this.selectedAssetKey !== null || (enabled && showProcessFlow) ? "" : "none";
     if (enabled && (siteChanged || this.processPaths.length === 0)) {
       this.rebuildLearningOverlay();
     }
@@ -437,6 +447,10 @@ export class Viewer {
       this.diorama = null;
     }
     this.setEnvironment(site);
+    this.loadedAssetCount = 0;
+    this.expectedAssetCount = site === "equatorial" ? 8 : 7;
+    this.assetLoadStatus.hidden = false;
+    this.assetLoadStatus.textContent = `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
     if (site === "equatorial") {
       const equatorial = new EquatorialDiorama(this.quality, () => {
         if (this.diorama !== equatorial || this.disposed) {
@@ -446,6 +460,7 @@ export class Viewer {
           equatorial.apply(this.lastResult, this.lastParams, this.tweens, true);
         }
         this.refreshSelectionOutline();
+        this.markAssetReady(site);
         this.wake();
       });
       this.diorama = equatorial;
@@ -458,6 +473,7 @@ export class Viewer {
           polar.apply(this.lastResult, this.lastParams, this.tweens, true);
         }
         this.refreshSelectionOutline();
+        this.markAssetReady(site);
         this.wake();
       });
       this.diorama = polar;
@@ -489,6 +505,16 @@ export class Viewer {
     this.controls.target.set(...pose.target);
     this.controls.update();
     this.needsRender = true;
+  }
+
+  private markAssetReady(site: SiteMode): void {
+    this.loadedAssetCount = Math.min(this.expectedAssetCount, this.loadedAssetCount + 1);
+    this.assetLoadStatus.textContent =
+      `LOADING ${site.toUpperCase()} ASSETS · ${this.loadedAssetCount}/${this.expectedAssetCount}`;
+    if (this.loadedAssetCount >= this.expectedAssetCount) {
+      this.assetLoadStatus.textContent = `${site.toUpperCase()} ASSETS READY`;
+      this.assetLoadStatus.hidden = true;
+    }
   }
 
   private applyCycleLighting(point: TimeseriesPoint, site: SiteMode, cycleHours: number): void {
@@ -642,11 +668,26 @@ export class Viewer {
     this.processSvg.replaceChildren();
     this.processPaths = [];
 
-    if (this.diorama === null || this.lastResult === null) {
+    if (this.diorama === null || this.lastResult === null || this.lastParams === null) {
       return;
     }
 
     const site = this.lastResult.site;
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    marker.id = "selene-process-arrow";
+    marker.setAttribute("viewBox", "0 0 8 8");
+    marker.setAttribute("refX", "7");
+    marker.setAttribute("refY", "4");
+    marker.setAttribute("markerWidth", "6");
+    marker.setAttribute("markerHeight", "6");
+    marker.setAttribute("orient", "auto-start-reverse");
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    arrow.setAttribute("d", "M 0 0 L 8 4 L 0 8 z");
+    arrow.setAttribute("class", "process-flow-arrow");
+    marker.appendChild(arrow);
+    defs.appendChild(marker);
+    this.processSvg.appendChild(defs);
     for (const [key, label] of Object.entries(INTERACTIVE_ASSET_LABELS[site])) {
       if (this.diorama.assets[key] === undefined) {
         continue;
@@ -661,19 +702,49 @@ export class Viewer {
       this.learningLabels.set(key, button);
     }
 
-    for (const edge of PROCESS_EDGES[site]) {
+    for (const edge of processEdges(this.lastResult, this.lastParams)) {
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.classList.add("process-flow-line");
+      line.classList.add(`process-flow-${edge.kind}`);
+      line.setAttribute("marker-end", "url(#selene-process-arrow)");
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
       text.classList.add("process-flow-label");
-      text.textContent = edge.label;
+      text.textContent = this.mobile ? edge.shortLabel : edge.label;
       text.setAttribute("text-anchor", "middle");
       this.processSvg.append(line, text);
       this.processPaths.push({ ...edge, line, text });
     }
 
-    this.learningOverlay.hidden = !this.learningMode;
-    this.processSvg.style.display = this.learningMode && this.showProcessFlow ? "" : "none";
+    this.learningOverlay.hidden = !this.learningMode && this.selectedAssetKey === null;
+    this.processSvg.style.display =
+      this.selectedAssetKey !== null || (this.learningMode && this.showProcessFlow) ? "" : "none";
+  }
+
+  private refreshProcessOverlayData(): void {
+    if (this.lastResult === null || this.lastParams === null || this.diorama === null) {
+      return;
+    }
+    const next = processEdges(this.lastResult, this.lastParams);
+    const sameTopology =
+      next.length === this.processPaths.length &&
+      next.every((edge, index) => {
+        const current = this.processPaths[index];
+        return current?.from === edge.from && current.to === edge.to && current.kind === edge.kind;
+      });
+    if (!sameTopology) {
+      this.rebuildLearningOverlay();
+      return;
+    }
+    next.forEach((edge, index) => {
+      const current = this.processPaths[index];
+      if (current === undefined) {
+        return;
+      }
+      current.label = edge.label;
+      current.shortLabel = edge.shortLabel;
+      current.text.textContent = this.mobile ? edge.shortLabel : edge.label;
+    });
+    this.refreshSelectionOutline();
   }
 
   private assetScreenPoint(assetKey: string, height: number): { x: number; y: number } | null {
@@ -698,7 +769,11 @@ export class Viewer {
   }
 
   private updateLearningOverlay(): void {
-    if (!this.learningMode || this.lastResult === null || this.diorama === null) {
+    if (
+      (!this.learningMode && this.selectedAssetKey === null) ||
+      this.lastResult === null ||
+      this.diorama === null
+    ) {
       return;
     }
     const site = this.lastResult.site;
@@ -708,7 +783,8 @@ export class Viewer {
 
     for (const [key, label] of this.learningLabels) {
       const point = this.assetScreenPoint(key, ASSET_LABEL_HEIGHT[site][key] ?? 5);
-      const visible = point !== null && (this.selectedAssetKey === null || this.selectedAssetKey === key);
+      const visible =
+        this.learningMode && point !== null && (this.selectedAssetKey === null || this.selectedAssetKey === key);
       label.hidden = !visible;
       if (visible && point !== null) {
         const x = Math.min(width - 96, Math.max(96, point.x));
@@ -720,8 +796,13 @@ export class Viewer {
     for (const path of this.processPaths) {
       const from = this.assetScreenPoint(path.from, 1.4);
       const to = this.assetScreenPoint(path.to, 1.4);
+      const selectedPath =
+        this.selectedAssetKey !== null &&
+        (path.from === this.selectedAssetKey || path.to === this.selectedAssetKey);
       const visible =
-        this.showProcessFlow && this.selectedAssetKey === null && from !== null && to !== null;
+        (selectedPath || (this.learningMode && this.showProcessFlow && this.selectedAssetKey === null)) &&
+        from !== null &&
+        to !== null;
       path.line.style.display = visible ? "" : "none";
       path.text.style.display = visible ? "" : "none";
       if (!visible || from === null || to === null) {
@@ -934,7 +1015,9 @@ export class Viewer {
 
   private refreshSelectionOutline(): void {
     this.removeOutline("selection");
+    this.removeConnectionOutlines();
     if (this.selectedAssetKey === null || this.diorama === null) {
+      this.learningOverlay.hidden = !this.learningMode;
       return;
     }
     const asset = this.diorama.assets[this.selectedAssetKey];
@@ -942,6 +1025,28 @@ export class Viewer {
       this.selectionOutline = this.makeOutline(asset, 0x74d8ff, 0.86);
       this.scene.add(this.selectionOutline);
     }
+    if (this.lastResult !== null && this.lastParams !== null) {
+      for (const key of connectedAssets(this.lastResult, this.lastParams, this.selectedAssetKey)) {
+        const connected = this.diorama.assets[key];
+        if (connected === undefined || connected.children.length === 0) {
+          continue;
+        }
+        const outline = this.makeOutline(connected, 0xff7e1f, 0.42);
+        this.connectionOutlines.push(outline);
+        this.scene.add(outline);
+      }
+    }
+    this.learningOverlay.hidden = false;
+    this.processSvg.style.display = "";
+  }
+
+  private removeConnectionOutlines(): void {
+    for (const outline of this.connectionOutlines) {
+      this.scene.remove(outline);
+      outline.geometry.dispose();
+      (outline.material as THREE.Material).dispose();
+    }
+    this.connectionOutlines = [];
   }
 
   private makeOutline(asset: THREE.Object3D, color: number, opacity: number): THREE.Mesh {

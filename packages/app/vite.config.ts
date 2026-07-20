@@ -9,7 +9,18 @@ export default defineConfig(({ mode }) => ({
   plugins: [react()],
   build: {
     target: "es2022",
-    chunkSizeWarningLimit: 800
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/three")) return "three-runtime";
+          if (id.includes("node_modules/d3-")) return "analysis-charts";
+          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) return "react-runtime";
+          if (id.includes("node_modules/zustand")) return "state-runtime";
+          return undefined;
+        }
+      }
+    }
   },
   test: {
     environment: "jsdom"

@@ -1,6 +1,7 @@
 import type { SimResult } from "@selene-isru/engine";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
+import { ScenarioLibrary } from "./ScenarioLibrary";
 
 interface CompareMetric {
   label: string;
@@ -80,6 +81,10 @@ export function ComparePanel(): React.JSX.Element {
 
   return (
     <div className="panel-section">
+      <ScenarioLibrary />
+      <div className="quick-compare-divider">
+        <span>QUICK LIVE A/B</span>
+      </div>
       <div className="panel-header">
         NAMED SCENARIO COMPARE
         <span className="num">B {compareParams.site.toUpperCase()}</span>

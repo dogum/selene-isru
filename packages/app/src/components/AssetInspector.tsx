@@ -1,6 +1,8 @@
 import type { SimParams, SimResult } from "@selene-isru/engine";
+import { useEffect } from "react";
+import { assetKnowledge, flowsForAsset } from "../analysis/process";
 import { paramsForGroup } from "../controls/manifest";
-import { formatQtyText } from "../lib/format";
+import { formatInputValue, formatQtyText } from "../lib/format";
 import { useStore } from "../state/store";
 import { ParamRow } from "./ParamRow";
 
@@ -318,6 +320,15 @@ export function AssetInspector(): React.JSX.Element | null {
   const setUi = useStore((state) => state.setUi);
   const flyTo = useStore((state) => state.flyTo);
 
+  useEffect(() => {
+    if (selected === null) return undefined;
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") setUi({ selectedAsset: null });
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selected, setUi]);
+
   const config = selected === null
     ? undefined
     : (site === "equatorial" ? EQUATORIAL_CONFIG : POLAR_CONFIG)[selected];
@@ -328,6 +339,28 @@ export function AssetInspector(): React.JSX.Element | null {
 
   const controls = paramsForGroup(config.group).filter((def) => def.key in config.controlLabels);
   const warnings = result.warnings.filter((warning) => warning.module === config.module);
+  const knowledge = assetKnowledge(site, selected ?? "");
+  const flows = flowsForAsset(result, params, selected ?? "");
+  const configs = site === "equatorial" ? EQUATORIAL_CONFIG : POLAR_CONFIG;
+  const nearestBound = controls
+    .map((def) => {
+      const value = params[def.key];
+      if (typeof value !== "number") {
+        return null;
+      }
+      const span = Math.max(1e-12, def.max - def.min);
+      const minDistance = (value - def.min) / span;
+      const maxDistance = (def.max - value) / span;
+      return {
+        label: config.controlLabels[def.key] ?? def.label,
+        side: minDistance <= maxDistance ? "minimum" : "maximum",
+        margin: Math.min(minDistance, maxDistance),
+        bound: minDistance <= maxDistance ? def.min : def.max,
+        unit: def.unit
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => a.margin - b.margin)[0];
   const status = warnings.some((warning) => warning.severity === "alarm")
     ? "alarm"
     : warnings.length > 0
@@ -359,12 +392,83 @@ export function AssetInspector(): React.JSX.Element | null {
         ))}
       </div>
 
-      <div className="reactor-state-note">
-        <span className="reactor-section-title">PURPOSE + SIMULATED BEHAVIOR</span>
+      <div className="reactor-state-note asset-purpose">
+        <span className="reactor-section-title">PURPOSE</span>
+        <p>{knowledge?.purpose ?? config.note}</p>
+        <span className="reactor-section-title">SIMULATED BEHAVIOR</span>
         <p>{config.note}</p>
       </div>
 
-      {warnings.length > 0 && <div className={`reactor-warning ${status}`}>{warnings[0]?.message}</div>}
+      {knowledge !== null && (
+        <section className="asset-flow-section" aria-label="Live subsystem flow">
+          <div className="reactor-section-title">LIVE INPUTS → OUTPUTS</div>
+          <div className="asset-flow-grid">
+            <div>
+              <span>INPUTS</span>
+              {flows.incoming.map((edge) => (
+                <button
+                  key={`${edge.from}-${edge.to}`}
+                  type="button"
+                  onClick={() => {
+                    setUi({ selectedAsset: edge.from });
+                    flyTo(edge.from);
+                  }}
+                >
+                  <small>{configs[edge.from]?.title ?? edge.from}</small>
+                  <strong>{edge.label}</strong>
+                </button>
+              ))}
+              {flows.incoming.length === 0 && knowledge.inputs.slice(0, 3).map((input) => (
+                <p key={input}>{input}</p>
+              ))}
+            </div>
+            <i aria-hidden="true">→</i>
+            <div>
+              <span>OUTPUTS</span>
+              {flows.outgoing.map((edge) => (
+                <button
+                  key={`${edge.from}-${edge.to}`}
+                  type="button"
+                  onClick={() => {
+                    setUi({ selectedAsset: edge.to });
+                    flyTo(edge.to);
+                  }}
+                >
+                  <small>{configs[edge.to]?.title ?? edge.to}</small>
+                  <strong>{edge.label}</strong>
+                </button>
+              ))}
+              {flows.outgoing.length === 0 && <p>Terminal mission service</p>}
+            </div>
+          </div>
+          <div className="asset-input-tags">
+            {knowledge.inputs.map((input) => <span key={input}>{input}</span>)}
+          </div>
+        </section>
+      )}
+
+      <section className="asset-constraint-section">
+        <div className="reactor-section-title">ACTIVE CONSTRAINT</div>
+        {warnings.length > 0 ? (
+          <p className={status}>{warnings[0]?.message}</p>
+        ) : nearestBound !== undefined ? (
+          <p>
+            Nearest model bound: <b>{nearestBound.label}</b> is {Math.max(0, nearestBound.margin * 100).toFixed(0)}%
+            of its supported span from the {nearestBound.side} ({formatInputValue(nearestBound.bound)}{nearestBound.unit === "1" ? "" : ` ${nearestBound.unit}`}).
+          </p>
+        ) : (
+          <p>No active model warning for this subsystem.</p>
+        )}
+      </section>
+
+      {knowledge !== null && (
+        <details className="asset-assumptions">
+          <summary>
+            ASSUMPTIONS + MODEL MATURITY <span>{knowledge.maturity}</span>
+          </summary>
+          <ul>{knowledge.assumptions.map((assumption) => <li key={assumption}>{assumption}</li>)}</ul>
+        </details>
+      )}
 
       {controls.length > 0 && (
         <section className="reactor-controls" aria-labelledby="asset-controls-title">

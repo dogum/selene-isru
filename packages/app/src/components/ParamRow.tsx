@@ -140,11 +140,20 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
       </div>
       {detailsOpen && (
         <div className="param-evidence">
-          {nameMode === "code" && <p>{def.description}</p>}
+          <div className="param-evidence-head">
+            <span>{def.evidence.maturity}</span>
+            <span>±{(def.evidence.defaultUncertainty * 100).toFixed(0)}% DEFAULT σ</span>
+          </div>
+          <p>{def.description}</p>
           <dl>
             <div>
               <dt>Source</dt>
-              <dd>{def.source}</dd>
+              <dd>
+                <a href={def.evidence.sourceUrl} target="_blank" rel="noreferrer">
+                  {def.source}
+                </a>
+                <small>{def.evidence.sourceSection}</small>
+              </dd>
             </div>
             <div>
               <dt>Supported range</dt>
@@ -152,11 +161,16 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
                 {formatInputValue(def.min)}–{formatInputValue(def.max)}{rangeUnit}
               </dd>
             </div>
+            <div>
+              <dt>Range basis</dt>
+              <dd>{def.evidence.rangeRationale}</dd>
+            </div>
+            <div>
+              <dt>Applies to</dt>
+              <dd>{def.evidence.applicability}</dd>
+            </div>
           </dl>
-          <small>
-            Range basis: checked-in engineering/model bounds. Extrapolation outside this
-            interval is unsupported and clamped by the engine.
-          </small>
+          <small>{def.evidence.validity} Extrapolation is unsupported and clamped by the engine.</small>
         </div>
       )}
     </div>

@@ -47,16 +47,21 @@ The default view stays simulator-first. Optional layers add explanation only
 when they are useful:
 
 - **Learn** projects clickable asset labels and leader lines into the 3D scene,
-  adds a reset-camera control and readability lock, and can overlay the material
-  and power paths between equipment.
-- **Trade Study** promotes named A/B scenarios, Pareto exploration, and
-  deterministic uncertainty bands into one visible analysis workspace.
+  adds a reset-camera control and readability lock, and can overlay live,
+  directional material and power paths between equipment. Selecting one asset
+  isolates its connected subsystem even when Learn is off.
+- **Trade Study** stores up to eight named browser-local cases, pins four into a
+  multi-case matrix, shares reproducible URLs, imports/exports JSON and CSV,
+  searches a constrained 625-point Pareto grid, ranks local sensitivity, and
+  produces a print/PDF-ready engineering report.
 - **Brief** is an opt-in goal workflow for questions such as a polar water camp,
-  minimum landed mass, or the solar/nuclear crossover. It reports a recommended
-  starting case, bottleneck, feasibility, largest drivers, uncertainty range,
-  and caveats before handing the case into Trade Study.
+  minimum landed mass, or the solar/nuclear crossover. It performs a transparent
+  bounded design search, ranks distinct feasible designs, and reports the
+  bottleneck, largest drivers, uncertainty range, and caveats before handing an
+  accepted case into Trade Study.
 - Inputs use plain engineering names by default, can toggle to engine variable
-  names, and expose their source and supported range beside the control.
+  names, and expose model maturity, source links/sections, uncertainty defaults,
+  range rationale, applicability, and validity limits beside the control.
 
 ## The parity story
 
@@ -102,7 +107,7 @@ asset, and license entry in `assets/ASSET_LICENSES.md`.
 The top-bar graphics menu exposes Auto/Low/Medium/High/Ultra tiers, bloom,
 the dev HUD, photo mode, and PNG export.
 
-Visual QA and performance notes are recorded in the [MRE vertical slice](docs/vertical-slice-mre.md), the [equatorial equipment overhaul](docs/equatorial-asset-overhaul.md), and the [polar equipment overhaul](docs/polar-asset-overhaul.md).
+Visual QA and performance notes are recorded in the [MRE vertical slice](docs/vertical-slice-mre.md), the [equatorial equipment overhaul](docs/equatorial-asset-overhaul.md), the [polar equipment overhaul](docs/polar-asset-overhaul.md), and the [analysis and explainability sprint](docs/analysis-polish-sprint.md).
 
 ## Workspace
 
@@ -123,6 +128,8 @@ pnpm build                   # engine build + app production build
 pnpm asset:mre               # regenerate the MRE .blend and optimized GLB
 pnpm asset:equatorial        # regenerate the remaining equatorial equipment library
 pnpm asset:polar             # regenerate the polar equipment library
+pnpm demo:analysis -- http://localhost:5173
+                             # record the short engineering-analysis browser tour
 
 # Python mirror (uv creates and manages the project environment)
 uv sync --project python --locked --group dev

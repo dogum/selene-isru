@@ -1,12 +1,22 @@
+import { lazy, Suspense } from "react";
 import { useStore, type StudyTab } from "../../state/store";
 import { ComparePanel } from "./ComparePanel";
-import { FrontierExplorer } from "./FrontierExplorer";
-import { UncertaintyPanel } from "./UncertaintyPanel";
+
+const FrontierExplorer = lazy(() =>
+  import("./FrontierExplorer").then((module) => ({ default: module.FrontierExplorer }))
+);
+const UncertaintyPanel = lazy(() =>
+  import("./UncertaintyPanel").then((module) => ({ default: module.UncertaintyPanel }))
+);
+const EngineeringReport = lazy(() =>
+  import("./EngineeringReport").then((module) => ({ default: module.EngineeringReport }))
+);
 
 const TABS: Array<{ id: StudyTab; label: string; note: string }> = [
   { id: "scenarios", label: "SCENARIOS", note: "Name and compare two operating cases" },
   { id: "frontier", label: "PARETO", note: "Explore non-dominated design points" },
-  { id: "uncertainty", label: "UNCERTAINTY", note: "Test sensitivity to uncertain inputs" }
+  { id: "uncertainty", label: "UNCERTAINTY", note: "Test sensitivity to uncertain inputs" },
+  { id: "report", label: "REPORT", note: "Print or export a reproducible engineering snapshot" }
 ];
 
 export function TradeStudyPanel(): React.JSX.Element {
@@ -42,8 +52,11 @@ export function TradeStudyPanel(): React.JSX.Element {
       <p className="study-tab-note">{selected.note}</p>
 
       {active === "scenarios" && <ComparePanel />}
-      {active === "frontier" && <FrontierExplorer />}
-      {active === "uncertainty" && <UncertaintyPanel />}
+      <Suspense fallback={<div className="analysis-loading">LOADING ANALYSIS WORKSPACE…</div>}>
+        {active === "frontier" && <FrontierExplorer />}
+        {active === "uncertainty" && <UncertaintyPanel />}
+        {active === "report" && <EngineeringReport />}
+      </Suspense>
     </div>
   );
 }

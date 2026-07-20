@@ -1,5 +1,6 @@
 import { PARAM_META } from "@selene-isru/engine";
 import type { SimParams, SimResult } from "@selene-isru/engine";
+import { evidenceForParam, type ParamEvidence } from "./evidence";
 
 type SiteMode = SimParams["site"];
 
@@ -97,6 +98,7 @@ export interface NumericParamDef {
   defaultValue: number;
   description: string;
   source: string;
+  evidence: ParamEvidence;
 }
 
 /** Numeric, user-adjustable params for one engine group (fixed constants with min === max are skipped). */
@@ -112,7 +114,7 @@ export function paramsForGroup(engineGroup: string): NumericParamDef[] {
     if (meta.min === meta.max) {
       continue;
     }
-    defs.push({
+    const numeric = {
       key: key as keyof SimParams,
       label: meta.description,
       unit: meta.unit,
@@ -121,6 +123,17 @@ export function paramsForGroup(engineGroup: string): NumericParamDef[] {
       defaultValue: meta.value,
       description: meta.description,
       source: meta.source
+    };
+    defs.push({
+      ...numeric,
+      evidence: evidenceForParam({
+        key: numeric.key,
+        group: meta.group,
+        source: numeric.source,
+        min: numeric.min,
+        max: numeric.max,
+        unit: numeric.unit
+      })
     });
   }
   return defs;

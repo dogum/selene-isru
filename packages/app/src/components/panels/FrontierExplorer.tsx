@@ -1,25 +1,50 @@
-import { useMemo, useState } from "react";
 import { simulate } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
+import { useMemo, useState } from "react";
 import { useSize } from "../../lib/hooks";
-import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
 
-type SweepKey = "targetKgPerDay" | "Vcell" | "etaCurrent" | "reserveDays" | "missionYears";
-type Objective = "payback-missions" | "sec-power";
+type SweepKey =
+  | "targetKgPerDay"
+  | "Vcell"
+  | "etaCurrent"
+  | "reserveDays"
+  | "missionYears"
+  | "chiIce"
+  | "Nmli"
+  | "etaCell"
+  | "alphaSpecific"
+  | "shieldDesignM";
+type Objective = "payback-missions" | "sec-power" | "mass-sec" | "mass-missions";
 
-const PARAMS: Array<{ key: SweepKey; label: string; min: number; max: number; log?: boolean }> = [
-  { key: "targetKgPerDay", label: "Output", min: 100, max: 10000, log: true },
-  { key: "Vcell", label: "Cell V", min: 3, max: 5 },
-  { key: "etaCurrent", label: "Current eff.", min: 0.5, max: 0.95 },
+interface SweepParam {
+  key: SweepKey;
+  label: string;
+  min: number;
+  max: number;
+  log?: boolean;
+  site?: SimParams["site"];
+}
+
+const PARAMS: SweepParam[] = [
+  { key: "targetKgPerDay", label: "Output", min: 10, max: 20_000, log: true },
+  { key: "missionYears", label: "Mission years", min: 1, max: 20 },
   { key: "reserveDays", label: "Reserve days", min: 1, max: 60 },
-  { key: "missionYears", label: "Mission years", min: 1, max: 10 }
+  { key: "etaCell", label: "PV efficiency", min: 0.15, max: 0.4 },
+  { key: "alphaSpecific", label: "Nuclear kg/kW", min: 5, max: 80, log: true },
+  { key: "Nmli", label: "MLI layers", min: 10, max: 80 },
+  { key: "Vcell", label: "MRE cell voltage", min: 3.5, max: 5, site: "equatorial" },
+  { key: "etaCurrent", label: "Current efficiency", min: 0.5, max: 0.95, site: "equatorial" },
+  { key: "shieldDesignM", label: "Shield depth", min: 0.1, max: 5, site: "equatorial" },
+  { key: "chiIce", label: "Polar ice fraction", min: 0.005, max: 0.12, log: true, site: "polar" }
 ];
 
-const OBJECTIVES: Array<{ id: Objective; label: string }> = [
-  { id: "payback-missions", label: "Payback / missions" },
-  { id: "sec-power", label: "SEC / power" }
+const OBJECTIVES: Array<{ id: Objective; label: string; x: string; y: string }> = [
+  { id: "payback-missions", label: "Payback / missions", x: "PAYBACK · DAYS", y: "MISSIONS" },
+  { id: "sec-power", label: "SEC / grid power", x: "SEC · KWH/KG", y: "GRID POWER · W" },
+  { id: "mass-sec", label: "Infra mass / SEC", x: "INFRA MASS · KG", y: "SEC · KWH/KG" },
+  { id: "mass-missions", label: "Infra mass / missions", x: "INFRA MASS · KG", y: "MISSIONS" }
 ];
 
 interface FrontierPoint {
@@ -27,30 +52,39 @@ interface FrontierPoint {
   y: number;
   patch: Partial<SimParams>;
   frontier: boolean;
+  feasible: boolean;
+  warningCount: number;
 }
 
-function valuesFor(key: SweepKey, n: number): number[] {
-  const param = PARAMS.find((p) => p.key === key)!;
+function valuesFor(param: SweepParam, n: number): number[] {
   const lo = Math.max(1e-9, param.min);
   const hi = Math.max(lo * 1.01, param.max);
-  const out: number[] = [];
-  for (let i = 0; i < n; i += 1) {
-    const u = n === 1 ? 0.5 : i / (n - 1);
-    out.push(param.log ? lo * Math.pow(hi / lo, u) : lo + (hi - lo) * u);
-  }
-  return out;
+  return Array.from({ length: n }, (_, index) => {
+    const u = n === 1 ? 0.5 : index / (n - 1);
+    return param.log ? lo * Math.pow(hi / lo, u) : lo + (hi - lo) * u;
+  });
 }
 
 function objectiveValues(result: ReturnType<typeof simulate>, objective: Objective): [number, number] {
-  if (objective === "sec-power") {
-    return [result.energy.secTotal_kWhPerKg, result.energy.gridPowerW];
+  switch (objective) {
+    case "sec-power":
+      return [result.energy.secTotal_kWhPerKg, result.energy.gridPowerW];
+    case "mass-sec":
+      return [result.logistics.totalInfraMassKg, result.energy.secTotal_kWhPerKg];
+    case "mass-missions":
+      return [result.logistics.totalInfraMassKg, result.logistics.nMissions];
+    default:
+      return [result.logistics.paybackDays, result.logistics.nMissions];
   }
-  return [result.logistics.paybackDays, result.logistics.nMissions];
 }
 
 function markFrontier(points: FrontierPoint[]): FrontierPoint[] {
+  const feasible = points.filter((point) => point.feasible);
   return points.map((point) => {
-    const dominated = points.some(
+    if (!point.feasible) {
+      return point;
+    }
+    const dominated = feasible.some(
       (other) =>
         other !== point &&
         other.x <= point.x &&
@@ -63,33 +97,51 @@ function markFrontier(points: FrontierPoint[]): FrontierPoint[] {
 
 export function FrontierExplorer(): React.JSX.Element {
   const params = useStore((s) => s.params);
-  const setParam = useStore((s) => s.setParam);
+  const applyPatch = useStore((s) => s.applyPatch);
   const [ref, size] = useSize<HTMLDivElement>();
+  const available = PARAMS.filter((param) => param.site === undefined || param.site === params.site);
   const [aKey, setAKey] = useState<SweepKey>("targetKgPerDay");
-  const [bKey, setBKey] = useState<SweepKey | "none">("Vcell");
-  const [objective, setObjective] = useState<Objective>("payback-missions");
+  const [bKey, setBKey] = useState<SweepKey | "none">(params.site === "polar" ? "chiIce" : "etaCurrent");
+  const [objective, setObjective] = useState<Objective>("mass-sec");
+  const [maxMissions, setMaxMissions] = useState(30);
+  const [maxPowerMw, setMaxPowerMw] = useState(20);
+  const [candidate, setCandidate] = useState<FrontierPoint | null>(null);
 
   const width = Math.max(280, size.width);
-  const height = 250;
-  const margin = { top: 14, right: 18, bottom: 34, left: 62 };
+  const height = 280;
+  const margin = { top: 14, right: 18, bottom: 42, left: 72 };
+  const aParam = available.find((param) => param.key === aKey) ?? available[0]!;
+  const bParam = bKey === "none" ? null : available.find((param) => param.key === bKey) ?? null;
+  const objectiveMeta = OBJECTIVES.find((item) => item.id === objective) ?? OBJECTIVES[0]!;
 
   const data = useMemo(() => {
-    const aValues = valuesFor(aKey, bKey === "none" ? 41 : 25);
-    const bValues = bKey === "none" ? [0] : valuesFor(bKey, 25);
+    const aValues = valuesFor(aParam, bParam === null ? 49 : 25);
+    const bValues = bParam === null ? [0] : valuesFor(bParam, 25);
     const raw: FrontierPoint[] = [];
     for (const a of aValues) {
       for (const b of bValues) {
-        const patch: Partial<SimParams> = { [aKey]: a } as Partial<SimParams>;
-        if (bKey !== "none") {
-          (patch as Record<string, number>)[bKey] = b;
+        const patch: Partial<SimParams> = { [aParam.key]: a } as Partial<SimParams>;
+        if (bParam !== null) {
+          (patch as Record<string, number>)[bParam.key] = b;
         }
         const result = simulate({ ...params, ...patch });
         const [x, y] = objectiveValues(result, objective);
-        raw.push({ x, y, patch, frontier: false });
+        const alarms = result.warnings.filter((warning) => warning.severity === "alarm");
+        raw.push({
+          x,
+          y,
+          patch,
+          frontier: false,
+          feasible:
+            alarms.length === 0 &&
+            result.logistics.nMissions <= maxMissions &&
+            result.energy.gridPowerW <= maxPowerMw * 1_000_000,
+          warningCount: result.warnings.length
+        });
       }
     }
     return markFrontier(raw);
-  }, [aKey, bKey, objective, params]);
+  }, [aParam, bParam, maxMissions, maxPowerMw, objective, params]);
 
   const xs = data.map((point) => Math.max(1e-9, point.x));
   const ys = data.map((point) => Math.max(1e-9, point.y));
@@ -100,55 +152,76 @@ export function FrontierExplorer(): React.JSX.Element {
     .domain([Math.min(...ys) / 1.1, Math.max(...ys) * 1.1])
     .range([height - margin.bottom, margin.top]);
   const current = objectiveValues(simulate(params), objective);
-  const xUnit = objective === "sec-power" ? "kWh/kg" : "days";
-  const yUnit = objective === "sec-power" ? "W" : "";
+  const feasibleCount = data.filter((point) => point.feasible).length;
 
   return (
     <div className="panel-section frontier-section" ref={ref}>
       <div className="panel-header">
-        FRONTIER EXPLORER
-        <span className="num">{data.length} RUN CAP</span>
+        CONSTRAINED FRONTIER EXPLORER
+        <span className="num">{feasibleCount}/{data.length} FEASIBLE</span>
       </div>
       <div className="frontier-controls">
-        <select value={aKey} onChange={(e) => setAKey(e.target.value as SweepKey)} aria-label="Frontier parameter A">
-          {PARAMS.map((param) => (
-            <option key={param.key} value={param.key}>
-              {param.label}
-            </option>
-          ))}
-        </select>
-        <select value={bKey} onChange={(e) => setBKey(e.target.value as SweepKey | "none")} aria-label="Frontier parameter B">
-          <option value="none">One parameter</option>
-          {PARAMS.filter((param) => param.key !== aKey).map((param) => (
-            <option key={param.key} value={param.key}>
-              {param.label}
-            </option>
-          ))}
-        </select>
-        <select value={objective} onChange={(e) => setObjective(e.target.value as Objective)} aria-label="Frontier objective">
-          {OBJECTIVES.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.label}
-            </option>
-          ))}
-        </select>
+        <label>
+          <span>SWEEP A</span>
+          <select value={aParam.key} onChange={(event) => {
+            const next = event.target.value as SweepKey;
+            setAKey(next);
+            if (bKey === next) setBKey("none");
+            setCandidate(null);
+          }} aria-label="Frontier parameter A">
+            {available.map((param) => <option key={param.key} value={param.key}>{param.label}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>SWEEP B</span>
+          <select value={bParam?.key ?? "none"} onChange={(event) => {
+            setBKey(event.target.value as SweepKey | "none");
+            setCandidate(null);
+          }} aria-label="Frontier parameter B">
+            <option value="none">One parameter</option>
+            {available.filter((param) => param.key !== aParam.key).map((param) => (
+              <option key={param.key} value={param.key}>{param.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>OBJECTIVES</span>
+          <select value={objective} onChange={(event) => {
+            setObjective(event.target.value as Objective);
+            setCandidate(null);
+          }} aria-label="Frontier objective">
+            {OBJECTIVES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+      </div>
+      <div className="frontier-constraints">
+        <label>
+          MAX MISSIONS
+          <input type="number" min="1" max="200" value={maxMissions} onChange={(event) => setMaxMissions(Number(event.target.value))} />
+        </label>
+        <label>
+          MAX GRID · MW
+          <input type="number" min="0.1" max="500" step="0.5" value={maxPowerMw} onChange={(event) => setMaxPowerMw(Number(event.target.value))} />
+        </label>
+        <span><i className="frontier-key frontier-key-good" /> PARETO</span>
+        <span><i className="frontier-key frontier-key-bad" /> INFEASIBLE</span>
       </div>
       <div className="chart-well frontier-well">
-        <svg width={width} height={height} role="img" aria-label="Pareto frontier explorer">
-          {data.map((point, i) => (
+        <svg width={width} height={height} role="img" aria-label="Constrained Pareto frontier explorer">
+          {data.map((point, index) => (
             <circle
-              key={i}
+              key={index}
               cx={xScale(Math.max(1e-9, point.x))}
               cy={yScale(Math.max(1e-9, point.y))}
-              r={point.frontier ? 4 : 2.2}
-              fill={point.frontier ? "var(--melt)" : "var(--text-low)"}
-              opacity={point.frontier ? 0.95 : 0.32}
-              onClick={() => {
-                for (const [key, value] of Object.entries(point.patch)) {
-                  setParam(key as keyof SimParams, value as SimParams[keyof SimParams]);
-                }
-              }}
-            />
+              r={point.frontier ? 4.4 : point.feasible ? 2.3 : 1.8}
+              fill={point.frontier ? "var(--melt)" : point.feasible ? "var(--text-low)" : "var(--alarm)"}
+              opacity={point.frontier ? 0.96 : point.feasible ? 0.3 : 0.22}
+              tabIndex={point.frontier ? 0 : -1}
+              onClick={() => setCandidate(point)}
+              onKeyDown={(event) => event.key === "Enter" && setCandidate(point)}
+            >
+              <title>{`${objectiveMeta.x}: ${point.x.toPrecision(4)} · ${objectiveMeta.y}: ${point.y.toPrecision(4)} · ${point.feasible ? "feasible" : "infeasible"}`}</title>
+            </circle>
           ))}
           <circle
             cx={xScale(Math.max(1e-9, current[0]))}
@@ -158,17 +231,28 @@ export function FrontierExplorer(): React.JSX.Element {
             stroke="var(--cryo)"
             strokeWidth="2"
           />
-          <text className="axis-label" x={margin.left} y={height - 9}>
-            {xUnit.toUpperCase()}
-          </text>
-          <text className="axis-label" x={8} y={margin.top + 8}>
-            {yUnit === "" ? "MISSIONS" : yUnit.toUpperCase()}
-          </text>
+          <text className="axis-label" x={margin.left} y={height - 10}>{objectiveMeta.x}</text>
+          <text className="axis-label" x={8} y={margin.top + 8}>{objectiveMeta.y}</text>
         </svg>
       </div>
       <div className="frontier-current mono">
-        CURRENT {formatQtyText(current[0], xUnit, 3)} / {yUnit === "" ? current[1].toFixed(0) : formatQtyText(current[1], yUnit)}
+        CURRENT {current[0].toPrecision(4)} / {current[1].toPrecision(4)}
       </div>
+      {candidate !== null && (
+        <div className="frontier-candidate">
+          <div>
+            <span className="reactor-section-title">SELECTED DESIGN POINT</span>
+            <strong>{candidate.feasible ? "FEASIBLE" : "OUTSIDE ACTIVE CONSTRAINTS"}</strong>
+            <small>{Object.entries(candidate.patch).map(([key, value]) => `${key}=${Number(value).toPrecision(4)}`).join(" · ")}</small>
+          </div>
+          <button type="button" className="topbar-btn" disabled={!candidate.feasible} onClick={() => applyPatch({ ...params, ...candidate.patch })}>
+            APPLY POINT
+          </button>
+        </div>
+      )}
+      <p className="panel-caption">
+        Orange points are non-dominated among cases satisfying the mission and power caps. Select a point to inspect it before changing the live case.
+      </p>
     </div>
   );
 }

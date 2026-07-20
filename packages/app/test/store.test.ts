@@ -90,4 +90,23 @@ describe("store wiring (§5)", () => {
     expect(useStore.getState().ui.currentScenarioName).toBe("Reference case");
     expect(useStore.getState().ui.compareScenarioName).toBe("Live candidate");
   });
+
+  it("persists, pins, duplicates, and reloads named study cases", () => {
+    const beforeIds = new Set(useStore.getState().scenarioLibrary.map((scenario) => scenario.id));
+    useStore.getState().setParam("targetKgPerDay", 1777);
+    useStore.getState().saveCurrentScenario("Persistence test case");
+    const saved = useStore.getState().scenarioLibrary.find((scenario) => !beforeIds.has(scenario.id));
+    expect(saved?.name).toBe("Persistence test case");
+    expect(saved?.params.targetKgPerDay).toBe(1777);
+    if (saved === undefined) return;
+
+    useStore.getState().duplicateScenario(saved.id);
+    const copy = useStore.getState().scenarioLibrary.find((scenario) => scenario.name === "Persistence test case copy");
+    expect(copy).toBeDefined();
+    useStore.getState().loadScenario(saved.id);
+    expect(useStore.getState().params.targetKgPerDay).toBe(1777);
+
+    if (copy !== undefined) useStore.getState().deleteScenario(copy.id);
+    useStore.getState().deleteScenario(saved.id);
+  });
 });

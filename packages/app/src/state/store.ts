@@ -7,7 +7,16 @@ export type ViewTab = "site" | "energy" | "mass" | "power" | "study";
 export type SheetDetent = "peek" | "half" | "full";
 export type MobileTab = "controls" | "energy" | "mass" | "power" | "study";
 export type ParameterNameMode = "plain" | "code";
-export type StudyTab = "scenarios" | "frontier" | "uncertainty";
+export type StudyTab = "scenarios" | "frontier" | "uncertainty" | "report";
+
+export interface StudyScenario {
+  id: string;
+  name: string;
+  params: SimParams;
+  createdAt: number;
+  updatedAt: number;
+  pinned: boolean;
+}
 
 export interface UiState {
   view: ViewTab;
@@ -48,6 +57,10 @@ export interface TourState {
 }
 
 const SEC_HISTORY_LENGTH = 60;
+const SCENARIO_STORAGE_KEY = "selene-isru.study-scenarios.v2";
+export const MAX_STUDY_SCENARIOS = 8;
+export const MAX_PINNED_SCENARIOS = 4;
+let scenarioNonce = 0;
 
 interface Store {
   params: SimParams;
@@ -60,6 +73,8 @@ interface Store {
   tour: TourState;
   /** last N secTotal values for the Sankey header sparkline (session-local) */
   secHistory: number[];
+  /** local-only named study cases persisted in this browser */
+  scenarioLibrary: StudyScenario[];
   ui: UiState;
   setParam: <K extends keyof SimParams>(key: K, value: SimParams[K]) => void;
   applyPatch: (patch: Partial<SimParams>) => void;
@@ -71,6 +86,13 @@ interface Store {
   advanceTime: (dtSeconds: number) => void;
   setCompareFromCurrent: () => void;
   swapCompare: () => void;
+  saveCurrentScenario: (name?: string) => void;
+  loadScenario: (id: string) => void;
+  renameScenario: (id: string, name: string) => void;
+  duplicateScenario: (id: string) => void;
+  deleteScenario: (id: string) => void;
+  toggleScenarioPin: (id: string) => void;
+  importScenarios: (scenarios: StudyScenario[]) => void;
   startTour: (id: string) => void;
   stopTour: () => void;
   advanceTour: () => void;
@@ -136,6 +158,76 @@ function initialCompareParams(params: SimParams): SimParams {
   return { ...params, site: params.site === "polar" ? "equatorial" : "polar" };
 }
 
+function scenarioId(): string {
+  scenarioNonce += 1;
+  return `case-${Date.now().toString(36)}-${scenarioNonce.toString(36)}`;
+}
+
+function validScenario(value: unknown): value is StudyScenario {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as Partial<StudyScenario>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.params === "object" &&
+    candidate.params !== null &&
+    typeof candidate.createdAt === "number" &&
+    typeof candidate.updatedAt === "number" &&
+    typeof candidate.pinned === "boolean"
+  );
+}
+
+function initialScenarioLibrary(params: SimParams, compareParams: SimParams): StudyScenario[] {
+  if (typeof window !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(SCENARIO_STORAGE_KEY);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter(validScenario).slice(0, MAX_STUDY_SCENARIOS);
+          if (valid.length > 0) {
+            return valid;
+          }
+        }
+      }
+    } catch {
+      // Corrupt or unavailable local storage falls back to reproducible starter cases.
+    }
+  }
+  const now = Date.now();
+  return [
+    {
+      id: scenarioId(),
+      name: `${params.site === "polar" ? "Polar" : "Equatorial"} baseline`,
+      params: { ...params },
+      createdAt: now,
+      updatedAt: now,
+      pinned: true
+    },
+    {
+      id: scenarioId(),
+      name: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
+      params: { ...compareParams },
+      createdAt: now,
+      updatedAt: now,
+      pinned: true
+    }
+  ];
+}
+
+function persistScenarioLibrary(scenarios: StudyScenario[]): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(SCENARIO_STORAGE_KEY, JSON.stringify(scenarios));
+  } catch {
+    // The in-memory study remains usable when browser storage is unavailable.
+  }
+}
+
 export const useStore = create<Store>((set, get) => {
   const params = initialParams();
   const result = simulate(params);
@@ -144,6 +236,7 @@ export const useStore = create<Store>((set, get) => {
   const timeseries = simulateTimeseries(params, { cycles: 1, samplesPerCycle: 96 });
   const time: TimeState = { tHours: 0, playing: false, rate: 48 };
   const timePoint = sampleTimeseries(timeseries, time.tHours);
+  const scenarioLibrary = initialScenarioLibrary(params, compareParams);
 
   return {
     params,
@@ -155,6 +248,7 @@ export const useStore = create<Store>((set, get) => {
     timePoint,
     tour: { activeId: null, beatIndex: 0 },
     secHistory: [result.energy.secTotal_kWhPerKg],
+    scenarioLibrary,
     ui: {
       view: "site",
       aboutOpen: false,
@@ -283,6 +377,120 @@ export const useStore = create<Store>((set, get) => {
           compareScenarioName: ui.currentScenarioName
         }
       });
+    },
+
+    saveCurrentScenario: (name) => {
+      const { params, ui, scenarioLibrary: current } = get();
+      if (current.length >= MAX_STUDY_SCENARIOS) {
+        return;
+      }
+      const now = Date.now();
+      const next: StudyScenario[] = [
+        ...current,
+        {
+          id: scenarioId(),
+          name: name?.trim() || ui.currentScenarioName.trim() || `Study case ${current.length + 1}`,
+          params: { ...params },
+          createdAt: now,
+          updatedAt: now,
+          pinned: current.filter((scenario) => scenario.pinned).length < 2
+        }
+      ];
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    loadScenario: (id) => {
+      const scenario = get().scenarioLibrary.find((item) => item.id === id);
+      if (scenario === undefined) {
+        return;
+      }
+      get().applyPatch(scenario.params);
+      set({ ui: { ...get().ui, currentScenarioName: scenario.name } });
+    },
+
+    renameScenario: (id, name) => {
+      const next = get().scenarioLibrary.map((scenario) =>
+        scenario.id === id
+          ? { ...scenario, name: name.slice(0, 80), updatedAt: Date.now() }
+          : scenario
+      );
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    duplicateScenario: (id) => {
+      const current = get().scenarioLibrary;
+      const scenario = current.find((item) => item.id === id);
+      if (scenario === undefined || current.length >= MAX_STUDY_SCENARIOS) {
+        return;
+      }
+      const now = Date.now();
+      const next: StudyScenario[] = [
+        ...current,
+        {
+          ...scenario,
+          id: scenarioId(),
+          name: `${scenario.name} copy`,
+          params: { ...scenario.params },
+          createdAt: now,
+          updatedAt: now,
+          pinned: false
+        }
+      ];
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    deleteScenario: (id) => {
+      const next = get().scenarioLibrary.filter((scenario) => scenario.id !== id);
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    toggleScenarioPin: (id) => {
+      const current = get().scenarioLibrary;
+      const target = current.find((scenario) => scenario.id === id);
+      if (
+        target === undefined ||
+        (!target.pinned &&
+          current.filter((scenario) => scenario.pinned).length >= MAX_PINNED_SCENARIOS)
+      ) {
+        return;
+      }
+      const next = current.map((scenario) =>
+        scenario.id === id
+          ? { ...scenario, pinned: !scenario.pinned, updatedAt: Date.now() }
+          : scenario
+      );
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    importScenarios: (scenarios) => {
+      const incoming = scenarios.filter(validScenario);
+      const byId = new Map(get().scenarioLibrary.map((scenario) => [scenario.id, scenario]));
+      for (const scenario of incoming) {
+        if (byId.size >= MAX_STUDY_SCENARIOS && !byId.has(scenario.id)) {
+          break;
+        }
+        byId.set(scenario.id, {
+          ...scenario,
+          params: { ...DEFAULTS, ...scenario.params },
+          name: scenario.name.slice(0, 80)
+        });
+      }
+      const next = [...byId.values()].slice(0, MAX_STUDY_SCENARIOS);
+      let pinned = 0;
+      const normalized = next.map((scenario) => {
+        if (!scenario.pinned) {
+          return scenario;
+        }
+        pinned += 1;
+        return pinned <= MAX_PINNED_SCENARIOS ? scenario : { ...scenario, pinned: false };
+      });
+      persistScenarioLibrary(normalized);
+      set({ scenarioLibrary: normalized });
     },
 
     startTour: (id) => {
