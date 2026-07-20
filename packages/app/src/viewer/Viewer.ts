@@ -36,15 +36,26 @@ import { TweenManager } from "./tween";
 const IDLE_ORBIT_DELAY_MS = 30_000;
 const IDLE_ORBIT_RATE = (0.4 * Math.PI) / 180; // 0.4°/s
 
-const INTERACTIVE_ASSET_LABELS: Record<string, string> = {
-  excavator: "EXCAVATION ROVER EX-01",
-  hauler: "REGOLITH HAULER HV-01",
-  reactor: "MRE REACTOR MRE-01",
-  castingYard: "CASTING YARD CY-01",
-  tanks: "CRYOGENIC FARM CR-01",
-  station: "HYBRID POWER HUB PW-01",
-  pad: "LANDING SYSTEM LP-01",
-  habitat: "SHIELDED HABITAT HAB-01"
+const INTERACTIVE_ASSET_LABELS: Record<SiteMode, Record<string, string>> = {
+  equatorial: {
+    excavator: "EXCAVATION ROVER EX-01",
+    hauler: "REGOLITH HAULER HV-01",
+    reactor: "MRE REACTOR MRE-01",
+    castingYard: "CASTING YARD CY-01",
+    tanks: "CRYOGENIC FARM CR-01",
+    station: "HYBRID POWER HUB PW-01",
+    pad: "LANDING SYSTEM LP-01",
+    habitat: "SHIELDED HABITAT HAB-01"
+  },
+  polar: {
+    excavator: "POLAR ICE EXCAVATOR PX-01",
+    tents: "SUBLIMATION CAMP SUB-01",
+    receiver: "BEAM RECEIVER + SABATIER BR-01",
+    tanks: "POLAR CRYOGENIC FARM PCR-01",
+    towers: "RIM POWER TOWERS PT-01",
+    station: "POLAR NUCLEAR STATION PN-01",
+    habitat: "POLAR HABITAT PHAB-01"
+  }
 };
 
 interface Pulse {
@@ -334,7 +345,17 @@ export class Viewer {
       });
       this.diorama = equatorial;
     } else {
-      this.diorama = new PolarDiorama(this.quality);
+      const polar = new PolarDiorama(this.quality, () => {
+        if (this.diorama !== polar || this.disposed) {
+          return;
+        }
+        if (this.lastResult !== null && this.lastParams !== null) {
+          polar.apply(this.lastResult, this.lastParams, this.tweens, true);
+        }
+        this.refreshSelectionOutline();
+        this.wake();
+      });
+      this.diorama = polar;
     }
     this.scene.add(this.diorama.group);
 
@@ -628,9 +649,10 @@ export class Viewer {
   };
 
   private pickAsset(event: MouseEvent | PointerEvent): string | null {
-    if (this.diorama === null || this.lastResult?.site !== "equatorial") {
+    if (this.diorama === null || this.lastResult === null) {
       return null;
     }
+    const labels = INTERACTIVE_ASSET_LABELS[this.lastResult.site];
     const rect = this.renderer.domElement.getBoundingClientRect();
     this.pointer.set(
       ((event.clientX - rect.left) / rect.width) * 2 - 1,
@@ -638,13 +660,13 @@ export class Viewer {
     );
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const roots = Object.entries(this.diorama.assets)
-      .filter(([key, asset]) => key in INTERACTIVE_ASSET_LABELS && asset.children.length > 0)
+      .filter(([key, asset]) => key in labels && asset.children.length > 0)
       .map(([, asset]) => asset);
     const hit = this.raycaster.intersectObjects(roots, true)[0]?.object ?? null;
     let current: THREE.Object3D | null = hit;
     while (current !== null) {
       const assetKey = current.userData.assetKey;
-      if (typeof assetKey === "string" && assetKey in INTERACTIVE_ASSET_LABELS) {
+      if (typeof assetKey === "string" && assetKey in labels) {
         return assetKey;
       }
       current = current.parent;
@@ -673,7 +695,8 @@ export class Viewer {
     this.renderer.domElement.style.cursor = assetKey === null ? "grab" : "pointer";
     this.assetTooltip.hidden = assetKey === null;
     if (assetKey !== null && this.diorama !== null) {
-      this.assetTooltip.textContent = `${INTERACTIVE_ASSET_LABELS[assetKey] ?? assetKey.toUpperCase()} · CLICK TO INSPECT`;
+      const site = this.lastResult?.site ?? "equatorial";
+      this.assetTooltip.textContent = `${INTERACTIVE_ASSET_LABELS[site][assetKey] ?? assetKey.toUpperCase()} · CLICK TO INSPECT`;
       const asset = this.diorama.assets[assetKey];
       if (asset !== undefined) {
         this.hoverOutline = this.makeOutline(asset, 0xff7e1f, 0.72);

@@ -235,15 +235,15 @@ export const CAMERA_POSES: Record<SiteMode, Record<string, CameraPose>> = {
     habitat: { position: [27, 10, 29], target: [18, 2, 16] }
   },
   polar: {
-    overview: { position: [34, 34, 78], target: [0, -4, -12] },
+    overview: { position: [34, 18, 45], target: [0, -6, -9] },
     towers: { position: [22, 26, -24], target: [0, 16, -56] },
     beam: { position: [28, 8, -16], target: [0, -6, -14] },
-    receiver: { position: [12, 0, 10], target: [0, -9, -6] },
-    tents: { position: [13, -1, 9], target: [4, -9, -2] },
-    excavator: { position: [-4, -2, 16], target: [-9, -9, 4] },
-    tanks: { position: [24, 1, 12], target: [15, -8, 3] },
-    station: { position: [26, 28, -34], target: [10, 17, -54] },
-    habitat: { position: [-24, 1, 12], target: [-15, -8, 3] }
+    receiver: { position: [14, 0, 12], target: [0, -8, -6] },
+    tents: { position: [17, 1, 12], target: [6, -8, 1] },
+    excavator: { position: [-1, -1, 0], target: [-11, -9, -10] },
+    tanks: { position: [29, 1, 15], target: [17, -8, 5] },
+    station: { position: [33, 27, -31], target: [30, 18, -49] },
+    habitat: { position: [-29, 1, 15], target: [-17, -8, 5] }
   }
 };
 

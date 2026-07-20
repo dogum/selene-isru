@@ -15,7 +15,9 @@ from code at runtime. Hero equipment can be generated reproducibly from
 checked-in Blender/Python source, exported as optimized GLB, and driven by live
 simulator state. The equatorial site now uses this workflow for the MRE reactor,
 excavation fleet, casting yard, cryogenic farm, power hub, landing system, and
-surface habitat.
+surface habitat. The polar site uses the same workflow for its tracked ice
+excavator, sublimation camp, beam receiver and Sabatier skid, cryogenic farm,
+rim power towers, nuclear station, and occupied habitat.
 
 **Live demo:** [dogum.github.io/selene-isru](https://dogum.github.io/selene-isru/)
 (deployed from `main` by GitHub Actions).
@@ -72,7 +74,7 @@ asset, and license entry in `assets/ASSET_LICENSES.md`.
 The top-bar graphics menu exposes Auto/Low/Medium/High/Ultra tiers, bloom,
 the dev HUD, photo mode, and PNG export.
 
-Visual QA and performance notes are recorded in the [MRE vertical slice](docs/vertical-slice-mre.md) and the [equatorial equipment overhaul](docs/equatorial-asset-overhaul.md).
+Visual QA and performance notes are recorded in the [MRE vertical slice](docs/vertical-slice-mre.md), the [equatorial equipment overhaul](docs/equatorial-asset-overhaul.md), and the [polar equipment overhaul](docs/polar-asset-overhaul.md).
 
 ## Workspace
 
@@ -92,6 +94,7 @@ pnpm test                    # engine + app vitest suites
 pnpm build                   # engine build + app production build
 pnpm asset:mre               # regenerate the MRE .blend and optimized GLB
 pnpm asset:equatorial        # regenerate the remaining equatorial equipment library
+pnpm asset:polar             # regenerate the polar equipment library
 
 # Python mirror (uv creates and manages the project environment)
 uv sync --project python --locked --group dev

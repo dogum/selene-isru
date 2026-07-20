@@ -1,0 +1,58 @@
+{
+  "polar-excavator": {
+    "blendBytes": 142943,
+    "rawGlbBytes": 420032,
+    "optimizedGlbBytes": 233284,
+    "meshObjects": 57,
+    "vertices": 3876,
+    "triangles": 7524
+  },
+  "sublimation-camp": {
+    "blendBytes": 169458,
+    "rawGlbBytes": 413692,
+    "optimizedGlbBytes": 253708,
+    "meshObjects": 56,
+    "vertices": 7606,
+    "triangles": 15012
+  },
+  "receiver-plant": {
+    "blendBytes": 171148,
+    "rawGlbBytes": 290740,
+    "optimizedGlbBytes": 174084,
+    "meshObjects": 37,
+    "vertices": 5002,
+    "triangles": 9876
+  },
+  "polar-cryogenic-farm": {
+    "blendBytes": 194571,
+    "rawGlbBytes": 796560,
+    "optimizedGlbBytes": 469496,
+    "meshObjects": 98,
+    "vertices": 16080,
+    "triangles": 31832
+  },
+  "polar-power-towers": {
+    "blendBytes": 171634,
+    "rawGlbBytes": 680828,
+    "optimizedGlbBytes": 444308,
+    "meshObjects": 111,
+    "vertices": 11384,
+    "triangles": 22324
+  },
+  "polar-nuclear-station": {
+    "blendBytes": 162364,
+    "rawGlbBytes": 317676,
+    "optimizedGlbBytes": 198660,
+    "meshObjects": 47,
+    "vertices": 4850,
+    "triangles": 9516
+  },
+  "polar-habitat": {
+    "blendBytes": 165231,
+    "rawGlbBytes": 272400,
+    "optimizedGlbBytes": 151256,
+    "meshObjects": 31,
+    "vertices": 4300,
+    "triangles": 8500
+  }
+}

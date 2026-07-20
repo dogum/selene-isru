@@ -34,3 +34,25 @@ All colors, PBR material values, geometry, naming, and control points are genera
 | Runtime format | Binary glTF 2.0, optimized with Blender's bundled meshopt exporter |
 
 The checked-in generator is the primary source of truth. It rebuilds all seven editable `.blend` files, the optimized runtime GLBs, and `asset-metrics.json` from Blender primitives and procedural Principled BSDF materials. No downloaded texture, mesh, HDRI, font, paid asset, or restrictively licensed material is included.
+
+## Polar base equipment library
+
+| Asset | Runtime GLB | Editable Blender source |
+| --- | --- | --- |
+| Tracked ice excavator | `polar-excavator.glb` | `assets/blender/polar_base/polar-excavator.blend` |
+| Sublimation field camp | `sublimation-camp.glb` | `assets/blender/polar_base/sublimation-camp.blend` |
+| Beam receiver and Sabatier plant | `receiver-plant.glb` | `assets/blender/polar_base/receiver-plant.blend` |
+| Polar cryogenic farm | `polar-cryogenic-farm.glb` | `assets/blender/polar_base/polar-cryogenic-farm.blend` |
+| Rim power towers | `polar-power-towers.glb` | `assets/blender/polar_base/polar-power-towers.blend` |
+| Polar nuclear station | `polar-nuclear-station.glb` | `assets/blender/polar_base/polar-nuclear-station.blend` |
+| Polar surface habitat | `polar-habitat.glb` | `assets/blender/polar_base/polar-habitat.blend` |
+
+| Field | Value |
+| --- | --- |
+| Authoring source | `assets/blender/polar_base/generate_polar_base.py` |
+| Origin | Original procedural geometry and materials created for SELENE-ISRU |
+| External dependencies | None |
+| License | CC0 1.0 Universal |
+| Runtime format | Binary glTF 2.0, optimized with Blender's bundled meshopt exporter |
+
+The generator rebuilds the seven editable `.blend` sources, optimized runtime GLBs, and measured `asset-metrics.json`. Named pivots and material roles are part of the runtime contract. No downloaded texture, mesh, HDRI, font, paid asset, or restrictively licensed material is included.

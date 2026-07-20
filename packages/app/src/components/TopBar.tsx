@@ -24,6 +24,16 @@ const EQUATORIAL_EQUIPMENT = [
   ["habitat", "Surface habitat"]
 ] as const;
 
+const POLAR_EQUIPMENT = [
+  ["excavator", "Polar ice excavator"],
+  ["tents", "Sublimation camp"],
+  ["receiver", "Receiver + Sabatier"],
+  ["tanks", "Polar cryogenic farm"],
+  ["towers", "Rim power towers"],
+  ["station", "Nuclear power station"],
+  ["habitat", "Polar habitat"]
+] as const;
+
 export function TopBar(): React.JSX.Element {
   const site = useStore((s) => s.params.site);
   const setParam = useStore((s) => s.setParam);
@@ -78,7 +88,7 @@ function DesktopActions(): React.JSX.Element {
   );
 }
 
-function EquipmentDropdown(): React.JSX.Element | null {
+function EquipmentDropdown(): React.JSX.Element {
   const site = useStore((s) => s.params.site);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -96,9 +106,7 @@ function EquipmentDropdown(): React.JSX.Element | null {
     return () => document.removeEventListener("pointerdown", onDoc);
   }, [open]);
 
-  if (site !== "equatorial") {
-    return null;
-  }
+  const equipment = site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT;
 
   return (
     <div className="presets" ref={ref}>
@@ -107,7 +115,7 @@ function EquipmentDropdown(): React.JSX.Element | null {
       </button>
       {open && (
         <div className="presets-menu" role="menu">
-          {EQUATORIAL_EQUIPMENT.map(([key, label]) => (
+          {equipment.map(([key, label]) => (
             <button
               key={key}
               role="menuitem"
@@ -383,26 +391,22 @@ function MobileMenu(): React.JSX.Element {
               {tour.label}
             </button>
           ))}
-          {site === "equatorial" && (
-            <>
-              <div className="presets-section">ASSETS</div>
-              {EQUATORIAL_EQUIPMENT.map(([key, label]) => (
-                <button
-                  key={key}
-                  role="menuitem"
-                  className="presets-item"
-                  onClick={() => {
-                    const store = useStore.getState();
-                    store.setUi({ selectedAsset: key });
-                    store.flyTo(key);
-                    setOpen(false);
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </>
-          )}
+          <div className="presets-section">ASSETS</div>
+          {(site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT).map(([key, label]) => (
+            <button
+              key={key}
+              role="menuitem"
+              className="presets-item"
+              onClick={() => {
+                const store = useStore.getState();
+                store.setUi({ selectedAsset: key });
+                store.flyTo(key);
+                setOpen(false);
+              }}
+            >
+              {label}
+            </button>
+          ))}
           <div className="presets-section">PRESETS</div>
           {PRESETS.map((p) => (
             <button

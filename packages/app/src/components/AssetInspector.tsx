@@ -4,16 +4,6 @@ import { formatQtyText } from "../lib/format";
 import { useStore } from "../state/store";
 import { ParamRow } from "./ParamRow";
 
-type AssetKey =
-  | "excavator"
-  | "hauler"
-  | "reactor"
-  | "castingYard"
-  | "tanks"
-  | "station"
-  | "pad"
-  | "habitat";
-
 interface MetricValue {
   label: string;
   value: string;
@@ -29,7 +19,7 @@ interface AssetConfig {
   metrics: (result: SimResult, params: SimParams) => MetricValue[];
 }
 
-const CONFIG: Record<AssetKey, AssetConfig> = {
+const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
   excavator: {
     id: "EX-01",
     title: "EXCAVATION ROVER",
@@ -184,9 +174,141 @@ const CONFIG: Record<AssetKey, AssetConfig> = {
   }
 };
 
-function isAssetKey(value: string | null): value is AssetKey {
-  return value !== null && value in CONFIG;
-}
+const POLAR_CONFIG: Record<string, AssetConfig> = {
+  excavator: {
+    id: "PX-01",
+    title: "POLAR ICE EXCAVATOR",
+    group: "excavation",
+    module: "excavation",
+    controlLabels: {
+      zDepth: "Cut depth",
+      wBlade: "Cutter width",
+      vCut: "Traverse speed",
+      etaDrive: "Drive efficiency"
+    },
+    note: "Tracked ground contact, articulated cutter depth, auger speed, route cadence, and dust respond to the excavation load instead of looping as decoration.",
+    metrics: (r) => [
+      { label: "Icy feed", value: formatQtyText(r.production.regolithKgPerDay, "kg/day") },
+      { label: "Cutting force", value: formatQtyText(r.excavation.cuttingForceN, "N") },
+      { label: "Mechanical power", value: formatQtyText(r.excavation.mechPowerW, "W") },
+      { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") }
+    ]
+  },
+  tents: {
+    id: "SUB-01",
+    title: "SUBLIMATION FIELD CAMP",
+    group: "thermal",
+    module: "thermal",
+    controlLabels: {
+      chiIce: "Feedstock ice fraction",
+      Tpsr: "PSR temperature",
+      Tsub: "Sublimation temperature",
+      rPore: "Regolith pore radius"
+    },
+    note: "Three sealed extraction tents feed a shared condenser manifold; vent activity and cold-blue status lighting follow the calculated sublimation energy demand.",
+    metrics: (r, p) => [
+      { label: "Sublimation SEC", value: formatQtyText((r.thermal.secSub_JPerKg ?? 0) / 3.6e6, "kWh/kg") },
+      { label: "Ice fraction", value: `${(p.chiIce * 100).toFixed(2)}%` },
+      { label: "Conductivity", value: formatQtyText(r.thermal.conductivity_WPerMK, "W/(m·K)") },
+      { label: "Knudsen diffusion", value: formatQtyText(r.thermal.knudsenD_M2PerS, "m²/s") }
+    ]
+  },
+  receiver: {
+    id: "BR-01",
+    title: "BEAM RECEIVER + SABATIER PLANT",
+    group: "sabatier",
+    module: "sabatier",
+    controlLabels: {
+      Vel: "Electrolyzer voltage",
+      etaFaradayEl: "Faradaic efficiency",
+      fConversion: "Sabatier conversion",
+      Tsabatier: "Reactor temperature"
+    },
+    note: "The restrained beam terminates on a serviceable absorber deck. The reactor skid and moving valve appear only when the Sabatier loop is enabled.",
+    metrics: (r) => [
+      { label: "Beamed floor power", value: formatQtyText(r.power.beamedFloorPowerW ?? 0, "W") },
+      { label: "CH₄ output", value: formatQtyText(r.production.ch4KgPerDay, "kg/day") },
+      { label: "H₂ output", value: formatQtyText(r.production.h2KgPerDay, "kg/day") },
+      { label: "O₂ coproduct", value: formatQtyText(r.production.o2KgPerDay, "kg/day") }
+    ]
+  },
+  tanks: {
+    id: "PCR-01",
+    title: "POLAR CRYOGENIC FARM",
+    group: "cryo",
+    module: "cryo",
+    controlLabels: {
+      reserveDays: "Reserve duration",
+      Nmli: "MLI layers",
+      Ttank: "Tank temperature",
+      secLiquefaction: "Liquefaction SEC"
+    },
+    note: "Tank count follows reserve volume while fill columns, status intensity, and low-opacity vapor follow storage state and calculated boil-off.",
+    metrics: (r, p) => [
+      { label: "Boil-off", value: formatQtyText(r.cryo.boiloffKgPerDay, "kg/day") },
+      { label: "Heat leak", value: formatQtyText(r.cryo.qLeakW, "W") },
+      { label: "Cryocooler", value: formatQtyText(r.cryo.cryocoolerPowerW, "W") },
+      { label: "Reserve", value: formatQtyText(p.reserveDays, "days", 1) }
+    ]
+  },
+  towers: {
+    id: "PT-01",
+    title: "RIM POWER TOWERS",
+    group: "power",
+    module: "power",
+    controlLabels: {
+      thetaSun: "Solar incidence",
+      etaCell: "Cell efficiency",
+      thetaDivBeam: "Beam divergence",
+      rReceiver: "Receiver radius"
+    },
+    note: "Three terrain-grounded lattice towers track the lunar cycle and feed a narrower, readable power column to the crater-floor receiver.",
+    metrics: (r) => [
+      { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
+      { label: "Solar array", value: formatQtyText(r.power.solarArrayM2, "m²") },
+      { label: "Beamed floor", value: formatQtyText(r.power.beamedFloorPowerW ?? 0, "W") },
+      { label: "Architecture", value: r.power.architecture.toUpperCase() }
+    ]
+  },
+  station: {
+    id: "PN-01",
+    title: "POLAR NUCLEAR STATION",
+    group: "power",
+    module: "power",
+    controlLabels: {
+      Tsource: "Hot-side temperature",
+      Tsink: "Sink temperature",
+      alphaSpecific: "Nuclear specific mass",
+      epsRad: "Radiator emissivity"
+    },
+    note: "The rim reactor appears for the nuclear architecture; its radiator span scales with rejected heat and its switchgear lighting follows grid demand.",
+    metrics: (r) => [
+      { label: "Architecture", value: r.power.architecture.toUpperCase() },
+      { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
+      { label: "Nuclear mass", value: formatQtyText(r.power.nuclearMassKg, "kg") },
+      { label: "Radiator area", value: formatQtyText(r.power.radiatorM2, "m²") }
+    ]
+  },
+  habitat: {
+    id: "PHAB-01",
+    title: "POLAR SURFACE HABITAT",
+    group: "construction",
+    module: "construction",
+    controlLabels: {
+      shieldDesignM: "Designed shielding",
+      areaHabRoof: "Habitat roof area",
+      Pinternal: "Internal pressure",
+      rhoSlag: "Shield material density"
+    },
+    note: "The pressure shell, airlock, radiator, human-scale windows, and quantized shielding sections provide a readable occupied anchor on the crater floor.",
+    metrics: (r, p) => [
+      { label: "Shield design", value: formatQtyText(r.construction.shieldDesignM, "m", 2) },
+      { label: "Time to shield", value: formatQtyText(r.construction.daysToShieldHabitat, "days") },
+      { label: "Internal pressure", value: formatQtyText(p.Pinternal, "Pa") },
+      { label: "Roof area", value: formatQtyText(p.areaHabRoof, "m²") }
+    ]
+  }
+};
 
 export function AssetInspector(): React.JSX.Element | null {
   const selected = useStore((state) => state.ui.selectedAsset);
@@ -196,11 +318,14 @@ export function AssetInspector(): React.JSX.Element | null {
   const setUi = useStore((state) => state.setUi);
   const flyTo = useStore((state) => state.flyTo);
 
-  if (!isAssetKey(selected) || site !== "equatorial") {
+  const config = selected === null
+    ? undefined
+    : (site === "equatorial" ? EQUATORIAL_CONFIG : POLAR_CONFIG)[selected];
+
+  if (config === undefined) {
     return null;
   }
 
-  const config = CONFIG[selected];
   const controls = paramsForGroup(config.group).filter((def) => def.key in config.controlLabels);
   const warnings = result.warnings.filter((warning) => warning.module === config.module);
   const status = warnings.some((warning) => warning.severity === "alarm")
@@ -223,7 +348,7 @@ export function AssetInspector(): React.JSX.Element | null {
 
       <div className="reactor-status-row">
         <span className={`reactor-status ${status}`}>{status.toUpperCase()}</span>
-        <button type="button" className="reactor-focus" onClick={() => flyTo(selected)}>
+        <button type="button" className="reactor-focus" onClick={() => selected !== null && flyTo(selected)}>
           FOCUS CAMERA
         </button>
       </div>

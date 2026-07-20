@@ -16,88 +16,52 @@ import {
 import type { TweenManager } from "../tween";
 import {
   disposeObject,
-  flatMat,
-  makeBoltRing,
-  makeCableRun,
+  makeContactShadow,
   makeCraterStrata,
-  makeEquipmentCluster,
   makeGlowTexture,
-  makeHabitat,
-  makeLadder,
-  makeMonolithStation,
   makePowerLine,
-  makeRibBands,
-  makeRover,
+  makeRockScatter,
   makeScuffedRegolith,
   makeTerrain,
-  materialMaps,
-  materialsOf,
-  TankFarm,
-  type Habitat,
-  type MonolithStation,
-  type Rover,
-  makeContactShadow,
-  makeGreebles,
-  makeRockScatter,
-  roundedBox
+  makeTerrainHeightSampler
 } from "./shared";
 import { enableBloom } from "../layers";
 import type { Diorama } from "./types";
+import {
+  PolarEquipmentAsset,
+  type PolarEquipmentKey
+} from "../assets/PolarEquipmentAsset";
 
 const FLOOR_Y = -10;
 const RIM_R = 57;
-const RECEIVER_POS = new THREE.Vector3(0, FLOOR_Y, -6);
-const TENTS_POS = new THREE.Vector3(5, FLOOR_Y, -1);
-const TANKS_POS = new THREE.Vector3(15, FLOOR_Y, 3);
-const HABITAT_POS = new THREE.Vector3(-15, FLOOR_Y, 3);
+const RECEIVER_POS = new THREE.Vector3(0, 0, -6);
+const TENTS_POS = new THREE.Vector3(6, 0, 1.5);
+const TANKS_POS = new THREE.Vector3(17, 0, 5);
+const HABITAT_POS = new THREE.Vector3(-17, 0, 5);
+const STATION_POS = new THREE.Vector3(Math.sin(0.55) * RIM_R, 0, -Math.cos(0.55) * RIM_R);
+const TOWER_WORLD_POSITIONS = [
+  new THREE.Vector3(-18, 0, -RIM_R - 3.2),
+  new THREE.Vector3(0, 0, -RIM_R),
+  new THREE.Vector3(18, 0, -RIM_R - 3.2)
+] as const;
 
 function smoothstep(a: number, b: number, x: number): number {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 }
 
-/** crater profile: shadowed floor, rising wall, rim ridge, falloff outside */
+/** Crater profile: cold floor, terraced wall, raised rim, natural exterior. */
 function craterCarve(x: number, z: number, h: number): number {
   const r = Math.hypot(x, z);
   const rise = smoothstep(34, 52, r);
   const rim = 9 * Math.exp(-((r - RIM_R) ** 2) / 42);
   const floor = FLOOR_Y + h * 0.16;
   const wallRelief = h * (0.1 + 0.22 * rise);
-  const terraces =
-    Math.sin(r * 0.92) *
-    0.34 *
-    smoothstep(35, 41, r) *
-    (1 - smoothstep(53, 59, r));
+  const terraces = Math.sin(r * 0.92) * 0.34 * smoothstep(35, 41, r) * (1 - smoothstep(53, 59, r));
   const inner = floor + wallRelief + terraces;
   let height = inner + (8 - inner) * rise + rim;
   height += (h - height) * smoothstep(64, 86, r);
   return height;
-}
-
-/** rim surface height at radius RIM_R for given angle */
-function rimY(): number {
-  return 8 + 9;
-}
-
-function makeBeamMotes(count: number, beamLen: number): THREE.BufferGeometry {
-  let seed = 0x5e1e9;
-  const rand = (): number => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-  const positions = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const a = rand() * Math.PI * 2;
-    const r = Math.sqrt(rand()) * 0.85;
-    positions[i * 3] = Math.cos(a) * r;
-    positions[i * 3 + 1] = (rand() - 0.5) * beamLen;
-    positions[i * 3 + 2] = Math.sin(a) * r;
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  return geo;
 }
 
 class PolarDustPuff {
@@ -111,7 +75,7 @@ class PolarDustPuff {
       const sprite = new THREE.Sprite(
         new THREE.SpriteMaterial({
           map: texture,
-          color: 0x56606b,
+          color: 0x66717d,
           transparent: true,
           opacity: 0,
           depthWrite: false
@@ -151,49 +115,140 @@ class PolarDustPuff {
   }
 }
 
+class PolarCryoVapor {
+  readonly group = new THREE.Group();
+  private puffs: THREE.Mesh[] = [];
+  private rate = 0;
+  private count = 1;
+
+  constructor(count: number) {
+    for (let i = 0; i < count; i++) {
+      const puff = new THREE.Mesh(
+        new THREE.SphereGeometry(0.32, 8, 6),
+        new THREE.MeshBasicMaterial({
+          color: 0xc8f3ff,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        })
+      );
+      this.group.add(puff);
+      this.puffs.push(puff);
+    }
+  }
+
+  setState(count: number, rate: number): void {
+    this.count = Math.max(1, Math.min(8, count));
+    this.rate = THREE.MathUtils.clamp(rate, 0, 1);
+  }
+
+  tick(t: number, reduced: boolean): boolean {
+    const tankXZ = [
+      [-4.8, 2.1], [-1.6, 2.1], [1.6, 2.1], [4.8, 2.1],
+      [-4.8, -2.1], [-1.6, -2.1], [1.6, -2.1], [4.8, -2.1]
+    ];
+    this.puffs.forEach((puff, i) => {
+      const visible = this.rate > 0.015 && i < Math.max(1, Math.round(this.rate * this.puffs.length * 0.34));
+      puff.visible = visible;
+      if (!visible) {
+        return;
+      }
+      const phase = reduced ? 0.35 : (t * (0.12 + this.rate * 0.2) + i * 0.137) % 1;
+      const [x, z] = tankXZ[i % this.count]!;
+      puff.position.set(x + Math.sin(i * 2.17) * 0.16, 4.1 + phase * 2.2, z + Math.cos(i * 1.71) * 0.16);
+      (puff.material as THREE.MeshBasicMaterial).opacity = this.rate * Math.sin(phase * Math.PI) * 0.11;
+      puff.scale.setScalar(0.42 + phase * 0.42);
+    });
+    return !reduced && this.rate > 0.015;
+  }
+}
+
 export class PolarDiorama implements Diorama {
   readonly group = new THREE.Group();
   readonly assets: Record<string, THREE.Object3D> = {};
 
-  private rovers: Rover[] = [];
+  private equipment: Record<PolarEquipmentKey, PolarEquipmentAsset>;
+  private excavator: PolarEquipmentAsset;
+  private tents: PolarEquipmentAsset;
+  private receiver: PolarEquipmentAsset;
+  private tanks: PolarEquipmentAsset;
+  private towers: PolarEquipmentAsset;
+  private station: PolarEquipmentAsset;
+  private habitat: PolarEquipmentAsset;
   private beam: THREE.Mesh;
   private beamMat: THREE.MeshBasicMaterial;
-  private beamVolume: THREE.Mesh;
-  private beamVolumeMat: THREE.ShaderMaterial;
   private beamCore: THREE.Mesh;
   private beamCoreMat: THREE.MeshBasicMaterial;
-  private beamMotes: THREE.Points;
-  private beamMotesMat: THREE.PointsMaterial;
   private splash: THREE.Mesh;
   private splashMat: THREE.MeshBasicMaterial;
-  private receiverMat: THREE.MeshStandardMaterial;
-  private tentMats: THREE.MeshStandardMaterial[] = [];
-  private tentWisps: THREE.Sprite[] = [];
-  private tanks: TankFarm;
-  private monolith: MonolithStation;
-  private towersGroup: THREE.Group;
-  private habitat: Habitat;
   private lines: THREE.Mesh[] = [];
+  private tentWisps: THREE.Sprite[] = [];
   private dust: PolarDustPuff;
+  private cryoVapor: PolarCryoVapor;
+  private sampleTerrain: (x: number, z: number) => number;
 
   private loopPeriod = 60;
   private beamTargetOpacity = 0;
   private lastDustPass = -1;
   private architecture: "solar" | "nuclear" | null = null;
+  private tankCountState = 1;
+  private tankFillState = 1;
+  private tentGlow = 0.3;
+  private receiverGlow = 0.2;
+  private gridGlow = 0.2;
+  private radiatorScale = 1;
+  private shieldSections = 1;
+  private sabatierEnabled = false;
+  private solarDaylight = true;
+  private solarPhase = 0;
 
-  constructor(quality: QualityProfile) {
+  constructor(quality: QualityProfile, onAssetReady: () => void = () => undefined) {
     const glowTex = makeGlowTexture("160,220,250");
     const detail = quality.detailLevel;
-    const greebleBudget = quality.greebleCap;
 
-    const terrain = makeTerrain({
-      carve: craterCarve,
+    const baseSampler = makeTerrainHeightSampler({ carve: craterCarve, noiseAmp: 1.6 });
+    const gradeSpecs = [
+      { position: RECEIVER_POS, radius: 8.0 },
+      { position: TENTS_POS, radius: 8.4 },
+      { position: TANKS_POS, radius: 8.5 },
+      { position: HABITAT_POS, radius: 7.8 },
+      { position: STATION_POS, radius: 8.5 },
+      ...TOWER_WORLD_POSITIONS.map((position) => ({ position, radius: 3.6 }))
+    ];
+    const grades = gradeSpecs.map(({ position, radius }) => ({
+      position,
+      radius,
+      y: baseSampler(position.x, position.z)
+    }));
+    const terrainOpts = {
       noiseAmp: 1.6,
-      segments: quality.terrainSegments
-    });
+      segments: quality.terrainSegments,
+      carve: (x: number, z: number, h: number): number => {
+        let height = craterCarve(x, z, h);
+        for (const grade of grades) {
+          const distance = Math.hypot(x - grade.position.x, z - grade.position.z);
+          if (distance < grade.radius) {
+            const blend = THREE.MathUtils.smoothstep(grade.radius - distance, 0, 1.8);
+            height = THREE.MathUtils.lerp(height, grade.y, blend);
+          }
+        }
+        return height;
+      }
+    };
+    this.sampleTerrain = makeTerrainHeightSampler(terrainOpts);
+    const groundAt = (position: THREE.Vector3): number => this.sampleTerrain(position.x, position.z);
+
+    const terrain = makeTerrain(terrainOpts);
+    const terrainMaterial = terrain.material as THREE.MeshStandardMaterial;
+    terrainMaterial.emissive.setHex(0x20272d);
+    terrainMaterial.emissiveIntensity = 0.72;
     this.group.add(terrain);
-    const floorScuff = makeScuffedRegolith(46, 32, 91, 0.32);
-    floorScuff.position.set(3, FLOOR_Y + 0.11, -2);
+    // A cold, non-directional bounce keeps the permanently shadowed floor
+    // legible without pretending it is sunlit.
+    this.group.add(new THREE.HemisphereLight(0x8fa9be, 0x313940, 0.62));
+    const floorScuff = makeScuffedRegolith(48, 34, 91, 0.3);
+    floorScuff.position.set(3, groundAt(RECEIVER_POS) + 0.08, -2);
     this.group.add(floorScuff);
     this.group.add(makeCraterStrata([37, 41, 45, 49, 53].slice(0, 3 + detail), (radius) => craterCarve(radius, 0, 0)));
     this.group.add(
@@ -203,233 +258,51 @@ export class PolarDiorama implements Diorama {
         radiusX: 32,
         radiusZ: 22,
         seed: 91,
-        color: 0x333842
+        color: 0x3a424b
       })
     );
-    const rimScatter = makeRockScatter({
-      count: Math.round(quality.rockCap * 0.22),
-      center: new THREE.Vector3(0, rimY() + 0.22, -RIM_R + 2),
-      radiusX: 46,
-      radiusZ: 7,
-      seed: 132,
-      color: 0x4b4e52
-    });
-    rimScatter.castShadow = false;
-    this.group.add(rimScatter);
 
-    /* 1. rim arc with solar towers */
-    this.towersGroup = new THREE.Group();
-    const mastMat = flatMat(SCENE_COLORS.metal, {
-      ...materialMaps("metal"),
-      metalness: 0.4,
-      roughness: 0.55,
-      envMapIntensity: 0.5
-    });
-    const crownMat = flatMat(SCENE_COLORS.solar, {
-      ...materialMaps("panel"),
-      metalness: 0.6,
-      roughness: 0.3,
-      emissive: SCENE_COLORS.solar,
-      emissiveIntensity: 0.18
-    });
-    const towerAngles = [-0.32, 0, 0.32];
-    for (const a of towerAngles) {
-      const tower = new THREE.Group();
-      const x = Math.sin(a) * RIM_R;
-      const z = -Math.cos(a) * RIM_R;
-      tower.position.set(x, rimY(), z);
-      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.55, 14, 18), mastMat);
-      mast.position.y = 7;
-      mast.castShadow = true;
-      tower.add(mast);
-      const basePad = new THREE.Mesh(roundedBox(2.0, 0.18, 2.0, 0.06, 1), mastMat);
-      basePad.position.y = 0.09;
-      basePad.castShadow = true;
-      tower.add(basePad);
-      tower.add(makeRibBands(0.58, 13.4, 4 + detail, SCENE_COLORS.metalDark));
-      tower.add(makeBoltRing({ radius: 0.66, y: 1.0, count: 10 + detail * 2, size: 0.045 }));
-      const ladder = makeLadder(10.6, 0.34, 9 + detail * 2);
-      ladder.position.set(0, 1.4, 0.63);
-      tower.add(ladder);
-      for (let p = 0; p < 3; p++) {
-        const crown = new THREE.Mesh(roundedBox(4.4, 0.12, 1.6, 0.035, 1), crownMat);
-        crown.position.y = 14.2;
-        crown.rotation.y = (p / 3) * Math.PI;
-        crown.rotation.z = 0.12;
-        enableBloom(crown);
-        tower.add(crown);
-      }
-      tower.add(
-        makeCableRun(
-          [
-            new THREE.Vector3(0.42, 2.2, 0.42),
-            new THREE.Vector3(0.78, 7.2, 0.2),
-            new THREE.Vector3(0.44, 13.2, -0.4),
-            new THREE.Vector3(1.5, 14.1, -0.2)
-          ],
-          SCENE_COLORS.metalDark,
-          0.035
-        )
-      );
-      tower.add(makeGreebles({ count: Math.max(6, Math.round(greebleBudget * 0.035)), radius: 0.9, height: 11.5, seed: 30 + Math.round((a + 1) * 100) }));
-      this.towersGroup.add(tower);
-    }
-    this.group.add(this.towersGroup);
-    this.assets.towers = this.towersGroup;
+    const equipmentReady = (): void => {
+      this.bindLoadedEquipment();
+      onAssetReady();
+    };
 
-    /* 2. the beam — rim crown → floor receiver, additive, solar→cryo gradient */
-    const crownWorld = new THREE.Vector3(0, rimY() + 14.2, -RIM_R);
-    const beamVec = new THREE.Vector3().subVectors(RECEIVER_POS, crownWorld);
+    this.towers = new PolarEquipmentAsset("towers", equipmentReady);
+    this.towers.group.position.set(0, groundAt(TOWER_WORLD_POSITIONS[1]) + 0.015, -RIM_R);
+    this.group.add(this.towers.group);
+    this.assets.towers = this.towers.group;
+
+    const crownWorld = new THREE.Vector3(0, groundAt(TOWER_WORLD_POSITIONS[1]) + 14.3, -RIM_R);
+    const receiverGround = groundAt(RECEIVER_POS);
+    const beamTarget = new THREE.Vector3(RECEIVER_POS.x, receiverGround + 1.0, RECEIVER_POS.z);
+    const beamVec = new THREE.Vector3().subVectors(beamTarget, crownWorld);
     const beamLen = beamVec.length();
-    const beamGeo = new THREE.CylinderGeometry(0.82, 1.16, beamLen, 48, 10, true);
-    // vertex colors: +y end (rim) solar, -y end (floor) cryo
-    const positions = beamGeo.attributes.position as THREE.BufferAttribute;
-    const colors = new Float32Array(positions.count * 3);
-    const solar = new THREE.Color(SCENE_COLORS.solar);
-    const cryo = new THREE.Color(SCENE_COLORS.cryo);
-    const mix = new THREE.Color();
-    for (let i = 0; i < positions.count; i++) {
-      const u = (positions.getY(i) / beamLen + 0.5);
-      mix.copy(cryo).lerp(solar, u);
-      colors[i * 3] = mix.r;
-      colors[i * 3 + 1] = mix.g;
-      colors[i * 3 + 2] = mix.b;
-    }
-    beamGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     this.beamMat = new THREE.MeshBasicMaterial({
-      vertexColors: true,
+      color: 0xaeefff,
       transparent: true,
       opacity: 0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       side: THREE.DoubleSide
     });
-    this.beam = new THREE.Mesh(beamGeo, this.beamMat);
-    this.beam.position.copy(crownWorld).add(beamVec.clone().multiplyScalar(0.5));
-    this.beam.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 1, 0),
-      beamVec.clone().normalize().negate()
-    );
+    this.beam = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.55, beamLen, 32, 4, true), this.beamMat);
+    this.beam.position.copy(crownWorld).addScaledVector(beamVec, 0.5);
+    this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), beamVec.clone().normalize());
     this.beam.visible = false;
-    this.beamVolumeMat = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uOpacity: { value: 0 }
-      },
-      vertexColors: true,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      vertexShader: `
-        varying vec2 vUv;
-        varying vec3 vColor;
-        void main() {
-          vUv = uv;
-          vColor = color;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float uTime;
-        uniform float uOpacity;
-        varying vec2 vUv;
-        varying vec3 vColor;
-        float hash(vec2 p) {
-          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-        }
-        float noise(vec2 p) {
-          vec2 i = floor(p);
-          vec2 f = fract(p);
-          float a = hash(i);
-          float b = hash(i + vec2(1.0, 0.0));
-          float c = hash(i + vec2(0.0, 1.0));
-          float d = hash(i + vec2(1.0, 1.0));
-          vec2 u = f * f * (3.0 - 2.0 * f);
-          return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-        }
-        void main() {
-          float edge = smoothstep(0.0, 0.18, vUv.y) * (1.0 - smoothstep(0.82, 1.0, vUv.y));
-          float column = smoothstep(0.02, 0.5, abs(vUv.x - 0.5));
-          float n = noise(vec2(vUv.x * 7.0 + uTime * 0.18, vUv.y * 18.0 - uTime * 0.55));
-          float bands = 0.55 + 0.45 * sin(vUv.y * 42.0 + n * 5.0 - uTime * 2.0);
-          float a = uOpacity * edge * column * (0.38 + 0.62 * bands);
-          gl_FragColor = vec4(vColor * (0.85 + n * 0.35), a);
-        }
-      `
-    });
-    const beamVolumeGeo = new THREE.CylinderGeometry(1.1, 1.42, beamLen, 48, 16, true);
-    const volumePositions = beamVolumeGeo.attributes.position as THREE.BufferAttribute;
-    const volumeColors = new Float32Array(volumePositions.count * 3);
-    for (let i = 0; i < volumePositions.count; i++) {
-      const u = volumePositions.getY(i) / beamLen + 0.5;
-      mix.copy(cryo).lerp(solar, u);
-      volumeColors[i * 3] = mix.r;
-      volumeColors[i * 3 + 1] = mix.g;
-      volumeColors[i * 3 + 2] = mix.b;
-    }
-    beamVolumeGeo.setAttribute("color", new THREE.BufferAttribute(volumeColors, 3));
-    this.beamVolume = new THREE.Mesh(beamVolumeGeo, this.beamVolumeMat);
-    enableBloom(this.beamVolume);
-    this.beam.add(this.beamVolume);
+    enableBloom(this.beam);
     this.beamCoreMat = new THREE.MeshBasicMaterial({
-      color: 0xdffbff,
+      color: 0xf1fdff,
       transparent: true,
       opacity: 0,
       blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
+      depthWrite: false
     });
-    this.beamCore = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, beamLen, 24, 1, true), this.beamCoreMat);
-    enableBloom(this.beamCore);
+    this.beamCore = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, beamLen, 16, 1, true), this.beamCoreMat);
     this.beam.add(this.beamCore);
-    this.beamMotesMat = new THREE.PointsMaterial({
-      color: 0xe5fbff,
-      size: 1.8,
-      sizeAttenuation: false,
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    });
-    this.beamMotes = new THREE.Points(makeBeamMotes(Math.round(quality.effectCap * 0.78), beamLen), this.beamMotesMat);
-    enableBloom(this.beamMotes);
-    this.beam.add(this.beamMotes);
+    enableBloom(this.beamCore);
     this.group.add(this.beam);
     this.assets.beam = this.beam;
 
-    /* 3. floor receiver + sublimation tents */
-    const receiver = new THREE.Group();
-    receiver.position.copy(RECEIVER_POS);
-    this.receiverMat = flatMat(SCENE_COLORS.cryo, {
-      ...materialMaps("metal"),
-      emissive: SCENE_COLORS.cryo,
-      emissiveIntensity: 0.15,
-      metalness: 0.4,
-      roughness: 0.4,
-      envMapIntensity: 0.6
-    });
-    const dish = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3, 0.5, 40), this.receiverMat);
-    dish.position.y = 0.25;
-    enableBloom(dish);
-    receiver.add(dish);
-    const mast2 = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.2, 16), this.receiverMat);
-    mast2.position.y = 1.6;
-    enableBloom(mast2);
-    receiver.add(mast2);
-    const receiverHatch = new THREE.Mesh(
-      roundedBox(1.0, 0.14, 0.72, 0.04, 1),
-      flatMat(0x26313b, {
-        ...materialMaps("metal"),
-        metalness: 0.42,
-        roughness: 0.48,
-        envMapIntensity: 0.5
-      })
-    );
-    receiverHatch.position.set(-1.55, 0.58, 1.55);
-    receiverHatch.rotation.y = 0.65;
-    receiverHatch.castShadow = true;
-    receiver.add(receiverHatch);
     this.splashMat = new THREE.MeshBasicMaterial({
       color: SCENE_COLORS.cryo,
       transparent: true,
@@ -438,258 +311,130 @@ export class PolarDiorama implements Diorama {
       depthWrite: false,
       side: THREE.DoubleSide
     });
-    this.splash = new THREE.Mesh(new THREE.RingGeometry(1.6, 4.2, 64), this.splashMat);
+    this.splash = new THREE.Mesh(new THREE.RingGeometry(1.8, 4.3, 56), this.splashMat);
     this.splash.rotation.x = -Math.PI / 2;
-    this.splash.position.y = 0.08;
+    this.splash.position.set(RECEIVER_POS.x, receiverGround + 0.07, RECEIVER_POS.z);
+    this.splash.visible = false;
     enableBloom(this.splash);
-    receiver.add(this.splash);
-    receiver.add(makeBoltRing({ radius: 2.85, y: 0.56, count: 24 + detail * 6, size: 0.075, color: SCENE_COLORS.metal }));
-    const receiverBoxes = makeEquipmentCluster({
-      count: Math.max(6, Math.round(greebleBudget * 0.055)),
-      width: 5.8,
-      depth: 2.2,
-      seed: 152,
-      color: SCENE_COLORS.metal
-    });
-    receiverBoxes.position.set(0, 0.34, 3.8);
-    receiver.add(receiverBoxes);
-    receiver.add(
-      makeCableRun(
-        [
-          new THREE.Vector3(-3.4, 0.35, 2.4),
-          new THREE.Vector3(-2.2, 0.72, 3.6),
-          new THREE.Vector3(1.8, 0.72, 3.8),
-          new THREE.Vector3(3.5, 0.35, 2.3)
-        ],
-        SCENE_COLORS.metalDark,
-        0.05
-      )
-    );
-    receiver.add(makeGreebles({ count: Math.max(8, Math.round(greebleBudget * 0.06)), radius: 3.1, height: 1.2, seed: 52, color: SCENE_COLORS.cryo }));
-    this.group.add(receiver);
-    this.assets.receiver = receiver;
-    const receiverShadow = makeContactShadow(4.8, 4, 0.38);
-    receiverShadow.position.set(RECEIVER_POS.x, FLOOR_Y + 0.04, RECEIVER_POS.z);
-    this.group.add(receiverShadow);
+    this.group.add(this.splash);
 
-    const tents = new THREE.Group();
-    tents.position.copy(TENTS_POS);
-    const coldTrap = new THREE.Mesh(
-      roundedBox(1.6, 1.2, 1.6, 0.09, 1),
-      flatMat(SCENE_COLORS.metalDark, { ...materialMaps("metal"), metalness: 0.5, roughness: 0.5 })
-    );
-    coldTrap.position.set(5.4, 0.6, 0.5);
-    tents.add(coldTrap);
-    for (let i = 0; i < 3; i++) {
-      const mat = flatMat(0x39424d, {
-        ...materialMaps("metal"),
-        emissive: SCENE_COLORS.cryo,
-        emissiveIntensity: 0.25,
-        roughness: 0.7,
-        envMapIntensity: 0.38
-      });
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(1.9, 32, 18, 0, Math.PI * 2, 0, Math.PI / 2),
-        mat
-      );
-      dome.scale.y = 0.62;
-      dome.position.set(i * 3.4 - 2, 0, (i % 2) * 2.2);
-      dome.castShadow = true;
-      enableBloom(dome);
-      tents.add(dome);
-      this.tentMats.push(mat);
+    this.receiver = new PolarEquipmentAsset("receiver", equipmentReady);
+    this.receiver.group.position.set(RECEIVER_POS.x, receiverGround + 0.015, RECEIVER_POS.z);
+    this.group.add(this.receiver.group);
+    this.assets.receiver = this.receiver.group;
 
-      const wisp = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: glowTex,
-          color: SCENE_COLORS.cryo,
-          transparent: true,
-          opacity: 0,
-          depthWrite: false
-        })
-      );
-      wisp.scale.setScalar(1);
-      wisp.position.copy(dome.position).setY(2);
-      enableBloom(wisp);
-      tents.add(wisp);
-      this.tentWisps.push(wisp);
-    }
-    const tentGear = makeEquipmentCluster({
-      count: Math.max(7, Math.round(greebleBudget * 0.055)),
-      width: 8.4,
-      depth: 4.2,
-      seed: 173,
-      color: SCENE_COLORS.metalDark
-    });
-    tentGear.position.set(1.7, 0.24, 3.8);
-    tents.add(tentGear);
-    tents.add(
-      makeCableRun(
-        [
-          new THREE.Vector3(-3.4, 0.35, 2.9),
-          new THREE.Vector3(0.4, 0.42, 3.6),
-          new THREE.Vector3(4.7, 0.5, 2.7),
-          new THREE.Vector3(5.4, 0.8, 0.5)
-        ],
-        SCENE_COLORS.metalDark,
-        0.045
-      )
-    );
-    this.group.add(tents);
-    this.assets.tents = tents;
-    const tentShadow = makeContactShadow(8, 5, 0.34);
-    tentShadow.position.set(TENTS_POS.x + 1.5, FLOOR_Y + 0.04, TENTS_POS.z + 1.2);
-    this.group.add(tentShadow);
+    this.tents = new PolarEquipmentAsset("tents", equipmentReady);
+    this.tents.group.position.set(TENTS_POS.x, groundAt(TENTS_POS) + 0.015, TENTS_POS.z);
+    this.group.add(this.tents.group);
+    this.assets.tents = this.tents.group;
 
-    /* 4. ice hoppers/rovers with torque-dither arm */
-    for (let i = 0; i < 2; i++) {
-      const rover = makeRover(0x7e8894, true);
-      this.group.add(rover.group);
-      this.rovers.push(rover);
-    }
-    this.dust = new PolarDustPuff(glowTex, Math.max(10, Math.round(quality.effectCap * 0.2)));
-    this.group.add(this.dust.group);
-    this.assets.excavator = this.rovers[0].group;
+    this.excavator = new PolarEquipmentAsset("excavator", equipmentReady);
+    const excavatorStart = new THREE.Vector3(-11, 0, -10);
+    this.excavator.group.position.set(excavatorStart.x, groundAt(excavatorStart) + 0.045, excavatorStart.z);
+    this.group.add(this.excavator.group);
+    this.assets.excavator = this.excavator.group;
 
-    /* 5. rim nuclear option — radiators face the 40 K crater floor */
-    this.monolith = makeMonolithStation();
-    this.monolith.group.position.set(Math.sin(0.55) * RIM_R, rimY(), -Math.cos(0.55) * RIM_R);
-    this.monolith.group.lookAt(new THREE.Vector3(0, FLOOR_Y, 0));
-    this.monolith.group.rotateY(Math.PI / 2);
-    this.monolith.group.add(makeGreebles({ count: Math.max(10, Math.round(greebleBudget * 0.08)), radius: 2.7, height: 5.8, seed: 63 }));
-    const stationLadder = makeLadder(5.8, 0.5, 8 + detail);
-    stationLadder.position.set(0, 0.4, 1.05);
-    this.monolith.group.add(stationLadder);
-    this.group.add(this.monolith.group);
-    this.assets.station = this.monolith.group;
+    this.station = new PolarEquipmentAsset("station", equipmentReady);
+    this.station.group.position.set(STATION_POS.x, groundAt(STATION_POS) + 0.015, STATION_POS.z);
+    this.station.group.rotation.y = -0.55;
+    this.group.add(this.station.group);
+    this.assets.station = this.station.group;
 
-    /* 6. cryo farm + habitat on the floor, emissive accents light them */
-    this.tanks = new TankFarm(8, glowTex);
-    this.tanks.group.position.copy(TANKS_POS);
+    this.tanks = new PolarEquipmentAsset("tanks", equipmentReady);
+    this.tanks.group.position.set(TANKS_POS.x, groundAt(TANKS_POS) + 0.015, TANKS_POS.z);
     this.group.add(this.tanks.group);
     this.assets.tanks = this.tanks.group;
-    const tankShadow = makeContactShadow(10, 5.5, 0.32);
-    tankShadow.position.set(TANKS_POS.x, FLOOR_Y + 0.04, TANKS_POS.z + 2.6);
-    this.group.add(tankShadow);
 
-    this.habitat = makeHabitat();
-    this.habitat.group.position.copy(HABITAT_POS);
-    this.habitat.group.add(makeGreebles({ count: Math.max(8, Math.round(greebleBudget * 0.06)), radius: 3.7, height: 1.1, seed: 79 }));
-    this.habitat.group.add(
-      makeCableRun(
-        [
-          new THREE.Vector3(-2.8, 0.34, 2.1),
-          new THREE.Vector3(-3.3, 0.78, 0.4),
-          new THREE.Vector3(-2.7, 1.05, -1.7)
-        ],
-        SCENE_COLORS.metalDark,
-        0.05
-      )
-    );
+    this.habitat = new PolarEquipmentAsset("habitat", equipmentReady);
+    this.habitat.group.position.set(HABITAT_POS.x, groundAt(HABITAT_POS) + 0.015, HABITAT_POS.z);
     this.group.add(this.habitat.group);
     this.assets.habitat = this.habitat.group;
-    const habitatShadow = makeContactShadow(5.2, 4.6, 0.32);
-    habitatShadow.position.set(HABITAT_POS.x, FLOOR_Y + 0.04, HABITAT_POS.z);
-    this.group.add(habitatShadow);
 
-    /* accent lights — the PSR floor is lit by its own hardware, not the sun */
-    const floorLight = new THREE.PointLight(SCENE_COLORS.cryo, 60, 46, 1.8);
-    floorLight.position.set(RECEIVER_POS.x, FLOOR_Y + 6, RECEIVER_POS.z + 2);
+    const shadows: Array<[THREE.Vector3, number, number]> = [
+      [RECEIVER_POS, 7, 6], [TENTS_POS, 7, 5], [TANKS_POS, 12, 7], [HABITAT_POS, 6, 5], [STATION_POS, 8, 6]
+    ];
+    for (const [position, width, depth] of shadows) {
+      const shadow = makeContactShadow(width, depth, 0.28);
+      shadow.position.set(position.x, groundAt(position) + 0.025, position.z);
+      this.group.add(shadow);
+    }
+
+    this.cryoVapor = new PolarCryoVapor(Math.max(10, Math.round(quality.effectCap * 0.18)));
+    this.cryoVapor.group.position.copy(this.tanks.group.position);
+    this.group.add(this.cryoVapor.group);
+    this.dust = new PolarDustPuff(glowTex, Math.max(10, Math.round(quality.effectCap * 0.2)));
+    this.group.add(this.dust.group);
+
+    for (let i = 0; i < 3; i++) {
+      const wisp = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: glowTex, color: SCENE_COLORS.cryo, transparent: true, opacity: 0, depthWrite: false })
+      );
+      wisp.scale.setScalar(1.15);
+      wisp.position.set(TENTS_POS.x + i * 3.5 - 3.5, groundAt(TENTS_POS) + 2.8, TENTS_POS.z + (i % 2) * 2.8);
+      enableBloom(wisp);
+      this.group.add(wisp);
+      this.tentWisps.push(wisp);
+    }
+
+    const floorLight = new THREE.PointLight(SCENE_COLORS.cryo, 48, 44, 1.8);
+    floorLight.position.set(RECEIVER_POS.x, receiverGround + 6, RECEIVER_POS.z + 2);
     this.group.add(floorLight);
-    const trapLight = new THREE.PointLight(SCENE_COLORS.cryo, 25, 30, 1.8);
-    trapLight.position.set(TANKS_POS.x, FLOOR_Y + 5, TANKS_POS.z);
-    this.group.add(trapLight);
-    const crownLight = new THREE.PointLight(SCENE_COLORS.solar, 50, 60, 1.6);
-    crownLight.position.set(0, rimY() + 15, -RIM_R + 4);
+    const campLight = new THREE.PointLight(SCENE_COLORS.cryo, 20, 28, 1.8);
+    campLight.position.set(TENTS_POS.x, groundAt(TENTS_POS) + 4, TENTS_POS.z);
+    this.group.add(campLight);
+    const crownLight = new THREE.PointLight(SCENE_COLORS.solar, 42, 58, 1.6);
+    crownLight.position.copy(crownWorld).add(new THREE.Vector3(0, 1, 3));
     this.group.add(crownLight);
 
-    /* power lines: receiver → tents, receiver → cryo */
-    const lineY = FLOOR_Y + 0.4;
-    const lift = (a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3[] => [
-      new THREE.Vector3(a.x, lineY, a.z),
-      new THREE.Vector3((a.x + b.x) / 2, lineY + 1, (a.z + b.z) / 2),
-      new THREE.Vector3(b.x, lineY, b.z)
-    ];
-    this.lines.push(makePowerLine(lift(RECEIVER_POS, TENTS_POS), SCENE_COLORS.cryo));
-    this.lines.push(makePowerLine(lift(RECEIVER_POS, TANKS_POS), SCENE_COLORS.cryo));
+    const lifted = (a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3[] => {
+      const ay = groundAt(a) + 0.42;
+      const by = groundAt(b) + 0.42;
+      return [
+        new THREE.Vector3(a.x, ay, a.z),
+        new THREE.Vector3((a.x + b.x) / 2, Math.max(ay, by) + 1, (a.z + b.z) / 2),
+        new THREE.Vector3(b.x, by, b.z)
+      ];
+    };
+    this.lines.push(makePowerLine(lifted(RECEIVER_POS, TENTS_POS), SCENE_COLORS.cryo));
+    this.lines.push(makePowerLine(lifted(RECEIVER_POS, TANKS_POS), SCENE_COLORS.cryo));
+    this.lines.push(makePowerLine(lifted(RECEIVER_POS, HABITAT_POS), SCENE_COLORS.cryo));
     for (const line of this.lines) {
       this.group.add(line);
     }
+
+    this.equipment = {
+      excavator: this.excavator,
+      tents: this.tents,
+      receiver: this.receiver,
+      tanks: this.tanks,
+      towers: this.towers,
+      station: this.station,
+      habitat: this.habitat
+    };
   }
 
   apply(result: SimResult, params: SimParams, tweens: TweenManager, reduced: boolean): void {
     const ms = reduced ? 0 : 300;
+    tweens.add("po.loop", this.loopPeriod, excavatorLoopPeriodS(result.production.regolithKgPerDay), ms, (v) => {
+      this.loopPeriod = v;
+    });
 
-    tweens.add(
-      "po.loop",
-      this.loopPeriod,
-      excavatorLoopPeriodS(result.production.regolithKgPerDay),
-      ms,
-      (v) => {
-        this.loopPeriod = v;
-      }
-    );
+    const architecture = result.power.architecture;
+    this.architecture = architecture;
+    this.station.group.visible = true;
 
-    // the rim towers always feed the beamed-power experiment; the grid
-    // station swap (§3.4) fades the nuclear monolith in/out on the rim
-    const arch = result.power.architecture;
-    if (arch !== this.architecture) {
-      const fadeMs = reduced || this.architecture === null ? 0 : 600;
-      this.architecture = arch;
-      fadeGroup(tweens, "po.arch", this.monolith.group, arch === "nuclear", fadeMs);
-    }
-    this.monolith.setRadiatorScale(radiatorWingScale(result.power.radiatorM2));
-
-    // beam visibility + radius driven only by beamedFloorPowerW (§3.4 table)
     const radius = beamRadius(result.power.beamedFloorPowerW);
-    const beamOn = radius > 0;
-    this.beam.visible = beamOn || this.beamMat.opacity > 0.01;
-    this.beamVolume.visible = this.beam.visible;
-    this.beamCore.visible = this.beam.visible;
-    this.beamMotes.visible = this.beam.visible;
-    this.splash.visible = beamOn || this.splashMat.opacity > 0.01;
-    this.beamTargetOpacity = beamOn ? 0.34 : 0;
-    tweens.add("po.beam", this.beamMat.opacity, this.beamTargetOpacity, ms, (v) => {
-      this.beamMat.opacity = v;
-      this.beam.visible = v > 0.01;
-      this.beamVolume.visible = this.beam.visible;
-      this.beamCore.visible = this.beam.visible;
-      this.beamMotes.visible = this.beam.visible;
-      this.beamVolumeMat.uniforms.uOpacity.value = v * 0.58;
-      this.beamCoreMat.opacity = v * 0.45;
-      this.beamMotesMat.opacity = v * 0.52;
-    });
-    tweens.add("po.splash", this.splashMat.opacity, beamOn ? 0.42 : 0, ms, (v) => {
-      this.splashMat.opacity = v;
-      this.splash.visible = v > 0.01;
-    });
-    if (radius > 0) {
-      tweens.add("po.beamR", this.beam.scale.x, radius, ms, (v) => {
-        this.beam.scale.x = v;
-        this.beam.scale.z = v;
-      });
-      tweens.add("po.splashR", this.splash.scale.x, 0.8 + radius * 0.32, ms, (v) => {
-        this.splash.scale.setScalar(v);
-      });
-    }
-    const receiverGlow = beamOn ? 0.9 : 0.12;
-    tweens.add("po.recv", this.receiverMat.emissiveIntensity, receiverGlow, ms, (v) => {
-      this.receiverMat.emissiveIntensity = v;
-    });
-
-    // tent glow ∝ secSub throughput
-    const glow = tentGlowIntensity(result.thermal.secSub_JPerKg);
-    for (const mat of this.tentMats) {
-      tweens.add(`po.tent.${mat.id}`, mat.emissiveIntensity, glow, ms, (v) => {
-        mat.emissiveIntensity = v;
-      });
-    }
-
-    this.tanks.setCount(tankCount(params));
-    this.tanks.setFill(tankFillFraction(result));
-    this.tanks.setWispRate(boiloffWispRate(result.cryo.boiloffKgPerDay));
-
-    this.habitat.setShieldSteps(habitatShellSteps(result.construction.shieldDesignM));
+    this.setBeamState(radius > 0, radius, ms, tweens);
+    this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg);
+    this.receiverGlow = radius > 0 ? 1 : 0.18;
+    this.gridGlow = Math.min(2.8, 0.6 + powerLineOpacity(result.energy.gridPowerW) * 2.5);
+    this.tankCountState = tankCount(params);
+    this.tankFillState = tankFillFraction(result);
+    this.cryoVapor.setState(this.tankCountState, boiloffWispRate(result.cryo.boiloffKgPerDay));
+    this.radiatorScale = radiatorWingScale(result.power.radiatorM2);
+    this.shieldSections = Math.max(1, Math.min(6, Math.ceil(habitatShellSteps(result.construction.shieldDesignM) / 7)));
+    this.sabatierEnabled = params.enableSabatier;
+    this.applyEquipmentVisualState();
 
     const lineOpacity = powerLineOpacity(result.energy.gridPowerW);
     for (const line of this.lines) {
@@ -700,143 +445,203 @@ export class PolarDiorama implements Diorama {
     }
   }
 
-  applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, _cycleHours: number): void {
+  applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
     const reserveKg = Math.max(1, params.reserveDays * result.production.targetKgPerDay);
-    const fill = Math.min(1, Math.max(0, point.tankFillKg / reserveKg));
-    this.tanks.setFill(fill);
-    this.tanks.setWispRate(boiloffWispRate(point.boiloffKgPerDay));
-
+    this.tankFillState = Math.min(1, Math.max(0, point.tankFillKg / reserveKg));
+    this.cryoVapor.setState(this.tankCountState, boiloffWispRate(point.boiloffKgPerDay));
     const loadScale = result.energy.gridPowerW > 0 ? Math.min(1.4, point.loadW / result.energy.gridPowerW) : 1;
-    this.receiverMat.emissiveIntensity = (point.daylight ? 0.8 : 0.18) * loadScale;
-    for (const mat of this.tentMats) {
-      mat.emissiveIntensity = tentGlowIntensity(result.thermal.secSub_JPerKg) * loadScale;
-    }
-
-    if (point.daylight && result.power.beamedFloorPowerW !== null && result.power.beamedFloorPowerW > 0) {
-      this.beamTargetOpacity = 0.34;
-      this.beamMat.opacity = 0.34;
-      this.beamVolumeMat.uniforms.uOpacity.value = 0.2;
-      this.beamCoreMat.opacity = 0.15;
-      this.beamMotesMat.opacity = 0.18;
-      this.splashMat.opacity = 0.42;
-      this.beam.visible = true;
-      this.beamVolume.visible = true;
-      this.beamCore.visible = true;
-      this.beamMotes.visible = true;
-      this.splash.visible = true;
-    } else {
-      this.beamTargetOpacity = 0;
-      this.beamMat.opacity = 0;
-      this.beamVolumeMat.uniforms.uOpacity.value = 0;
-      this.beamCoreMat.opacity = 0;
-      this.beamMotesMat.opacity = 0;
-      this.splashMat.opacity = 0;
-      this.beam.visible = false;
-      this.beamVolume.visible = false;
-      this.beamCore.visible = false;
-      this.beamMotes.visible = false;
-      this.splash.visible = false;
-    }
-
-    const lineOpacity = powerLineOpacity(point.loadW);
+    this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg) * loadScale;
+    this.receiverGlow = point.daylight && result.power.beamedFloorPowerW !== null ? 1.1 * loadScale : 0.16;
+    this.gridGlow = Math.min(2.8, 0.6 + powerLineOpacity(point.loadW) * 2.5);
+    this.solarDaylight = point.daylight;
+    this.solarPhase = ((point.tHours / Math.max(1, cycleHours)) % 1 + 1) % 1;
+    this.setBeamImmediate(point.daylight && (result.power.beamedFloorPowerW ?? 0) > 0);
+    this.applyEquipmentVisualState();
     for (const line of this.lines) {
-      (line.material as THREE.MeshBasicMaterial).opacity = lineOpacity;
+      (line.material as THREE.MeshBasicMaterial).opacity = powerLineOpacity(point.loadW);
     }
   }
 
   tick(dt: number, t: number, reduced: boolean): boolean {
     let active = false;
     if (!reduced) {
-      // ice rovers patrol small loops near the tents; arm torque-dither jitter
-      this.rovers.forEach((rover, i) => {
-        const dir = i === 0 ? 1 : -1;
-        const a = ((t % this.loopPeriod) / this.loopPeriod) * Math.PI * 2 * dir + i * 2.4;
-        const cx = -8 + i * 4;
-        const cz = 6 - i * 9;
-        rover.group.position.set(cx + Math.cos(a) * 4.5, FLOOR_Y, cz + Math.sin(a) * 3);
-        rover.group.rotation.y = -a - (dir > 0 ? Math.PI / 2 : -Math.PI / 2);
-        // 2px-scale dither while digging
-        rover.arm.rotation.z = -0.3 + (Math.sin(t * 37 + i * 9) + Math.sin(t * 53)) * 0.02;
-        const dustPass = Math.floor((t / Math.max(1, this.loopPeriod)) * 2);
-        if (i === 0 && dustPass !== this.lastDustPass) {
-          this.lastDustPass = dustPass;
-          this.dust.emit(rover.group.position.clone().setY(FLOOR_Y + 0.35), rover.group.rotation.y);
-        }
-      });
-
-      // beam shimmer via opacity noise
-      if (this.beam.visible && this.beamTargetOpacity > 0) {
-        this.beamMat.opacity =
-          this.beamTargetOpacity * (1 + 0.12 * Math.sin(t * 5.3) * Math.sin(t * 1.7));
-        this.beamVolumeMat.uniforms.uTime.value = t;
-        this.beamVolumeMat.uniforms.uOpacity.value = this.beamMat.opacity * 0.58;
-        this.beamCoreMat.opacity = this.beamMat.opacity * 0.45;
-        this.beamMotesMat.opacity = this.beamMat.opacity * 0.52;
-        this.beamMotes.rotation.y += dt * 0.18;
-        this.beamMotes.position.y = Math.sin(t * 0.6) * 0.18;
-        this.splash.rotation.z += dt * 0.28;
-        this.splashMat.opacity = 0.34 + 0.08 * Math.sin(t * 4.4);
+      const a = ((t % this.loopPeriod) / this.loopPeriod) * Math.PI * 2;
+      const x = -11 + Math.cos(a) * 4.5;
+      const z = -10 + Math.sin(a) * 3.0;
+      this.excavator.group.position.set(x, this.sampleTerrain(x, z) + 0.045, z);
+      this.excavator.group.rotation.y = -a - Math.PI / 2;
+      const boom = this.excavator.node("PolarExcavator_BoomPivot");
+      const auger = this.excavator.node("PolarExcavator_AugerPivot");
+      if (boom !== null) {
+        boom.rotation.z = -0.08 - Math.max(0, Math.cos(a)) * 0.2 + Math.sin(t * 4.2) * 0.015;
+      }
+      if (auger !== null) {
+        auger.rotation.z -= dt * (1.4 + 14 / Math.max(8, this.loopPeriod));
+      }
+      const dustPass = Math.floor((t / Math.max(1, this.loopPeriod)) * 2);
+      if (dustPass !== this.lastDustPass) {
+        this.lastDustPass = dustPass;
+        this.dust.emit(this.excavator.group.position.clone().add(new THREE.Vector3(3.4, 0.4, 0)), this.excavator.group.rotation.y);
       }
 
-      // tent vapor wisps → cold trap
+      const dish = this.receiver.node("Receiver_DishPivot");
+      const valve = this.receiver.node("Receiver_SabatierValvePivot");
+      if (dish !== null) {
+        dish.rotation.y = Math.sin(t * 0.22) * 0.035;
+      }
+      if (valve !== null && this.sabatierEnabled) {
+        valve.rotation.y = Math.sin(t * 0.45) * 0.28;
+      }
+      for (let i = 1; i <= 3; i++) {
+        const tentValve = this.tents.node(`Sublimation_ValvePivot_${String(i).padStart(2, "0")}`);
+        if (tentValve !== null) {
+          tentValve.rotation.y = Math.sin(t * 0.38 + i) * 0.18;
+        }
+      }
+      for (let i = 1; i <= 3; i++) {
+        const tracker = this.towers.node(`PolarPower_Tracker_${String(i).padStart(2, "0")}`);
+        if (tracker !== null) {
+          tracker.rotation.y = this.solarDaylight ? Math.sin(this.solarPhase * Math.PI * 2) * 0.42 : 0;
+        }
+      }
+      if (this.beam.visible && this.beamTargetOpacity > 0) {
+        this.beamMat.opacity = this.beamTargetOpacity * (0.9 + 0.1 * Math.sin(t * 5.1) * Math.sin(t * 1.7));
+        this.beamCoreMat.opacity = this.beamMat.opacity * 0.48;
+        this.splash.rotation.z += dt * 0.24;
+        this.splashMat.opacity = 0.24 + 0.08 * Math.sin(t * 4.4);
+      }
       this.tentWisps.forEach((wisp, i) => {
-        const u = ((t * 0.3 + i * 0.41) % 1 + 1) % 1;
-        wisp.position.y = 1.4 + u * 2.6;
-        wisp.position.x += Math.sin(t + i) * 0.002;
-        wisp.material.opacity = 0.3 * Math.sin(u * Math.PI);
+        const u = ((t * 0.24 + i * 0.37) % 1 + 1) % 1;
+        wisp.position.y = this.tents.group.position.y + 2.5 + u * 2.5;
+        wisp.material.opacity = Math.min(0.34, this.tentGlow * 0.18) * Math.sin(u * Math.PI);
       });
       active = true;
     }
-    if (!reduced && this.dust.tick(dt)) {
+    if (this.dust.tick(dt)) {
       active = true;
     }
-    if (this.tanks.tick(t) && !reduced) {
+    if (this.cryoVapor.tick(t, reduced)) {
       active = true;
     }
     return active;
   }
 
+  private bindLoadedEquipment(): void {
+    const towerBase = this.towers.group.position.y;
+    for (let i = 1; i <= 3; i++) {
+      const tower = this.towers.node(`PolarPower_Tower_${String(i).padStart(2, "0")}`);
+      if (tower !== null) {
+        tower.position.y = this.sampleTerrain(TOWER_WORLD_POSITIONS[i - 1]!.x, TOWER_WORLD_POSITIONS[i - 1]!.z) - towerBase;
+      }
+    }
+    this.applyEquipmentVisualState();
+  }
+
+  private applyEquipmentVisualState(): void {
+    for (let i = 1; i <= 8; i++) {
+      const suffix = String(i).padStart(2, "0");
+      const tank = this.tanks.node(`PolarCryo_Tank_${suffix}`);
+      if (tank !== null) {
+        tank.visible = i <= this.tankCountState;
+      }
+      const fill = this.tanks.node(`PolarCryo_FillColumn_${suffix}`);
+      if (fill !== null) {
+        fill.scale.y = 0.12 + this.tankFillState * 0.88;
+      }
+    }
+    const sabatier = this.receiver.node("Receiver_SabatierRoot");
+    if (sabatier !== null) {
+      sabatier.visible = this.sabatierEnabled;
+    }
+    const radiators = this.station.node("PolarNuclear_RadiatorRoot");
+    if (radiators !== null) {
+      radiators.scale.x = this.radiatorScale;
+    }
+    for (let i = 1; i <= 6; i++) {
+      const shield = this.habitat.node(`PolarHabitat_Shield_${String(i).padStart(2, "0")}`);
+      if (shield !== null) {
+        shield.visible = i <= this.shieldSections;
+      }
+    }
+    const materialStates: Array<[PolarEquipmentAsset, string, number]> = [
+      [this.excavator, "POLAR_EXC_StatusLight", 1.2 + 36 / Math.max(8, this.loopPeriod)],
+      [this.tents, "SUB_StatusLight", 0.8 + this.tentGlow * 1.6],
+      [this.receiver, "RECV_StatusLight", 0.8 + this.receiverGlow * 2.1],
+      [this.receiver, "RECV_WarmLight", this.sabatierEnabled ? 2.6 : 0.18],
+      [this.tanks, "POLAR_CRYO_StatusLight", 0.8 + this.tankFillState * 2.2],
+      [this.towers, "POLAR_POWER_StatusLight", 0.8 + this.gridGlow],
+      [this.station, "POLAR_NUC_StatusLight", 0.8 + this.gridGlow],
+      [this.habitat, "POLAR_HAB_StatusLight", 1.5]
+    ];
+    for (const [asset, materialName, intensity] of materialStates) {
+      for (const material of asset.materials(materialName)) {
+        material.emissiveIntensity = intensity;
+      }
+    }
+    for (const material of this.towers.materials("POLAR_POWER_Photovoltaic")) {
+      material.transparent = !this.solarDaylight;
+      material.opacity = this.solarDaylight ? 1 : 0.42;
+    }
+    for (const material of this.station.group.children.flatMap((child) => collectMaterials(child))) {
+      const active = this.architecture === "nuclear";
+      material.transparent = !active;
+      material.opacity = active ? 1 : 0.34;
+    }
+  }
+
+  private setBeamState(on: boolean, radius: number, ms: number, tweens: TweenManager): void {
+    this.beamTargetOpacity = on ? 0.22 : 0;
+    this.beam.visible = on || this.beamMat.opacity > 0.01;
+    this.splash.visible = on || this.splashMat.opacity > 0.01;
+    tweens.add("po.beam", this.beamMat.opacity, this.beamTargetOpacity, ms, (value) => {
+      this.beamMat.opacity = value;
+      this.beamCoreMat.opacity = value * 0.48;
+      this.beam.visible = value > 0.01;
+    });
+    tweens.add("po.splash", this.splashMat.opacity, on ? 0.3 : 0, ms, (value) => {
+      this.splashMat.opacity = value;
+      this.splash.visible = value > 0.01;
+    });
+    if (radius > 0) {
+      const scale = Math.max(0.5, radius * 0.42);
+      tweens.add("po.beamR", this.beam.scale.x, scale, ms, (value) => {
+        this.beam.scale.x = value;
+        this.beam.scale.z = value;
+      });
+      this.splash.scale.setScalar(0.82 + radius * 0.24);
+    }
+  }
+
+  private setBeamImmediate(on: boolean): void {
+    this.beamTargetOpacity = on ? 0.22 : 0;
+    this.beamMat.opacity = this.beamTargetOpacity;
+    this.beamCoreMat.opacity = this.beamTargetOpacity * 0.48;
+    this.splashMat.opacity = on ? 0.3 : 0;
+    this.beam.visible = on;
+    this.splash.visible = on;
+  }
+
   dispose(): void {
+    for (const asset of Object.values(this.equipment)) {
+      asset.dispose();
+    }
     disposeObject(this.group);
   }
 }
 
-function fadeGroup(
-  tweens: TweenManager,
-  key: string,
-  group: THREE.Group,
-  show: boolean,
-  ms: number
-): void {
-  const mats = materialsOf(group);
-  if (ms <= 0) {
-    group.visible = show;
-    for (const m of mats) {
-      m.opacity = 1;
-      m.transparent = false;
+function collectMaterials(root: THREE.Object3D): THREE.MeshStandardMaterial[] {
+  const materials = new Set<THREE.MeshStandardMaterial>();
+  root.traverse((object) => {
+    const mesh = object as THREE.Mesh;
+    if (!mesh.isMesh) {
+      return;
     }
-    return;
-  }
-  group.visible = true;
-  for (const m of mats) {
-    m.transparent = true;
-  }
-  tweens.add(
-    key,
-    show ? 0 : 1,
-    show ? 1 : 0,
-    ms,
-    (v) => {
-      for (const m of mats) {
-        m.opacity = v;
-      }
-    },
-    () => {
-      group.visible = show;
-      for (const m of mats) {
-        m.opacity = 1;
-        m.transparent = false;
+    const assigned = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const material of assigned) {
+      if (material instanceof THREE.MeshStandardMaterial) {
+        materials.add(material);
       }
     }
-  );
+  });
+  return [...materials];
 }
