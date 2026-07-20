@@ -1,0 +1,40 @@
+# JavaScript / build output
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+.pnpm-store/
+
+# Python / uv
+.venv/
+.uv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Editor, agent, and operating-system files
+.claude/
+.codex/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Private project-planning and agent workflow notes
+/NOTES-FOR-FABLE.md
+/spec/

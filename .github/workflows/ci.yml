@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: pnpm/action-setup@v6.0.9
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          python-version: "3.11.15"
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --project python --locked --group dev
+      - run: uv run --project python pytest python/tests
+      - run: uv run --project python python python/tools/generate_golden.py
+      - run: git diff --exit-code -- packages/engine/test/golden_vectors.json packages/engine/test/dynamics_vectors.json
+      - run: pnpm --filter @selene-isru/engine check:constants
+      - run: pnpm --filter @selene-isru/engine test
+      - run: pnpm --filter @selene-isru/engine build
+      - run: pnpm --filter @selene-isru/app test
+      - run: pnpm --filter @selene-isru/app build
+      - run: uv run --project python ruff check python
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: pnpm/action-setup@v6.0.9
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @selene-isru/engine build
+      - run: pnpm --filter @selene-isru/app build
+        env:
+          PAGES_BASE: /${{ github.event.repository.name }}/
+      - uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: packages/app/dist
+      - id: deployment
+        uses: actions/deploy-pages@v5.0.0

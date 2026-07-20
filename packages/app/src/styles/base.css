@@ -1,0 +1,196 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg-space);
+  color: var(--text-hi);
+  font-family: var(--font-body);
+  font-size: var(--fs-14);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--melt);
+  outline-offset: 1px;
+}
+
+::selection {
+  background: var(--melt-deep);
+  color: var(--text-hi);
+}
+
+/* ---------- shared primitives ---------- */
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--text-low);
+  letter-spacing: 0.04em;
+}
+
+.panel-header {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-low);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chart-well {
+  background-color: var(--bg-inset);
+  background-image: var(--dot-grid);
+  background-size: 24px 24px;
+  border: 1px solid var(--line);
+}
+
+.hairline-top {
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- app shell (desktop) ---------- */
+
+.app {
+  display: grid;
+  height: 100%;
+  grid-template-rows: var(--topbar-h) 1fr var(--kpi-h);
+  grid-template-columns: var(--rail-w) 1fr;
+  grid-template-areas:
+    "topbar topbar"
+    "rail stage"
+    "kpi kpi";
+}
+
+.app-topbar {
+  grid-area: topbar;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-panel);
+}
+
+.app-rail {
+  grid-area: rail;
+  border-right: 1px solid var(--line);
+  background: var(--bg-panel);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app-stage {
+  grid-area: stage;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-kpi {
+  grid-area: kpi;
+  border-top: 1px solid var(--line);
+  background: var(--bg-panel);
+}
+
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.stage-canvas canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* fade veil for site transitions */
+.stage-veil {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ---------- scrollbars ---------- */
+
+.app-rail::-webkit-scrollbar,
+.slideover-body::-webkit-scrollbar,
+.sheet-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-rail::-webkit-scrollbar-thumb,
+.slideover-body::-webkit-scrollbar-thumb,
+.sheet-scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+/* ---------- mobile shell ---------- */
+
+@media (max-width: 1099px) {
+  .app {
+    grid-template-rows: 44px 1fr;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "topbar"
+      "stage";
+  }
+
+  .app-topbar {
+    padding-top: env(safe-area-inset-top);
+    height: calc(44px + env(safe-area-inset-top));
+  }
+
+  .app-rail,
+  .app-kpi {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

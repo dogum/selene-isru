@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "selene-isru"
+version = "0.1.0"
+description = "Python mirror for the selene-isru lunar ISRU physics engine"
+authors = [{ name = "Greg Dogum" }]
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.urls]
+Homepage = "https://dogum.github.io/selene-isru/"
+Repository = "https://github.com/dogum/selene-isru"
+Issues = "https://github.com/dogum/selene-isru/issues"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.8"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["selene_isru*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

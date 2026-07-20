@@ -1,0 +1,131 @@
+import type { SimResult } from "@selene-isru/engine";
+import { formatQtyText } from "../../lib/format";
+import { useStore } from "../../state/store";
+
+interface CompareMetric {
+  label: string;
+  unit: string;
+  value: (r: SimResult) => number;
+  sig?: number;
+}
+
+const METRICS: CompareMetric[] = [
+  { label: "SEC TOTAL", unit: "kWh/kg", value: (r) => r.energy.secTotal_kWhPerKg, sig: 4 },
+  { label: "GRID POWER", unit: "W", value: (r) => r.energy.gridPowerW },
+  { label: "MISSIONS", unit: "", value: (r) => r.logistics.nMissions },
+  { label: "PAYBACK", unit: "days", value: (r) => r.logistics.paybackDays },
+  { label: "LEVERAGE L", unit: "x", value: (r) => r.logistics.leverageL },
+  { label: "OUTPUT", unit: "kg/day", value: (r) => r.production.targetKgPerDay, sig: 4 }
+];
+
+function signed(value: number): string {
+  if (!Number.isFinite(value)) {
+    return "—";
+  }
+  return value > 0 ? `+${value.toFixed(1)}%` : `${value.toFixed(1)}%`;
+}
+
+function flowSegments(result: SimResult): Array<{ key: string; value: number; pct: number }> {
+  const totals = new Map<string, number>();
+  for (const flow of result.energy.flows) {
+    totals.set(flow.to, (totals.get(flow.to) ?? 0) + flow.kWhPerKg);
+  }
+  const total = [...totals.values()].reduce((sum, value) => sum + value, 0);
+  return [...totals.entries()]
+    .map(([key, value]) => ({ key, value, pct: total > 0 ? (value / total) * 100 : 0 }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
+}
+
+function FlowStack({ label, result }: { label: string; result: SimResult }): React.JSX.Element {
+  const segments = flowSegments(result);
+  return (
+    <div className="compare-flow">
+      <div className="compare-flow-head mono">
+        <span>{label}</span>
+        <span>{formatQtyText(result.energy.secTotal_kWhPerKg, "kWh/kg", 4)}</span>
+      </div>
+      <div className="compare-flow-bar">
+        {segments.map((segment, i) => (
+          <i
+            key={segment.key}
+            style={{
+              width: `${segment.pct}%`,
+              background: i === 0 ? "var(--melt)" : i === 1 ? "var(--cryo)" : i === 2 ? "var(--solar)" : "var(--text-low)"
+            }}
+            title={`${segment.key}: ${formatQtyText(segment.value, "kWh/kg")}`}
+          />
+        ))}
+      </div>
+      <div className="compare-flow-legend mono">
+        {segments.map((segment) => (
+          <span key={segment.key}>
+            {segment.key.toUpperCase()} <b>{formatQtyText(segment.value, "kWh/kg")}</b>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ComparePanel(): React.JSX.Element {
+  const result = useStore((s) => s.result);
+  const compareResult = useStore((s) => s.compareResult);
+  const compareParams = useStore((s) => s.compareParams);
+  const setCompareFromCurrent = useStore((s) => s.setCompareFromCurrent);
+  const swapCompare = useStore((s) => s.swapCompare);
+
+  return (
+    <div className="panel-section">
+      <div className="panel-header">
+        A/B COMPARE
+        <span className="num">B {compareParams.site.toUpperCase()}</span>
+      </div>
+
+      <div className="compare-actions">
+        <button className="topbar-btn" onClick={setCompareFromCurrent}>
+          SET B = CURRENT
+        </button>
+        <button className="topbar-btn" onClick={swapCompare}>
+          SWAP
+        </button>
+      </div>
+
+      <div className="compare-grid mono">
+        <div className="compare-row compare-row-head">
+          <span>METRIC</span>
+          <span>CURRENT</span>
+          <span>B</span>
+          <span>DELTA</span>
+        </div>
+        {METRICS.map((metric) => {
+          const a = metric.value(result);
+          const b = metric.value(compareResult);
+          const delta = a - b;
+          const pct = b !== 0 ? (delta / Math.abs(b)) * 100 : 0;
+          return (
+            <div className="compare-row" key={metric.label}>
+              <span>{metric.label}</span>
+              <span className="num">{formatQtyText(a, metric.unit, metric.sig ?? 3)}</span>
+              <span className="num">{formatQtyText(b, metric.unit, metric.sig ?? 3)}</span>
+              <span className={`num ${delta <= 0 ? "good" : "warn"}`}>{signed(pct)}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="panel-header">
+        ENERGY STACKS
+        <span className="num">CURRENT / B</span>
+      </div>
+      <div className="chart-well compare-flow-well">
+        <FlowStack label="CURRENT" result={result} />
+        <FlowStack label="B" result={compareResult} />
+      </div>
+
+      <p className="panel-caption">
+        The POWER chart marks the current operating point and the B case on the same trade axes.
+      </p>
+    </div>
+  );
+}

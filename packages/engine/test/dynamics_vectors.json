@@ -1,0 +1,437 @@
+{
+  "schemaVersion": 1,
+  "seed": 42,
+  "timeseries": [
+    {
+      "name": "default-solar-cycle",
+      "params": {},
+      "opts": {
+        "cycles": 1,
+        "samplesPerCycle": 12
+      },
+      "result": {
+        "points": [
+          {
+            "tHours": 0.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 0,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 59.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 2254.5831316646645,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 118.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 4509.166263329329,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 177.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 6763.7493949939935,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 236.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 9018.332526658658,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 295.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 11272.915658323322,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 354.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 13527.498789987987,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 413.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 15782.08192165265,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 472.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 18036.665053317316,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 531.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 20291.24818498198,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 590.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 22545.831316646643,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 649.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 24800.414448311312,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          },
+          {
+            "tHours": 708.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 1032286.2461551225,
+            "batterySoC": 1,
+            "tankFillKg": 27054.997579975974,
+            "boiloffKgPerDay": 82.88143796691614,
+            "netProductionKgPerDay": 917.1185620330839
+          }
+        ],
+        "summary": {
+          "minSoC": 1,
+          "dutyCycle": 1.0,
+          "tankPeakKg": 27054.997579975974,
+          "curtailedFraction": 0
+        }
+      }
+    },
+    {
+      "name": "polar-cycle",
+      "params": {
+        "site": "polar",
+        "targetKgPerDay": 500
+      },
+      "opts": {
+        "cycles": 2,
+        "samplesPerCycle": 8
+      },
+      "result": {
+        "points": [
+          {
+            "tHours": 0.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 0,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 88.5,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 1748.0900338168103,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 177.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 3496.1800676336206,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 265.5,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 5244.270101450431,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 354.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 6992.360135267241,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 442.5,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 8740.450169084052,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 531.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 10488.540202900862,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 619.5,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 12236.630236717672,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 708.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 13984.720270534483,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 796.5,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 15732.810304351293,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 885.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 17480.900338168103,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 973.5,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 19228.990371984914,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 1062.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 20977.080405801724,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 1150.5,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 22725.170439618534,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 1239.0,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 24473.260473435344,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 1327.5,
+            "daylight": false,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 26221.350507252155,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          },
+          {
+            "tHours": 1416.0,
+            "daylight": true,
+            "solarOutputW": 0,
+            "loadW": 101324.76964930704,
+            "batterySoC": 1,
+            "tankFillKg": 27969.440541068965,
+            "boiloffKgPerDay": 25.94168574459382,
+            "netProductionKgPerDay": 474.0583142554062
+          }
+        ],
+        "summary": {
+          "minSoC": 1,
+          "dutyCycle": 1.0000000000000002,
+          "tankPeakKg": 27969.440541068965,
+          "curtailedFraction": 0
+        }
+      }
+    }
+  ],
+  "uncertainty": [
+    {
+      "name": "default-target-mining",
+      "base": {},
+      "spec": [
+        {
+          "key": "targetKgPerDay",
+          "rel": 0.08
+        },
+        {
+          "key": "eMining",
+          "rel": 0.15
+        }
+      ],
+      "opts": {
+        "n": 32,
+        "seed": 42
+      },
+      "result": {
+        "paybackDays": {
+          "p10": 58.82089512179915,
+          "p50": 58.932891221865745,
+          "p90": 59.11156009762401,
+          "mean": 58.95749436886447
+        },
+        "secTotal": {
+          "p10": 24.73858782033478,
+          "p50": 24.777686642912947,
+          "p90": 24.798627522711353,
+          "mean": 24.771816332368676
+        },
+        "nMissions": {
+          "p10": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "mean": 1.0
+        },
+        "leverageL": {
+          "p10": 185.2429538700264,
+          "p50": 185.80456342892097,
+          "p90": 186.15833766853467,
+          "mean": 185.72789381334422
+        }
+      }
+    },
+    {
+      "name": "polar-ice",
+      "base": {
+        "site": "polar"
+      },
+      "spec": [
+        {
+          "key": "chiIce",
+          "rel": 0.2
+        },
+        {
+          "key": "secLiquefaction",
+          "rel": 0.1
+        }
+      ],
+      "opts": {
+        "n": 32,
+        "seed": 7
+      },
+      "result": {
+        "paybackDays": {
+          "p10": 21.445997838776446,
+          "p50": 22.124048795269267,
+          "p90": 22.5922075481781,
+          "mean": 22.07323231500779
+        },
+        "secTotal": {
+          "p10": 4.356798271021154,
+          "p50": 4.899239036215414,
+          "p90": 5.273766038542482,
+          "mean": 4.858585852006233
+        },
+        "nMissions": {
+          "p10": 1.0,
+          "p50": 1.0,
+          "p90": 1.0,
+          "mean": 1.0
+        },
+        "leverageL": {
+          "p10": 484.6807537987286,
+          "p50": 494.93664505263297,
+          "p90": 510.5848644303199,
+          "mean": 496.34923699977185
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use selene-isru in a project or trade study, please cite this software."
+title: "selene-isru: Lunar ISRU Trade-Space Simulator"
+type: software
+authors:
+  - family-names: Dogum
+    given-names: Greg
+repository-code: "https://github.com/dogum/selene-isru"
+url: "https://dogum.github.io/selene-isru/"
+license: MIT
+version: 0.1.0
+date-released: 2026-07-20
+keywords:
+  - lunar ISRU
+  - space systems engineering
+  - trade-space analysis
+  - molten regolith electrolysis
+  - polar ice

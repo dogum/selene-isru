@@ -1,0 +1,52 @@
+:root {
+  /* surfaces */
+  --bg-space: #0b0e13;
+  --bg-panel: #11151d;
+  --bg-inset: #0d1117;
+  --line: #232a36;
+
+  /* text */
+  --text-hi: #e8ecf1;
+  --text-mid: #9aa4b2;
+  --text-low: #5c6675;
+
+  /* domains */
+  --regolith: #8e8a84;
+  --melt: #ff7a1a;
+  --melt-deep: #c2410c;
+  --cryo: #6fd3f2;
+  --solar: #f5c84c;
+  --fission: #b48cf2;
+
+  /* severity */
+  --ok: #4ade80;
+  --caution: #f59e0b;
+  --alarm: #f0432e;
+
+  --earthshine: #3b5b8f;
+
+  /* type */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* scale */
+  --fs-11: 11px;
+  --fs-12: 12.5px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-28: 28px;
+  --fs-40: 40px;
+
+  /* layout */
+  --topbar-h: 48px;
+  --kpi-h: 76px;
+  --rail-w: 320px;
+  --slideover-w: 780px;
+
+  --shadow-slideover: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* blueprint dot grid for chart wells */
+  --dot-grid: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}

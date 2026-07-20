@@ -1,0 +1,29 @@
+{
+  "name": "selene-isru",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://dogum.github.io/selene-isru/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dogum/selene-isru.git"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build": "pnpm --filter @selene-isru/engine build && pnpm --filter @selene-isru/app build",
+    "dev": "pnpm --filter @selene-isru/app dev",
+    "check:constants": "pnpm --filter @selene-isru/engine check:constants",
+    "generate:golden": "uv run --project python python python/tools/generate_golden.py",
+    "screenshots": "node scripts/capture-screens.mjs",
+    "test": "pnpm --filter @selene-isru/engine test && pnpm --filter @selene-isru/app test",
+    "test:python": "uv run --project python pytest python/tests",
+    "lint:python": "uv run --project python ruff check python",
+    "ci": "pnpm generate:golden && pnpm check:constants && pnpm test:python && pnpm lint:python && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
