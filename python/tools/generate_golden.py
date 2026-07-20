@@ -15,6 +15,20 @@ OUT_PATH = ROOT / "packages" / "engine" / "test" / "golden_vectors.json"
 DYNAMICS_OUT_PATH = ROOT / "packages" / "engine" / "test" / "dynamics_vectors.json"
 SEED = 42
 N_SAMPLES = 200
+FIXTURE_SIGNIFICANT_DIGITS = 14
+
+
+def canonicalize_numbers(value: Any) -> Any:
+    """Remove platform-specific last-bit noise from committed JSON fixtures."""
+    if isinstance(value, float):
+        if value == 0:
+            return 0.0
+        return float(format(value, f".{FIXTURE_SIGNIFICANT_DIGITS}g"))
+    if isinstance(value, list):
+        return [canonicalize_numbers(item) for item in value]
+    if isinstance(value, dict):
+        return {key: canonicalize_numbers(item) for key, item in value.items()}
+    return value
 
 
 def numeric_param_keys() -> list[str]:
@@ -113,7 +127,8 @@ def main() -> None:
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUT_PATH.open("w", encoding="utf-8") as handle:
-        json.dump({"schemaVersion": 1, "seed": SEED, "vectors": vectors}, handle, indent=2, allow_nan=False)
+        golden = canonicalize_numbers({"schemaVersion": 1, "seed": SEED, "vectors": vectors})
+        json.dump(golden, handle, indent=2, allow_nan=False)
         handle.write("\n")
 
     dynamics = {
@@ -159,7 +174,7 @@ def main() -> None:
         ],
     }
     with DYNAMICS_OUT_PATH.open("w", encoding="utf-8") as handle:
-        json.dump(dynamics, handle, indent=2, allow_nan=False)
+        json.dump(canonicalize_numbers(dynamics), handle, indent=2, allow_nan=False)
         handle.write("\n")
 
 
