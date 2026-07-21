@@ -60,6 +60,9 @@ export function LearningToolbar(): React.JSX.Element | null {
       >
         PROCESS PATHS
       </button>
+      <button type="button" onClick={() => setUi({ conservationOpen: true })}>
+        CONSERVE
+      </button>
       <button type="button" className="learning-done" onClick={() => setUi({ learningMode: false })}>
         DONE
       </button>

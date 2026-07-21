@@ -19,6 +19,8 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
   const nameMode = useStore((s) => s.ui.parameterNames);
   const setParam = useStore((s) => s.setParam);
   const resetParam = useStore((s) => s.resetParam);
+  const causalParam = useStore((s) => s.ui.causalParam);
+  const setUi = useStore((s) => s.setUi);
   const [editing, setEditing] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const sliderRef = useRef<HTMLInputElement | null>(null);
@@ -69,7 +71,7 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
   }, [def.key, def.min, def.max, step, setParam]);
 
   return (
-    <div className={`param-row ${warnSeverity ?? ""}`}>
+    <div className={`param-row ${warnSeverity ?? ""} ${causalParam === def.key ? "causal-selected" : ""}`}>
       <div className="param-row-top">
         <div className="param-label-wrap">
           <label className="param-label" htmlFor={`p-${def.key}`} title={def.description}>
@@ -142,7 +144,10 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
         <div className="param-evidence">
           <div className="param-evidence-head">
             <span>{def.evidence.maturity}</span>
-            <span>±{(def.evidence.defaultUncertainty * 100).toFixed(0)}% DEFAULT σ</span>
+            <span>±{(def.evidence.defaultUncertainty * 100).toFixed(0)}% INPUT SPREAD</span>
+          </div>
+          <div className={`param-role ${def.evidence.role === "CAUSAL INPUT" ? "causal" : "diagnostic"}`}>
+            {def.evidence.role}
           </div>
           <p>{def.description}</p>
           <dl>
@@ -169,8 +174,15 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
               <dt>Applies to</dt>
               <dd>{def.evidence.applicability}</dd>
             </div>
+            <div>
+              <dt>Dependency</dt>
+              <dd>{def.evidence.affects}</dd>
+            </div>
           </dl>
           <small>{def.evidence.validity} Extrapolation is unsupported and clamped by the engine.</small>
+          <button type="button" className="causal-trace-button" onClick={() => setUi({ causalParam: def.key })}>
+            TRACE ACTUAL DOWNSTREAM EFFECTS
+          </button>
         </div>
       )}
     </div>

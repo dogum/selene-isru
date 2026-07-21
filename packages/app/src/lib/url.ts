@@ -48,6 +48,22 @@ export function parseParams(query: string): Partial<SimParams> {
       if (raw === "equatorial" || raw === "polar") {
         patch[key] = raw;
       }
+    } else if (key === "storageStream") {
+      if (["auto", "lox", "water-ice", "liquid-water", "lh2", "lch4", "co2-feed", "custom"].includes(raw)) {
+        patch[key] = raw;
+      }
+    } else if (key === "cryoControlMode") {
+      if (["zero-boiloff", "passive", "capacity-limited"].includes(raw)) {
+        patch[key] = raw;
+      }
+    } else if (key === "polarProfileMode") {
+      if (raw === "scalar" || raw === "profile") {
+        patch[key] = raw;
+      }
+    } else if (key === "polarProfileData") {
+      if (raw.length <= 100_000) {
+        patch[key] = raw;
+      }
     }
   }
   return patch as Partial<SimParams>;

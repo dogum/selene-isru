@@ -428,7 +428,7 @@ export class PolarDiorama implements Diorama {
     this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg);
     this.receiverGlow = radius > 0 ? 1 : 0.18;
     this.gridGlow = Math.min(2.8, 0.6 + powerLineOpacity(result.energy.gridPowerW) * 2.5);
-    this.tankCountState = tankCount(params);
+    this.tankCountState = tankCount(params, result);
     this.tankFillState = tankFillFraction(result);
     this.cryoVapor.setState(this.tankCountState, boiloffWispRate(result.cryo.boiloffKgPerDay));
     this.radiatorScale = radiatorWingScale(result.power.radiatorM2);
@@ -451,11 +451,12 @@ export class PolarDiorama implements Diorama {
     this.cryoVapor.setState(this.tankCountState, boiloffWispRate(point.boiloffKgPerDay));
     const loadScale = result.energy.gridPowerW > 0 ? Math.min(1.4, point.loadW / result.energy.gridPowerW) : 1;
     this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg) * loadScale;
-    this.receiverGlow = point.daylight && result.power.beamedFloorPowerW !== null ? 1.1 * loadScale : 0.16;
+    const deliveredFraction = point.illumination * point.receiverVisibility;
+    this.receiverGlow = result.power.beamedFloorPowerW !== null ? 0.16 + deliveredFraction * 0.94 * loadScale : 0.16;
     this.gridGlow = Math.min(2.8, 0.6 + powerLineOpacity(point.loadW) * 2.5);
-    this.solarDaylight = point.daylight;
+    this.solarDaylight = point.illumination > 0.05;
     this.solarPhase = ((point.tHours / Math.max(1, cycleHours)) % 1 + 1) % 1;
-    this.setBeamImmediate(point.daylight && (result.power.beamedFloorPowerW ?? 0) > 0);
+    this.setBeamImmediate(deliveredFraction > 0.05 && (result.power.beamedFloorPowerW ?? 0) > 0);
     this.applyEquipmentVisualState();
     for (const line of this.lines) {
       (line.material as THREE.MeshBasicMaterial).opacity = powerLineOpacity(point.loadW);

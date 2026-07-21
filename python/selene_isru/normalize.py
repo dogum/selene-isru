@@ -62,6 +62,27 @@ def normalize_params(input_params: dict[str, Any] | None = None) -> tuple[dict[s
                 )
             continue
 
+        string_options = {
+            "storageStream": {"auto", "lox", "water-ice", "liquid-water", "lh2", "lch4", "co2-feed", "custom"},
+            "cryoControlMode": {"zero-boiloff", "passive", "capacity-limited"},
+            "polarProfileMode": {"scalar", "profile"},
+        }
+        if key in string_options:
+            if isinstance(raw, str) and raw in string_options[key]:
+                params[key] = raw
+            else:
+                params[key] = default_value
+                warnings.append({"id": "param-clamped", "severity": "info", "module": "params", "message": "Parameter was reset to a supported option.", "value": 0, "limit": 0})
+            continue
+
+        if key == "polarProfileData":
+            if isinstance(raw, str) and len(raw) <= 100_000:
+                params[key] = raw
+            else:
+                params[key] = default_value
+                warnings.append({"id": "param-clamped", "severity": "info", "module": "params", "message": "Imported profile data exceeded the supported text boundary.", "value": 0, "limit": 100_000})
+            continue
+
         if isinstance(default_value, bool):
             if isinstance(raw, bool):
                 params[key] = raw

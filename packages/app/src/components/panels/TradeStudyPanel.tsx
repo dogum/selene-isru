@@ -15,7 +15,7 @@ const EngineeringReport = lazy(() =>
 const TABS: Array<{ id: StudyTab; label: string; note: string }> = [
   { id: "scenarios", label: "SCENARIOS", note: "Name and compare two operating cases" },
   { id: "frontier", label: "PARETO", note: "Explore non-dominated design points" },
-  { id: "uncertainty", label: "UNCERTAINTY", note: "Test sensitivity to uncertain inputs" },
+  { id: "uncertainty", label: "SENSITIVITY", note: "Test response to illustrative input spreads" },
   { id: "report", label: "REPORT", note: "Print or export a reproducible engineering snapshot" }
 ];
 
@@ -30,7 +30,7 @@ export function TradeStudyPanel(): React.JSX.Element {
         <span className="reactor-eyebrow">ANALYSIS WORKSPACE</span>
         <h2>Trade Study</h2>
         <p>
-          Compare named cases, search the Pareto frontier, and quantify uncertainty without
+          Compare named cases, search the Pareto frontier, and explore sensitivity without
           leaving the live simulator.
         </p>
       </div>

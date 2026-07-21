@@ -1,6 +1,10 @@
 export type SiteMode = "equatorial" | "polar";
 export type PowerArchitecture = "solar" | "nuclear";
 export type WarningSeverity = "info" | "caution" | "alarm";
+export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
+export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
+export type CryoControlMode = "zero-boiloff" | "passive" | "capacity-limited";
+export type PolarProfileMode = "scalar" | "profile";
 
 export interface Warning {
   id: string;
@@ -22,6 +26,105 @@ export interface ManifestRow {
   subsystem: string;
   /** [kg] */
   massKg: number;
+}
+
+export interface MaterialFlow {
+  material: string;
+  from: string;
+  to: string;
+  /** [kg/day] */
+  kgPerDay: number;
+}
+
+export interface ProcessBalance {
+  id: string;
+  label: string;
+  /** [kg/day] */
+  massInKgPerDay: number;
+  /** [kg/day] */
+  massOutKgPerDay: number;
+  /** mass-in minus mass-out [kg/day] */
+  residualKgPerDay: number;
+}
+
+export interface StorageInventory {
+  id: string;
+  stream: ResolvedStorageStream;
+  role: "product" | "feed" | "buffer" | "custom";
+  /** [kg/day] */
+  rateKgPerDay: number;
+  /** [kg] */
+  reserveInventoryKg: number;
+  /** [m^3] */
+  volumeM3: number;
+  /** [kg] */
+  storageMassKg: number;
+  /** [kg/m^3] */
+  densityKgPerM3: number;
+  /** [K] */
+  storageTemperatureK: number;
+  /** [kWh/kg] */
+  conditioningSecKWhPerKg: number;
+  /** [W] */
+  conditioningPowerW: number;
+  /** [W] */
+  qLeakW: number;
+  /** [W] */
+  qRemovedW: number;
+  /** [W] */
+  qResidualW: number;
+  /** [kg/day] */
+  unmitigatedLossKgPerDay: number;
+  /** [kg/day] */
+  actualLossKgPerDay: number;
+}
+
+export interface EnergyProcessBalance {
+  id: string;
+  label: string;
+  /** modeled electrical/process input [W] */
+  electricalInputW: number;
+  /** heat or chemical energy entering across the node boundary [W] */
+  coupledInputW: number;
+  /** useful duty or stored chemical/thermal rate [W] */
+  usefulOutputW: number;
+  /** rejected heat and modeled losses [W] */
+  rejectedHeatW: number;
+  /** retained inventory or state-energy rate [W] */
+  accumulationW: number;
+  /** inputs minus outputs [W] */
+  residualW: number;
+}
+
+export interface PolarProfilePoint {
+  /** elapsed profile hour; points must be strictly increasing */
+  hour: number;
+  /** normalized array illumination [0..1] */
+  illumination: number;
+  /** normalized beam receiver visibility [0..1] */
+  receiverVisibility: number;
+  /** local surface temperature [K] */
+  surfaceTemperatureK: number;
+}
+
+export interface PolarProfileSummary {
+  mode: PolarProfileMode;
+  name: string;
+  /** [h] */
+  cycleHours: number;
+  averageIllumination: number;
+  averageReceiverVisibility: number;
+  /** cycle average of illumination * receiver visibility */
+  averageDeliveredFraction: number;
+  /** [h] */
+  longestShadowHours: number;
+  /** [h] */
+  longestReceiverOutageHours: number;
+  /** [K] */
+  minimumSurfaceTemperatureK: number;
+  /** [K] */
+  maximumSurfaceTemperatureK: number;
+  points: PolarProfilePoint[];
 }
 
 export interface OxideYield {
@@ -131,6 +234,10 @@ export interface SimParams {
   deltaDiff: number;
   /** [A/m^2] */
   jOperating: number;
+  /** [V] */
+  mreActivationOverpotentialV: number;
+  /** [ohm*m^2] */
+  mreAreaSpecificResistanceOhmM2: number;
   /** [kg/(kg/day)] */
   kReactorMass: number;
   /** [V] */
@@ -141,8 +248,14 @@ export interface SimParams {
   Tsabatier: number;
   /** [day] */
   reserveDays: number;
+  storageStream: StorageStreamSelection;
+  cryoControlMode: CryoControlMode;
+  /** cold-side heat-removal capacity [W] */
+  coolerCapacityW: number;
   /** [kg/m^3] */
   rhoCryo: number;
+  /** [J/kg] */
+  customLatentHeatJPerKg: number;
   alphaTank: number;
   epsTank: number;
   Fview: number;
@@ -165,6 +278,12 @@ export interface SimParams {
   secLiquefaction: number;
   /** [kg/(kg/day)] */
   kCryoMass: number;
+  polarIlluminationFraction: number;
+  /** [h] */
+  polarLongestShadowHours: number;
+  polarProfileMode: PolarProfileMode;
+  /** canonical JSON site-profile payload */
+  polarProfileData: string;
   etaWire: number;
   etaRoundTrip: number;
   etaCell: number;
@@ -255,14 +374,22 @@ export interface SimResult {
     slagKgPerDay: number;
     o2KgPerDay: number;
     waterKgPerDay: number;
+    grossH2KgPerDay: number;
     h2KgPerDay: number;
+    co2ImportedKgPerDay: number;
     ch4KgPerDay: number;
+    waterRecycleKgPerDay: number;
   };
   energy: {
     secTotal_kWhPerKg: number;
     flows: FlowEdge[];
     /** [W] */
     gridPowerW: number;
+    balances: EnergyProcessBalance[];
+    /** [W] */
+    maxAbsResidualW: number;
+    /** grid power minus the modeled electrical allocations [W] */
+    gridAllocationResidualW: number;
   };
   excavation: {
     /** [N] */
@@ -292,6 +419,28 @@ export interface SimResult {
     /** [kg O2/kg regolith] */
     xO2Effective: number;
     oxideYield: OxideYield[];
+    /** O2-yield-weighted equilibrium decomposition voltage [V] */
+    reversibleVoltageV: number;
+    /** [V] */
+    activationOverpotentialV: number;
+    /** [V] */
+    ohmicOverpotentialV: number;
+    /** [V] */
+    concentrationOverpotentialV: number;
+    /** [V] */
+    unallocatedVoltageV: number;
+    /** applied voltage minus modeled required voltage [V] */
+    voltageMarginV: number;
+    /** [m^2] */
+    electrodeAreaM2: number;
+    /** operating / limiting current density */
+    currentUtilization: number;
+    /** [W] */
+    electricalInputW: number;
+    /** [W] */
+    chemicalPowerW: number;
+    /** [W] */
+    modeledLossPowerW: number;
   };
   thermal: {
     /** [J/kg H2O] */
@@ -302,14 +451,35 @@ export interface SimResult {
     conductivity_WPerMK: number;
   };
   cryo: {
+    stream: ResolvedStorageStream;
+    controlMode: CryoControlMode;
+    /** [kg/m^3] */
+    densityKgPerM3: number;
+    /** [K] */
+    storageTemperatureK: number;
+    /** [kWh/kg] */
+    conditioningSecKWhPerKg: number;
     /** [W] */
     qLeakW: number;
+    /** [W] */
+    qRemovedW: number;
+    /** [W] */
+    qResidualW: number;
+    /** [kg/day] */
+    unmitigatedBoiloffKgPerDay: number;
     /** [kg/day] */
     boiloffKgPerDay: number;
     /** [W] */
     cryocoolerPowerW: number;
     /** [W/m^2] */
     mliFlux_WPerM2: number;
+    inventories: StorageInventory[];
+    /** [kg] */
+    totalStorageMassKg: number;
+    /** [m^3] */
+    totalReserveVolumeM3: number;
+    /** [W] */
+    totalConditioningPowerW: number;
   };
   power: {
     architecture: PowerArchitecture;
@@ -327,6 +497,15 @@ export interface SimResult {
     pCritDynamicW: number;
     /** [W] */
     beamedFloorPowerW: number | null;
+    /** [W] */
+    beamDeliveryMarginW: number | null;
+    /** [W] */
+    solarDeliveredCapacityW: number;
+    /** [h] */
+    siteDayHours: number;
+    /** [h] */
+    siteNightHours: number;
+    siteProfile: PolarProfileSummary;
   };
   logistics: {
     /** [kg] */
@@ -335,8 +514,14 @@ export interface SimResult {
     totalInfraMassKg: number;
     nMissions: number;
     leverageL: number;
-    paybackDays: number;
+    plantMassThroughputDays: number;
     manifest: ManifestRow[];
+  };
+  materials: {
+    flows: MaterialFlow[];
+    balances: ProcessBalance[];
+    /** [kg/day] */
+    maxAbsResidualKgPerDay: number;
   };
   construction: {
     /** [t/yr] */
@@ -377,6 +562,10 @@ export interface TimeseriesPoint {
   boiloffKgPerDay: number;
   /** [kg/day] */
   netProductionKgPerDay: number;
+  illumination: number;
+  receiverVisibility: number;
+  /** [K] */
+  surfaceTemperatureK: number;
 }
 
 export interface TimeseriesResult {
@@ -403,4 +592,4 @@ export interface UncertaintyBand {
   mean: number;
 }
 
-export type UncertaintyResult = Record<"paybackDays" | "secTotal" | "nMissions" | "leverageL", UncertaintyBand>;
+export type UncertaintyResult = Record<"plantMassThroughputDays" | "secTotal" | "nMissions" | "leverageL", UncertaintyBand>;

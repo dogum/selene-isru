@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "name": "Illustrative 72-hour ridge/receiver cycle",
+  "points": [
+    {
+      "hour": 0,
+      "illumination": 1,
+      "receiverVisibility": 1,
+      "surfaceTemperatureK": 210
+    },
+    {
+      "hour": 8,
+      "illumination": 0.9,
+      "receiverVisibility": 1,
+      "surfaceTemperatureK": 205
+    },
+    {
+      "hour": 16,
+      "illumination": 0.55,
+      "receiverVisibility": 0.8,
+      "surfaceTemperatureK": 165
+    },
+    {
+      "hour": 24,
+      "illumination": 0,
+      "receiverVisibility": 0,
+      "surfaceTemperatureK": 80
+    },
+    {
+      "hour": 40,
+      "illumination": 0,
+      "receiverVisibility": 0,
+      "surfaceTemperatureK": 50
+    },
+    {
+      "hour": 52,
+      "illumination": 0.35,
+      "receiverVisibility": 0.65,
+      "surfaceTemperatureK": 120
+    },
+    {
+      "hour": 62,
+      "illumination": 0.85,
+      "receiverVisibility": 1,
+      "surfaceTemperatureK": 190
+    },
+    {
+      "hour": 72,
+      "illumination": 1,
+      "receiverVisibility": 1,
+      "surfaceTemperatureK": 210
+    }
+  ]
+}

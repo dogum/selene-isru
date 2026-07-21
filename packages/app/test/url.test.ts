@@ -17,7 +17,12 @@ describe("URL round-trip (§8.4)", () => {
       targetKgPerDay: 5000,
       enableSabatier: true,
       missionYears: 12,
-      Vcell: 4.7
+      Vcell: 4.7,
+      storageStream: "lch4",
+      cryoControlMode: "capacity-limited",
+      coolerCapacityW: 75,
+      polarProfileMode: "profile",
+      polarProfileData: JSON.stringify({ name: "URL profile", points: [{ hour: 0, illumination: 1 }, { hour: 24, illumination: 0 }] })
     };
     const params: SimParams = { ...DEFAULTS, ...patch };
     const query = serializeParams(params);

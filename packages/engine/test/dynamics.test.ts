@@ -37,7 +37,7 @@ describe("phase 2 dynamics parity", () => {
   test("fixture shape is deterministic", () => {
     expect(dynamics.schemaVersion).toBe(1);
     expect(dynamics.seed).toBe(42);
-    expect(dynamics.timeseries).toHaveLength(2);
+    expect(dynamics.timeseries).toHaveLength(3);
     expect(dynamics.uncertainty).toHaveLength(2);
   });
 
@@ -76,12 +76,12 @@ describe("phase 2 dynamics regression anchors", () => {
       ],
       { n: 32, seed: 42 }
     );
-    expect(result.paybackDays.p10).toBeLessThanOrEqual(result.paybackDays.p50);
-    expect(result.paybackDays.p50).toBeLessThanOrEqual(result.paybackDays.p90);
+    expect(result.plantMassThroughputDays.p10).toBeLessThanOrEqual(result.plantMassThroughputDays.p50);
+    expect(result.plantMassThroughputDays.p50).toBeLessThanOrEqual(result.plantMassThroughputDays.p90);
     expect(result.secTotal.p10).toBeLessThanOrEqual(result.secTotal.p50);
     expect(result.secTotal.p50).toBeLessThanOrEqual(result.secTotal.p90);
-    expectRel(result.paybackDays.p50, 58.932891221865745, 1e-12);
-    expectRel(result.secTotal.p50, 24.77768664291294, 1e-12);
+    expectRel(result.plantMassThroughputDays.p50, 58.93253207974891, 1e-12);
+    expectRel(result.secTotal.p50, 24.777402251765626, 1e-12);
   });
 });
 

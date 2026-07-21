@@ -594,7 +594,7 @@ export class EquatorialDiorama implements Diorama {
       flag.visible = i < Math.min(FLAG_CAP, result.logistics.nMissions);
     });
 
-    this.currentTankCount = tankCount(params);
+    this.currentTankCount = tankCount(params, result);
     this.currentTankFill = tankFillFraction(result);
     this.currentWispRate = boiloffWispRate(result.cryo.boiloffKgPerDay);
     this.cryoVapor.setState(this.currentTankCount, this.currentWispRate);

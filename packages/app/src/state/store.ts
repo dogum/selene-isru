@@ -8,6 +8,7 @@ export type SheetDetent = "peek" | "half" | "full";
 export type MobileTab = "controls" | "energy" | "mass" | "power" | "study";
 export type ParameterNameMode = "plain" | "code";
 export type StudyTab = "scenarios" | "frontier" | "uncertainty" | "report";
+export type KpiKey = "sec" | "power" | "missions" | "mass-throughput" | "leverage" | "output";
 
 export interface StudyScenario {
   id: string;
@@ -37,6 +38,12 @@ export interface UiState {
   compareScenarioName: string;
   /** currently inspected scene asset */
   selectedAsset: string | null;
+  /** headline metric selected for equation/provenance inspection */
+  selectedKpi: KpiKey | null;
+  /** input selected for runtime differential dependency tracing */
+  causalParam: keyof SimParams | null;
+  /** conservation and inventory inspector */
+  conservationOpen: boolean;
   /** camera bookmark request — consumed by the Scene component */
   flyRequest: { target: string; nonce: number } | null;
   /** warning pulse request — asset key + severity */
@@ -123,7 +130,10 @@ function sampleTimeseries(timeseries: TimeseriesResult, tHours: number): Timeser
       batterySoC: 1,
       tankFillKg: 0,
       boiloffKgPerDay: 0,
-      netProductionKgPerDay: 0
+      netProductionKgPerDay: 0,
+      illumination: 1,
+      receiverVisibility: 1,
+      surfaceTemperatureK: 300
     };
   }
   const last = points[points.length - 1]!;
@@ -146,7 +156,10 @@ function sampleTimeseries(timeseries: TimeseriesResult, tHours: number): Timeser
     batterySoC: lerp(a.batterySoC, b.batterySoC),
     tankFillKg: lerp(a.tankFillKg, b.tankFillKg),
     boiloffKgPerDay: lerp(a.boiloffKgPerDay, b.boiloffKgPerDay),
-    netProductionKgPerDay: lerp(a.netProductionKgPerDay, b.netProductionKgPerDay)
+    netProductionKgPerDay: lerp(a.netProductionKgPerDay, b.netProductionKgPerDay),
+    illumination: lerp(a.illumination, b.illumination),
+    receiverVisibility: lerp(a.receiverVisibility, b.receiverVisibility),
+    surfaceTemperatureK: lerp(a.surfaceTemperatureK, b.surfaceTemperatureK)
   };
 }
 
@@ -262,6 +275,9 @@ export const useStore = create<Store>((set, get) => {
       currentScenarioName: `${params.site === "polar" ? "Polar" : "Equatorial"} working case`,
       compareScenarioName: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
       selectedAsset: null,
+      selectedKpi: null,
+      causalParam: null,
+      conservationOpen: false,
       flyRequest: null,
       pulseRequest: null,
       sheetDetent: "peek",

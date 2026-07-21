@@ -44,9 +44,9 @@ describe("regression anchors", () => {
     expectRel(secSubJPerKg(0.005, 800, 40, 263) / J_PER_KWH, 10.7, 0.01);
     expectRel(secSubJPerKg(0.05, 800, 40, 263) / J_PER_KWH, 1.78, 0.01);
     expect(result.logistics.nMissions).toBe(1);
-    expect(result.logistics.paybackDays).toBe(result.logistics.totalInfraMassKg / 1000);
-    expect(result.logistics.paybackDays).toBeGreaterThanOrEqual(55);
-    expect(result.logistics.paybackDays).toBeLessThanOrEqual(62);
+    expect(result.logistics.plantMassThroughputDays).toBe(result.logistics.totalInfraMassKg / 1000);
+    expect(result.logistics.plantMassThroughputDays).toBeGreaterThanOrEqual(55);
+    expect(result.logistics.plantMassThroughputDays).toBeLessThanOrEqual(62);
     expectRel(shieldFullBalanceM(101325, 3000), 20.85, 0.005);
     expect(payloadPerMissionKg(DEFAULTS)).toBeGreaterThanOrEqual(95_000);
     expect(payloadPerMissionKg(DEFAULTS)).toBeLessThanOrEqual(107_000);

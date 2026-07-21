@@ -89,8 +89,8 @@ export const TANK_VOLUME_M3 = 120;
 export const TANK_CAP = 8;
 
 /** cryo farm: N spheres = ceil(reserve volume / fixed tank size), capped */
-export function tankCount(params: SimParams): number {
-  const reserveVolumeM3 = (params.reserveDays * params.targetKgPerDay) / params.rhoCryo;
+export function tankCount(params: SimParams, result?: SimResult): number {
+  const reserveVolumeM3 = result?.cryo.totalReserveVolumeM3 ?? (params.reserveDays * params.targetKgPerDay) / params.rhoCryo;
   return clamp(Math.ceil(reserveVolumeM3 / TANK_VOLUME_M3), 1, TANK_CAP);
 }
 

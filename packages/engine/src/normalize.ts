@@ -73,6 +73,48 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "storageStream") {
+      const options = new Set(["auto", "lox", "water-ice", "liquid-water", "lh2", "lch4", "co2-feed", "custom"]);
+      if (typeof raw === "string" && options.has(raw)) {
+        assign("storageStream", raw as SimParams["storageStream"]);
+      } else {
+        assign("storageStream", DEFAULTS.storageStream);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
+    if (key === "polarProfileMode") {
+      if (raw === "scalar" || raw === "profile") {
+        assign("polarProfileMode", raw);
+      } else {
+        assign("polarProfileMode", DEFAULTS.polarProfileMode);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
+    if (key === "polarProfileData") {
+      if (typeof raw === "string" && raw.length <= 100_000) {
+        assign("polarProfileData", raw);
+      } else {
+        assign("polarProfileData", DEFAULTS.polarProfileData);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Imported profile data exceeded the supported text boundary.", value: 0, limit: 100_000 });
+      }
+      continue;
+    }
+
+    if (key === "cryoControlMode") {
+      const options = new Set(["zero-boiloff", "passive", "capacity-limited"]);
+      if (typeof raw === "string" && options.has(raw)) {
+        assign("cryoControlMode", raw as SimParams["cryoControlMode"]);
+      } else {
+        assign("cryoControlMode", DEFAULTS.cryoControlMode);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (typeof defaultValue === "boolean") {
       if (typeof raw === "boolean") {
         assign(key, raw as SimParams[typeof key]);

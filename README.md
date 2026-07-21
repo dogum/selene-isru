@@ -3,11 +3,15 @@
 [![CI](https://github.com/dogum/selene-isru/actions/workflows/ci.yml/badge.svg)](https://github.com/dogum/selene-isru/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-4ade80.svg)](LICENSE)
 
-A single-page, client-side engineering trade-space simulator for a
-self-sustaining lunar ISRU chain. Move a slider; the entire lunar industrial
-chain — 3D diorama, energy Sankey, mass manifest, mission count, payback
+A single-page, client-side engineering trade-space simulator for an
+integrated conceptual lunar ISRU chain. Move a slider; the entire lunar industrial
+chain — 3D diorama, energy Sankey, mass manifest, mission count, plant-mass throughput equivalent
 clock — recomputes and re-renders the same frame. No server, no debounce,
 no workers: the physics engine runs in well under a millisecond.
+
+> **Model boundary:** SELENE-ISRU is a conceptual systems and comparative trade tool,
+> not a flight, hardware, safety, cost, or mission-readiness model. TypeScript/Python
+> parity proves implementation agreement, not physical validation.
 
 The renderer uses a hybrid procedural/Blender pipeline. Lunar terrain, regolith
 PBR maps, star fields, Earth, environment lighting, and effects are generated
@@ -56,19 +60,23 @@ when they are useful:
   produces a print/PDF-ready engineering report.
 - **Brief** is an opt-in goal workflow for questions such as a polar water camp,
   minimum landed mass, or the solar/nuclear crossover. It performs a transparent
-  bounded design search, ranks distinct feasible designs, and reports the
-  bottleneck, largest drivers, uncertainty range, and caveats before handing an
+  bounded design search, ranks designs inside active implemented constraints, and reports the
+  bottleneck, largest drivers, illustrative sensitivity range, and caveats before handing an
   accepted case into Trade Study.
 - Inputs use plain engineering names by default, can toggle to engine variable
-  names, and expose model maturity, source links/sections, uncertainty defaults,
+  names, and expose model maturity, source links/sections, illustrative input spreads,
   range rationale, applicability, and validity limits beside the control.
+- **Conserve** opens the executed material and energy ledgers beside independently
+  sized product/feed inventories. Polar studies can import a time-resolved JSON
+  or CSV illumination, receiver-visibility, and temperature profile. Numeric
+  evidence drawers can run a local causal trace through the actual engine.
 
-## The parity story
+## Implementation parity and evidence
 
-Every equation lives twice:
+Every implemented equation lives twice:
 
 - **TypeScript** (`packages/engine`) — the runtime engine the app calls on
-  every input event. Zero dependencies, pure ESM, < 50 kB built.
+  every input event. Zero dependencies, pure ESM, with a 96 KiB CI budget.
 - **Python** (`python/selene_isru`) — an independent mirror used for
   derivations, citations, and golden-vector generation.
 
@@ -78,6 +86,12 @@ engine, and writes `packages/engine/test/golden_vectors.json`. Vitest then
 asserts that the TypeScript engine reproduces **every numeric leaf to 1e-9
 relative tolerance**. CI regenerates the vectors from Python on every push —
 a unilateral edit to either implementation breaks the build.
+
+External analytical anchors and conservation invariants are tested separately
+from the parity vectors. The original review is recorded in
+[`docs/model-audit-v02.md`](docs/model-audit-v02.md); its five major continuation
+items and their remaining limits are documented in
+[`docs/model-depth-v03.md`](docs/model-depth-v03.md).
 
 ## Architecture
 
@@ -155,3 +169,8 @@ All internal model units are SI. Energy Sankey lines are exposed as
 Scenarios share via URL — non-default params serialize to a compact query
 string (`?site=polar&chiIce=0.03`) that round-trips to an identical
 `SimResult` (asserted in tests).
+
+Time-resolved polar profiles can be imported in the Power controls. See the
+checked-in [JSON profile example](docs/examples/polar-site-profile.json) for the
+supported schema and [`docs/model-depth-v03.md`](docs/model-depth-v03.md) for
+interpolation, validation, and model-boundary details.

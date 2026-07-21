@@ -39,4 +39,12 @@ export const PARAM_META = ${JSON.stringify(params, null, 2)} as const satisfies 
 export const DEFAULTS = ${JSON.stringify(defaults, null, 2)} as const satisfies SimParams;
 `;
 
-writeFileSync(outPath, source);
+if (process.argv.includes("--check")) {
+  const existing = readFileSync(outPath, "utf8");
+  if (existing !== source) {
+    console.error("src/constants.ts is stale; run pnpm gen:constants");
+    process.exitCode = 1;
+  }
+} else {
+  writeFileSync(outPath, source);
+}

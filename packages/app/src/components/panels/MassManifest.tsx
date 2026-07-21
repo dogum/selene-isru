@@ -170,7 +170,7 @@ export function MassManifest(): React.JSX.Element {
               LEVERAGE <b className="num">{formatQtyText(result.logistics.leverageL, "×")}</b>
             </div>
             <div>
-              PAYBACK <b className="num">{formatQtyText(result.logistics.paybackDays, "days")}</b>
+              PLANT-MASS THROUGHPUT EQUIV. <b className="num">{formatQtyText(result.logistics.plantMassThroughputDays, "days")}</b>
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ def simulate_logistics(
     total_infra_mass_kg = fleet_mass_kg + reactor_mass_kg + power_mass_kg + cryo_mass_kg
     capacity = params["etaPack"] * payload
     n_missions = max(0, math.ceil(total_infra_mass_kg / capacity)) if capacity > 0 else 0
-    payback_days = total_infra_mass_kg / params["targetKgPerDay"]
+    plant_mass_throughput_days = total_infra_mass_kg / params["targetKgPerDay"]
     annual_product_kg = params["targetKgPerDay"] * 365
     leverage_l = annual_product_kg * params["missionYears"] * params["gearRatio"] / total_infra_mass_kg if total_infra_mass_kg != 0 else 0
     manifest = [
@@ -36,6 +36,6 @@ def simulate_logistics(
         "totalInfraMassKg": total_infra_mass_kg,
         "nMissions": n_missions,
         "leverageL": leverage_l,
-        "paybackDays": payback_days,
+        "plantMassThroughputDays": plant_mass_throughput_days,
         "manifest": manifest,
     }

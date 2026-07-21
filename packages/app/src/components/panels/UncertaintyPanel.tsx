@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
 
-type SensitivityMetric = "payback" | "sec" | "missions" | "mass";
+type SensitivityMetric = "mass-throughput" | "sec" | "missions" | "mass";
 
 interface UncertaintyOption {
   key: keyof SimParams;
@@ -38,7 +38,7 @@ function metricValue(result: ReturnType<typeof simulate>, metric: SensitivityMet
     case "sec": return result.energy.secTotal_kWhPerKg;
     case "missions": return result.logistics.nMissions;
     case "mass": return result.logistics.totalInfraMassKg;
-    default: return result.logistics.paybackDays;
+    default: return result.logistics.plantMassThroughputDays;
   }
 }
 
@@ -51,7 +51,7 @@ export function UncertaintyPanel(): React.JSX.Element {
   const [keys, setKeys] = useState<Array<keyof SimParams>>(defaultKeys);
   const [sigma, setSigma] = useState(0.1);
   const [evidenceDefaults, setEvidenceDefaults] = useState(true);
-  const [metric, setMetric] = useState<SensitivityMetric>("payback");
+  const [metric, setMetric] = useState<SensitivityMetric>("mass-throughput");
 
   const spec = useMemo<UncertaintySpec[]>(() =>
     keys
@@ -93,23 +93,23 @@ export function UncertaintyPanel(): React.JSX.Element {
   }, [available, metric, params, spec]);
 
   const maxDelta = Math.max(1, ...sensitivity.flatMap((row) => [Math.abs(row.low), Math.abs(row.high)]));
-  const payback = bands.paybackDays;
+  const massEquivalent = bands.plantMassThroughputDays;
   const sec = bands.secTotal;
-  const span = Math.max(1e-9, payback.p90 - payback.p10);
-  const p50 = ((payback.p50 - payback.p10) / span) * 100;
+  const span = Math.max(1e-9, massEquivalent.p90 - massEquivalent.p10);
+  const p50 = ((massEquivalent.p50 - massEquivalent.p10) / span) * 100;
 
   return (
     <div className="panel-section uncertainty-section">
       <div className="panel-header">
-        UNCERTAINTY + SENSITIVITY
+        ILLUSTRATIVE SENSITIVITY
         <span className="num">256 DETERMINISTIC RUNS</span>
       </div>
       <div className="uncertainty-mode-row">
         <button type="button" className={evidenceDefaults ? "active" : ""} onClick={() => setEvidenceDefaults(true)}>
-          EVIDENCE DEFAULTS
+          EVIDENCE-INFORMED SPREADS
         </button>
         <button type="button" className={!evidenceDefaults ? "active" : ""} onClick={() => setEvidenceDefaults(false)}>
-          UNIFORM σ
+          UNIFORM INPUT SPREAD
         </button>
         {!evidenceDefaults && (
           <label>
@@ -135,9 +135,9 @@ export function UncertaintyPanel(): React.JSX.Element {
       <div className="chart-well uncertainty-well">
         <div className="uncertainty-band"><span style={{ left: `${p50}%` }} /></div>
         <div className="uncertainty-values mono">
-          <span>PAYBACK P10 {formatQtyText(payback.p10, "days")}</span>
-          <span>P50 {formatQtyText(payback.p50, "days")}</span>
-          <span>P90 {formatQtyText(payback.p90, "days")}</span>
+          <span>MASS EQUIV. P10 {formatQtyText(massEquivalent.p10, "days")}</span>
+          <span>P50 {formatQtyText(massEquivalent.p50, "days")}</span>
+          <span>P90 {formatQtyText(massEquivalent.p90, "days")}</span>
         </div>
         <div className="uncertainty-values mono">
           <span>SEC P10 {formatQtyText(sec.p10, "kWh/kg", 4)}</span>
@@ -154,10 +154,10 @@ export function UncertaintyPanel(): React.JSX.Element {
       <div className="sensitivity-head">
         <div>
           <span className="reactor-section-title">ONE-AT-A-TIME SENSITIVITY RANKING</span>
-          <small>Percent response at each selected input's uncertainty bound</small>
+          <small>Percent response at each selected illustrative input bound</small>
         </div>
         <select value={metric} onChange={(event) => setMetric(event.target.value as SensitivityMetric)} aria-label="Sensitivity output metric">
-          <option value="payback">Payback</option>
+          <option value="mass-throughput">Plant-mass throughput equivalent</option>
           <option value="sec">Specific energy</option>
           <option value="missions">Missions</option>
           <option value="mass">Infrastructure mass</option>
@@ -177,7 +177,7 @@ export function UncertaintyPanel(): React.JSX.Element {
         ))}
       </div>
       <p className="panel-caption">
-        Monte Carlo bands combine the selected inputs. The ranking perturbs one input at a time and should be read as local model sensitivity, not empirical confidence.
+        Deterministic sampled bands combine the selected input spreads. They are illustrative model sensitivity, not calibrated uncertainty or empirical confidence.
       </p>
     </div>
   );

@@ -5,7 +5,7 @@ import { formatQtyText } from "../lib/format";
 import { useStore } from "../state/store";
 
 type GoalSite = "either" | SimParams["site"];
-type GoalObjective = "landed-mass" | "energy" | "missions" | "payback" | "crossover";
+type GoalObjective = "landed-mass" | "energy" | "missions" | "mass-throughput" | "crossover";
 
 interface MissionConstraints {
   site: GoalSite;
@@ -51,7 +51,7 @@ const GOALS: BriefGoal[] = [
   {
     id: "polar-water",
     title: "Polar water camp",
-    prompt: "Find a feasible polar excavation, sublimation, and storage chain.",
+    prompt: "Find a polar chain with no implemented constraint violations under the active caps.",
     constraints: { site: "polar", objective: "landed-mass", targetKgPerDay: 1000, missionYears: 5, maxMissions: 30, maxPowerMw: 20, maxInfraT: 250, allowSabatier: false },
     caveats: ["Ice fraction is treated as a uniform bulk assay.", "Thermal transport uses a representative pore scale and steady-state bed model."]
   },
@@ -65,7 +65,7 @@ const GOALS: BriefGoal[] = [
   {
     id: "energy",
     title: "Minimize energy",
-    prompt: "Rank feasible designs by total product-specific energy.",
+    prompt: "Rank designs inside the active caps by total product-specific energy.",
     constraints: { site: "either", objective: "energy", targetKgPerDay: 1000, missionYears: 8, maxMissions: 30, maxPowerMw: 20, maxInfraT: 250, allowSabatier: false },
     caveats: ["High-efficiency input values are engineering targets, not guaranteed hardware states.", "Energy minimization may trade against mass, maturity, and operating margin."]
   },
@@ -82,7 +82,7 @@ const OBJECTIVES: Array<{ id: GoalObjective; label: string }> = [
   { id: "landed-mass", label: "Minimum landed mass" },
   { id: "energy", label: "Minimum energy" },
   { id: "missions", label: "Minimum missions" },
-  { id: "payback", label: "Fastest payback" },
+  { id: "mass-throughput", label: "Lowest plant-mass throughput equivalent" },
   { id: "crossover", label: "Solar/nuclear crossover" }
 ];
 
@@ -110,7 +110,7 @@ function score(result: SimResult, objective: GoalObjective): number {
   switch (objective) {
     case "energy": return result.energy.secTotal_kWhPerKg;
     case "missions": return result.logistics.nMissions;
-    case "payback": return result.logistics.paybackDays;
+    case "mass-throughput": return result.logistics.plantMassThroughputDays;
     case "crossover": return Math.abs(result.energy.gridPowerW - result.power.pCritDynamicW) / Math.max(1, result.power.pCritDynamicW);
     default: return result.logistics.totalInfraMassKg;
   }
@@ -298,12 +298,12 @@ export function MissionBrief(): React.JSX.Element | null {
           {optimization !== null && selected !== null && uncertainty !== null && (
             <section className="brief-analysis" aria-live="polite">
               <div className="brief-analysis-head">
-                <div><span className="reactor-eyebrow">RECOMMENDED BOUNDED DESIGN</span><h3>{recommendationTitle(selected)}</h3><small>{optimization.feasible} feasible of {optimization.evaluated} evaluated cases</small></div>
-                <span className={`brief-status ${selected.feasible ? "nominal" : "alarm"}`}>{selected.feasible ? "FEASIBLE UNDER CAPS" : "NO FULLY FEASIBLE CASE"}</span>
+                <div><span className="reactor-eyebrow">RECOMMENDED BOUNDED DESIGN</span><h3>{recommendationTitle(selected)}</h3><small>{optimization.feasible} of {optimization.evaluated} cases satisfy the active implemented constraints</small></div>
+                <span className={`brief-status ${selected.feasible ? "nominal" : "alarm"}`}>{selected.feasible ? "NO IMPLEMENTED CONSTRAINT VIOLATIONS" : "NO CASE SATISFIES ACTIVE CAPS"}</span>
               </div>
               <div className="brief-summary-grid">
                 <div><span>PRIMARY ENERGY DRIVER</span><strong>{drivers[0]?.label.toUpperCase() ?? "—"}</strong><small>{formatQtyText(drivers[0]?.value ?? 0, "kWh/kg")}</small></div>
-                <div><span>PAYBACK · P10–P90</span><strong>{formatQtyText(uncertainty.paybackDays.p10, "days")}–{formatQtyText(uncertainty.paybackDays.p90, "days")}</strong><small>192 uncertainty samples</small></div>
+                <div><span>PLANT-MASS EQUIV. · P10–P90</span><strong>{formatQtyText(uncertainty.plantMassThroughputDays.p10, "days")}–{formatQtyText(uncertainty.plantMassThroughputDays.p90, "days")}</strong><small>192 illustrative sensitivity samples</small></div>
                 <div><span>INFRA / MISSIONS</span><strong>{formatQtyText(selected.result.logistics.totalInfraMassKg, "kg")} / {selected.result.logistics.nMissions}</strong><small>{formatQtyText(selected.result.energy.gridPowerW, "W")} grid</small></div>
               </div>
 

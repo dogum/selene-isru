@@ -6,7 +6,7 @@ export interface LogisticsOutput {
   totalInfraMassKg: number;
   nMissions: number;
   leverageL: number;
-  paybackDays: number;
+  plantMassThroughputDays: number;
   manifest: ManifestRow[];
 }
 
@@ -29,7 +29,7 @@ export function simulateLogistics(
   const totalInfraMassKg = fleetMassKg + reactorMassKg + powerMassKg + cryoMassKg;
   const capacity = params.etaPack * payload;
   const nMissions = capacity > 0 ? Math.max(0, Math.ceil(totalInfraMassKg / capacity)) : 0;
-  const paybackDays = totalInfraMassKg / params.targetKgPerDay;
+  const plantMassThroughputDays = totalInfraMassKg / params.targetKgPerDay;
   const annualProductKg = params.targetKgPerDay * 365;
   const leverageL = totalInfraMassKg !== 0 ? (annualProductKg * params.missionYears * params.gearRatio) / totalInfraMassKg : 0;
   const manifest: ManifestRow[] = [
@@ -44,7 +44,7 @@ export function simulateLogistics(
     totalInfraMassKg,
     nMissions,
     leverageL,
-    paybackDays,
+    plantMassThroughputDays,
     manifest
   };
 }

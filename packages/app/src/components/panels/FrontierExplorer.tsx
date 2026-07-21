@@ -16,7 +16,7 @@ type SweepKey =
   | "etaCell"
   | "alphaSpecific"
   | "shieldDesignM";
-type Objective = "payback-missions" | "sec-power" | "mass-sec" | "mass-missions";
+type Objective = "mass-throughput-missions" | "sec-power" | "mass-sec" | "mass-missions";
 
 interface SweepParam {
   key: SweepKey;
@@ -41,7 +41,7 @@ const PARAMS: SweepParam[] = [
 ];
 
 const OBJECTIVES: Array<{ id: Objective; label: string; x: string; y: string }> = [
-  { id: "payback-missions", label: "Payback / missions", x: "PAYBACK · DAYS", y: "MISSIONS" },
+  { id: "mass-throughput-missions", label: "Plant-mass equivalent / missions", x: "PLANT-MASS EQUIV. · DAYS", y: "MISSIONS" },
   { id: "sec-power", label: "SEC / grid power", x: "SEC · KWH/KG", y: "GRID POWER · W" },
   { id: "mass-sec", label: "Infra mass / SEC", x: "INFRA MASS · KG", y: "SEC · KWH/KG" },
   { id: "mass-missions", label: "Infra mass / missions", x: "INFRA MASS · KG", y: "MISSIONS" }
@@ -74,7 +74,7 @@ function objectiveValues(result: ReturnType<typeof simulate>, objective: Objecti
     case "mass-missions":
       return [result.logistics.totalInfraMassKg, result.logistics.nMissions];
     default:
-      return [result.logistics.paybackDays, result.logistics.nMissions];
+      return [result.logistics.plantMassThroughputDays, result.logistics.nMissions];
   }
 }
 
@@ -158,7 +158,7 @@ export function FrontierExplorer(): React.JSX.Element {
     <div className="panel-section frontier-section" ref={ref}>
       <div className="panel-header">
         CONSTRAINED FRONTIER EXPLORER
-        <span className="num">{feasibleCount}/{data.length} FEASIBLE</span>
+        <span className="num">{feasibleCount}/{data.length} WITHIN ACTIVE CONSTRAINTS</span>
       </div>
       <div className="frontier-controls">
         <label>
@@ -204,7 +204,7 @@ export function FrontierExplorer(): React.JSX.Element {
           <input type="number" min="0.1" max="500" step="0.5" value={maxPowerMw} onChange={(event) => setMaxPowerMw(Number(event.target.value))} />
         </label>
         <span><i className="frontier-key frontier-key-good" /> PARETO</span>
-        <span><i className="frontier-key frontier-key-bad" /> INFEASIBLE</span>
+        <span><i className="frontier-key frontier-key-bad" /> OUTSIDE ACTIVE CONSTRAINTS</span>
       </div>
       <div className="chart-well frontier-well">
         <svg width={width} height={height} role="img" aria-label="Constrained Pareto frontier explorer">
@@ -220,7 +220,7 @@ export function FrontierExplorer(): React.JSX.Element {
               onClick={() => setCandidate(point)}
               onKeyDown={(event) => event.key === "Enter" && setCandidate(point)}
             >
-              <title>{`${objectiveMeta.x}: ${point.x.toPrecision(4)} · ${objectiveMeta.y}: ${point.y.toPrecision(4)} · ${point.feasible ? "feasible" : "infeasible"}`}</title>
+              <title>{`${objectiveMeta.x}: ${point.x.toPrecision(4)} · ${objectiveMeta.y}: ${point.y.toPrecision(4)} · ${point.feasible ? "inside active constraints" : "outside active constraints"}`}</title>
             </circle>
           ))}
           <circle
@@ -242,7 +242,7 @@ export function FrontierExplorer(): React.JSX.Element {
         <div className="frontier-candidate">
           <div>
             <span className="reactor-section-title">SELECTED DESIGN POINT</span>
-            <strong>{candidate.feasible ? "FEASIBLE" : "OUTSIDE ACTIVE CONSTRAINTS"}</strong>
+            <strong>{candidate.feasible ? "NO IMPLEMENTED CONSTRAINT VIOLATIONS" : "OUTSIDE ACTIVE CONSTRAINTS"}</strong>
             <small>{Object.entries(candidate.patch).map(([key, value]) => `${key}=${Number(value).toPrecision(4)}`).join(" · ")}</small>
           </div>
           <button type="button" className="topbar-btn" disabled={!candidate.feasible} onClick={() => applyPatch({ ...params, ...candidate.patch })}>

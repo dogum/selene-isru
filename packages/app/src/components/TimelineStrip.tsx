@@ -5,6 +5,7 @@ import { useStore } from "../state/store";
 export function TimelineStrip(): React.JSX.Element {
   const time = useStore((s) => s.time);
   const point = useStore((s) => s.timePoint);
+  const site = useStore((s) => s.params.site);
   const timeseries = useStore((s) => s.timeseries);
   const setTimeHours = useStore((s) => s.setTimeHours);
   const setPlaying = useStore((s) => s.setPlaying);
@@ -71,6 +72,7 @@ export function TimelineStrip(): React.JSX.Element {
       <div className="timeline-readouts mono">
         <span>{formatQtyText(point.tHours, "h")}</span>
         <span>{point.daylight ? "DAY" : "NIGHT"}</span>
+        {site === "polar" && <span>SUN {Math.round(point.illumination * 100)}% · RX {Math.round(point.receiverVisibility * 100)}%</span>}
         <span>SOC {Math.round(point.batterySoC * 100)}%</span>
         <span>{formatQtyText(point.tankFillKg, "kg")}</span>
       </div>

@@ -1,12 +1,15 @@
 import { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS } from "./constants";
 import { normalizeParams } from "./normalize";
 import { simulateConstruction } from "./modules/construction";
-import { simulateCryo } from "./modules/cryo";
+import { simulateCryo, type StorageDemand } from "./modules/cryo";
+import { energyLedger } from "./modules/energyLedger";
 import { simulateElectrolysis } from "./modules/electrolysis";
 import { simulateExcavation } from "./modules/excavation";
 import { simulateLogistics } from "./modules/logistics";
+import { materialLedger } from "./modules/materials";
 import { simulatePower } from "./modules/power";
 import { simulateSabatier } from "./modules/sabatier";
+import { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 import { simulateThermal } from "./modules/thermal";
 import type {
   FlowEdge,
@@ -31,20 +34,32 @@ export {
   oxideDecompositionVoltage,
   oxideModelYield,
   oxideO2KgPerKg,
+  mreVoltageLosses,
   secElecJPerKg,
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
 export { payloadPerMissionKg } from "./modules/logistics";
-export { beamedPowerW, pCritDynamicKw, pCritKw } from "./modules/power";
+export { beamedPowerW, beamEfficiency, pCritDynamicKw, pCritKw, siteCycleHours } from "./modules/power";
 export { sabatierKp } from "./modules/sabatier";
+export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 export { secSubJPerKg } from "./modules/thermal";
 export type {
   FlowEdge,
   ManifestRow,
+  MaterialFlow,
   OxideYield,
   ParamMeta,
   SimParams,
   SimResult,
+  ProcessBalance,
+  EnergyProcessBalance,
+  StorageInventory,
+  PolarProfileMode,
+  PolarProfilePoint,
+  PolarProfileSummary,
+  CryoControlMode,
+  ResolvedStorageStream,
+  StorageStreamSelection,
   TimeseriesOptions,
   TimeseriesPoint,
   TimeseriesResult,
@@ -60,14 +75,23 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
   const electrolysis = simulateElectrolysis(params);
   const excavation = simulateExcavation(params, electrolysis.xO2Effective);
   const thermal = simulateThermal(params);
-  const cryo = simulateCryo(params);
+  const siteProfile = resolvePolarProfile(params);
   const sabatier =
     params.site === "polar" && params.enableSabatier
       ? simulateSabatier(params, params.targetKgPerDay)
       : null;
 
   const production = productionState(params, excavation.regolithPerKgProduct, sabatier);
-  const energyLines = energyLineItems(params, excavation.secExcavation_JPerKg, electrolysis, thermal.secSub_JPerKg, cryo.cryocoolerPowerW, sabatier);
+  const cryo = simulateCryo(params, storageDemands(params, production), siteProfile.profile);
+  const energyLines = energyLineItems(
+    params,
+    excavation.secExcavation_JPerKg,
+    electrolysis,
+    thermal.secSub_JPerKg,
+    cryo.conditioningSecKWhPerKg,
+    cryo.cryocoolerPowerW,
+    sabatier
+  );
   const flows = energyLines.map((line) => ({
     from: line.from,
     to: line.to,
@@ -76,7 +100,8 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
   const secTotal_JPerKg = energyLines.reduce((total, line) => total + line.jPerKg, 0);
   const secTotal_kWhPerKg = secTotal_JPerKg / J_PER_KWH;
   const gridPowerW = (params.targetKgPerDay / SECONDS_PER_DAY) * secTotal_JPerKg;
-  const power = simulatePower(params, gridPowerW);
+  const energyAccounting = energyLedger(params, gridPowerW, energyLines, excavation.mechPowerW, electrolysis, cryo, sabatier);
+  const power = simulatePower(params, gridPowerW, siteProfile.profile);
   const reactorMassKg =
     params.site === "equatorial" || params.enableSabatier
       ? params.kReactorMass * params.targetKgPerDay
@@ -89,12 +114,51 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
     cryo.cryoMassKg
   );
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
+  const materials = materialLedger(params, production);
   const warnings: Warning[] = [
     ...normalized.warnings,
+    ...siteProfile.warnings,
     ...(params.site === "equatorial" ? electrolysis.warnings : []),
+    ...cryo.warnings,
     ...power.warnings,
-    ...(params.site === "equatorial" ? construction.warnings : [])
+    ...construction.warnings
   ];
+
+  if (materials.maxAbsResidualKgPerDay > 1e-6) {
+    warnings.push({
+      id: "material-balance",
+      severity: "alarm",
+      module: "materials",
+      message: "A process-node material balance exceeds the conservation tolerance.",
+      value: materials.maxAbsResidualKgPerDay,
+      limit: 1e-6
+    });
+  }
+  if (energyAccounting.maxAbsResidualW > 1e-6) {
+    warnings.push({
+      id: "energy-balance",
+      severity: "alarm",
+      module: "energy",
+      message: "A process-node energy balance or grid allocation exceeds the conservation tolerance.",
+      value: energyAccounting.maxAbsResidualW,
+      limit: 1e-6
+    });
+  }
+  if (params.site === "equatorial" && params.oxideModel) {
+    const oxideSum =
+      params.oxideSiO2 + params.oxideTiO2 + params.oxideAl2O3 +
+      params.oxideFeO + params.oxideMgO + params.oxideCaO;
+    if (Math.abs(oxideSum - 1) > 0.05) {
+      warnings.push({
+        id: "oxide-composition-sum",
+        severity: "caution",
+        module: "electrolysis",
+        message: "Oxide fractions differ from unity by more than five percentage points; the model normalizes them.",
+        value: oxideSum,
+        limit: 1
+      });
+    }
+  }
 
   return {
     site: params.site,
@@ -102,7 +166,10 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
     energy: {
       secTotal_kWhPerKg,
       flows,
-      gridPowerW
+      gridPowerW,
+      balances: energyAccounting.balances,
+      maxAbsResidualW: energyAccounting.maxAbsResidualW,
+      gridAllocationResidualW: energyAccounting.gridAllocationResidualW
     },
     excavation: {
       cuttingForceN: excavation.cuttingForceN,
@@ -119,14 +186,37 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
       meltViscosityPaS: electrolysis.meltViscosityPaS,
       drainVelocityMPerS: electrolysis.drainVelocityMPerS,
       xO2Effective: electrolysis.xO2Effective,
-      oxideYield: electrolysis.oxideYield
+      oxideYield: electrolysis.oxideYield,
+      reversibleVoltageV: electrolysis.reversibleVoltageV,
+      activationOverpotentialV: electrolysis.activationOverpotentialV,
+      ohmicOverpotentialV: electrolysis.ohmicOverpotentialV,
+      concentrationOverpotentialV: electrolysis.concentrationOverpotentialV,
+      unallocatedVoltageV: electrolysis.unallocatedVoltageV,
+      voltageMarginV: electrolysis.voltageMarginV,
+      electrodeAreaM2: electrolysis.electrodeAreaM2,
+      currentUtilization: electrolysis.currentUtilization,
+      electricalInputW: electrolysis.electricalInputW,
+      chemicalPowerW: electrolysis.chemicalPowerW,
+      modeledLossPowerW: electrolysis.modeledLossPowerW
     },
     thermal,
     cryo: {
+      stream: cryo.stream,
+      controlMode: cryo.controlMode,
+      densityKgPerM3: cryo.densityKgPerM3,
+      storageTemperatureK: cryo.storageTemperatureK,
+      conditioningSecKWhPerKg: cryo.conditioningSecKWhPerKg,
       qLeakW: cryo.qLeakW,
+      qRemovedW: cryo.qRemovedW,
+      qResidualW: cryo.qResidualW,
+      unmitigatedBoiloffKgPerDay: cryo.unmitigatedBoiloffKgPerDay,
       boiloffKgPerDay: cryo.boiloffKgPerDay,
       cryocoolerPowerW: cryo.cryocoolerPowerW,
-      mliFlux_WPerM2: cryo.mliFlux_WPerM2
+      mliFlux_WPerM2: cryo.mliFlux_WPerM2,
+      inventories: cryo.inventories,
+      totalStorageMassKg: cryo.cryoMassKg,
+      totalReserveVolumeM3: cryo.totalReserveVolumeM3,
+      totalConditioningPowerW: cryo.totalConditioningPowerW
     },
     power: {
       architecture: power.architecture,
@@ -136,9 +226,15 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
       radiatorM2: power.radiatorM2,
       pCritW: power.pCritW,
       pCritDynamicW: power.pCritDynamicW,
-      beamedFloorPowerW: power.beamedFloorPowerW
+      beamedFloorPowerW: power.beamedFloorPowerW,
+      beamDeliveryMarginW: power.beamDeliveryMarginW,
+      solarDeliveredCapacityW: power.solarDeliveredCapacityW,
+      siteDayHours: power.siteDayHours,
+      siteNightHours: power.siteNightHours,
+      siteProfile: power.siteProfile
     },
     logistics,
+    materials,
     construction,
     warnings
   };
@@ -156,8 +252,11 @@ interface ProductionState {
   slagKgPerDay: number;
   o2KgPerDay: number;
   waterKgPerDay: number;
+  grossH2KgPerDay: number;
   h2KgPerDay: number;
+  co2ImportedKgPerDay: number;
   ch4KgPerDay: number;
+  waterRecycleKgPerDay: number;
 }
 
 interface ActiveElectrolysis {
@@ -168,9 +267,12 @@ interface ActiveElectrolysis {
 
 interface ActiveSabatier {
   secWaterElectrolysis_JPerKg: number;
-  h2KgPerDay: number;
+  grossH2KgPerDay: number;
+  h2UnreactedKgPerDay: number;
   o2KgPerDay: number;
+  co2ImportedKgPerDay: number;
   ch4KgPerDay: number;
+  waterRecycleKgPerDay: number;
 }
 
 function productionState(
@@ -186,8 +288,11 @@ function productionState(
       slagKgPerDay: regolithKgPerDay - params.targetKgPerDay,
       o2KgPerDay: params.targetKgPerDay,
       waterKgPerDay: 0,
+      grossH2KgPerDay: 0,
       h2KgPerDay: 0,
-      ch4KgPerDay: 0
+      co2ImportedKgPerDay: 0,
+      ch4KgPerDay: 0,
+      waterRecycleKgPerDay: 0
     };
   }
 
@@ -197,9 +302,36 @@ function productionState(
     slagKgPerDay: 0,
     o2KgPerDay: sabatier === null ? 0 : sabatier.o2KgPerDay,
     waterKgPerDay: params.targetKgPerDay,
-    h2KgPerDay: sabatier === null ? 0 : sabatier.h2KgPerDay,
-    ch4KgPerDay: sabatier === null ? 0 : sabatier.ch4KgPerDay
+    grossH2KgPerDay: sabatier === null ? 0 : sabatier.grossH2KgPerDay,
+    h2KgPerDay: sabatier === null ? 0 : sabatier.h2UnreactedKgPerDay,
+    co2ImportedKgPerDay: sabatier === null ? 0 : sabatier.co2ImportedKgPerDay,
+    ch4KgPerDay: sabatier === null ? 0 : sabatier.ch4KgPerDay,
+    waterRecycleKgPerDay: sabatier === null ? 0 : sabatier.waterRecycleKgPerDay
   };
+}
+
+function storageDemands(params: SimParams, production: ProductionState): StorageDemand[] {
+  if (params.storageStream !== "auto") {
+    return [{
+      id: "selected-primary",
+      stream: params.storageStream,
+      role: params.storageStream === "custom" ? "custom" : "product",
+      rateKgPerDay: params.targetKgPerDay
+    }];
+  }
+  if (params.site === "equatorial") {
+    return [{ id: "oxygen-product", stream: "lox", role: "product", rateKgPerDay: production.o2KgPerDay }];
+  }
+  if (!params.enableSabatier) {
+    return [{ id: "water-product", stream: "water-ice", role: "product", rateKgPerDay: production.waterKgPerDay }];
+  }
+  return [
+    { id: "water-feed-buffer", stream: "water-ice", role: "buffer", rateKgPerDay: production.waterKgPerDay },
+    { id: "oxygen-product", stream: "lox", role: "product", rateKgPerDay: production.o2KgPerDay },
+    { id: "hydrogen-product", stream: "lh2", role: "product", rateKgPerDay: production.h2KgPerDay },
+    { id: "methane-product", stream: "lch4", role: "product", rateKgPerDay: production.ch4KgPerDay },
+    { id: "carbon-dioxide-feed", stream: "co2-feed", role: "feed", rateKgPerDay: production.co2ImportedKgPerDay }
+  ];
 }
 
 function energyLineItems(
@@ -207,12 +339,13 @@ function energyLineItems(
   secExcavation_JPerKg: number,
   electrolysis: ActiveElectrolysis,
   secSub_JPerKg: number | null,
+  conditioningSecKWhPerKg: number,
   cryocoolerPowerW: number,
   sabatier: ActiveSabatier | null
 ): EnergyLine[] {
   const mdotProduct_kgPerS = params.targetKgPerDay / SECONDS_PER_DAY;
   const cryoJPerKg =
-    params.secLiquefaction * J_PER_KWH +
+    conditioningSecKWhPerKg * J_PER_KWH +
     (mdotProduct_kgPerS > 0 ? cryocoolerPowerW / mdotProduct_kgPerS : 0);
 
   if (params.site === "equatorial") {
@@ -256,37 +389,54 @@ export function simulateTimeseries(
   const result = simulate(params);
   const cycles = Math.max(1, Math.trunc(opts.cycles ?? 1));
   const samplesPerCycle = Math.max(2, Math.trunc(opts.samplesPerCycle ?? 96));
-  const tDay = PHYSICAL_CONSTANTS.tDay.value;
-  const tNight = PHYSICAL_CONSTANTS.tNight.value;
-  const cycleHours = tDay + tNight;
+  const tDay = result.power.siteDayHours;
+  const tNight = result.power.siteNightHours;
+  const cycleHours = params.site === "polar" ? result.power.siteProfile.cycleHours : tDay + tNight;
   const steps = cycles * samplesPerCycle;
   const dtHours = cycleHours / samplesPerCycle;
   const loadNominalW = result.energy.gridPowerW;
-  const pArrayW =
-    loadNominalW / params.etaWire + (loadNominalW * tNight) / (tDay * params.etaRoundTrip);
+  const pArrayW = result.power.solarDeliveredCapacityW;
   const reserveSoC = 1 - params.DoD;
   const netProductionNominalKgPerDay = Math.max(0, result.production.targetKgPerDay - result.cryo.boiloffKgPerDay);
   const points = [];
   let deliveredWh = 0;
+  let batterySoC = 1;
+  let tankFillKg = 0;
+  const storageCapacityWh = Math.max(1e-9, loadNominalW * tNight / (params.DoD * params.etaDischarge));
   const requestedWh = loadNominalW * steps * dtHours;
 
   for (let step = 0; step <= steps; step += 1) {
     const tHours = step * dtHours;
     const inCycle = tHours % cycleHours;
-    const daylight = inCycle < tDay;
+    const profilePoint = params.site === "polar"
+      ? samplePolarProfile(result.power.siteProfile, inCycle)
+      : {
+          hour: inCycle,
+          illumination: inCycle < tDay ? 1 : 0,
+          receiverVisibility: 1,
+          surfaceTemperatureK: inCycle < tDay ? params.Tsurface : params.Tpsr
+        };
+    const daylight = profilePoint.illumination > 0.05;
     let solarOutputW = 0;
-    let batterySoC = 1;
     let loadW = loadNominalW;
 
     if (result.power.architecture === "solar") {
-      solarOutputW = daylight ? pArrayW : 0;
-      if (daylight) {
-        batterySoC = Math.min(1, reserveSoC + params.DoD * (inCycle / tDay));
-      } else {
-        batterySoC = Math.max(reserveSoC, 1 - params.DoD * ((inCycle - tDay) / tNight));
-      }
-      if (!daylight && batterySoC <= reserveSoC && params.DoD <= 0) {
-        loadW = 0;
+      solarOutputW = pArrayW * profilePoint.illumination * profilePoint.receiverVisibility;
+      if (step < steps) {
+        const netW = solarOutputW - loadNominalW;
+        if (netW >= 0) {
+          batterySoC = Math.min(1, batterySoC + netW * dtHours * params.etaRoundTrip / storageCapacityWh);
+        } else {
+          const availableWh = Math.max(0, batterySoC - reserveSoC) * storageCapacityWh;
+          const requiredWh = -netW * dtHours / params.etaDischarge;
+          if (availableWh + 1e-9 >= requiredWh) {
+            batterySoC = Math.max(reserveSoC, batterySoC - requiredWh / storageCapacityWh);
+          } else {
+            const batteryDeliveredW = availableWh * params.etaDischarge / dtHours;
+            loadW = Math.max(0, Math.min(loadNominalW, solarOutputW + batteryDeliveredW));
+            batterySoC = reserveSoC;
+          }
+        }
       }
     } else {
       solarOutputW = 0;
@@ -299,7 +449,6 @@ export function simulateTimeseries(
 
     const loadFraction = loadNominalW > 0 ? loadW / loadNominalW : 1;
     const netProductionKgPerDay = netProductionNominalKgPerDay * loadFraction;
-    const tankFillKg = Math.max(0, (tHours / 24) * netProductionKgPerDay);
     points.push({
       tHours,
       daylight,
@@ -308,8 +457,14 @@ export function simulateTimeseries(
       batterySoC,
       tankFillKg,
       boiloffKgPerDay: result.cryo.boiloffKgPerDay,
-      netProductionKgPerDay
+      netProductionKgPerDay,
+      illumination: profilePoint.illumination,
+      receiverVisibility: profilePoint.receiverVisibility,
+      surfaceTemperatureK: profilePoint.surfaceTemperatureK
     });
+    if (step < steps) {
+      tankFillKg = Math.max(0, tankFillKg + netProductionKgPerDay * dtHours / 24);
+    }
   }
 
   const minSoC = points.reduce((minimum, point) => Math.min(minimum, point.batterySoC), 1);
@@ -342,7 +497,7 @@ export function sampleUncertainty(
   const rng = new SplitMix64(opts.seed);
   const baseParams = normalizeParams(base).params;
   const samples: Record<keyof UncertaintyResult, number[]> = {
-    paybackDays: [],
+    plantMassThroughputDays: [],
     secTotal: [],
     nMissions: [],
     leverageL: []
@@ -360,14 +515,14 @@ export function sampleUncertainty(
       (params as Record<string, unknown>)[item.key] = sampled;
     }
     const result = simulate(params);
-    samples.paybackDays.push(result.logistics.paybackDays);
+    samples.plantMassThroughputDays.push(result.logistics.plantMassThroughputDays);
     samples.secTotal.push(result.energy.secTotal_kWhPerKg);
     samples.nMissions.push(result.logistics.nMissions);
     samples.leverageL.push(result.logistics.leverageL);
   }
 
   return {
-    paybackDays: summarize(samples.paybackDays),
+    plantMassThroughputDays: summarize(samples.plantMassThroughputDays),
     secTotal: summarize(samples.secTotal),
     nMissions: summarize(samples.nMissions),
     leverageL: summarize(samples.leverageL)

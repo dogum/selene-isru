@@ -5,6 +5,7 @@ export type EvidenceMaturity =
   | "LITERATURE-DERIVED"
   | "SIMPLIFIED CORRELATION"
   | "DESIGN ASSUMPTION";
+export type ParamRole = "CAUSAL INPUT" | "CONSTRAINT DIAGNOSTIC" | "REFERENCE ASSUMPTION";
 
 export interface ParamEvidence {
   maturity: EvidenceMaturity;
@@ -14,6 +15,8 @@ export interface ParamEvidence {
   validity: string;
   applicability: string;
   defaultUncertainty: number;
+  role: ParamRole;
+  affects: string;
 }
 
 interface EvidenceInput {
@@ -74,7 +77,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     defaultUncertainty: 0.1
   },
   missionYears: {
-    rangeRationale: "One-to-twenty-year surface campaign envelope used for degradation and payback trades.",
+    rangeRationale: "One-to-twenty-year surface campaign envelope used for degradation and mass-leverage trades.",
     validity: "Does not include component replacement schedules or probabilistic mission loss.",
     applicability: "Both sites · logistics and power lifecycle",
     defaultUncertainty: 0.05
@@ -92,7 +95,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   Vcell: {
     rangeRationale: "Engineering operating envelope around the modeled MRE decomposition requirement and overpotential.",
-    validity: "Aggregate cell voltage; electrode degradation and transient control are excluded.",
+    validity: "System-level applied voltage is decomposed into reversible, activation, area-specific ohmic, concentration, and unallocated terms. The loss inputs are lumped assumptions rather than integrated-reactor calibration.",
     applicability: "Equatorial MRE only · electrolysis",
     defaultUncertainty: 0.08
   },
@@ -110,9 +113,21 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   jOperating: {
     rangeRationale: "Design sweep bounded by low-rate operation and the model's diffusion-limit warning region.",
-    validity: "One-dimensional mass-transfer limit; electrode geometry and bubbles are unresolved.",
-    applicability: "Equatorial MRE only · anode operating point",
+    validity: "Drives electrode area, ohmic loss, concentration overpotential, and the diffusion-limit warning; bubble coverage and three-dimensional geometry remain unresolved.",
+    applicability: "Equatorial MRE only · voltage-loss and electrode-area operating point",
     defaultUncertainty: 0.15
+  },
+  mreActivationOverpotentialV: {
+    rangeRationale: "Bounded aggregate electrode-kinetics sweep used to expose voltage headroom.",
+    validity: "A lumped design assumption, not a fitted Butler-Volmer model or electrode-specific measurement.",
+    applicability: "Equatorial MRE · voltage-loss decomposition",
+    defaultUncertainty: 0.25
+  },
+  mreAreaSpecificResistanceOhmM2: {
+    rangeRationale: "Conceptual electrolyte/electrode area-specific resistance envelope.",
+    validity: "Uniform effective resistance; temperature gradients, electrode spacing, contacts, bubbles, and aging are not resolved.",
+    applicability: "Equatorial MRE · ohmic voltage loss",
+    defaultUncertainty: 0.3
   },
   reserveDays: {
     rangeRationale: "Operational reserve from one day through a sixty-day contingency stock.",
@@ -125,6 +140,28 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Layer performance is lumped; seams, penetrations, compression, and aging are excluded.",
     applicability: "Both sites · cryogenic heat leak",
     defaultUncertainty: 0.15
+  },
+  Nlaydens: {
+    rangeRationale: "Layer-density sweep around the checked-in v0.1 thermal anchors.",
+    validity: "The current coefficient is calibrated with an internal layers/mm convention. Published NASA optimization examples report layers/cm; absolute heat leak remains benchmark-pending.",
+    applicability: "Both sites · storage heat-leak sensitivity",
+    defaultUncertainty: 0.25
+  },
+  polarIlluminationFraction: {
+    rangeRationale: "Site-profile envelope rather than a lunar-global constant.",
+    validity: "Default reflects a Shackleton-rim study case; mission design requires a location and height-specific illumination trace.",
+    applicability: "Polar solar architecture and storage sizing",
+    defaultUncertainty: 0.15
+  },
+  polarLongestShadowHours: {
+    rangeRationale: "One-hour favorable access through a full equatorial half-cycle.",
+    validity: "Default is a conservative Shackleton-rim study value. NASA reported 62 h for a different favorable reduced-DEM site.",
+    applicability: "Polar storage sizing and time-domain display",
+    defaultUncertainty: 0.2
+  },
+  polarProfileMode: {
+    validity: "Imported profiles are deterministic user inputs, not validated site ephemerides.",
+    applicability: "Polar solar, receiver, storage, thermal display, and time-domain simulation"
   },
   etaCell: {
     rangeRationale: "Commercial-to-advanced photovoltaic conversion-efficiency design envelope.",
@@ -186,12 +223,32 @@ function applicabilityFor(group: string): string {
   return labels[group] ?? `Model group · ${group}`;
 }
 
+const DIAGNOSTIC_KEYS = new Set<keyof SimParams>([
+  "c", "Nc", "Nq", "Ngamma", "zDepth", "wBlade", "dBlade", "vCut", "etaDrive",
+  "kc", "kr", "rPore", "Amu", "Bmu", "T0vft", "rhoSlag", "hMelt", "thetaDrain",
+  "Tsabatier", "castDeltaT"
+]);
+
+function roleFor(key: keyof SimParams): { role: ParamRole; affects: string } {
+  if (DIAGNOSTIC_KEYS.has(key)) {
+    return {
+      role: "CONSTRAINT DIAGNOSTIC",
+      affects: "Updates a derived operating check or warning; it does not currently resize every headline KPI."
+    };
+  }
+  return {
+    role: "CAUSAL INPUT",
+    affects: "Propagates through one or more energy, mass, production, storage, power, or logistics outputs."
+  };
+}
+
 export function evidenceForParam(input: EvidenceInput): ParamEvidence {
   const link = SOURCE_LINKS.find((entry) => entry.match.test(input.source)) ?? {
     url: REPO_CONSTANTS,
     section: "SELENE model constants and cited source label"
   };
   const maturity = maturityFor(input.source);
+  const dependency = roleFor(input.key);
   const base: ParamEvidence = {
     maturity,
     sourceUrl: link.url,
@@ -202,7 +259,8 @@ export function evidenceForParam(input: EvidenceInput): ParamEvidence {
         : `Bounded literature/model sweep from ${input.min} to ${input.max} ${input.unit === "1" ? "" : input.unit}.`,
     validity: "Use inside the supported range and with the subsystem assumptions shown in the selected-asset inspector.",
     applicability: applicabilityFor(input.group),
-    defaultUncertainty: maturity === "REFERENCE DATA" ? 0.005 : maturity === "DESIGN ASSUMPTION" ? 0.15 : 0.1
+    defaultUncertainty: maturity === "REFERENCE DATA" ? 0.005 : maturity === "DESIGN ASSUMPTION" ? 0.15 : 0.1,
+    ...dependency
   };
   return { ...base, ...KEY_OVERRIDES[input.key] };
 }

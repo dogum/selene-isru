@@ -1,7 +1,9 @@
+import { lazy, Suspense } from "react";
 import { AboutModal } from "./components/AboutModal";
 import { AssetInspector } from "./components/AssetInspector";
 import { ControlRail } from "./components/ControlRail";
 import { KpiStrip } from "./components/KpiStrip";
+import { KpiInspector } from "./components/KpiInspector";
 import { LearningToolbar } from "./components/LearningToolbar";
 import { MissionBrief } from "./components/MissionBrief";
 import { PhotoModeExit } from "./components/PhotoModeExit";
@@ -13,6 +15,9 @@ import { TourOverlay } from "./components/TourOverlay";
 import { WarningsDock } from "./components/WarningsDock";
 import { MobileOverlay } from "./components/mobile/MobileShell";
 import { useIsMobile } from "./lib/hooks";
+
+const CausalGraph = lazy(async () => ({ default: (await import("./components/CausalGraph")).CausalGraph }));
+const ConservationInspector = lazy(async () => ({ default: (await import("./components/ConservationInspector")).ConservationInspector }));
 
 export default function App(): React.JSX.Element {
   const isMobile = useIsMobile();
@@ -50,6 +55,9 @@ export default function App(): React.JSX.Element {
 
         <AboutModal />
         <MissionBrief />
+        <KpiInspector />
+        <Suspense fallback={null}><CausalGraph /></Suspense>
+        <Suspense fallback={null}><ConservationInspector /></Suspense>
       </div>
       <PhotoModeExit />
     </>

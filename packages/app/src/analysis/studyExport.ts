@@ -58,7 +58,7 @@ export function scenariosCsv(scenarios: StudyScenario[]): string {
       gridPowerW: result.energy.gridPowerW,
       infrastructureMassKg: result.logistics.totalInfraMassKg,
       missions: result.logistics.nMissions,
-      paybackDays: result.logistics.paybackDays,
+      plantMassThroughputDays: result.logistics.plantMassThroughputDays,
       leverage: result.logistics.leverageL,
       warnings: result.warnings.length,
       reproducibilityUrl: paramsToUrl(scenario.params)
@@ -75,7 +75,7 @@ export function scenariosCsv(scenarios: StudyScenario[]): string {
     gridPowerW: 0,
     infrastructureMassKg: 0,
     missions: 0,
-    paybackDays: 0,
+    plantMassThroughputDays: 0,
     leverage: 0,
     warnings: 0,
     reproducibilityUrl: ""

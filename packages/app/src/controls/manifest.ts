@@ -26,7 +26,7 @@ export const GROUPS: GroupDef[] = [
     id: "mission",
     label: "Mission",
     engineGroup: "global",
-    readout: (r) => ({ value: r.logistics.paybackDays, unit: "days" })
+    readout: (r) => ({ value: r.logistics.plantMassThroughputDays, unit: "days" })
   },
   {
     id: "excavation",
@@ -151,11 +151,17 @@ export function groupsForSite(site: SiteMode): GroupDef[] {
  */
 export const WARNING_PARAM: Partial<Record<string, keyof SimParams>> = {
   "anode-current": "jOperating",
+  "mre-voltage-shortfall": "Vcell",
+  "mre-no-oxide-yield": "Vcell",
+  "cryo-capacity-shortfall": "coolerCapacityW",
   "thermal-stress": "castDeltaT"
 };
 
 /** Known warning id → diorama asset key (camera fly + pulse, §6). */
 export const WARNING_ASSET: Partial<Record<string, string>> = {
   "anode-current": "reactor",
+  "mre-voltage-shortfall": "reactor",
+  "mre-no-oxide-yield": "reactor",
+  "energy-balance": "reactor",
   "thermal-stress": "castingYard"
 };

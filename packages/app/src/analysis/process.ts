@@ -48,10 +48,10 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       purpose: "Convert molten regolith into oxygen product and construction-grade slag.",
       inputs: ["Regolith feed", "Electrical power", "Cell voltage", "Melt temperature"],
       assumptions: [
-        "Aggregate oxygen recovery stands in for a complete reactor-scale oxide kinetics model.",
-        "Current density is checked against a diffusion-limited analytical estimate."
+        "Oxide recovery is gated by applied voltage after lumped activation, area-specific ohmic, and concentration losses.",
+        "Electrode area and voltage closure are explicit, but geometry, bubbles, materials, kinetics, and lifetime are not resolved."
       ],
-      maturity: "LITERATURE-DERIVED"
+      maturity: "SIMPLIFIED CORRELATION"
     },
     castingYard: {
       purpose: "Cast hot slag coproduct into pads, shielding, and structural feedstock.",
@@ -63,11 +63,11 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       maturity: "SIMPLIFIED CORRELATION"
     },
     tanks: {
-      purpose: "Liquefy and hold oxygen product as an operational reserve.",
-      inputs: ["Product throughput", "Reserve duration", "Tank temperature", "MLI construction"],
+      purpose: "Condition and hold independently sized product and feed inventories as an operational reserve.",
+      inputs: ["Mission stream ledger", "Reserve duration", "Stream properties", "MLI construction"],
       assumptions: [
-        "Tank geometry is derived from reserve volume with a lumped heat-leak model.",
-        "Boil-off is steady-state and excludes transient chill-down and transfer losses."
+        "Each active stream receives its own density, reserve volume, tank mass, conditioning duty, heat leak, and loss calculation.",
+        "Actual phase loss follows residual heat after the selected passive, limited, or zero-boil-off control mode."
       ],
       maturity: "LITERATURE-DERIVED"
     },
@@ -122,17 +122,17 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       purpose: "Receive beamed power, collect water, and optionally produce methane and oxygen.",
       inputs: ["Recovered water", "Beamed or nuclear power", "Electrolyzer voltage", "Sabatier conversion"],
       assumptions: [
-        "The optional Sabatier loop uses equilibrium-informed conversion with fixed operating inputs.",
-        "CO₂ supply, recycle hardware, catalyst aging, and gas cleanup are outside the manifest."
+        "The optional Sabatier loop uses a fixed single-pass conversion; equilibrium is diagnostic only.",
+        "CO₂ import and recycled water are reported explicitly, but their supply/cleanup hardware, catalyst aging, and gas cleanup remain outside the mass manifest."
       ],
       maturity: "LITERATURE-DERIVED"
     },
     tanks: {
-      purpose: "Liquefy and store water-derived products for reserve and downstream use.",
-      inputs: ["Product throughput", "Reserve duration", "Tank temperature", "MLI construction"],
+      purpose: "Condition and store water, oxygen, residual hydrogen, methane, and imported carbon-dioxide inventories.",
+      inputs: ["Conserved process streams", "Reserve duration", "Stream properties", "MLI construction"],
       assumptions: [
-        "Storage products share a lumped cryogenic sizing model.",
-        "Steady-state boil-off excludes transient transfer and chill-down losses."
+        "Each active stream resolves density, temperature, phase enthalpy, conditioning SEC, reserve volume, and tank mass independently.",
+        "A shared control budget is allocated by heat leak; transient transfer, chill-down, and co-storage constraints remain outside the model."
       ],
       maturity: "LITERATURE-DERIVED"
     },
@@ -141,7 +141,7 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       inputs: ["Grid demand", "Solar incidence", "Beam divergence", "Receiver radius"],
       assumptions: [
         "Beam propagation is represented by geometric divergence and fixed conversion efficiencies.",
-        "Pointing losses, terrain occlusion statistics, and tower structural dynamics are not resolved."
+        "Imported profiles can resolve deterministic illumination and receiver visibility; pointing statistics and tower structural dynamics remain outside the model."
       ],
       maturity: "SIMPLIFIED CORRELATION"
     },

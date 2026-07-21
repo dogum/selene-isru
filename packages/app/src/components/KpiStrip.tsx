@@ -1,8 +1,10 @@
 import type { SimResult } from "@selene-isru/engine";
+import type { KpiKey } from "../state/store";
 import { useStore } from "../state/store";
 import { Qty } from "./Qty";
 
 interface KpiDef {
+  key: KpiKey;
   label: string;
   unit: string;
   color: string;
@@ -11,21 +13,30 @@ interface KpiDef {
 }
 
 const KPIS: KpiDef[] = [
-  { label: "SEC TOTAL", unit: "kWh/kg", color: "var(--melt)", value: (r) => r.energy.secTotal_kWhPerKg, sig: 4 },
-  { label: "GRID POWER", unit: "W", color: "var(--melt)", value: (r) => r.energy.gridPowerW },
-  { label: "MISSIONS", unit: "", color: "var(--regolith)", value: (r) => r.logistics.nMissions },
-  { label: "PAYBACK", unit: "days", color: "var(--regolith)", value: (r) => r.logistics.paybackDays },
-  { label: "LEVERAGE L", unit: "×", color: "var(--regolith)", value: (r) => r.logistics.leverageL },
-  { label: "OUTPUT", unit: "kg/day", color: "var(--cryo)", value: (r) => r.production.targetKgPerDay, sig: 4 }
+  { key: "sec", label: "SEC TOTAL", unit: "kWh/kg", color: "var(--melt)", value: (r) => r.energy.secTotal_kWhPerKg, sig: 4 },
+  { key: "power", label: "GRID POWER", unit: "W", color: "var(--melt)", value: (r) => r.energy.gridPowerW },
+  { key: "missions", label: "MISSIONS", unit: "", color: "var(--regolith)", value: (r) => r.logistics.nMissions },
+  { key: "mass-throughput", label: "MASS EQUIV.", unit: "days", color: "var(--regolith)", value: (r) => r.logistics.plantMassThroughputDays },
+  { key: "leverage", label: "LEVERAGE L", unit: "×", color: "var(--regolith)", value: (r) => r.logistics.leverageL },
+  { key: "output", label: "OUTPUT", unit: "kg/day", color: "var(--cryo)", value: (r) => r.production.targetKgPerDay, sig: 4 }
 ];
 
 export function KpiCells({ compact = false }: { compact?: boolean }): React.JSX.Element {
   const result = useStore((s) => s.result);
+  const selectedKpi = useStore((s) => s.ui.selectedKpi);
+  const setUi = useStore((s) => s.setUi);
   const archColor = result.power.architecture === "solar" ? "var(--solar)" : "var(--fission)";
   return (
     <>
       {KPIS.map((k) => (
-        <div className={`kpi ${compact ? "compact" : ""}`} key={k.label}>
+        <button
+          type="button"
+          className={`kpi ${compact ? "compact" : ""} ${selectedKpi === k.key ? "selected" : ""}`}
+          key={k.label}
+          aria-pressed={selectedKpi === k.key}
+          title="Explain this number"
+          onClick={() => setUi({ selectedKpi: selectedKpi === k.key ? null : k.key })}
+        >
           <div className="kpi-value">
             <Qty value={k.value(result)} unit={k.unit} sig={k.sig ?? 3} animate />
           </div>
@@ -35,7 +46,7 @@ export function KpiCells({ compact = false }: { compact?: boolean }): React.JSX.
           >
             {k.label}
           </div>
-        </div>
+        </button>
       ))}
     </>
   );

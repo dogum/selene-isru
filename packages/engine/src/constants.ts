@@ -254,6 +254,27 @@ export const PHYSICAL_CONSTANTS = {
     "description": "Latent heat of vaporization of liquid hydrogen",
     "source": "engineering reference value"
   },
+  "dHvap_LCH4": {
+    "value": 510000,
+    "unit": "J/kg",
+    "kind": "physical",
+    "description": "Latent heat of vaporization of liquid methane",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "dHsub_CO2": {
+    "value": 571000,
+    "unit": "J/kg",
+    "kind": "physical",
+    "description": "Representative sublimation enthalpy of carbon dioxide",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "VthermoneutralWater": {
+    "value": 1.48,
+    "unit": "V",
+    "kind": "physical",
+    "description": "Representative thermoneutral voltage for liquid-water electrolysis",
+    "source": "standard water electrolysis thermodynamics"
+  },
   "dH_sabatier": {
     "value": -165000,
     "unit": "J/mol",
@@ -769,6 +790,26 @@ export const PARAM_META = {
     "description": "Operating current density",
     "source": "spec"
   },
+  "mreActivationOverpotentialV": {
+    "value": 0.45,
+    "min": 0.05,
+    "max": 1.5,
+    "unit": "V",
+    "kind": "parameter",
+    "group": "electrolysis",
+    "description": "Aggregate MRE electrode activation overpotential",
+    "source": "bounded reactor-level design assumption"
+  },
+  "mreAreaSpecificResistanceOhmM2": {
+    "value": 0.0005,
+    "min": 0.00005,
+    "max": 0.002,
+    "unit": "ohm*m^2",
+    "kind": "parameter",
+    "group": "electrolysis",
+    "description": "MRE area-specific ohmic resistance",
+    "source": "bounded reactor-level design assumption"
+  },
   "kReactorMass": {
     "value": 12,
     "min": 3,
@@ -829,6 +870,32 @@ export const PARAM_META = {
     "description": "Cryogenic storage reserve duration",
     "source": "spec"
   },
+  "storageStream": {
+    "value": "auto",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Primary stored product stream",
+    "source": "product-aware storage model v0.2"
+  },
+  "cryoControlMode": {
+    "value": "zero-boiloff",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Storage heat-control operating mode",
+    "source": "product-aware storage model v0.2"
+  },
+  "coolerCapacityW": {
+    "value": 250,
+    "min": 0,
+    "max": 100000,
+    "unit": "W",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Cold-side heat-removal capacity in limited-control mode",
+    "source": "design assumption"
+  },
   "rhoCryo": {
     "value": 1141,
     "min": 70,
@@ -836,8 +903,18 @@ export const PARAM_META = {
     "unit": "kg/m^3",
     "kind": "parameter",
     "group": "cryo",
-    "description": "Cryogenic product density",
-    "source": "LOX default"
+    "description": "Custom-stream density (used only for custom storage)",
+    "source": "custom stream design assumption"
+  },
+  "customLatentHeatJPerKg": {
+    "value": 213000,
+    "min": 100000,
+    "max": 3000000,
+    "unit": "J/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Custom-stream phase-change enthalpy (used only for custom storage)",
+    "source": "custom stream design assumption"
   },
   "alphaTank": {
     "value": 0.2,
@@ -886,8 +963,8 @@ export const PARAM_META = {
     "unit": "K",
     "kind": "parameter",
     "group": "cryo",
-    "description": "Tank cold-side temperature",
-    "source": "spec"
+    "description": "Custom-stream storage temperature (used only for custom storage)",
+    "source": "custom stream design assumption"
   },
   "Nmli": {
     "value": 40,
@@ -906,8 +983,8 @@ export const PARAM_META = {
     "unit": "layers/cm",
     "kind": "parameter",
     "group": "cryo",
-    "description": "MLI layer density",
-    "source": "spec"
+    "description": "MLI layer density; calibrated internal convention pending benchmark",
+    "source": "Lockheed-style MLI correlation calibrated to v0.1 anchors"
   },
   "C1mli": {
     "value": 0.00024,
@@ -976,8 +1053,8 @@ export const PARAM_META = {
     "unit": "kWh/kg",
     "kind": "parameter",
     "group": "cryo",
-    "description": "Liquefier specific energy consumption",
-    "source": "spec"
+    "description": "Custom-stream conditioning SEC (used only for custom storage)",
+    "source": "custom stream design assumption"
   },
   "kCryoMass": {
     "value": 6,
@@ -988,6 +1065,42 @@ export const PARAM_META = {
     "group": "cryo",
     "description": "Cryogenic block mass coefficient",
     "source": "spec"
+  },
+  "polarIlluminationFraction": {
+    "value": 0.71,
+    "min": 0.3,
+    "max": 0.95,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Polar site illuminated-time fraction",
+    "source": "NASA Shackleton-rim illumination study"
+  },
+  "polarLongestShadowHours": {
+    "value": 117,
+    "min": 1,
+    "max": 354,
+    "unit": "h",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Polar site design storage interval",
+    "source": "NASA Shackleton-rim illumination study; site-specific"
+  },
+  "polarProfileMode": {
+    "value": "scalar",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Polar illumination model: scalar assumptions or imported time profile",
+    "source": "site-profile model v0.3"
+  },
+  "polarProfileData": {
+    "value": "",
+    "unit": "json",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Canonical imported polar illumination, receiver visibility, and surface-temperature profile",
+    "source": "user-supplied site profile"
   },
   "etaWire": {
     "value": 0.95,
@@ -1521,13 +1634,19 @@ export const DEFAULTS = {
   "Cbulk": 10000,
   "deltaDiff": 0.001,
   "jOperating": 1200,
+  "mreActivationOverpotentialV": 0.45,
+  "mreAreaSpecificResistanceOhmM2": 0.0005,
   "kReactorMass": 12,
   "Vel": 1.8,
   "etaFaradayEl": 0.95,
   "fConversion": 0.95,
   "Tsabatier": 623,
   "reserveDays": 30,
+  "storageStream": "auto",
+  "cryoControlMode": "zero-boiloff",
+  "coolerCapacityW": 250,
   "rhoCryo": 1141,
+  "customLatentHeatJPerKg": 213000,
   "alphaTank": 0.2,
   "epsTank": 0.05,
   "Fview": 0.5,
@@ -1543,6 +1662,10 @@ export const DEFAULTS = {
   "eta2ndLaw": 0.2,
   "secLiquefaction": 2.2,
   "kCryoMass": 6,
+  "polarIlluminationFraction": 0.71,
+  "polarLongestShadowHours": 117,
+  "polarProfileMode": "scalar",
+  "polarProfileData": "",
   "etaWire": 0.95,
   "etaRoundTrip": 0.6,
   "etaCell": 0.3,

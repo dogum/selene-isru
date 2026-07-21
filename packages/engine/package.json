@@ -13,7 +13,7 @@
   },
   "scripts": {
     "gen:constants": "node scripts/gen-constants.ts",
-    "check:constants": "node scripts/gen-constants.ts && git diff --exit-code -- src/constants.ts",
+    "check:constants": "node scripts/gen-constants.ts --check",
     "build": "pnpm gen:constants && tsc -p tsconfig.json && node scripts/check-size.mjs",
     "test": "vitest run"
   },

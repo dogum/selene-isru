@@ -522,6 +522,8 @@ export class Viewer {
       ? {
           ...point,
           daylight: true,
+          illumination: 1,
+          receiverVisibility: 1,
           tHours: cycleHours * (site === "equatorial" ? 0.24 : 0.08)
         }
       : point;
@@ -535,11 +537,12 @@ export class Viewer {
       this.sun.intensity = lightPoint.daylight ? 2.8 + 0.8 * Math.sin(dayU * Math.PI) : 0.18;
       this.hemi.intensity = lightPoint.daylight ? 0.48 : 0.16;
     } else {
-      const elev = (lightPoint.daylight ? 2 : -1) * (Math.PI / 180);
+      const illumination = Math.min(1, Math.max(0, lightPoint.illumination));
+      const elev = (-1 + 3 * illumination) * (Math.PI / 180);
       const r = 240;
       this.sun.position.set(Math.cos(az) * Math.cos(elev) * r, Math.sin(elev) * r, Math.sin(az) * Math.cos(elev) * r);
-      this.sun.intensity = lightPoint.daylight ? 3.3 : 0.45;
-      this.hemi.intensity = lightPoint.daylight ? 0.14 : 0.07;
+      this.sun.intensity = 0.45 + 2.85 * illumination;
+      this.hemi.intensity = 0.07 + 0.07 * illumination;
     }
     this.sun.target.position.set(0, 0, 0);
 

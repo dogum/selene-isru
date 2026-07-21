@@ -212,6 +212,13 @@ export function PowerTrade(): React.JSX.Element {
             BEAMED FLOOR <b className="num">{formatQtyText(result.power.beamedFloorPowerW, "W")}</b>
           </div>
         )}
+        {result.site === "polar" && (
+          <>
+            <div>PROFILE <b className="num">{result.power.siteProfile.mode.toUpperCase()}</b></div>
+            <div>AVG DELIVERED <b className="num">{(result.power.siteProfile.averageDeliveredFraction * 100).toFixed(1)}%</b></div>
+            <div>RX OUTAGE <b className="num">{formatQtyText(result.power.siteProfile.longestReceiverOutageHours, "h")}</b></div>
+          </>
+        )}
       </div>
     </div>
   );

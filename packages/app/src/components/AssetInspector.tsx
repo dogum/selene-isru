@@ -69,14 +69,18 @@ const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
       Vcell: "Cell voltage",
       etaCurrent: "Current efficiency",
       Tmelt: "Melt temperature",
-      jOperating: "Anode current density"
+      jOperating: "Anode current density",
+      mreActivationOverpotentialV: "Activation overpotential",
+      mreAreaSpecificResistanceOhmM2: "Area-specific resistance"
     },
-    note: "Feed gate, tap valve, gauge, thermal band, and beacon respond to the current simulator state.",
+    note: "Feed gate, tap valve, gauge, thermal band, and beacon respond to the current state. Voltage headroom now resolves reversible, activation, ohmic, and concentration terms, while remaining a lumped conceptual reactor model.",
     metrics: (r) => [
       { label: "O₂ output", value: formatQtyText(r.production.o2KgPerDay, "kg/day") },
       { label: "Cell current", value: `${(r.electrolysis.currentA / 1_000).toFixed(1)} kA` },
       { label: "Electrolysis SEC", value: formatQtyText(r.electrolysis.secElec_JPerKg / 3.6e6, "kWh/kg") },
-      { label: "Effective O₂ yield", value: formatQtyText(r.electrolysis.xO2Effective, "kg/kg", 3) }
+      { label: "Effective O₂ yield", value: formatQtyText(r.electrolysis.xO2Effective, "kg/kg", 3) },
+      { label: "Voltage margin", value: formatQtyText(r.electrolysis.voltageMarginV, "V", 4) },
+      { label: "Electrode area", value: formatQtyText(r.electrolysis.electrodeAreaM2, "m²", 4) }
     ]
   },
   castingYard: {
@@ -109,12 +113,14 @@ const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
       Ttank: "Tank temperature",
       secLiquefaction: "Liquefaction SEC"
     },
-    note: "Tank count follows reserve volume; fill columns, valve speed, beacon intensity, and subtle vapor follow storage state and calculated boil-off.",
+    note: "Each mission product or feed stream receives its own reserve inventory, volume, conditioning duty, heat leak, and loss calculation. The selected heat-control mode shares capacity across those inventories.",
     metrics: (r, p) => [
-      { label: "Boil-off", value: formatQtyText(r.cryo.boiloffKgPerDay, "kg/day") },
-      { label: "Heat leak", value: formatQtyText(r.cryo.qLeakW, "W") },
+      { label: "Residual loss", value: formatQtyText(r.cryo.boiloffKgPerDay, "kg/day") },
+      { label: "Unmitigated equiv.", value: formatQtyText(r.cryo.unmitigatedBoiloffKgPerDay, "kg/day") },
       { label: "Cryocooler", value: formatQtyText(r.cryo.cryocoolerPowerW, "W") },
-      { label: "Reserve", value: formatQtyText(p.reserveDays, "days", 1) }
+      { label: "Independent streams", value: String(r.cryo.inventories.length) },
+      { label: "Reserve volume", value: formatQtyText(r.cryo.totalReserveVolumeM3, "m³", 4) },
+      { label: `${r.cryo.stream} reserve`, value: formatQtyText(p.reserveDays, "days", 1) }
     ]
   },
   station: {
@@ -226,12 +232,14 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
       fConversion: "Sabatier conversion",
       Tsabatier: "Reactor temperature"
     },
-    note: "The restrained beam terminates on a serviceable absorber deck. The reactor skid and moving valve appear only when the Sabatier loop is enabled.",
+    note: "The beam and receiver are active only when the mass-selected architecture is solar; nuclear cases no longer imply a hypothetical beamed-power supply.",
     metrics: (r) => [
-      { label: "Beamed floor power", value: formatQtyText(r.power.beamedFloorPowerW ?? 0, "W") },
+      { label: "Beamed floor power", value: r.power.beamedFloorPowerW === null ? "INACTIVE · NUCLEAR" : formatQtyText(r.power.beamedFloorPowerW, "W") },
+      { label: "Delivery margin", value: r.power.beamDeliveryMarginW === null ? "—" : formatQtyText(r.power.beamDeliveryMarginW, "W") },
       { label: "CH₄ output", value: formatQtyText(r.production.ch4KgPerDay, "kg/day") },
-      { label: "H₂ output", value: formatQtyText(r.production.h2KgPerDay, "kg/day") },
-      { label: "O₂ coproduct", value: formatQtyText(r.production.o2KgPerDay, "kg/day") }
+      { label: "Unreacted H₂", value: formatQtyText(r.production.h2KgPerDay, "kg/day") },
+      { label: "CO₂ import", value: formatQtyText(r.production.co2ImportedKgPerDay, "kg/day") },
+      { label: "Water recycle", value: formatQtyText(r.production.waterRecycleKgPerDay, "kg/day") }
     ]
   },
   tanks: {
@@ -245,12 +253,14 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
       Ttank: "Tank temperature",
       secLiquefaction: "Liquefaction SEC"
     },
-    note: "Tank count follows reserve volume while fill columns, status intensity, and low-opacity vapor follow storage state and calculated boil-off.",
+    note: "Water, oxygen, residual hydrogen, methane, and imported carbon dioxide receive independent reserve inventories when the Sabatier chain is active.",
     metrics: (r, p) => [
-      { label: "Boil-off", value: formatQtyText(r.cryo.boiloffKgPerDay, "kg/day") },
-      { label: "Heat leak", value: formatQtyText(r.cryo.qLeakW, "W") },
+      { label: "Residual loss", value: formatQtyText(r.cryo.boiloffKgPerDay, "kg/day") },
+      { label: "Unmitigated equiv.", value: formatQtyText(r.cryo.unmitigatedBoiloffKgPerDay, "kg/day") },
       { label: "Cryocooler", value: formatQtyText(r.cryo.cryocoolerPowerW, "W") },
-      { label: "Reserve", value: formatQtyText(p.reserveDays, "days", 1) }
+      { label: "Independent streams", value: String(r.cryo.inventories.length) },
+      { label: "Reserve volume", value: formatQtyText(r.cryo.totalReserveVolumeM3, "m³", 4) },
+      { label: `${r.cryo.stream} reserve`, value: formatQtyText(p.reserveDays, "days", 1) }
     ]
   },
   towers: {
@@ -268,7 +278,7 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     metrics: (r) => [
       { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
       { label: "Solar array", value: formatQtyText(r.power.solarArrayM2, "m²") },
-      { label: "Beamed floor", value: formatQtyText(r.power.beamedFloorPowerW ?? 0, "W") },
+      { label: "Beamed floor", value: r.power.beamedFloorPowerW === null ? "INACTIVE · NUCLEAR" : formatQtyText(r.power.beamedFloorPowerW, "W") },
       { label: "Architecture", value: r.power.architecture.toUpperCase() }
     ]
   },

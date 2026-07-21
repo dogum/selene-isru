@@ -79,6 +79,16 @@ def named_scenarios() -> list[tuple[str, dict[str, Any]]]:
         for name, build in profiles.items():
             params = build(site)
             scenarios.append((f"{site}-{name}", params))
+    imported_profile = json.dumps({
+        "version": 1,
+        "name": "Parity ridge cycle",
+        "points": [
+            {"hour": 0, "illumination": 1, "receiverVisibility": 1, "surfaceTemperatureK": 210},
+            {"hour": 12, "illumination": 0, "receiverVisibility": 0, "surfaceTemperatureK": 50},
+            {"hour": 24, "illumination": 1, "receiverVisibility": 1, "surfaceTemperatureK": 210},
+        ],
+    }, separators=(",", ":"))
+    scenarios.append(("polar-imported-profile", {"site": "polar", "polarProfileMode": "profile", "polarProfileData": imported_profile}))
     return scenarios
 
 
@@ -146,6 +156,12 @@ def main() -> None:
                 "params": {"site": "polar", "targetKgPerDay": 500},
                 "opts": {"cycles": 2, "samplesPerCycle": 8},
                 "result": simulate_timeseries({"site": "polar", "targetKgPerDay": 500}, {"cycles": 2, "samplesPerCycle": 8}),
+            },
+            {
+                "name": "polar-imported-profile-cycle",
+                "params": {"site": "polar", "polarProfileMode": "profile", "polarProfileData": named_scenarios()[-1][1]["polarProfileData"]},
+                "opts": {"cycles": 1, "samplesPerCycle": 12},
+                "result": simulate_timeseries({"site": "polar", "polarProfileMode": "profile", "polarProfileData": named_scenarios()[-1][1]["polarProfileData"]}, {"cycles": 1, "samplesPerCycle": 12}),
             },
         ],
         "uncertainty": [

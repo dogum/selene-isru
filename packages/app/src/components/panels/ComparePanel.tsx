@@ -14,7 +14,7 @@ const METRICS: CompareMetric[] = [
   { label: "SEC TOTAL", unit: "kWh/kg", value: (r) => r.energy.secTotal_kWhPerKg, sig: 4 },
   { label: "GRID POWER", unit: "W", value: (r) => r.energy.gridPowerW },
   { label: "MISSIONS", unit: "", value: (r) => r.logistics.nMissions },
-  { label: "PAYBACK", unit: "days", value: (r) => r.logistics.paybackDays },
+  { label: "PLANT-MASS EQUIV.", unit: "days", value: (r) => r.logistics.plantMassThroughputDays },
   { label: "LEVERAGE L", unit: "x", value: (r) => r.logistics.leverageL },
   { label: "OUTPUT", unit: "kg/day", value: (r) => r.production.targetKgPerDay, sig: 4 }
 ];

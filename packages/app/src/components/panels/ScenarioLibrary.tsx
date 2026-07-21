@@ -20,7 +20,7 @@ const COMPARISON_METRICS = [
   { label: "Grid", value: (id: string) => formatQtyText(simulateFor(id).energy.gridPowerW, "W") },
   { label: "Infra mass", value: (id: string) => formatQtyText(simulateFor(id).logistics.totalInfraMassKg, "kg") },
   { label: "Missions", value: (id: string) => formatQtyText(simulateFor(id).logistics.nMissions, "msn", 0) },
-  { label: "Payback", value: (id: string) => formatQtyText(simulateFor(id).logistics.paybackDays, "days") }
+  { label: "Plant-mass throughput equivalent", value: (id: string) => formatQtyText(simulateFor(id).logistics.plantMassThroughputDays, "days") }
 ];
 
 const resultCache = new Map<string, ReturnType<typeof simulate>>();

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "scope": "Narrow analytical and site-profile anchors; not whole-model validation",
+  "benchmarks": [
+    {
+      "id": "faraday-o2-default",
+      "kind": "computed",
+      "quantity": "oxygen electrolysis SEC",
+      "inputs": { "cellVoltageV": 4.2, "currentEfficiency": 0.9 },
+      "expected": 15.63,
+      "unit": "kWh/kg-O2",
+      "relativeTolerance": 0.005,
+      "source": "Faraday law with CODATA 2022 F and standard O2 molar mass",
+      "sourceUrl": "https://physics.nist.gov/cgi-bin/cuu/Value?f",
+      "sourceLocator": "Faraday constant; four electrons per O2 molecule",
+      "modelSimplification": "Analytical electrolysis anchor only; excludes reactor thermal, transport, and electrode geometry behavior"
+    },
+    {
+      "id": "polar-sublimation-5wt",
+      "kind": "computed",
+      "quantity": "thermodynamic lower-bound sublimation SEC",
+      "inputs": { "iceMassFraction": 0.05, "regolithHeatCapacity": 800, "startTemperatureK": 40, "sublimationTemperatureK": 263 },
+      "expected": 1.78,
+      "unit": "kWh/kg-H2O",
+      "relativeTolerance": 0.01,
+      "source": "NASA/TM-2012-217441 model boundary plus water-ice sublimation enthalpy",
+      "sourceUrl": "https://ntrs.nasa.gov/api/citations/20120009955/downloads/20120009955.pdf",
+      "sourceLocator": "Water-extraction energy and Cabeus-assay discussion",
+      "modelSimplification": "Sensible heating plus phase change only; excludes vapor transport, capture, purification, transient heating, and equipment losses"
+    },
+    {
+      "id": "polar-sublimation-0p5wt",
+      "kind": "computed",
+      "quantity": "thermodynamic lower-bound sublimation SEC",
+      "inputs": { "iceMassFraction": 0.005, "regolithHeatCapacity": 800, "startTemperatureK": 40, "sublimationTemperatureK": 263 },
+      "expected": 10.7,
+      "unit": "kWh/kg-H2O",
+      "relativeTolerance": 0.01,
+      "source": "NASA/TM-2012-217441 model boundary plus water-ice sublimation enthalpy",
+      "sourceUrl": "https://ntrs.nasa.gov/api/citations/20120009955/downloads/20120009955.pdf",
+      "sourceLocator": "Water-extraction energy and Cabeus-assay discussion",
+      "modelSimplification": "Sensible heating plus phase change only; excludes vapor transport, capture, purification, transient heating, and equipment losses"
+    },
+    {
+      "id": "shackleton-rim-profile",
+      "kind": "configuration",
+      "quantity": "conservative polar illumination design point",
+      "expected": { "illuminationFraction": 0.71, "longestShadowHours": 117 },
+      "source": "NASA lunar polar illumination review; site and height specific",
+      "sourceUrl": "https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/20080045536.pdf",
+      "sourceLocator": "South-pole illumination and storage-duration cases",
+      "modelSimplification": "Scalar fraction and longest shadow replace a time-resolved, height-dependent terrain profile"
+    },
+    {
+      "id": "favorable-polar-storage",
+      "kind": "documentation-only",
+      "quantity": "favorable reduced-DEM site storage interval",
+      "expected": 62,
+      "unit": "h",
+      "source": "NASA Lunar Polar Illumination for Power Analysis (2008)",
+      "sourceUrl": "https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/20080045536.pdf",
+      "sourceLocator": "Favorable reduced-DEM site case",
+      "modelSimplification": "Documentation anchor only; not applied as the default because it is site-specific"
+    },
+    {
+      "id": "mli-layer-density-units",
+      "kind": "open",
+      "quantity": "MLI layer-density coefficient/unit pairing",
+      "expected": "published examples use layers/cm; current absolute heat-leak coefficient remains benchmark-pending",
+      "source": "NASA Optimization of Layer Densities for Spacecraft Multilayered Insulation Systems",
+      "sourceUrl": "https://ntrs.nasa.gov/api/citations/20130012958/downloads/20130012958.pdf",
+      "sourceLocator": "Layer-density axes and example densities in layers/cm",
+      "modelSimplification": "No accepted coefficient/unit pair or absolute heat-flux tolerance yet; deliberately kept open"
+    }
+  ]
+}

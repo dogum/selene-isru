@@ -14,6 +14,17 @@ export interface ElectrolysisOutput {
   reactorMassKg: number;
   xO2Effective: number;
   oxideYield: OxideYield[];
+  reversibleVoltageV: number;
+  activationOverpotentialV: number;
+  ohmicOverpotentialV: number;
+  concentrationOverpotentialV: number;
+  unallocatedVoltageV: number;
+  voltageMarginV: number;
+  electrodeAreaM2: number;
+  currentUtilization: number;
+  electricalInputW: number;
+  chemicalPowerW: number;
+  modeledLossPowerW: number;
   warnings: Warning[];
 }
 
@@ -29,6 +40,16 @@ interface OxideDef {
 interface OxideModelOutput {
   xO2Effective: number;
   oxideYield: OxideYield[];
+  reversibleVoltageV: number;
+  availableVoltageV: number;
+}
+
+interface VoltageLosses {
+  activationV: number;
+  ohmicV: number;
+  concentrationV: number;
+  availableVoltageV: number;
+  jLimit_APerM2: number;
 }
 
 const OXIDES: OxideDef[] = [
@@ -118,7 +139,41 @@ export function oxideDecompositionVoltage(ellA_JPerMolO2: number, ellB_JPerMolO2
   return -dGf_JPerMolO2 / (4 * PHYSICAL_CONSTANTS.F.value);
 }
 
+export function mreVoltageLosses(params: SimParams): VoltageLosses {
+  const jLimit_APerM2 =
+    (4 * PHYSICAL_CONSTANTS.F.value * params.Dox * params.Cbulk) / params.deltaDiff;
+  const utilization = Math.min(0.999999, Math.max(0, params.jOperating / Math.max(1e-12, jLimit_APerM2)));
+  const concentrationV =
+    (PHYSICAL_CONSTANTS.R.value * params.Tmelt / (4 * PHYSICAL_CONSTANTS.F.value)) *
+    Math.log(1 / Math.max(1e-9, 1 - utilization));
+  const activationV = params.mreActivationOverpotentialV;
+  const ohmicV = params.jOperating * params.mreAreaSpecificResistanceOhmM2;
+  return {
+    activationV,
+    ohmicV,
+    concentrationV,
+    availableVoltageV: params.Vcell - activationV - ohmicV - concentrationV,
+    jLimit_APerM2
+  };
+}
+
+function compositionWeightedVoltage(params: SimParams, active: boolean[]): number {
+  const rawFractions = OXIDES.map((oxide) => Math.max(0, oxide.fraction(params)));
+  const scale = Math.max(1, rawFractions.reduce((total, value) => total + value, 0));
+  let weighted = 0;
+  let oxygenBasis = 0;
+  for (let index = 0; index < OXIDES.length; index += 1) {
+    if (!active[index]) continue;
+    const oxide = OXIDES[index]!;
+    const basis = rawFractions[index]! / scale * oxideO2KgPerKg(oxide.oxygens, oxide.molarMassKgPerMol);
+    weighted += basis * oxideDecompositionVoltage(oxide.ellA_JPerMolO2, oxide.ellB_JPerMolO2K, params.Tmelt);
+    oxygenBasis += basis;
+  }
+  return oxygenBasis > 0 ? weighted / oxygenBasis : 0;
+}
+
 export function oxideModelYield(params: SimParams): OxideModelOutput {
+  const voltage = mreVoltageLosses(params);
   if (!params.oxideModel) {
     return {
       xO2Effective: params.xO2 * params.fExtract,
@@ -126,7 +181,9 @@ export function oxideModelYield(params: SimParams): OxideModelOutput {
         oxide: oxide.oxide,
         o2KgPerKg: 0,
         decomposed: false
-      }))
+      })),
+      reversibleVoltageV: compositionWeightedVoltage(params, OXIDES.map(() => true)),
+      availableVoltageV: voltage.availableVoltageV
     };
   }
 
@@ -139,12 +196,13 @@ export function oxideModelYield(params: SimParams): OxideModelOutput {
         oxide: oxide.oxide,
         o2KgPerKg: 0,
         decomposed: false
-      }))
+      })),
+      reversibleVoltageV: 0,
+      availableVoltageV: voltage.availableVoltageV
     };
   }
 
   const fractionScale = Math.max(1, rawTotal);
-  const availableVoltage = params.Vcell * params.etaCurrent;
   const recovery = params.fExtract * PHYSICAL_CONSTANTS.oxideRecoveryCalibration.value;
   let xO2Effective = 0;
   const oxideYield: OxideYield[] = [];
@@ -154,7 +212,7 @@ export function oxideModelYield(params: SimParams): OxideModelOutput {
     const massFrac = rawFractions[i]! / fractionScale;
     const decomposed =
       oxideDecompositionVoltage(oxide.ellA_JPerMolO2, oxide.ellB_JPerMolO2K, params.Tmelt) <=
-      availableVoltage;
+      voltage.availableVoltageV;
     const o2KgPerKg = decomposed ? massFrac * oxideO2KgPerKg(oxide.oxygens, oxide.molarMassKgPerMol) * recovery : 0;
     xO2Effective += o2KgPerKg;
     oxideYield.push({
@@ -164,11 +222,17 @@ export function oxideModelYield(params: SimParams): OxideModelOutput {
     });
   }
 
-  return { xO2Effective, oxideYield };
+  return {
+    xO2Effective: Math.max(1e-9, xO2Effective),
+    oxideYield,
+    reversibleVoltageV: compositionWeightedVoltage(params, oxideYield.map((row) => row.decomposed)),
+    availableVoltageV: voltage.availableVoltageV
+  };
 }
 
 export function simulateElectrolysis(params: SimParams): ElectrolysisOutput {
   const secElec_JPerKg = secElecJPerKg(params.Vcell, params.etaCurrent);
+  const voltageLosses = mreVoltageLosses(params);
   const oxideModel = oxideModelYield(params);
   const Rreg = 1 / oxideModel.xO2Effective;
   const Qmelt = meltHeatJPerKg(params);
@@ -182,9 +246,17 @@ export function simulateElectrolysis(params: SimParams): ElectrolysisOutput {
   const drainVelocityMPerS =
     (params.rhoSlag * PHYSICAL_CONSTANTS.gL.value * params.hMelt ** 2 * Math.sin(params.thetaDrain)) /
     (3 * meltViscosityPaS);
-  const jLimit_APerM2 =
-    (4 * PHYSICAL_CONSTANTS.F.value * params.Dox * params.Cbulk) / params.deltaDiff;
+  const jLimit_APerM2 = voltageLosses.jLimit_APerM2;
   const jOperating_APerM2 = params.jOperating;
+  const electrodeAreaM2 = currentA / jOperating_APerM2;
+  const currentUtilization = jOperating_APerM2 / jLimit_APerM2;
+  const modeledRequiredVoltageV =
+    oxideModel.reversibleVoltageV + voltageLosses.activationV + voltageLosses.ohmicV + voltageLosses.concentrationV;
+  const voltageMarginV = params.Vcell - modeledRequiredVoltageV;
+  const unallocatedVoltageV = Math.max(0, voltageMarginV);
+  const electricalInputW = currentA * params.Vcell;
+  const chemicalPowerW = currentA * params.etaCurrent * oxideModel.reversibleVoltageV;
+  const modeledLossPowerW = Math.max(0, electricalInputW - chemicalPowerW);
   const reactorMassKg = params.kReactorMass * params.targetKgPerDay;
   const warnings: Warning[] = [];
 
@@ -196,6 +268,26 @@ export function simulateElectrolysis(params: SimParams): ElectrolysisOutput {
       message: "Operating current density exceeds 85% of limiting current density.",
       value: jOperating_APerM2,
       limit: 0.85 * jLimit_APerM2
+    });
+  }
+  if (voltageMarginV < 0) {
+    warnings.push({
+      id: "mre-voltage-shortfall",
+      severity: "alarm",
+      module: "electrolysis",
+      message: "Applied MRE voltage is below the modeled reversible, activation, ohmic, and concentration requirement.",
+      value: params.Vcell,
+      limit: modeledRequiredVoltageV
+    });
+  }
+  if (oxideModel.oxideYield.every((row) => !row.decomposed) && params.oxideModel) {
+    warnings.push({
+      id: "mre-no-oxide-yield",
+      severity: "alarm",
+      module: "electrolysis",
+      message: "No modeled oxide is energetically accessible at the current voltage-loss operating point.",
+      value: oxideModel.availableVoltageV,
+      limit: Math.min(...OXIDES.map((oxide) => oxideDecompositionVoltage(oxide.ellA_JPerMolO2, oxide.ellB_JPerMolO2K, params.Tmelt)))
     });
   }
 
@@ -212,6 +304,17 @@ export function simulateElectrolysis(params: SimParams): ElectrolysisOutput {
     reactorMassKg,
     xO2Effective: oxideModel.xO2Effective,
     oxideYield: oxideModel.oxideYield,
+    reversibleVoltageV: oxideModel.reversibleVoltageV,
+    activationOverpotentialV: voltageLosses.activationV,
+    ohmicOverpotentialV: voltageLosses.ohmicV,
+    concentrationOverpotentialV: voltageLosses.concentrationV,
+    unallocatedVoltageV,
+    voltageMarginV,
+    electrodeAreaM2,
+    currentUtilization,
+    electricalInputW,
+    chemicalPowerW,
+    modeledLossPowerW,
     warnings
   };
 }
