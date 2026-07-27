@@ -57,6 +57,10 @@ export class TweenManager {
     return this.tweens.size > 0;
   }
 
+  cancel(key: string): void {
+    this.tweens.delete(key);
+  }
+
   clear(): void {
     this.tweens.clear();
   }
