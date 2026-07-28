@@ -392,6 +392,30 @@ export class Viewer {
     this.lastInputAt = performance.now();
   }
 
+  /**
+   * Set an exact camera pose for deterministic, externally scripted capture.
+   * Scene.tsx only exposes this through the opt-in `?demo=1` bridge, so the
+   * normal interactive app keeps the Viewer as its sole camera owner.
+   */
+  setCameraPose(position: CameraPose["position"], target: CameraPose["target"]): void {
+    this.tweens.cancel("camera");
+    this.camera.position.set(...position);
+    this.controls.target.set(...target);
+    this.controls.update();
+    this.lastInputAt = performance.now();
+    this.needsRender = true;
+    this.wake();
+  }
+
+  /** True once every authored asset for the active site has loaded. */
+  isReady(): boolean {
+    return (
+      this.diorama !== null &&
+      this.expectedAssetCount > 0 &&
+      this.loadedAssetCount >= this.expectedAssetCount
+    );
+  }
+
   /** §6 — camera fly + 3-pulse outline on the implicated asset */
   focusAsset(assetKey: string, severity: string): void {
     if (this.diorama === null || this.lastResult === null || this.lastParams === null) {

@@ -144,6 +144,8 @@ pnpm asset:equatorial        # regenerate the remaining equatorial equipment lib
 pnpm asset:polar             # regenerate the polar equipment library
 pnpm demo:analysis -- http://localhost:5173
                              # record the short engineering-analysis browser tour
+pnpm demo:cinematic -- http://localhost:4173/selene-isru/ docs/media/selene-isru-cinematic-demo.mp4
+                             # record the scripted 32 s / 1080p cinematic product tour
 
 # Python mirror (uv creates and manages the project environment)
 uv sync --project python --locked --group dev
