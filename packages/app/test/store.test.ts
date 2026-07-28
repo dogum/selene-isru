@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { DEFAULTS } from "@selene-isru/engine";
 import { beforeEach, describe, expect, it } from "vitest";
+import { CUSTOM_SITE_DRAFT_KEY } from "../src/site-design/draft";
 import { useStore } from "../src/state/store";
 
 describe("store wiring (§5)", () => {
   beforeEach(() => {
+    useStore.getState().enterAuthoredSite(DEFAULTS.site);
     useStore.getState().applyPatch({});
   });
 
@@ -108,5 +110,55 @@ describe("store wiring (§5)", () => {
 
     if (copy !== undefined) useStore.getState().deleteScenario(copy.id);
     useStore.getState().deleteScenario(saved.id);
+  });
+
+  it("enters the custom planner without claiming an authored site graph", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().enterCustomSite();
+    const state = useStore.getState();
+
+    expect(state.workspaceMode).toBe("custom");
+    expect(state.customSite.viewMode).toBe("planner");
+    expect(state.customSite.design.assets).toEqual([]);
+    expect(state.customSite.design.connections).toEqual([]);
+    expect(state.customSite.findings.some((finding) =>
+      finding.id.startsWith("topology.required.")
+    )).toBe(true);
+
+    useStore.getState().setCustomViewMode("explore");
+    expect(useStore.getState().customSite.viewMode).toBe("explore");
+  });
+
+  it("persists custom environment, name, and parameter edits", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().enterCustomSite();
+    useStore.getState().setCustomEnvironment("polar");
+    useStore.getState().setCustomDesignName("South-pole logistics study");
+    useStore.getState().setParam("targetKgPerDay", 1440);
+
+    const state = useStore.getState();
+    const saved = window.localStorage.getItem(CUSTOM_SITE_DRAFT_KEY);
+
+    expect(state.customSite.design.environment).toBe("polar");
+    expect(state.customSite.design.params.site).toBe("polar");
+    expect(state.customSite.design.params.targetKgPerDay).toBe(1440);
+    expect(saved).not.toBeNull();
+    expect(JSON.parse(saved ?? "{}")).toMatchObject({
+      name: "South-pole logistics study",
+      environment: "polar",
+      params: { site: "polar", targetKgPerDay: 1440 }
+    });
+  });
+
+  it("keeps the working custom draft when returning to an authored site", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomDesignName("Keep this draft");
+    const id = useStore.getState().customSite.design.id;
+    useStore.getState().enterCustomSite();
+    useStore.getState().enterAuthoredSite("equatorial");
+
+    expect(useStore.getState().workspaceMode).toBe("authored");
+    expect(useStore.getState().customSite.design.id).toBe(id);
+    expect(useStore.getState().customSite.design.name).toBe("Keep this draft");
   });
 });

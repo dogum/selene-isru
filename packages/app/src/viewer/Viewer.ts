@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { SimParams, SimResult } from "@selene-isru/engine";
+import type {
+  SimParams,
+  SimResult,
+  SiteEnvironment,
+  SiteViewMode,
+  WorkspaceMode
+} from "@selene-isru/engine";
 import type { TimeseriesPoint } from "@selene-isru/engine";
 import {
   connectedAssets,
@@ -20,6 +26,7 @@ import {
 } from "./bindings";
 import { EquatorialDiorama } from "./dioramas/equatorial";
 import { PolarDiorama } from "./dioramas/polar";
+import { CustomSiteDiorama } from "./dioramas/custom";
 import {
   effectiveTier,
   GRAPHICS_EVENT,
@@ -133,7 +140,9 @@ export class Viewer {
   private renderer!: THREE.WebGLRenderer;
   private post!: PostPipeline;
   private scene!: THREE.Scene;
-  private camera!: THREE.PerspectiveCamera;
+  private camera!: THREE.PerspectiveCamera | THREE.OrthographicCamera;
+  private perspectiveCamera!: THREE.PerspectiveCamera;
+  private plannerCamera!: THREE.OrthographicCamera;
   private controls!: OrbitControls;
   private sun!: THREE.DirectionalLight;
   private hemi!: THREE.HemisphereLight;
@@ -178,6 +187,10 @@ export class Viewer {
   private reducedMotion: boolean;
   private lastInputAt = 0;
   private transitioning = false;
+  private workspaceMode: WorkspaceMode = "authored";
+  private customEnvironment: SiteEnvironment = "equatorial";
+  private customViewMode: SiteViewMode = "planner";
+  private activeSite: SiteMode | null = null;
 
   private lastResult: SimResult | null = null;
   private lastParams: SimParams | null = null;
@@ -307,18 +320,18 @@ export class Viewer {
     this.scene.add(this.fill);
 
     const aspect = Math.max(0.1, this.container.clientWidth / Math.max(1, this.container.clientHeight));
-    this.camera = new THREE.PerspectiveCamera(42, aspect, 0.5, 1400);
-
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
-    this.controls.minPolarAngle = (15 * Math.PI) / 180;
-    this.controls.maxPolarAngle = (80 * Math.PI) / 180;
-    this.controls.minDistance = 18;
-    this.controls.maxDistance = 140;
-    this.controls.enablePan = false;
-    this.controls.addEventListener("change", this.onUserInput);
-    this.controls.addEventListener("start", this.onUserInput);
+    this.perspectiveCamera = new THREE.PerspectiveCamera(42, aspect, 0.5, 1400);
+    this.plannerCamera = new THREE.OrthographicCamera(
+      -54 * aspect,
+      54 * aspect,
+      54,
+      -54,
+      0.5,
+      1400
+    );
+    this.plannerCamera.up.set(0, 0, -1);
+    this.camera = this.perspectiveCamera;
+    this.controls = this.createControls(this.camera);
 
     this.post = new PostPipeline(this.renderer, this.scene, this.camera, {
       mobile: this.mobile,
@@ -334,6 +347,26 @@ export class Viewer {
     // Apply user lighting after the camera and post stack are ready. Starting
     // the render loop earlier could leave the first frame in the dark defaults.
     this.applyLightingMode();
+  }
+
+  private createControls(
+    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  ): OrbitControls {
+    const controls = new OrbitControls(camera, this.renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minPolarAngle = (15 * Math.PI) / 180;
+    controls.maxPolarAngle = (80 * Math.PI) / 180;
+    controls.minDistance = 18;
+    controls.maxDistance = 180;
+    controls.enablePan = camera instanceof THREE.OrthographicCamera;
+    controls.enableRotate = camera instanceof THREE.PerspectiveCamera;
+    controls.screenSpacePanning = camera instanceof THREE.OrthographicCamera;
+    controls.minZoom = 0.65;
+    controls.maxZoom = 3.2;
+    controls.addEventListener("change", this.onUserInput);
+    controls.addEventListener("start", this.onUserInput);
+    return controls;
   }
 
   dispose(): void {
@@ -362,17 +395,50 @@ export class Viewer {
 
   /* ---------------- public API ---------------- */
 
+  setWorkspaceState(
+    mode: WorkspaceMode,
+    environment: SiteEnvironment,
+    viewMode: SiteViewMode
+  ): void {
+    const rebuild =
+      mode !== this.workspaceMode ||
+      environment !== this.customEnvironment ||
+      this.activeSite !== environment;
+    const viewChanged = viewMode !== this.customViewMode;
+    this.workspaceMode = mode;
+    this.customEnvironment = environment;
+    this.customViewMode = viewMode;
+
+    if (rebuild && this.diorama !== null) {
+      this.buildSite(mode === "custom" ? environment : this.lastResult?.site ?? environment);
+      if (this.lastResult !== null && this.lastParams !== null) {
+        this.applyToDiorama(this.lastResult, this.lastParams, true);
+      }
+    } else if (viewChanged || mode === "custom") {
+      this.applyWorkspaceCamera();
+    }
+    if (mode === "custom") {
+      this.learningOverlay.hidden = true;
+      this.assetTooltip.hidden = true;
+      this.setHoveredAsset(null);
+      this.setSelectedAsset(null);
+    }
+    this.wake();
+  }
+
   /** Idempotent. Called after every simulate (§3.1). */
   apply(result: SimResult, params: SimParams): void {
-    const prevSite = this.lastResult?.site ?? null;
     this.lastResult = result;
     this.lastParams = params;
+    const desiredSite = this.workspaceMode === "custom"
+      ? this.customEnvironment
+      : result.site;
 
-    if (prevSite === null || this.diorama === null) {
-      this.buildSite(result.site);
+    if (this.activeSite === null || this.diorama === null) {
+      this.buildSite(desiredSite);
       this.applyToDiorama(result, params, true);
-    } else if (result.site !== prevSite && !this.transitioning) {
-      this.siteTransition(result.site);
+    } else if (desiredSite !== this.activeSite && !this.transitioning) {
+      this.siteTransition(desiredSite);
     } else {
       this.applyToDiorama(result, params, false);
     }
@@ -409,6 +475,9 @@ export class Viewer {
 
   /** True once every authored asset for the active site has loaded. */
   isReady(): boolean {
+    if (this.workspaceMode === "custom") {
+      return this.diorama !== null;
+    }
     return (
       this.diorama !== null &&
       this.expectedAssetCount > 0 &&
@@ -463,6 +532,7 @@ export class Viewer {
   /* ---------------- site handling ---------------- */
 
   private buildSite(site: SiteMode): void {
+    this.activeSite = site;
     this.setHoveredAsset(null);
     this.removeOutline("selection");
     if (this.diorama !== null) {
@@ -472,10 +542,16 @@ export class Viewer {
     }
     this.setEnvironment(site);
     this.loadedAssetCount = 0;
-    this.expectedAssetCount = site === "equatorial" ? 8 : 7;
-    this.assetLoadStatus.hidden = false;
-    this.assetLoadStatus.textContent = `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
-    if (site === "equatorial") {
+    this.expectedAssetCount = this.workspaceMode === "custom"
+      ? 0
+      : site === "equatorial" ? 8 : 7;
+    this.assetLoadStatus.hidden = this.workspaceMode === "custom";
+    this.assetLoadStatus.textContent = this.workspaceMode === "custom"
+      ? ""
+      : `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
+    if (this.workspaceMode === "custom") {
+      this.diorama = new CustomSiteDiorama(site, this.quality);
+    } else if (site === "equatorial") {
       const equatorial = new EquatorialDiorama(this.quality, () => {
         if (this.diorama !== equatorial || this.disposed) {
           return;
@@ -524,10 +600,7 @@ export class Viewer {
     }
     this.sun.target.position.set(0, 0, 0);
 
-    const pose = CAMERA_POSES[site].overview;
-    this.camera.position.set(...pose.position);
-    this.controls.target.set(...pose.target);
-    this.controls.update();
+    this.applyWorkspaceCamera();
     this.needsRender = true;
   }
 
@@ -664,6 +737,42 @@ export class Viewer {
   }
 
   /* ---------------- camera ---------------- */
+
+  private switchCamera(
+    next: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  ): void {
+    if (this.camera === next) {
+      return;
+    }
+    this.controls.dispose();
+    this.camera = next;
+    this.controls = this.createControls(next);
+    this.post.setCamera(next);
+  }
+
+  private applyWorkspaceCamera(): void {
+    const site = this.activeSite ?? this.customEnvironment;
+    if (this.workspaceMode === "custom" && this.customViewMode === "planner") {
+      this.switchCamera(this.plannerCamera);
+      this.plannerCamera.position.set(0, 135, 0);
+      this.plannerCamera.zoom = this.mobile ? 0.78 : 1;
+      this.plannerCamera.updateProjectionMatrix();
+      this.controls.target.set(0, 0, 0);
+      this.controls.update();
+      return;
+    }
+
+    this.switchCamera(this.perspectiveCamera);
+    if (this.workspaceMode === "custom") {
+      this.perspectiveCamera.position.set(88, 64, 88);
+      this.controls.target.set(0, 0, 0);
+    } else {
+      const pose = CAMERA_POSES[site].overview;
+      this.perspectiveCamera.position.set(...pose.position);
+      this.controls.target.set(...pose.target);
+    }
+    this.controls.update();
+  }
 
   private flyToPose(pose: CameraPose, ms: number): void {
     const fromPos = this.camera.position.clone();
@@ -915,7 +1024,12 @@ export class Viewer {
     }
 
     // idle slow orbit after 30s of no input (disabled by reduced motion)
-    if (!this.reducedMotion && now - this.lastInputAt > IDLE_ORBIT_DELAY_MS && !this.transitioning) {
+    if (
+      !this.reducedMotion &&
+      !(this.workspaceMode === "custom" && this.customViewMode === "planner") &&
+      now - this.lastInputAt > IDLE_ORBIT_DELAY_MS &&
+      !this.transitioning
+    ) {
       const offset = this.camera.position.clone().sub(this.controls.target);
       offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), IDLE_ORBIT_RATE * dt);
       this.camera.position.copy(this.controls.target).add(offset);
@@ -1144,8 +1258,14 @@ export class Viewer {
   private resize(): void {
     const w = Math.max(1, this.container.clientWidth);
     const h = Math.max(1, this.container.clientHeight);
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    const aspect = w / h;
+    this.perspectiveCamera.aspect = aspect;
+    this.perspectiveCamera.updateProjectionMatrix();
+    this.plannerCamera.left = -54 * aspect;
+    this.plannerCamera.right = 54 * aspect;
+    this.plannerCamera.top = 54;
+    this.plannerCamera.bottom = -54;
+    this.plannerCamera.updateProjectionMatrix();
     const dpr = this.pixelRatio();
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(w, h);

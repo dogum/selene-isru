@@ -76,7 +76,8 @@ when they are useful:
 Every implemented equation lives twice:
 
 - **TypeScript** (`packages/engine`) — the runtime engine the app calls on
-  every input event. Zero dependencies, pure ESM, with a 96 KiB CI budget.
+  every input event. Zero dependencies, pure ESM, with a 112 KiB CI budget
+  including the versioned custom-site schema and graph validator.
 - **Python** (`python/selene_isru`) — an independent mirror used for
   derivations, citations, and golden-vector generation.
 

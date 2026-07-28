@@ -68,6 +68,7 @@ export type {
   UncertaintySpec,
   Warning
 } from "./types";
+export * from "./site-design";
 
 export function simulate(input: Partial<SimParams> = {}): SimResult {
   const normalized = normalizeParams(input);

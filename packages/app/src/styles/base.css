@@ -101,6 +101,14 @@ select {
     "kpi kpi";
 }
 
+.app.custom-site-app {
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "topbar"
+    "stage";
+}
+
 .app-topbar {
   grid-area: topbar;
   border-bottom: 1px solid var(--line);

@@ -3,10 +3,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dist = fileURLToPath(new URL("../dist", import.meta.url));
-// v0.3 adds independently sized stream inventories, process-energy ledgers,
-// time-resolved site-profile parsing/sampling, and MRE voltage-loss outputs.
-// The engine remains dependency-free; this cap still catches accidental bulk.
-const limitBytes = 96 * 1024;
+// The custom-site planning foundation adds a versioned design schema, equipment
+// and port catalog, deterministic fixtures, and pure graph validation. The
+// engine remains dependency-free; this cap still catches accidental bulk.
+const limitBytes = 112 * 1024;
 
 function jsSize(dir) {
   let total = 0;

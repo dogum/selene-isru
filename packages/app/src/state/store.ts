@@ -1,7 +1,27 @@
-import { DEFAULTS, simulate, simulateTimeseries } from "@selene-isru/engine";
-import type { SimParams, SimResult, TimeseriesPoint, TimeseriesResult } from "@selene-isru/engine";
+import {
+  DEFAULTS,
+  simulate,
+  simulateTimeseries,
+  validateSiteDesign
+} from "@selene-isru/engine";
+import type {
+  SimParams,
+  SimResult,
+  SiteDesignDocument,
+  SiteDesignFinding,
+  SiteEnvironment,
+  SiteViewMode,
+  TimeseriesPoint,
+  TimeseriesResult,
+  WorkspaceMode
+} from "@selene-isru/engine";
 import { create } from "zustand";
 import { parseParams, serializeParams } from "../lib/url";
+import {
+  createWorkingSiteDesign,
+  loadCustomSiteDraft,
+  saveCustomSiteDraft
+} from "../site-design/draft";
 
 export type ViewTab = "site" | "energy" | "mass" | "power" | "study";
 export type SheetDetent = "peek" | "half" | "full";
@@ -63,6 +83,12 @@ export interface TourState {
   beatIndex: number;
 }
 
+export interface CustomSiteState {
+  design: SiteDesignDocument;
+  viewMode: SiteViewMode;
+  findings: SiteDesignFinding[];
+}
+
 const SEC_HISTORY_LENGTH = 60;
 const SCENARIO_STORAGE_KEY = "selene-isru.study-scenarios.v2";
 export const MAX_STUDY_SCENARIOS = 8;
@@ -70,6 +96,8 @@ export const MAX_PINNED_SCENARIOS = 4;
 let scenarioNonce = 0;
 
 interface Store {
+  workspaceMode: WorkspaceMode;
+  customSite: CustomSiteState;
   params: SimParams;
   result: SimResult;
   compareParams: SimParams;
@@ -83,6 +111,12 @@ interface Store {
   /** local-only named study cases persisted in this browser */
   scenarioLibrary: StudyScenario[];
   ui: UiState;
+  enterAuthoredSite: (site: SiteEnvironment) => void;
+  enterCustomSite: () => void;
+  setCustomEnvironment: (environment: SiteEnvironment) => void;
+  setCustomViewMode: (viewMode: SiteViewMode) => void;
+  setCustomDesignName: (name: string) => void;
+  resetCustomDesign: () => void;
   setParam: <K extends keyof SimParams>(key: K, value: SimParams[K]) => void;
   applyPatch: (patch: Partial<SimParams>) => void;
   resetParam: (key: keyof SimParams) => void;
@@ -250,8 +284,16 @@ export const useStore = create<Store>((set, get) => {
   const time: TimeState = { tHours: 0, playing: false, rate: 48 };
   const timePoint = sampleTimeseries(timeseries, time.tHours);
   const scenarioLibrary = initialScenarioLibrary(params, compareParams);
+  const customDesign = loadCustomSiteDraft() ?? createWorkingSiteDesign(params.site);
+  const customSite: CustomSiteState = {
+    design: customDesign,
+    viewMode: "planner",
+    findings: validateSiteDesign(customDesign)
+  };
 
   return {
+    workspaceMode: "authored",
+    customSite,
     params,
     result,
     compareParams,
@@ -284,12 +326,142 @@ export const useStore = create<Store>((set, get) => {
       mobileTab: "controls"
     },
 
+    enterAuthoredSite: (site) => {
+      set({ workspaceMode: "authored" });
+      get().setParam("site", site);
+    },
+
+    enterCustomSite: () => {
+      const design = get().customSite.design;
+      const nextResult = simulate(design.params);
+      const nextTimeseries = simulateTimeseries(design.params, {
+        cycles: 1,
+        samplesPerCycle: 96
+      });
+      const nextTime = {
+        ...get().time,
+        playing: false,
+        tHours: get().time.tHours % cycleHours(nextTimeseries)
+      };
+      set({
+        workspaceMode: "custom",
+        params: design.params,
+        result: nextResult,
+        timeseries: nextTimeseries,
+        time: nextTime,
+        timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
+        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+        ui: {
+          ...get().ui,
+          selectedAsset: null,
+          learningMode: false,
+          processFlow: false
+        }
+      });
+    },
+
+    setCustomEnvironment: (environment) => {
+      const current = get().customSite.design;
+      const timestamp = new Date().toISOString();
+      const design: SiteDesignDocument = {
+        ...current,
+        environment,
+        params: { ...current.params, site: environment },
+        assets: [],
+        connections: [],
+        updatedAt: timestamp
+      };
+      const findings = validateSiteDesign(design);
+      saveCustomSiteDraft(design);
+      const nextResult = simulate(design.params);
+      const nextTimeseries = simulateTimeseries(design.params, {
+        cycles: 1,
+        samplesPerCycle: 96
+      });
+      const nextTime = {
+        ...get().time,
+        playing: false,
+        tHours: get().time.tHours % cycleHours(nextTimeseries)
+      };
+      set({
+        customSite: { ...get().customSite, design, findings },
+        params: design.params,
+        result: nextResult,
+        timeseries: nextTimeseries,
+        time: nextTime,
+        timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
+        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+        ui: { ...get().ui, selectedAsset: null }
+      });
+    },
+
+    setCustomViewMode: (viewMode) => {
+      set({ customSite: { ...get().customSite, viewMode } });
+    },
+
+    setCustomDesignName: (name) => {
+      const current = get().customSite.design;
+      const design = {
+        ...current,
+        name: name.slice(0, 120),
+        updatedAt: new Date().toISOString()
+      };
+      saveCustomSiteDraft(design);
+      set({
+        customSite: {
+          ...get().customSite,
+          design,
+          findings: validateSiteDesign(design)
+        }
+      });
+    },
+
+    resetCustomDesign: () => {
+      const current = get().customSite.design;
+      const design = createWorkingSiteDesign(current.environment);
+      saveCustomSiteDraft(design);
+      set({
+        customSite: {
+          design,
+          viewMode: "planner",
+          findings: validateSiteDesign(design)
+        }
+      });
+      if (get().workspaceMode === "custom") {
+        get().enterCustomSite();
+      }
+    },
+
     setParam: (key, value) => {
+      if (get().workspaceMode === "custom" && key === "site") {
+        get().setCustomEnvironment(value as SiteEnvironment);
+        return;
+      }
       const nextParams = { ...get().params, [key]: value };
       const nextResult = simulate(nextParams);
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
+      const customDesign = get().customSite.design;
+      const nextCustomDesign = get().workspaceMode === "custom"
+        ? {
+            ...customDesign,
+            params: nextParams,
+            updatedAt: new Date().toISOString()
+          }
+        : customDesign;
+      if (get().workspaceMode === "custom") {
+        saveCustomSiteDraft(nextCustomDesign);
+      }
       set({
+        ...(get().workspaceMode === "custom"
+          ? {
+              customSite: {
+                ...get().customSite,
+                design: nextCustomDesign,
+                findings: validateSiteDesign(nextCustomDesign)
+              }
+            }
+          : {}),
         params: nextParams,
         result: nextResult,
         timeseries: nextTimeseries,

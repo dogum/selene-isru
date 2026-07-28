@@ -43,6 +43,11 @@ export function Scene(): React.JSX.Element {
       onSelectAsset: (assetKey) => useStore.getState().setUi({ selectedAsset: assetKey })
     });
     const initial = useStore.getState();
+    viewer.setWorkspaceState(
+      initial.workspaceMode,
+      initial.customSite.design.environment,
+      initial.customSite.viewMode
+    );
     viewer.apply(initial.result, initial.params);
     viewer.applyTime(
       initial.timePoint,
@@ -78,6 +83,17 @@ export function Scene(): React.JSX.Element {
     }
 
     const unsub = useStore.subscribe((state, prev) => {
+      if (
+        state.workspaceMode !== prev.workspaceMode ||
+        state.customSite.design.environment !== prev.customSite.design.environment ||
+        state.customSite.viewMode !== prev.customSite.viewMode
+      ) {
+        viewer.setWorkspaceState(
+          state.workspaceMode,
+          state.customSite.design.environment,
+          state.customSite.viewMode
+        );
+      }
       if (state.result !== prev.result) {
         viewer.apply(state.result, state.params);
       }

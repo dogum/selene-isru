@@ -32,12 +32,15 @@ export class PostPipeline {
   private smaa: SMAAPass;
   private gtao: GTAOPass | null = null;
   private camera: THREE.Camera;
+  private bloomRenderPass: RenderPass;
+  private renderPass: RenderPass;
 
   constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, opts: PostOptions) {
     this.camera = camera;
     this.bloomComposer = new EffectComposer(renderer);
     this.bloomComposer.renderToScreen = false;
-    this.bloomComposer.addPass(new RenderPass(scene, camera));
+    this.bloomRenderPass = new RenderPass(scene, camera);
+    this.bloomComposer.addPass(this.bloomRenderPass);
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(opts.width, opts.height),
       opts.bloomStrength,
@@ -48,7 +51,8 @@ export class PostPipeline {
     this.bloomComposer.addPass(this.bloom);
 
     this.composer = new EffectComposer(renderer);
-    this.composer.addPass(new RenderPass(scene, camera));
+    this.renderPass = new RenderPass(scene, camera);
+    this.composer.addPass(this.renderPass);
 
     if (!opts.mobile) {
       this.gtao = new GTAOPass(scene, camera, opts.width, opts.height);
@@ -107,6 +111,22 @@ export class PostPipeline {
     this.composer.addPass(this.smaa);
     this.composer.addPass(new OutputPass());
     this.setSize(opts.width, opts.height, opts.dpr);
+  }
+
+  setCamera(camera: THREE.Camera): void {
+    this.camera = camera;
+    this.bloomRenderPass.camera = camera;
+    this.renderPass.camera = camera;
+    if (this.gtao !== null) {
+      const gtao = this.gtao as GTAOPass & {
+        camera: THREE.Camera;
+        gtaoMaterial: THREE.ShaderMaterial;
+      };
+      gtao.camera = camera;
+      gtao.gtaoMaterial.defines.PERSPECTIVE_CAMERA =
+        camera instanceof THREE.PerspectiveCamera ? 1 : 0;
+      gtao.gtaoMaterial.needsUpdate = true;
+    }
   }
 
   setSize(width: number, height: number, dpr: number): void {

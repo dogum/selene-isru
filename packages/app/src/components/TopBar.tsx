@@ -36,7 +36,9 @@ const POLAR_EQUIPMENT = [
 
 export function TopBar(): React.JSX.Element {
   const site = useStore((s) => s.params.site);
-  const setParam = useStore((s) => s.setParam);
+  const workspaceMode = useStore((s) => s.workspaceMode);
+  const enterAuthoredSite = useStore((s) => s.enterAuthoredSite);
+  const enterCustomSite = useStore((s) => s.enterCustomSite);
   const isMobile = useIsMobile();
 
   return (
@@ -50,19 +52,27 @@ export function TopBar(): React.JSX.Element {
       <div className="topbar-site" role="radiogroup" aria-label="Site mode">
         <button
           role="radio"
-          aria-checked={site === "equatorial"}
-          className={`site-btn ${site === "equatorial" ? "active" : ""}`}
-          onClick={() => setParam("site", "equatorial")}
+          aria-checked={workspaceMode === "authored" && site === "equatorial"}
+          className={`site-btn ${workspaceMode === "authored" && site === "equatorial" ? "active" : ""}`}
+          onClick={() => enterAuthoredSite("equatorial")}
         >
           EQUATORIAL
         </button>
         <button
           role="radio"
-          aria-checked={site === "polar"}
-          className={`site-btn polar ${site === "polar" ? "active" : ""}`}
-          onClick={() => setParam("site", "polar")}
+          aria-checked={workspaceMode === "authored" && site === "polar"}
+          className={`site-btn polar ${workspaceMode === "authored" && site === "polar" ? "active" : ""}`}
+          onClick={() => enterAuthoredSite("polar")}
         >
           POLAR
+        </button>
+        <button
+          role="radio"
+          aria-checked={workspaceMode === "custom"}
+          className={`site-btn custom ${workspaceMode === "custom" ? "active" : ""}`}
+          onClick={enterCustomSite}
+        >
+          CUSTOM SITE
         </button>
       </div>
 
@@ -74,6 +84,20 @@ export function TopBar(): React.JSX.Element {
 }
 
 function DesktopActions(): React.JSX.Element {
+  const workspaceMode = useStore((state) => state.workspaceMode);
+
+  if (workspaceMode === "custom") {
+    return (
+      <>
+        <CustomViewToggle />
+        <GraphicsDropdown />
+        <button className="topbar-btn" onClick={() => useStore.getState().setUi({ aboutOpen: true })}>
+          ABOUT
+        </button>
+      </>
+    );
+  }
+
   return (
     <>
       <LearnButton />
@@ -87,6 +111,32 @@ function DesktopActions(): React.JSX.Element {
         ABOUT
       </button>
     </>
+  );
+}
+
+function CustomViewToggle(): React.JSX.Element {
+  const viewMode = useStore((state) => state.customSite.viewMode);
+  const setCustomViewMode = useStore((state) => state.setCustomViewMode);
+
+  return (
+    <div className="custom-view-toggle" role="radiogroup" aria-label="Custom site camera mode">
+      <button
+        role="radio"
+        aria-checked={viewMode === "planner"}
+        className={viewMode === "planner" ? "active" : ""}
+        onClick={() => setCustomViewMode("planner")}
+      >
+        PLANNER
+      </button>
+      <button
+        role="radio"
+        aria-checked={viewMode === "explore"}
+        className={viewMode === "explore" ? "active" : ""}
+        onClick={() => setCustomViewMode("explore")}
+      >
+        EXPLORE
+      </button>
+    </div>
   );
 }
 
@@ -383,6 +433,8 @@ function MobileMenu(): React.JSX.Element {
   const ref = useRef<HTMLDivElement | null>(null);
   const applyPatch = useStore((s) => s.applyPatch);
   const site = useStore((s) => s.params.site);
+  const workspaceMode = useStore((s) => s.workspaceMode);
+  const viewMode = useStore((s) => s.customSite.viewMode);
   const learningMode = useStore((s) => s.ui.learningMode);
 
   useEffect(() => {
@@ -423,97 +475,123 @@ function MobileMenu(): React.JSX.Element {
       </button>
       {open && (
         <div className="presets-menu" role="menu">
-          <div className="presets-section">TOURS</div>
-          {TOURS.map((tour) => (
-            <button
-              key={tour.id}
-              role="menuitem"
-              className="presets-item"
-              onClick={() => {
-                useStore.getState().startTour(tour.id);
-                setOpen(false);
-              }}
-            >
-              {tour.label}
-            </button>
-          ))}
-          <div className="presets-section">ASSETS</div>
-          {(site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT).map(([key, label]) => (
-            <button
-              key={key}
-              role="menuitem"
-              className="presets-item"
-              onClick={() => {
-                const store = useStore.getState();
-                store.setUi({ selectedAsset: key });
-                store.flyTo(key);
-                setOpen(false);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-          <div className="presets-section">PRESETS</div>
-          {PRESETS.map((p) => (
-            <button
-              key={p.id}
-              role="menuitem"
-              className="presets-item"
-              onClick={() => {
-                applyPatch(p.patch);
-                setOpen(false);
-              }}
-            >
-              {p.label}
-            </button>
-          ))}
+          {workspaceMode === "custom" ? (
+            <>
+              <div className="presets-section">VIEW</div>
+              {(["planner", "explore"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  role="menuitemradio"
+                  aria-checked={viewMode === mode}
+                  className="presets-item"
+                  onClick={() => {
+                    useStore.getState().setCustomViewMode(mode);
+                    setOpen(false);
+                  }}
+                >
+                  {mode === "planner" ? "Planner — top down" : "Explore — orbit"}{viewMode === mode ? " ✓" : ""}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="presets-section">TOURS</div>
+              {TOURS.map((tour) => (
+                <button
+                  key={tour.id}
+                  role="menuitem"
+                  className="presets-item"
+                  onClick={() => {
+                    useStore.getState().startTour(tour.id);
+                    setOpen(false);
+                  }}
+                >
+                  {tour.label}
+                </button>
+              ))}
+              <div className="presets-section">ASSETS</div>
+              {(site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT).map(([key, label]) => (
+                <button
+                  key={key}
+                  role="menuitem"
+                  className="presets-item"
+                  onClick={() => {
+                    const store = useStore.getState();
+                    store.setUi({ selectedAsset: key });
+                    store.flyTo(key);
+                    setOpen(false);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+              <div className="presets-section">PRESETS</div>
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  role="menuitem"
+                  className="presets-item"
+                  onClick={() => {
+                    applyPatch(p.patch);
+                    setOpen(false);
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </>
+          )}
           <div className="presets-section">APP</div>
-          <button
-            role="menuitem"
-            className="presets-item"
-            onClick={() => {
-              const store = useStore.getState();
-              const next = !store.ui.learningMode;
-              store.setUi({ learningMode: next });
-              if (next) {
-                publishGraphicsPrefs({ ...loadGraphicsPrefs(), brightLighting: true, daylightLock: true });
-              }
-              setOpen(false);
-            }}
-          >
-            Learning mode — {learningMode ? "on" : "off"}
-          </button>
-          <button
-            role="menuitem"
-            className="presets-item"
-            onClick={() => {
-              useStore.getState().setUi({ missionBriefOpen: true });
-              setOpen(false);
-            }}
-          >
-            Mission brief
-          </button>
-          <button
-            role="menuitem"
-            className="presets-item"
-            onClick={() => {
-              useStore.getState().setUi({ mobileTab: "study", sheetDetent: "full" });
-              setOpen(false);
-            }}
-          >
-            Trade study
-          </button>
-          <button
-            role="menuitem"
-            className="presets-item"
-            onClick={() => {
-              const url = paramsToUrl(useStore.getState().params);
-              void navigator.clipboard.writeText(url);
-              setOpen(false);
-            }}
-          >
-            Share — copy link
-          </button>
+          {workspaceMode === "authored" && (
+            <>
+              <button
+                role="menuitem"
+                className="presets-item"
+                onClick={() => {
+                  const store = useStore.getState();
+                  const next = !store.ui.learningMode;
+                  store.setUi({ learningMode: next });
+                  if (next) {
+                    publishGraphicsPrefs({ ...loadGraphicsPrefs(), brightLighting: true, daylightLock: true });
+                  }
+                  setOpen(false);
+                }}
+              >
+                Learning mode — {learningMode ? "on" : "off"}
+              </button>
+              <button
+                role="menuitem"
+                className="presets-item"
+                onClick={() => {
+                  useStore.getState().setUi({ missionBriefOpen: true });
+                  setOpen(false);
+                }}
+              >
+                Mission brief
+              </button>
+              <button
+                role="menuitem"
+                className="presets-item"
+                onClick={() => {
+                  useStore.getState().setUi({ mobileTab: "study", sheetDetent: "full" });
+                  setOpen(false);
+                }}
+              >
+                Trade study
+              </button>
+              <button
+                role="menuitem"
+                className="presets-item"
+                onClick={() => {
+                  const url = paramsToUrl(useStore.getState().params);
+                  void navigator.clipboard.writeText(url);
+                  setOpen(false);
+                }}
+              >
+                Share — copy link
+              </button>
+            </>
+          )}
           <button
             role="menuitem"
             className="presets-item"
