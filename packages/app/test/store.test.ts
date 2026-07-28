@@ -161,4 +161,51 @@ describe("store wiring (§5)", () => {
     expect(useStore.getState().customSite.design.id).toBe(id);
     expect(useStore.getState().customSite.design.name).toBe("Keep this draft");
   });
+
+  it("edits a custom layout through one-command undo and redo snapshots", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().enterCustomSite();
+    useStore.getState().placeCustomAsset("equatorial.excavator", -30, -30);
+    const asset = useStore.getState().customSite.design.assets[0]!;
+
+    expect(asset.transform).toMatchObject({ xM: -30, zM: -30 });
+    expect(useStore.getState().customSite.editor.selectedAssetId).toBe(asset.id);
+    useStore.getState().moveCustomAsset(asset.id, -20, -15);
+    useStore.getState().rotateCustomAsset(asset.id, 20);
+    expect(useStore.getState().customSite.design.assets[0]?.transform)
+      .toMatchObject({ xM: -20, zM: -15, headingDeg: 15 });
+
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets[0]?.transform.headingDeg).toBe(0);
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design.assets[0]?.transform.headingDeg).toBe(15);
+  });
+
+  it("duplicates, disables, deletes, and restores custom assets", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().placeCustomAsset("equatorial.excavator", -30, -30);
+    const original = useStore.getState().customSite.design.assets[0]!;
+    useStore.getState().duplicateCustomAsset(original.id);
+    expect(useStore.getState().customSite.design.assets).toHaveLength(2);
+
+    const duplicate = useStore.getState().customSite.design.assets[1]!;
+    useStore.getState().updateCustomAsset(duplicate.id, { enabled: false });
+    expect(useStore.getState().customSite.design.assets[1]?.enabled).toBe(false);
+    useStore.getState().deleteCustomAsset(duplicate.id);
+    expect(useStore.getState().customSite.design.assets).toHaveLength(1);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets).toHaveLength(2);
+  });
+
+  it("rejects placements that collide or exceed the planner boundary", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().placeCustomAsset("equatorial.excavator", 0, 0);
+    useStore.getState().placeCustomAsset("equatorial.hauler", 0, 0);
+    useStore.getState().placeCustomAsset("equatorial.landing-system", 90, 0);
+
+    expect(useStore.getState().customSite.design.assets).toHaveLength(1);
+  });
 });

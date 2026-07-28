@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Implementation contract |
+| Status | Milestones 0–2 implemented; Milestone 3 next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -884,6 +884,10 @@ Acceptance:
 ### Milestone 2 — placement and transforms
 
 **Goal:** create and organize a site from the asset catalog.
+
+**Implementation status (2026-07-28):** Delivered on the working branch as a
+reviewable vertical slice. Typed connections remain intentionally deferred to
+Milestone 3, and custom-site evaluation remains deferred to Milestone 4.
 
 Deliver:
 

@@ -118,10 +118,10 @@ function polarSeed(options: SiteDesignFixtureOptions): SiteDesignDocument {
     id: options.id ?? "fixture-polar-seed",
     name: options.name ?? "Seeded Polar reference"
   });
-  const excavator = instance("polar-excavator-1", "polar.ice-excavator", "Polar excavator PX-01", -22, 16);
-  const extraction = instance("polar-sublimation-1", "polar.sublimation-camp", "Sublimation camp SUB-01", -4, 12);
-  const receiver = instance("polar-receiver-1", "polar.receiver-sabatier", "Receiver plant BR-01", 8, -2);
-  const storage = instance("polar-storage-1", "polar.cryo-farm", "Polar cryogenic farm PCR-01", 25, 10);
+  const excavator = instance("polar-excavator-1", "polar.ice-excavator", "Polar excavator PX-01", -36, 18);
+  const extraction = instance("polar-sublimation-1", "polar.sublimation-camp", "Sublimation camp SUB-01", -18, 12);
+  const receiver = instance("polar-receiver-1", "polar.receiver-sabatier", "Receiver plant BR-01", 4, -8);
+  const storage = instance("polar-storage-1", "polar.cryo-farm", "Polar cryogenic farm PCR-01", 28, 6);
   const towers = instance("polar-towers-1", "polar.power-towers", "Rim power towers PT-01", 0, -44);
   const station = instance("polar-station-1", "polar.nuclear-station", "Nuclear station PN-01", 34, -28);
   const habitat = instance("polar-habitat-1", "polar.habitat", "Polar habitat PHAB-01", 30, 28);

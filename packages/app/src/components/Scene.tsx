@@ -40,13 +40,32 @@ export function Scene(): React.JSX.Element {
       return;
     }
     const viewer = new Viewer(el, isMobile, {
-      onSelectAsset: (assetKey) => useStore.getState().setUi({ selectedAsset: assetKey })
+      onSelectAsset: (assetKey) => {
+        const state = useStore.getState();
+        if (state.workspaceMode === "custom") {
+          state.selectCustomAsset(assetKey);
+        } else {
+          state.setUi({ selectedAsset: assetKey });
+        }
+      },
+      onPlaceCustomAsset: (kind, xM, zM) =>
+        useStore.getState().placeCustomAsset(kind, xM, zM),
+      onMoveCustomAsset: (assetId, xM, zM) =>
+        useStore.getState().moveCustomAsset(assetId, xM, zM)
     });
     const initial = useStore.getState();
     viewer.setWorkspaceState(
       initial.workspaceMode,
       initial.customSite.design.environment,
       initial.customSite.viewMode
+    );
+    viewer.setCustomDesign(
+      initial.customSite.design,
+      initial.customSite.editor.selectedAssetId
+    );
+    viewer.setCustomEditorTool(
+      initial.customSite.editor.placementKind,
+      initial.customSite.design.planner.gridSnapM
     );
     viewer.apply(initial.result, initial.params);
     viewer.applyTime(
@@ -94,6 +113,24 @@ export function Scene(): React.JSX.Element {
           state.customSite.viewMode
         );
       }
+      if (
+        state.customSite.design !== prev.customSite.design ||
+        state.customSite.editor.selectedAssetId !== prev.customSite.editor.selectedAssetId
+      ) {
+        viewer.setCustomDesign(
+          state.customSite.design,
+          state.customSite.editor.selectedAssetId
+        );
+      }
+      if (
+        state.customSite.editor.placementKind !== prev.customSite.editor.placementKind ||
+        state.customSite.design.planner.gridSnapM !== prev.customSite.design.planner.gridSnapM
+      ) {
+        viewer.setCustomEditorTool(
+          state.customSite.editor.placementKind,
+          state.customSite.design.planner.gridSnapM
+        );
+      }
       if (state.result !== prev.result) {
         viewer.apply(state.result, state.params);
       }
@@ -111,7 +148,10 @@ export function Scene(): React.JSX.Element {
       if (state.ui.pulseRequest !== prev.ui.pulseRequest && state.ui.pulseRequest !== null) {
         viewer.focusAsset(state.ui.pulseRequest.asset, state.ui.pulseRequest.severity);
       }
-      if (state.ui.selectedAsset !== prev.ui.selectedAsset) {
+      if (
+        state.workspaceMode === "authored" &&
+        state.ui.selectedAsset !== prev.ui.selectedAsset
+      ) {
         viewer.setSelectedAsset(state.ui.selectedAsset);
       }
       if (

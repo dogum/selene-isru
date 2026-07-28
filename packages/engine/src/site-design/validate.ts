@@ -11,6 +11,7 @@ import type {
   SiteDesignFinding,
   SitePortDefinition
 } from "./types";
+import { validateSitePlacementLayout } from "./placement";
 
 function finding(
   id: string,
@@ -256,6 +257,8 @@ export function validateSiteDesign(document: SiteDesignDocument): SiteDesignFind
       "This is a blank planning surface. Add equipment to begin the site design."
     ));
   }
+
+  findings.push(...validateSitePlacementLayout(document));
 
   const severityOrder = { error: 0, caution: 1, info: 2 } as const;
   return findings.sort((a, b) =>

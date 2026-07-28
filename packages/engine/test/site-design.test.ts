@@ -8,7 +8,10 @@ import {
   createBlankSiteDesign,
   parseSiteDesign,
   serializeSiteDesign,
+  snapSiteCoordinate,
+  snapSiteHeading,
   siteAssetsForEnvironment,
+  validateSiteAssetPlacement,
   validateSiteDesign
 } from "../src/index";
 import type {
@@ -214,5 +217,62 @@ describe("site design validation", () => {
 
     expect(ids).toContain("connection.endpoint.missing");
     expect(ids).toContain("connection.incompatible.incompatible");
+  });
+});
+
+describe("site placement geometry", () => {
+  test("snaps finite coordinates and normalizes headings", () => {
+    expect(snapSiteCoordinate(12.6, 5)).toBe(15);
+    expect(snapSiteCoordinate(12.6, 0)).toBe(12.6);
+    expect(snapSiteHeading(-17, 15)).toBe(345);
+    expect(snapSiteHeading(367, 0)).toBe(7);
+  });
+
+  test("distinguishes footprint collisions from clearance conflicts", () => {
+    const design = createBlankSiteDesign("equatorial");
+    const excavator: SiteAssetInstance = {
+      id: "excavator",
+      kind: "equatorial.excavator",
+      name: "Excavator",
+      transform: { xM: 0, zM: 0, headingDeg: 0 },
+      enabled: true,
+      configuration: {}
+    };
+    const hauler: SiteAssetInstance = {
+      id: "hauler",
+      kind: "equatorial.hauler",
+      name: "Hauler",
+      transform: { xM: 2, zM: 0, headingDeg: 0 },
+      enabled: true,
+      configuration: {}
+    };
+    design.assets = [excavator];
+
+    expect(validateSiteAssetPlacement(design, hauler).map((finding) => finding.id))
+      .toContain("placement.collision.excavator.hauler");
+
+    hauler.transform.xM = 7;
+    const clearance = validateSiteAssetPlacement(design, hauler);
+    expect(clearance.some((finding) => finding.id ===
+      "placement.clearance.excavator.hauler" && finding.severity === "caution"
+    )).toBe(true);
+
+    hauler.transform.xM = 12;
+    expect(validateSiteAssetPlacement(design, hauler)).toEqual([]);
+  });
+
+  test("rejects footprints that extend beyond the planning boundary", () => {
+    const design = createBlankSiteDesign("polar");
+    const candidate: SiteAssetInstance = {
+      id: "rim-towers",
+      kind: "polar.power-towers",
+      name: "Rim towers",
+      transform: { xM: 84, zM: 0, headingDeg: 0 },
+      enabled: true,
+      configuration: {}
+    };
+
+    expect(validateSiteAssetPlacement(design, candidate).map((finding) => finding.id))
+      .toContain("placement.boundary.rim-towers");
   });
 });

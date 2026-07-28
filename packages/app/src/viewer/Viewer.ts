@@ -3,9 +3,15 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type {
   SimParams,
   SimResult,
+  SiteAssetInstance,
+  SiteDesignDocument,
   SiteEnvironment,
   SiteViewMode,
   WorkspaceMode
+} from "@selene-isru/engine";
+import {
+  snapSiteCoordinate,
+  validateSiteAssetPlacement
 } from "@selene-isru/engine";
 import type { TimeseriesPoint } from "@selene-isru/engine";
 import {
@@ -126,6 +132,8 @@ interface ProcessOverlayPath extends ProcessEdgeView {
 
 export interface ViewerCallbacks {
   onSelectAsset?: (assetKey: string | null) => void;
+  onPlaceCustomAsset?: (kind: string, xM: number, zM: number) => void;
+  onMoveCustomAsset?: (assetId: string, xM: number, zM: number) => void;
 }
 
 /**
@@ -162,8 +170,10 @@ export class Viewer {
   private connectionOutlines: THREE.Mesh[] = [];
   private assetTooltip: HTMLDivElement;
   private learningOverlay: HTMLDivElement;
+  private customLabelOverlay: HTMLDivElement;
   private processSvg: SVGSVGElement;
   private learningLabels = new Map<string, HTMLButtonElement>();
+  private customLabels = new Map<string, HTMLButtonElement>();
   private processPaths: ProcessOverlayPath[] = [];
   private learningMode = false;
   private showProcessFlow = false;
@@ -191,6 +201,13 @@ export class Viewer {
   private customEnvironment: SiteEnvironment = "equatorial";
   private customViewMode: SiteViewMode = "planner";
   private activeSite: SiteMode | null = null;
+  private customDesign: SiteDesignDocument | null = null;
+  private customPlacementKind: string | null = null;
+  private customGridSnapM = 5;
+  private customPlacementPoint: THREE.Vector3 | null = null;
+  private customPlacementBlocked = false;
+  private customDragCandidate: string | null = null;
+  private customDragging = false;
 
   private lastResult: SimResult | null = null;
   private lastParams: SimParams | null = null;
@@ -260,6 +277,11 @@ export class Viewer {
     this.processSvg.appendChild(defs);
     this.learningOverlay.appendChild(this.processSvg);
     container.appendChild(this.learningOverlay);
+
+    this.customLabelOverlay = document.createElement("div");
+    this.customLabelOverlay.className = "custom-scene-label-overlay";
+    this.customLabelOverlay.hidden = true;
+    container.appendChild(this.customLabelOverlay);
 
     this.initGL();
 
@@ -391,6 +413,7 @@ export class Viewer {
     this.assetTooltip.remove();
     this.assetLoadStatus.remove();
     this.learningOverlay.remove();
+    this.customLabelOverlay.remove();
   }
 
   /* ---------------- public API ---------------- */
@@ -419,10 +442,37 @@ export class Viewer {
     }
     if (mode === "custom") {
       this.learningOverlay.hidden = true;
+      this.customLabelOverlay.hidden = this.customDesign?.assets.length === 0;
       this.assetTooltip.hidden = true;
       this.setHoveredAsset(null);
-      this.setSelectedAsset(null);
+    } else {
+      this.customLabelOverlay.hidden = true;
     }
+    this.wake();
+  }
+
+  /** Synchronize the persisted custom document with its dynamic scene instances. */
+  setCustomDesign(design: SiteDesignDocument, selectedAssetId: string | null): void {
+    this.customDesign = design;
+    this.customGridSnapM = design.planner.gridSnapM;
+    if (this.diorama instanceof CustomSiteDiorama) {
+      this.diorama.syncDesign(design, selectedAssetId);
+    }
+    this.rebuildCustomLabels();
+    this.setSelectedAsset(selectedAssetId);
+    this.wake();
+  }
+
+  /** Enter or leave placement mode without mutating the durable document. */
+  setCustomEditorTool(placementKind: string | null, gridSnapM: number): void {
+    this.customPlacementKind = placementKind;
+    this.customGridSnapM = gridSnapM;
+    this.customPlacementPoint = null;
+    this.customPlacementBlocked = false;
+    if (placementKind === null && this.diorama instanceof CustomSiteDiorama) {
+      this.diorama.clearPlacementPreview();
+    }
+    this.renderer.domElement.style.cursor = placementKind === null ? "grab" : "crosshair";
     this.wake();
   }
 
@@ -450,6 +500,28 @@ export class Viewer {
   /** fly the camera (1s) to a named pose for the current site */
   flyTo(key: string): void {
     if (this.lastResult === null) {
+      return;
+    }
+    if (this.workspaceMode === "custom") {
+      const asset = this.diorama?.assets[key];
+      if (asset === undefined) {
+        return;
+      }
+      const target = asset.getWorldPosition(new THREE.Vector3());
+      const offset = this.camera.position.clone().sub(this.controls.target);
+      const position = target.clone().add(
+        this.customViewMode === "planner"
+          ? offset
+          : new THREE.Vector3(18, 14, 18)
+      );
+      this.flyToPose(
+        {
+          position: [position.x, position.y, position.z],
+          target: [target.x, target.y, target.z]
+        },
+        this.reducedMotion ? 0 : 700
+      );
+      this.lastInputAt = performance.now();
       return;
     }
     const poses = CAMERA_POSES[this.lastResult.site];
@@ -500,6 +572,9 @@ export class Viewer {
   /** Synchronize React inspector state with the scene selection treatment. */
   setSelectedAsset(assetKey: string | null): void {
     this.selectedAssetKey = assetKey;
+    for (const [key, label] of this.customLabels) {
+      label.classList.toggle("active", key === assetKey);
+    }
     this.refreshSelectionOutline();
     this.updateLearningOverlay();
     this.wake();
@@ -550,7 +625,11 @@ export class Viewer {
       ? ""
       : `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
     if (this.workspaceMode === "custom") {
-      this.diorama = new CustomSiteDiorama(site, this.quality);
+      const custom = new CustomSiteDiorama(site, this.quality, () => this.wake());
+      if (this.customDesign !== null) {
+        custom.syncDesign(this.customDesign, this.selectedAssetKey);
+      }
+      this.diorama = custom;
     } else if (site === "equatorial") {
       const equatorial = new EquatorialDiorama(this.quality, () => {
         if (this.diorama !== equatorial || this.disposed) {
@@ -953,6 +1032,49 @@ export class Viewer {
     }
   }
 
+  private rebuildCustomLabels(): void {
+    this.customLabelOverlay.replaceChildren();
+    this.customLabels.clear();
+    if (this.customDesign === null) {
+      this.customLabelOverlay.hidden = true;
+      return;
+    }
+    for (const asset of this.customDesign.assets) {
+      const label = document.createElement("button");
+      label.type = "button";
+      label.className = "custom-scene-label";
+      label.textContent = asset.name.toUpperCase();
+      label.classList.toggle("disabled", !asset.enabled);
+      label.classList.toggle("active", asset.id === this.selectedAssetKey);
+      label.addEventListener("click", () => this.selectPickedAsset(asset.id));
+      this.customLabelOverlay.appendChild(label);
+      this.customLabels.set(asset.id, label);
+    }
+    this.customLabelOverlay.hidden =
+      this.workspaceMode !== "custom" || this.customLabels.size === 0;
+    this.updateCustomLabels();
+  }
+
+  private updateCustomLabels(): void {
+    if (
+      this.workspaceMode !== "custom" ||
+      this.customLabelOverlay.hidden ||
+      this.diorama === null
+    ) {
+      return;
+    }
+    const width = Math.max(1, this.container.clientWidth);
+    for (const [key, label] of this.customLabels) {
+      const point = this.assetScreenPoint(key, 4.2);
+      label.hidden = point === null;
+      if (point !== null) {
+        const x = Math.min(width - 80, Math.max(80, point.x));
+        const y = Math.max(36, point.y);
+        label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+      }
+    }
+  }
+
   /* ---------------- warning pulse outline ---------------- */
 
   private spawnPulse(asset: THREE.Object3D, color: number): void {
@@ -1038,6 +1160,7 @@ export class Viewer {
 
     this.controls.update();
     this.updateLearningOverlay();
+    this.updateCustomLabels();
 
     const rendered = active || this.needsRender;
     if (rendered) {
@@ -1060,19 +1183,142 @@ export class Viewer {
   };
 
   private onPointerMove = (event: PointerEvent): void => {
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      this.updateRaycaster(event);
+      const point = this.diorama.surfacePoint(this.raycaster);
+      if (this.customPlacementKind !== null) {
+        this.customPlacementPoint = point === null ? null : new THREE.Vector3(
+          snapSiteCoordinate(point.x, this.customGridSnapM),
+          point.y,
+          snapSiteCoordinate(point.z, this.customGridSnapM)
+        );
+        const candidate: SiteAssetInstance | null =
+          this.customDesign === null || this.customPlacementPoint === null
+            ? null
+            : {
+                id: "__placement-preview__",
+                kind: this.customPlacementKind,
+                name: "Placement preview",
+                transform: {
+                  xM: this.customPlacementPoint.x,
+                  zM: this.customPlacementPoint.z,
+                  headingDeg: 0
+                },
+                enabled: true,
+                configuration: {}
+              };
+        const findings = candidate === null || this.customDesign === null
+          ? []
+          : validateSiteAssetPlacement(this.customDesign, candidate);
+        this.customPlacementBlocked = findings.some((finding) => finding.severity === "error");
+        const severity = this.customPlacementBlocked
+          ? "error"
+          : findings.some((finding) => finding.severity === "caution") ? "caution" : "ok";
+        this.diorama.setPlacementPreview(
+          this.customPlacementKind,
+          this.customPlacementPoint,
+          severity
+        );
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = this.customPlacementBlocked
+          ? "not-allowed"
+          : "crosshair";
+        this.wake();
+        return;
+      }
+      if (
+        this.customDragCandidate !== null &&
+        (event.buttons & 1) === 1 &&
+        this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 4 &&
+        point !== null
+      ) {
+        this.customDragging = true;
+        this.controls.enabled = false;
+        const snapped = new THREE.Vector3(
+          snapSiteCoordinate(point.x, this.customGridSnapM),
+          point.y,
+          snapSiteCoordinate(point.z, this.customGridSnapM)
+        );
+        this.customPlacementPoint = snapped;
+        this.diorama.previewAssetTransform(this.customDragCandidate, snapped);
+        this.renderer.domElement.style.cursor = "grabbing";
+        this.wake();
+        return;
+      }
+      this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
+      return;
+    }
     const key = this.pickAsset(event);
     this.setHoveredAsset(key, event);
   };
 
   private onPointerLeave = (): void => {
+    if (this.diorama instanceof CustomSiteDiorama) {
+      this.diorama.clearPlacementPreview();
+      if (this.customDesign !== null) {
+        this.diorama.syncDesign(this.customDesign, this.selectedAssetKey);
+      }
+      this.customDragCandidate = null;
+      this.customDragging = false;
+      this.controls.enabled = true;
+    }
     this.setHoveredAsset(null);
   };
 
   private onPointerDown = (event: PointerEvent): void => {
     this.pointerDown.set(event.clientX, event.clientY);
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      if (this.customPlacementKind !== null) {
+        this.controls.enabled = false;
+        return;
+      }
+      this.updateRaycaster(event);
+      this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
+      if (this.customDragCandidate !== null) {
+        this.controls.enabled = false;
+      }
+    }
   };
 
   private onPointerUp = (event: PointerEvent): void => {
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      const movement = this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY));
+      const placing = this.customPlacementKind !== null;
+      if (
+        placing &&
+        this.customPlacementKind !== null &&
+        movement <= 6 &&
+        this.customPlacementPoint !== null &&
+        !this.customPlacementBlocked
+      ) {
+        this.callbacks.onPlaceCustomAsset?.(
+          this.customPlacementKind,
+          this.customPlacementPoint.x,
+          this.customPlacementPoint.z
+        );
+      } else if (!placing && (
+        this.customDragging &&
+        this.customDragCandidate !== null &&
+        this.customPlacementPoint !== null
+      )) {
+        this.callbacks.onMoveCustomAsset?.(
+          this.customDragCandidate,
+          this.customPlacementPoint.x,
+          this.customPlacementPoint.z
+        );
+      } else if (!placing && movement <= 6) {
+        this.updateRaycaster(event);
+        this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
+      }
+      this.controls.enabled = true;
+      this.customDragCandidate = null;
+      this.customDragging = false;
+      this.customPlacementPoint = null;
+      if (!placing && this.customDesign !== null) {
+        this.diorama.syncDesign(this.customDesign, this.selectedAssetKey);
+      }
+      return;
+    }
     if (this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6) {
       return;
     }
@@ -1092,13 +1338,11 @@ export class Viewer {
     if (this.diorama === null || this.lastResult === null) {
       return null;
     }
+    this.updateRaycaster(event);
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      return this.diorama.pickAsset(this.raycaster);
+    }
     const labels = INTERACTIVE_ASSET_LABELS[this.lastResult.site];
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    this.pointer.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1
-    );
-    this.raycaster.setFromCamera(this.pointer, this.camera);
     const roots = Object.entries(this.diorama.assets)
       .filter(([key, asset]) => key in labels && asset.children.length > 0)
       .map(([, asset]) => asset);
@@ -1118,9 +1362,18 @@ export class Viewer {
     this.setHoveredAsset(null);
     this.callbacks.onSelectAsset?.(assetKey);
     this.setSelectedAsset(assetKey);
-    if (assetKey !== null) {
+    if (assetKey !== null && this.workspaceMode !== "custom") {
       this.flyTo(assetKey);
     }
+  }
+
+  private updateRaycaster(event: MouseEvent | PointerEvent): void {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    this.raycaster.setFromCamera(this.pointer, this.camera);
   }
 
   private setHoveredAsset(assetKey: string | null, event?: PointerEvent): void {
@@ -1167,7 +1420,9 @@ export class Viewer {
       this.scene.add(this.selectionOutline);
     }
     if (this.lastResult !== null && this.lastParams !== null) {
-      for (const key of connectedAssets(this.lastResult, this.lastParams, this.selectedAssetKey)) {
+      for (const key of this.workspaceMode === "custom"
+        ? []
+        : connectedAssets(this.lastResult, this.lastParams, this.selectedAssetKey)) {
         const connected = this.diorama.assets[key];
         if (connected === undefined || connected.children.length === 0) {
           continue;

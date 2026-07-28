@@ -2,9 +2,11 @@ import {
   DEFAULTS,
   simulate,
   simulateTimeseries,
+  validateSiteAssetPlacement,
   validateSiteDesign
 } from "@selene-isru/engine";
 import type {
+  PlannerDocumentState,
   SimParams,
   SimResult,
   SiteDesignDocument,
@@ -22,6 +24,20 @@ import {
   loadCustomSiteDraft,
   saveCustomSiteDraft
 } from "../site-design/draft";
+import {
+  duplicateSiteAsset,
+  emptyCustomHistory,
+  isKindAvailable,
+  placeSiteAsset,
+  pushCustomHistory,
+  redoCustomDesign,
+  removeSiteAsset,
+  type CustomDesignHistory,
+  type CustomEditorSession,
+  undoCustomDesign,
+  updatePlannerSnaps,
+  updateSiteAsset
+} from "../site-design/editor";
 
 export type ViewTab = "site" | "energy" | "mass" | "power" | "study";
 export type SheetDetent = "peek" | "half" | "full";
@@ -87,6 +103,8 @@ export interface CustomSiteState {
   design: SiteDesignDocument;
   viewMode: SiteViewMode;
   findings: SiteDesignFinding[];
+  editor: CustomEditorSession;
+  history: CustomDesignHistory;
 }
 
 const SEC_HISTORY_LENGTH = 60;
@@ -117,6 +135,29 @@ interface Store {
   setCustomViewMode: (viewMode: SiteViewMode) => void;
   setCustomDesignName: (name: string) => void;
   resetCustomDesign: () => void;
+  beginCustomPlacement: (kind: string) => void;
+  cancelCustomPlacement: () => void;
+  selectCustomAsset: (assetId: string | null) => void;
+  placeCustomAsset: (kind: string, xM: number, zM: number) => void;
+  moveCustomAsset: (assetId: string, xM: number, zM: number) => void;
+  updateCustomAsset: (
+    assetId: string,
+    patch: {
+      name?: string;
+      xM?: number;
+      zM?: number;
+      headingDeg?: number;
+      enabled?: boolean;
+    }
+  ) => void;
+  rotateCustomAsset: (assetId: string, deltaDeg: number) => void;
+  duplicateCustomAsset: (assetId: string) => void;
+  deleteCustomAsset: (assetId: string) => void;
+  setCustomPlannerSnaps: (
+    patch: Partial<Pick<PlannerDocumentState, "gridSnapM" | "rotationSnapDeg">>
+  ) => void;
+  undoCustomEdit: () => void;
+  redoCustomEdit: () => void;
   setParam: <K extends keyof SimParams>(key: K, value: SimParams[K]) => void;
   applyPatch: (patch: Partial<SimParams>) => void;
   resetParam: (key: keyof SimParams) => void;
@@ -288,7 +329,37 @@ export const useStore = create<Store>((set, get) => {
   const customSite: CustomSiteState = {
     design: customDesign,
     viewMode: "planner",
-    findings: validateSiteDesign(customDesign)
+    findings: validateSiteDesign(customDesign),
+    editor: {
+      tool: "select",
+      placementKind: null,
+      selectedAssetId: null
+    },
+    history: emptyCustomHistory()
+  };
+
+  const commitCustomDesign = (
+    design: SiteDesignDocument,
+    selectedAssetId: string | null,
+    recordHistory = true
+  ): void => {
+    const current = get().customSite;
+    saveCustomSiteDraft(design);
+    set({
+      customSite: {
+        ...current,
+        design,
+        findings: validateSiteDesign(design),
+        editor: {
+          tool: "select",
+          placementKind: null,
+          selectedAssetId
+        },
+        history: recordHistory
+          ? pushCustomHistory(current.history, current.design)
+          : current.history
+      }
+    });
   };
 
   return {
@@ -384,7 +455,17 @@ export const useStore = create<Store>((set, get) => {
         tHours: get().time.tHours % cycleHours(nextTimeseries)
       };
       set({
-        customSite: { ...get().customSite, design, findings },
+        customSite: {
+          ...get().customSite,
+          design,
+          findings,
+          editor: {
+            tool: "select",
+            placementKind: null,
+            selectedAssetId: null
+          },
+          history: emptyCustomHistory()
+        },
         params: design.params,
         result: nextResult,
         timeseries: nextTimeseries,
@@ -424,12 +505,212 @@ export const useStore = create<Store>((set, get) => {
         customSite: {
           design,
           viewMode: "planner",
-          findings: validateSiteDesign(design)
+          findings: validateSiteDesign(design),
+          editor: {
+            tool: "select",
+            placementKind: null,
+            selectedAssetId: null
+          },
+          history: emptyCustomHistory()
         }
       });
       if (get().workspaceMode === "custom") {
         get().enterCustomSite();
       }
+    },
+
+    beginCustomPlacement: (kind) => {
+      const current = get().customSite;
+      if (!isKindAvailable(current.design, kind)) {
+        return;
+      }
+      set({
+        customSite: {
+          ...current,
+          editor: {
+            tool: "place",
+            placementKind: kind,
+            selectedAssetId: null
+          }
+        }
+      });
+    },
+
+    cancelCustomPlacement: () => {
+      const current = get().customSite;
+      set({
+        customSite: {
+          ...current,
+          editor: {
+            ...current.editor,
+            tool: "select",
+            placementKind: null
+          }
+        }
+      });
+    },
+
+    selectCustomAsset: (assetId) => {
+      const current = get().customSite;
+      const selectedAssetId = assetId !== null &&
+        current.design.assets.some((asset) => asset.id === assetId)
+        ? assetId
+        : null;
+      set({
+        customSite: {
+          ...current,
+          editor: {
+            tool: "select",
+            placementKind: null,
+            selectedAssetId
+          }
+        }
+      });
+    },
+
+    placeCustomAsset: (kind, xM, zM) => {
+      const current = get().customSite;
+      const design = placeSiteAsset(current.design, kind, xM, zM);
+      const asset = design?.assets.at(-1);
+      if (
+        design === null ||
+        asset === undefined ||
+        validateSiteAssetPlacement(current.design, asset)
+          .some((finding) => finding.severity === "error")
+      ) {
+        return;
+      }
+      commitCustomDesign(design, asset.id);
+    },
+
+    moveCustomAsset: (assetId, xM, zM) => {
+      const current = get().customSite;
+      if (!current.design.assets.some((asset) => asset.id === assetId)) {
+        return;
+      }
+      commitCustomDesign(
+        updateSiteAsset(current.design, assetId, { xM, zM }),
+        assetId
+      );
+    },
+
+    updateCustomAsset: (assetId, patch) => {
+      const current = get().customSite;
+      if (!current.design.assets.some((asset) => asset.id === assetId)) {
+        return;
+      }
+      commitCustomDesign(updateSiteAsset(current.design, assetId, patch), assetId);
+    },
+
+    rotateCustomAsset: (assetId, deltaDeg) => {
+      const current = get().customSite;
+      const asset = current.design.assets.find((item) => item.id === assetId);
+      if (asset === undefined) {
+        return;
+      }
+      commitCustomDesign(
+        updateSiteAsset(current.design, assetId, {
+          headingDeg: asset.transform.headingDeg + deltaDeg
+        }),
+        assetId
+      );
+    },
+
+    duplicateCustomAsset: (assetId) => {
+      const current = get().customSite;
+      let design = duplicateSiteAsset(current.design, assetId);
+      if (design === null) {
+        return;
+      }
+      let duplicate = design.assets.at(-1);
+      for (let attempt = 2; duplicate !== undefined && attempt <= 5; attempt += 1) {
+        const blocked = validateSiteAssetPlacement(current.design, duplicate)
+          .some((finding) => finding.severity === "error");
+        if (!blocked) {
+          break;
+        }
+        const source = current.design.assets.find((asset) => asset.id === assetId);
+        const offset = Math.max(5, current.design.planner.gridSnapM) * attempt;
+        if (source !== undefined) {
+          design = updateSiteAsset(design, duplicate.id, {
+            xM: source.transform.xM + offset,
+            zM: source.transform.zM + offset
+          });
+          duplicate = design.assets.at(-1);
+        }
+      }
+      if (
+        duplicate === undefined ||
+        validateSiteAssetPlacement(current.design, duplicate)
+          .some((finding) => finding.severity === "error")
+      ) {
+        return;
+      }
+      commitCustomDesign(design, duplicate.id);
+    },
+
+    deleteCustomAsset: (assetId) => {
+      const current = get().customSite;
+      if (!current.design.assets.some((asset) => asset.id === assetId)) {
+        return;
+      }
+      commitCustomDesign(removeSiteAsset(current.design, assetId), null);
+    },
+
+    setCustomPlannerSnaps: (patch) => {
+      const current = get().customSite;
+      commitCustomDesign(
+        updatePlannerSnaps(current.design, patch),
+        current.editor.selectedAssetId
+      );
+    },
+
+    undoCustomEdit: () => {
+      const current = get().customSite;
+      const restored = undoCustomDesign(current.design, current.history);
+      if (restored === null) {
+        return;
+      }
+      const selectedAssetId = current.editor.selectedAssetId !== null &&
+        restored.design.assets.some((asset) => asset.id === current.editor.selectedAssetId)
+        ? current.editor.selectedAssetId
+        : null;
+      saveCustomSiteDraft(restored.design);
+      set({
+        customSite: {
+          ...current,
+          design: restored.design,
+          findings: validateSiteDesign(restored.design),
+          editor: {
+            tool: "select",
+            placementKind: null,
+            selectedAssetId
+          },
+          history: restored.history
+        }
+      });
+    },
+
+    redoCustomEdit: () => {
+      const current = get().customSite;
+      const restored = redoCustomDesign(current.design, current.history);
+      if (restored === null) {
+        return;
+      }
+      saveCustomSiteDraft(restored.design);
+      set({
+        customSite: {
+          ...current,
+          design: restored.design,
+          findings: validateSiteDesign(restored.design),
+          editor: {
+            tool: "select",
+            placementKind: null,
+            selectedAssetId: current.editor.selectedAssetId
+          },
+          history: restored.history
+        }
+      });
     },
 
     setParam: (key, value) => {

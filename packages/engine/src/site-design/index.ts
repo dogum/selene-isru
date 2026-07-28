@@ -15,6 +15,13 @@ export {
   parseSiteDesign,
   serializeSiteDesign
 } from "./schema";
+export {
+  SITE_PLANNING_BOUND_M,
+  snapSiteCoordinate,
+  snapSiteHeading,
+  validateSiteAssetPlacement,
+  validateSitePlacementLayout
+} from "./placement";
 export { validateSiteDesign } from "./validate";
 export type {
   PlannerDocumentState,
