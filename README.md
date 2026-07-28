@@ -123,6 +123,8 @@ the dev HUD, photo mode, and PNG export.
 
 Visual QA and performance notes are recorded in the [MRE vertical slice](docs/vertical-slice-mre.md), the [equatorial equipment overhaul](docs/equatorial-asset-overhaul.md), the [polar equipment overhaul](docs/polar-asset-overhaul.md), and the [analysis and explainability sprint](docs/analysis-polish-sprint.md).
 
+The planned model-backed site editor is defined in the [Custom Site Sandbox product and implementation specification](docs/custom-site-sandbox-spec.md).
+
 ## Workspace
 
 - `constants/constants.json` — constants, defaults, slider bounds, units, citations.
