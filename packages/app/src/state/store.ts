@@ -616,7 +616,20 @@ export const useStore = create<Store>((set, get) => {
     },
 
     setCustomViewMode: (viewMode) => {
-      set({ customSite: { ...get().customSite, viewMode } });
+      const current = get().customSite;
+      set({
+        customSite: {
+          ...current,
+          viewMode,
+          editor: viewMode === "explore"
+            ? customEditorSession({
+                selectedAssetId: current.editor.selectedAssetId,
+                selectedAssetIds: current.editor.selectedAssetIds,
+                selectedConnectionId: current.editor.selectedConnectionId
+              })
+            : current.editor
+        }
+      });
     },
 
     setCustomDesignName: (name) => {

@@ -1498,6 +1498,16 @@ export class Viewer {
         this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
         return;
       }
+      if (this.customViewMode === "explore") {
+        const connection = this.diorama.pickConnection(this.raycaster);
+        if (connection !== null) {
+          this.setHoveredAsset(null);
+          this.renderer.domElement.style.cursor = "pointer";
+          return;
+        }
+        this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
+        return;
+      }
       if (this.customPlacementKind !== null) {
         this.customPlacementPoint = point === null ? null : new THREE.Vector3(
           snapSiteCoordinate(point.x, this.customGridSnapM),
@@ -1666,6 +1676,13 @@ export class Viewer {
         this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
         return;
       }
+      if (this.customViewMode === "explore") {
+        this.updateRaycaster(event);
+        this.customDownConnection =
+          this.diorama.pickConnection(this.raycaster);
+        this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
+        return;
+      }
       if (this.customPlacementKind !== null) {
         this.controls.enabled = false;
         return;
@@ -1698,6 +1715,17 @@ export class Viewer {
     if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
       const movement = this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY));
       if (this.mobile) {
+        this.updateRaycaster(event);
+        if (movement <= 6 && this.customDownConnection !== null) {
+          this.selectPickedConnection(this.customDownConnection);
+        } else if (movement <= 6) {
+          this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
+        }
+        this.customDownConnection = null;
+        this.customDragCandidate = null;
+        return;
+      }
+      if (this.customViewMode === "explore") {
         this.updateRaycaster(event);
         if (movement <= 6 && this.customDownConnection !== null) {
           this.selectPickedConnection(this.customDownConnection);
@@ -1983,7 +2011,17 @@ export class Viewer {
   };
 
   private onContextRestored = (): void => {
+    if (this.disposed) {
+      return;
+    }
     this.callbacks.onRendererStatus?.("restoring");
+    // Leave the browser's context-restored event before disposing the old
+    // renderer and allocating its replacement. Some drivers deadlock when
+    // those operations occur synchronously inside the restoration callback.
+    window.setTimeout(this.restoreContext, 0);
+  };
+
+  private restoreContext = (): void => {
     try {
       const result = this.lastResult;
       const params = this.lastParams;

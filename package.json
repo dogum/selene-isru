@@ -19,6 +19,8 @@
     "check:constants": "pnpm --filter @selene-isru/engine check:constants",
     "generate:golden": "uv run --project python python python/tools/generate_golden.py",
     "screenshots": "node scripts/capture-screens.mjs",
+    "evidence:custom": "node scripts/capture-custom-site-evidence.mjs",
+    "smoke:custom": "node scripts/capture-custom-site-evidence.mjs --verify-only",
     "demo:analysis": "node scripts/capture-analysis-demo.mjs",
     "demo:cinematic": "node scripts/capture-cinematic-demo.mjs",
     "test": "pnpm --filter @selene-isru/engine test && pnpm --filter @selene-isru/app test",

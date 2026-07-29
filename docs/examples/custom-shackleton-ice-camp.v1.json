@@ -1,0 +1,122 @@
+{
+  "schema": "selene-site-design",
+  "version": 1,
+  "id": "example-shackleton-ice-camp",
+  "name": "Shackleton Ice Camp",
+  "environment": "polar",
+  "params": {
+    "site": "polar",
+    "targetKgPerDay": 1000,
+    "enableSabatier": true,
+    "chiIce": 0.05
+  },
+  "assets": [
+    {
+      "id": "polar-excavator-1",
+      "kind": "polar.ice-excavator",
+      "name": "Polar excavator PX-01",
+      "transform": { "xM": -36, "zM": 18, "headingDeg": 15 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "polar-sublimation-1",
+      "kind": "polar.sublimation-camp",
+      "name": "Sublimation camp SUB-01",
+      "transform": { "xM": -18, "zM": 12, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "polar-receiver-1",
+      "kind": "polar.receiver-sabatier",
+      "name": "Receiver plant BR-01",
+      "transform": { "xM": 4, "zM": -8, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "polar-storage-1",
+      "kind": "polar.cryo-farm",
+      "name": "Polar cryogenic farm PCR-01",
+      "transform": { "xM": 28, "zM": 6, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "polar-towers-1",
+      "kind": "polar.power-towers",
+      "name": "Rim power towers PT-01",
+      "transform": { "xM": 0, "zM": -44, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": { "unitCount": 1 }
+    },
+    {
+      "id": "polar-station-1",
+      "kind": "polar.nuclear-station",
+      "name": "Nuclear station PN-01",
+      "transform": { "xM": 34, "zM": -28, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": { "unitCount": 1 }
+    },
+    {
+      "id": "polar-habitat-1",
+      "kind": "polar.habitat",
+      "name": "Polar habitat PHAB-01",
+      "transform": { "xM": 30, "zM": 28, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    }
+  ],
+  "connections": [
+    {
+      "id": "polar-icy-feed",
+      "kind": "material",
+      "from": { "assetId": "polar-excavator-1", "portId": "icy-feed-out" },
+      "to": { "assetId": "polar-sublimation-1", "portId": "icy-feed-in" },
+      "route": [{ "xM": -36, "zM": 18 }, { "xM": -18, "zM": 12 }],
+      "configuration": {}
+    },
+    {
+      "id": "polar-water-feed",
+      "kind": "material",
+      "from": { "assetId": "polar-sublimation-1", "portId": "water-out" },
+      "to": { "assetId": "polar-receiver-1", "portId": "water-in" },
+      "route": [{ "xM": -18, "zM": 12 }, { "xM": -6, "zM": 10 }, { "xM": 4, "zM": -8 }],
+      "configuration": {}
+    },
+    {
+      "id": "polar-power-feed",
+      "kind": "power",
+      "from": { "assetId": "polar-towers-1", "portId": "grid-out" },
+      "to": { "assetId": "polar-receiver-1", "portId": "power-in" },
+      "route": [{ "xM": 0, "zM": -44 }, { "xM": -4, "zM": -24 }, { "xM": 4, "zM": -8 }],
+      "configuration": {}
+    },
+    {
+      "id": "polar-product-storage",
+      "kind": "material",
+      "from": { "assetId": "polar-receiver-1", "portId": "product-out" },
+      "to": { "assetId": "polar-storage-1", "portId": "product-in" },
+      "route": [{ "xM": 4, "zM": -8 }, { "xM": 18, "zM": -4 }, { "xM": 28, "zM": 6 }],
+      "configuration": {}
+    },
+    {
+      "id": "polar-outpost-reserve",
+      "kind": "logistics",
+      "from": { "assetId": "polar-storage-1", "portId": "reserve-out" },
+      "to": { "assetId": "polar-habitat-1", "portId": "reserve-in" },
+      "route": [{ "xM": 28, "zM": 6 }, { "xM": 30, "zM": 28 }],
+      "configuration": {}
+    }
+  ],
+  "planner": {
+    "gridSnapM": 5,
+    "rotationSnapDeg": 15,
+    "northDeg": 0,
+    "annotations": []
+  },
+  "createdAt": "2026-07-29T00:00:00.000Z",
+  "updatedAt": "2026-07-29T00:00:00.000Z",
+  "appVersion": "0.1.0"
+}

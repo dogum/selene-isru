@@ -342,6 +342,7 @@ export class CustomSiteDiorama implements Diorama {
         !asset.enabled || overloaded || placementErrors.has(asset.id);
       footprintMaterial.needsUpdate = true;
       footprintMaterial.opacity = selectedAssetId === asset.id ? 0.34 : 0.1;
+      runtime.footprint.visible = this.plannerMode;
       const clearanceMaterial =
         runtime.clearance.material as THREE.MeshBasicMaterial;
       clearanceMaterial.color.setHex(
@@ -366,6 +367,7 @@ export class CustomSiteDiorama implements Diorama {
 
   setPlannerMode(plannerMode: boolean): void {
     this.plannerMode = plannerMode;
+    this.grid.visible = plannerMode;
     if (this.currentDesign !== null) {
       this.applyPortState(this.currentDesign);
     } else {
@@ -378,6 +380,7 @@ export class CustomSiteDiorama implements Diorama {
         asset.id === id
       )?.enabled ?? true;
       runtime.clearance.visible = plannerMode && enabled;
+      runtime.footprint.visible = plannerMode;
     }
     for (const runtime of this.connections.values()) {
       runtime.handles.visible = plannerMode;

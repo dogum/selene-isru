@@ -291,4 +291,18 @@ describe("custom site workspace", () => {
     expect(screen.getByLabelText("Custom site inspector").textContent)
       .toContain(first.name);
   });
+
+  it("makes Explore selection-only and cancels active authoring tools", () => {
+    render(<CustomSiteWorkspace />);
+    fireEvent.click(screen.getAllByRole("button", { name: "PLACE" })[0]!);
+    expect(useStore.getState().customSite.editor.tool).toBe("place");
+
+    act(() => {
+      useStore.getState().setCustomViewMode("explore");
+    });
+
+    expect(useStore.getState().customSite.editor.tool).toBe("select");
+    expect(screen.getAllByRole("button", { name: "PLANNER ONLY" }))
+      .toHaveLength(8);
+  });
 });

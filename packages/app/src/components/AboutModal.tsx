@@ -43,6 +43,26 @@ export function AboutModal(): React.JSX.Element | null {
             Earth, terrain, lighting, and effects are generated from code; the MRE reactor is an
             original, reproducibly generated Blender asset with an optimized GLB runtime export.
           </p>
+          <h3>Custom Site workflow</h3>
+          <p>
+            <strong>Custom Site</strong> opens a locally autosaved planning
+            document on Equatorial or Polar terrain. On desktop, choose an
+            equipment type, place its footprint, select an output port, connect
+            it to a compatible input, and follow Design Check until the
+            topology gate opens. Planner is the precise top-down working view;
+            Explore presents the same saved design in perspective.
+          </p>
+          <ol>
+            <li>Place and name equipment; use numeric X, Z, heading, and quantity fields for precision.</li>
+            <li>Connect typed ports and route bends; dashed routes are standby or invalid and double-line routes are over capacity.</li>
+            <li>Resolve errors, then compare planned target with achievable output and the identified bottleneck.</li>
+            <li>Save the case to Trade Study or export the versioned design JSON. Imports always stop at a review screen first.</li>
+          </ol>
+          <p>
+            Mobile is an explicit review surface: selection, metrics, findings,
+            and Planner/Explore remain available, while precision authoring is
+            intentionally desktop-only.
+          </p>
           <h3>Model caveats</h3>
           <p className="model-boundary-callout">
             <strong>Conceptual systems tool — not a flight, hardware, safety, cost, or mission-readiness model.</strong>
@@ -79,11 +99,21 @@ export function AboutModal(): React.JSX.Element | null {
               Material and declared process-energy nodes expose conservation residuals. The energy
               ledger is an explicit model boundary—not a complete fuel-cycle, exergy, transient, or thermal-network solution.
             </li>
+            <li>
+              Custom Site equipment ratings, cable mass/loss, and granular-haul
+              terms are disclosed screening allocations in the TypeScript
+              compiler. They are deterministic and tested, but are not
+              Python-parity-validated vendor hardware or detailed routing
+              models. Unsupported route kinds remain measured-only.
+            </li>
           </ul>
           <p>
-            Every implemented equation lives twice — once in TypeScript and once in Python — and CI
-            fails if they disagree across 200 sampled scenarios. External benchmark tests are kept
-            separately so implementation parity cannot be mistaken for physical validation.
+            Every core authored-site process equation lives twice — once in
+            TypeScript and once in Python — and CI fails if they disagree
+            across 200 sampled scenarios. Custom Site&apos;s isolated screening
+            compiler is TypeScript-only. External benchmark tests are kept
+            separately so implementation parity cannot be mistaken for
+            physical validation.
           </p>
           <p>
             <a href="https://github.com/dogum/selene-isru" target="_blank" rel="noreferrer">

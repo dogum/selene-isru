@@ -385,7 +385,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                     </footer>
                     <button
                       className="custom-place-button"
-                      disabled={!available || isMobile}
+                      disabled={
+                        !available ||
+                        isMobile ||
+                        customSite.viewMode === "explore"
+                      }
                       aria-pressed={active}
                       onClick={() => active
                         ? cancelCustomPlacement()
@@ -393,6 +397,8 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                     >
                       {isMobile
                         ? "DESKTOP ONLY"
+                        : customSite.viewMode === "explore"
+                          ? "PLANNER ONLY"
                         : !available
                           ? "PLACED · SINGLE"
                           : active ? "CANCEL PLACEMENT" : "PLACE"}
@@ -459,6 +465,8 @@ export function CustomSiteWorkspace(): React.JSX.Element {
           <span>
             {isMobile
               ? "REVIEW MODE · TAP AN ASSET OR ROUTE TO INSPECT"
+              : customSite.viewMode === "explore"
+                ? "EXPLORE MODE · ORBIT AND SELECT · SWITCH TO PLANNER TO EDIT"
               : editor.tool === "place"
               ? "PLACEMENT ACTIVE · CLICK TERRAIN · ESC CANCEL"
               : editor.tool === "connect"

@@ -1,0 +1,152 @@
+{
+  "schema": "selene-site-design",
+  "version": 1,
+  "id": "example-equatorial-first-camp",
+  "name": "Equatorial First Camp",
+  "environment": "equatorial",
+  "params": {
+    "site": "equatorial",
+    "targetKgPerDay": 1000
+  },
+  "assets": [
+    {
+      "id": "eq-excavator-1",
+      "kind": "equatorial.excavator",
+      "name": "Excavation rover EX-01",
+      "transform": { "xM": -45, "zM": 0, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "eq-hauler-1",
+      "kind": "equatorial.hauler",
+      "name": "Regolith hauler HV-01",
+      "transform": { "xM": -34, "zM": 3, "headingDeg": 15 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "eq-reactor-1",
+      "kind": "equatorial.mre-reactor",
+      "name": "MRE reactor MRE-01",
+      "transform": { "xM": -20, "zM": 0, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "eq-casting-1",
+      "kind": "equatorial.casting-yard",
+      "name": "Casting yard CY-01",
+      "transform": { "xM": -5, "zM": 14, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "eq-storage-1",
+      "kind": "equatorial.cryo-farm",
+      "name": "Cryogenic farm CR-01",
+      "transform": { "xM": 2, "zM": -18, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "eq-power-1",
+      "kind": "equatorial.power-hub",
+      "name": "Power hub PW-01",
+      "transform": { "xM": -30, "zM": -22, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": { "unitCount": 1 }
+    },
+    {
+      "id": "eq-landing-1",
+      "kind": "equatorial.landing-system",
+      "name": "Landing system LP-01",
+      "transform": { "xM": 30, "zM": -18, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    },
+    {
+      "id": "eq-habitat-1",
+      "kind": "equatorial.habitat",
+      "name": "Surface habitat HAB-01",
+      "transform": { "xM": 18, "zM": 16, "headingDeg": 0 },
+      "enabled": true,
+      "configuration": {}
+    }
+  ],
+  "connections": [
+    {
+      "id": "eq-regolith-pickup",
+      "kind": "material",
+      "from": { "assetId": "eq-excavator-1", "portId": "regolith-out" },
+      "to": { "assetId": "eq-hauler-1", "portId": "regolith-in" },
+      "route": [{ "xM": -45, "zM": 0 }, { "xM": -34, "zM": 3 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-reactor-feed",
+      "kind": "material",
+      "from": { "assetId": "eq-hauler-1", "portId": "regolith-out" },
+      "to": { "assetId": "eq-reactor-1", "portId": "regolith-in" },
+      "route": [{ "xM": -34, "zM": 3 }, { "xM": -20, "zM": 0 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-reactor-power",
+      "kind": "power",
+      "from": { "assetId": "eq-power-1", "portId": "grid-out" },
+      "to": { "assetId": "eq-reactor-1", "portId": "power-in" },
+      "route": [{ "xM": -30, "zM": -22 }, { "xM": -28, "zM": -8 }, { "xM": -20, "zM": 0 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-oxygen-storage",
+      "kind": "material",
+      "from": { "assetId": "eq-reactor-1", "portId": "oxygen-out" },
+      "to": { "assetId": "eq-storage-1", "portId": "product-in" },
+      "route": [{ "xM": -20, "zM": 0 }, { "xM": -8, "zM": -9 }, { "xM": 2, "zM": -18 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-slag-casting",
+      "kind": "construction",
+      "from": { "assetId": "eq-reactor-1", "portId": "slag-out" },
+      "to": { "assetId": "eq-casting-1", "portId": "slag-in" },
+      "route": [{ "xM": -20, "zM": 0 }, { "xM": -5, "zM": 14 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-shield-feed",
+      "kind": "construction",
+      "from": { "assetId": "eq-casting-1", "portId": "shield-out" },
+      "to": { "assetId": "eq-habitat-1", "portId": "shield-in" },
+      "route": [{ "xM": -5, "zM": 14 }, { "xM": 18, "zM": 16 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-product-logistics",
+      "kind": "logistics",
+      "from": { "assetId": "eq-storage-1", "portId": "reserve-out" },
+      "to": { "assetId": "eq-landing-1", "portId": "reserve-in" },
+      "route": [{ "xM": 2, "zM": -18 }, { "xM": 30, "zM": -18 }],
+      "configuration": {}
+    },
+    {
+      "id": "eq-landed-infra",
+      "kind": "logistics",
+      "from": { "assetId": "eq-landing-1", "portId": "infra-out" },
+      "to": { "assetId": "eq-habitat-1", "portId": "infra-in" },
+      "route": [{ "xM": 30, "zM": -18 }, { "xM": 34, "zM": 4 }, { "xM": 18, "zM": 16 }],
+      "configuration": {}
+    }
+  ],
+  "planner": {
+    "gridSnapM": 5,
+    "rotationSnapDeg": 15,
+    "northDeg": 0,
+    "annotations": []
+  },
+  "createdAt": "2026-07-29T00:00:00.000Z",
+  "updatedAt": "2026-07-29T00:00:00.000Z",
+  "appVersion": "0.1.0"
+}

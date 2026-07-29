@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–8 implemented; Milestone 9 release evidence next |
+| Status | Milestones 0–9 implemented; release-candidate evidence captured |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -1133,6 +1133,20 @@ Acceptance:
 ### Milestone 9 — release evidence and review
 
 **Goal:** produce a reviewable release candidate with bounded claims.
+
+**Implementation status (2026-07-29):** Delivered on the working branch.
+The README and in-app help now explain the complete desktop workflow, the
+Planner/Explore boundary, and inspect-only mobile review. Checked-in Equatorial
+and Polar version-one examples pass parser, canonical round-trip, topology, and
+non-zero evaluation tests. The
+[release evidence](custom-site-release.md) includes blank/connected/Explore and
+mobile screenshots, a 1080p demonstration, reproducible browser smoke flow,
+machine-readable performance and bundle measurements, and explicit capacity,
+cable, haul, and unsupported-route model limits. The browser run exercises
+placement, guarded import, evaluation, mode switching, study save, standalone
+export, and mobile review. Deterministic tests cover WebGL state restoration;
+headless SwiftShader GPU-loss injection is explicitly excluded because that
+renderer does not restore it reliably.
 
 Deliver:
 

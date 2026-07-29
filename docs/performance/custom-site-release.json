@@ -1,0 +1,47 @@
+{
+  "schema": "selene-custom-site-release-evidence",
+  "version": 1,
+  "measuredAt": "2026-07-29T10:55:36.843Z",
+  "environment": {
+    "browser": "HeadlessChrome/151.0.7922.47",
+    "viewport": "1600x900",
+    "renderer": "headless Chrome with SwiftShader WebGL",
+    "note": "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Placement and import timings are sampled before screencast recording starts."
+  },
+  "timingsMs": {
+    "navigation": 7089.8,
+    "enterBlankCustomSite": 3512.1,
+    "firstPlacementCommit": 348.8,
+    "importValidateEvaluateAndRender": 513.4,
+    "contextLossRestore": null,
+    "mobileReviewLoad": 7253.4,
+    "animationFrameSample": {
+      "frames": 90,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "maxMs": 16.8
+    }
+  },
+  "settledDesktop": {
+    "assets": 8,
+    "connections": 8,
+    "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 9.71 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
+    "jsHeapUsedMb": 19.07,
+    "domNodes": 916
+  },
+  "productionBundleBytes": {
+    "javascript": 1363316,
+    "css": 81032
+  },
+  "checks": [
+    "blank custom site opened",
+    "canvas placement committed",
+    "versioned example imported through preview and explicit acceptance",
+    "topology gate opened with non-zero achievable output",
+    "Planner and Explore modes rendered the same saved design",
+    "custom case saved to the study library",
+    "standalone design JSON downloaded",
+    "context recovery covered by deterministic viewer state restoration; GPU loss injection skipped because headless SwiftShader does not restore reliably",
+    "mobile review surface loaded"
+  ]
+}
