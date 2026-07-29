@@ -1,10 +1,12 @@
 import {
   siteAssetDefinition,
-  siteAssetsForEnvironment
+  siteAssetsForEnvironment,
+  siteConnectionLengthM
 } from "@selene-isru/engine";
 import type {
   PlannerDocumentState,
   SiteAssetDefinition,
+  SiteDesignFinding,
   SiteDesignFindingSeverity
 } from "@selene-isru/engine";
 import { useEffect, useMemo } from "react";
@@ -58,11 +60,16 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const resetCustomDesign = useStore((state) => state.resetCustomDesign);
   const beginCustomPlacement = useStore((state) => state.beginCustomPlacement);
   const cancelCustomPlacement = useStore((state) => state.cancelCustomPlacement);
+  const beginCustomConnection = useStore((state) => state.beginCustomConnection);
+  const cancelCustomConnection = useStore((state) => state.cancelCustomConnection);
   const selectCustomAsset = useStore((state) => state.selectCustomAsset);
+  const selectCustomConnection = useStore((state) => state.selectCustomConnection);
   const updateCustomAsset = useStore((state) => state.updateCustomAsset);
   const rotateCustomAsset = useStore((state) => state.rotateCustomAsset);
   const duplicateCustomAsset = useStore((state) => state.duplicateCustomAsset);
   const deleteCustomAsset = useStore((state) => state.deleteCustomAsset);
+  const rerouteCustomConnection = useStore((state) => state.rerouteCustomConnection);
+  const deleteCustomConnection = useStore((state) => state.deleteCustomConnection);
   const setCustomPlannerSnaps = useStore((state) => state.setCustomPlannerSnaps);
   const undoCustomEdit = useStore((state) => state.undoCustomEdit);
   const redoCustomEdit = useStore((state) => state.redoCustomEdit);
@@ -78,9 +85,36 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const selectedDefinition = selectedAsset === null
     ? null
     : siteAssetDefinition(selectedAsset.kind);
-  const selectedFindings = selectedAsset === null
+  const selectedConnection = editor.selectedConnectionId === null
+    ? null
+    : design.connections.find(
+        (connection) => connection.id === editor.selectedConnectionId
+      ) ?? null;
+  const connectionFromAsset = selectedConnection === null
+    ? null
+    : design.assets.find((asset) => asset.id === selectedConnection.from.assetId) ?? null;
+  const connectionToAsset = selectedConnection === null
+    ? null
+    : design.assets.find((asset) => asset.id === selectedConnection.to.assetId) ?? null;
+  const connectionFromPort = connectionFromAsset === null || selectedConnection === null
+    ? null
+    : siteAssetDefinition(connectionFromAsset.kind)?.ports.find(
+        (port) => port.id === selectedConnection.from.portId
+      ) ?? null;
+  const connectionToPort = connectionToAsset === null || selectedConnection === null
+    ? null
+    : siteAssetDefinition(connectionToAsset.kind)?.ports.find(
+        (port) => port.id === selectedConnection.to.portId
+      ) ?? null;
+  const connectionStreams = connectionFromPort === null || connectionToPort === null
     ? []
-    : findings.filter((finding) => finding.entityIds.includes(selectedAsset.id));
+    : connectionFromPort.streams.filter((stream) =>
+        connectionToPort.streams.includes(stream)
+      );
+  const selectedEntityId = selectedAsset?.id ?? selectedConnection?.id ?? null;
+  const selectedFindings = selectedEntityId === null
+    ? []
+    : findings.filter((finding) => finding.entityIds.includes(selectedEntityId));
   const errorCount = severityCount(findings, "error");
   const cautionCount = severityCount(findings, "caution");
   const infoCount = severityCount(findings, "info");
@@ -90,8 +124,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
       if (event.key === "Escape") {
         if (editor.tool === "place") {
           cancelCustomPlacement();
+        } else if (editor.tool === "connect") {
+          cancelCustomConnection();
         } else {
           selectCustomAsset(null);
+          selectCustomConnection(null);
         }
         return;
       }
@@ -107,23 +144,55 @@ export function CustomSiteWorkspace(): React.JSX.Element {
         }
       } else if (
         (event.key === "Delete" || event.key === "Backspace") &&
-        editor.selectedAssetId !== null
+        (editor.selectedAssetId !== null || editor.selectedConnectionId !== null)
       ) {
         event.preventDefault();
-        deleteCustomAsset(editor.selectedAssetId);
+        if (editor.selectedConnectionId !== null) {
+          deleteCustomConnection(editor.selectedConnectionId);
+        } else if (editor.selectedAssetId !== null) {
+          deleteCustomAsset(editor.selectedAssetId);
+        }
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     cancelCustomPlacement,
+    cancelCustomConnection,
     deleteCustomAsset,
+    deleteCustomConnection,
     editor.selectedAssetId,
+    editor.selectedConnectionId,
     editor.tool,
     redoCustomEdit,
     selectCustomAsset,
+    selectCustomConnection,
     undoCustomEdit
   ]);
+
+  const focusFinding = (finding: SiteDesignFinding): void => {
+    const connectionId = finding.entityIds.find((id) =>
+      design.connections.some((connection) => connection.id === id)
+    );
+    if (connectionId !== undefined) {
+      selectCustomConnection(connectionId);
+      flyTo(connectionId);
+      return;
+    }
+    const assetId = finding.entityIds.find((id) =>
+      design.assets.some((asset) => asset.id === id)
+    );
+    if (assetId !== undefined) {
+      selectCustomAsset(assetId);
+      flyTo(assetId);
+    }
+  };
+
+  const hasFindingTarget = (finding: SiteDesignFinding): boolean =>
+    finding.entityIds.some((id) =>
+      design.assets.some((asset) => asset.id === id) ||
+      design.connections.some((connection) => connection.id === id)
+    );
 
   const commitNumber = (
     assetId: string,
@@ -212,16 +281,30 @@ export function CustomSiteWorkspace(): React.JSX.Element {
           <span>
             {editor.tool === "place"
               ? "PLACEMENT ACTIVE · CLICK TERRAIN · ESC CANCEL"
-              : "CLICK TO SELECT · DRAG TO MOVE"}
+              : editor.tool === "connect"
+                ? "CONNECTION ACTIVE · CHOOSE A GREEN PORT · ESC CANCEL"
+                : "CLICK TO SELECT · DRAG TO MOVE · CLICK AN OUTPUT PORT TO CONNECT"}
           </span>
-          <strong>{design.assets.length} ASSET{design.assets.length === 1 ? "" : "S"}</strong>
+          <strong>
+            {design.assets.length} ASSET{design.assets.length === 1 ? "" : "S"} ·{" "}
+            {design.connections.length} ROUTE{design.connections.length === 1 ? "" : "S"}
+          </strong>
         </section>
       )}
 
       <aside className="custom-inspector" aria-label="Custom site inspector">
         <div className="custom-panel-header">
-          <p className="custom-eyebrow">{selectedAsset === null ? "SITE INSPECTOR" : "ASSET INSPECTOR"}</p>
-          <strong>{selectedAsset?.name ?? "WORKING DESIGN"}</strong>
+          <p className="custom-eyebrow">
+            {selectedAsset !== null
+              ? "ASSET INSPECTOR"
+              : selectedConnection !== null ? "CONNECTION INSPECTOR" : "SITE INSPECTOR"}
+          </p>
+          <strong>
+            {selectedAsset?.name ??
+              (selectedConnection === null
+                ? "WORKING DESIGN"
+                : `${selectedConnection.kind.toUpperCase()} ROUTE`)}
+          </strong>
           <span>Saved locally as you edit</span>
         </div>
 
@@ -290,6 +373,72 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <dd>{selectedAsset.enabled ? "ENABLED" : "DISABLED"}</dd>
                 </div>
               </dl>
+              <section className="custom-port-section">
+                <div className="custom-port-heading">
+                  <div>
+                    <p className="custom-eyebrow">TYPED INTERFACES</p>
+                    <h2>{selectedDefinition.ports.length} connection ports</h2>
+                  </div>
+                  {editor.connectionSource?.assetId === selectedAsset.id && (
+                    <button onClick={cancelCustomConnection}>CANCEL</button>
+                  )}
+                </div>
+                <div className="custom-port-list">
+                  {selectedDefinition.ports.map((port) => {
+                    const usage = design.connections.filter((connection) =>
+                      (
+                        connection.from.assetId === selectedAsset.id &&
+                        connection.from.portId === port.id
+                      ) || (
+                        connection.to.assetId === selectedAsset.id &&
+                        connection.to.portId === port.id
+                      )
+                    ).length;
+                    const canStart =
+                      port.direction === "output" ||
+                      port.direction === "bidirectional";
+                    const isSource =
+                      editor.connectionSource?.assetId === selectedAsset.id &&
+                      editor.connectionSource.portId === port.id;
+                    const full =
+                      port.maxConnections !== undefined &&
+                      usage >= port.maxConnections;
+                    return (
+                      <article
+                        className={`custom-port custom-port-${port.kind}${isSource ? " active" : ""}`}
+                        key={port.id}
+                      >
+                        <div>
+                          <strong>{port.label}</strong>
+                          <span>{port.kind.toUpperCase()}</span>
+                        </div>
+                        <p>
+                          {port.direction.toUpperCase()} · {port.streams.join(" / ")}
+                        </p>
+                        <footer>
+                          <span>
+                            {usage}/{port.maxConnections ?? "∞"} LINKS
+                          </span>
+                          {canStart && (
+                            <button
+                              disabled={!selectedAsset.enabled || (full && !isSource)}
+                              aria-pressed={isSource}
+                              onClick={() => isSource
+                                ? cancelCustomConnection()
+                                : beginCustomConnection({
+                                    assetId: selectedAsset.id,
+                                    portId: port.id
+                                  })}
+                            >
+                              {isSource ? "CONNECTING…" : full ? "PORT FULL" : "CONNECT"}
+                            </button>
+                          )}
+                        </footer>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
               <div className="custom-asset-actions">
                 <button onClick={() => flyTo(selectedAsset.id)}>FOCUS</button>
                 <button
@@ -303,6 +452,75 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   {selectedAsset.enabled ? "DISABLE" : "ENABLE"}
                 </button>
                 <button className="danger" onClick={() => deleteCustomAsset(selectedAsset.id)}>
+                  DELETE
+                </button>
+              </div>
+              {selectedFindings.length > 0 && (
+                <ol className="custom-findings custom-selected-findings">
+                  {selectedFindings.map((finding) => (
+                    <li className={`finding-${finding.severity}`} key={finding.id}>
+                      <span>{finding.severity.toUpperCase()}</span>
+                      <p>{finding.message}</p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </>
+          ) : selectedConnection !== null ? (
+            <>
+              <button
+                className="custom-back-button"
+                onClick={() => selectCustomConnection(null)}
+              >
+                ← SITE SETTINGS
+              </button>
+              <div className={`custom-connection-summary connection-${selectedConnection.kind}`}>
+                <p className="custom-eyebrow">{selectedConnection.kind.toUpperCase()} ROUTE</p>
+                <strong>
+                  {siteConnectionLengthM(design, selectedConnection).toFixed(1)} m measured length
+                </strong>
+                <span>
+                  {connectionStreams.length > 0
+                    ? connectionStreams.join(" / ")
+                    : "NO COMPATIBLE STREAM"}
+                </span>
+              </div>
+              <section className="custom-endpoint-list" aria-label="Connection endpoints">
+                <div>
+                  <span>FROM · {connectionFromPort?.direction.toUpperCase() ?? "MISSING"}</span>
+                  <strong>{connectionFromAsset?.name ?? selectedConnection.from.assetId}</strong>
+                  <p>{connectionFromPort?.label ?? selectedConnection.from.portId}</p>
+                </div>
+                <i aria-hidden="true">→</i>
+                <div>
+                  <span>TO · {connectionToPort?.direction.toUpperCase() ?? "MISSING"}</span>
+                  <strong>{connectionToAsset?.name ?? selectedConnection.to.assetId}</strong>
+                  <p>{connectionToPort?.label ?? selectedConnection.to.portId}</p>
+                </div>
+              </section>
+              <dl className="custom-document-meta">
+                <div><dt>Kind</dt><dd>{selectedConnection.kind.toUpperCase()}</dd></div>
+                <div><dt>Route bends</dt><dd>{selectedConnection.route.length}</dd></div>
+                <div>
+                  <dt>Measured length</dt>
+                  <dd>{siteConnectionLengthM(design, selectedConnection).toFixed(1)} m</dd>
+                </div>
+                <div>
+                  <dt>Topology</dt>
+                  <dd>{selectedFindings.some((finding) => finding.severity === "error")
+                    ? "INVALID"
+                    : "CONNECTED"}</dd>
+                </div>
+              </dl>
+              <div className="custom-asset-actions">
+                <button onClick={() => flyTo(selectedConnection.id)}>FOCUS</button>
+                <button onClick={() => rerouteCustomConnection(selectedConnection.id)}>
+                  REROUTE
+                </button>
+                <button
+                  className="danger"
+                  onClick={() => deleteCustomConnection(selectedConnection.id)}
+                >
                   DELETE
                 </button>
               </div>
@@ -396,7 +614,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <div className="custom-validation-heading">
                   <div>
                     <p className="custom-eyebrow">DESIGN CHECK</p>
-                    <h2>{errorCount === 0 ? "Ready to evaluate" : `${errorCount} open steps`}</h2>
+                    <h2>{errorCount === 0 ? "Topology complete" : `${errorCount} open steps`}</h2>
                   </div>
                   <span className={errorCount === 0 ? "ok" : "error"}>
                     {errorCount === 0 ? "VALID" : "INCOMPLETE"}
@@ -408,10 +626,18 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <span>{infoCount} notes</span>
                 </div>
                 <ol className="custom-findings">
-                  {findings.slice(0, 5).map((finding) => (
+                  {findings.slice(0, 8).map((finding) => (
                     <li className={`finding-${finding.severity}`} key={finding.id}>
-                      <span>{finding.severity.toUpperCase()}</span>
-                      <p>{finding.message}</p>
+                      <button
+                        disabled={!hasFindingTarget(finding)}
+                        onClick={() => focusFinding(finding)}
+                        title={hasFindingTarget(finding)
+                          ? "Focus the implicated site element"
+                          : finding.suggestedAction}
+                      >
+                        <span>{finding.severity.toUpperCase()}</span>
+                        <p>{finding.message}</p>
+                      </button>
                     </li>
                   ))}
                 </ol>
@@ -420,7 +646,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
           )}
         </div>
 
-        {selectedAsset === null && (
+        {selectedAsset === null && selectedConnection === null && (
           <button
             className="custom-reset"
             onClick={() => {
@@ -435,8 +661,13 @@ export function CustomSiteWorkspace(): React.JSX.Element {
       </aside>
 
       <div className="custom-statusbar" role="status">
-        <span><i className="custom-status-dot" /> PLANNER EDITING ACTIVE</span>
-        <span>CONNECTIONS AND CUSTOM OUTPUT EVALUATION ARRIVE IN THE NEXT MILESTONES</span>
+        <span>
+          <i className={`custom-status-dot${errorCount > 0 ? " incomplete" : ""}`} />
+          {errorCount === 0
+            ? "TOPOLOGY VALID · PLANNER EDITING ACTIVE"
+            : `TOPOLOGY INCOMPLETE · ${errorCount} ERROR${errorCount === 1 ? "" : "S"}`}
+        </span>
+        <span>CONNECTIONS ARE STRUCTURAL · CUSTOM OUTPUT EVALUATION ARRIVES IN MILESTONE 4</span>
       </div>
     </div>
   );

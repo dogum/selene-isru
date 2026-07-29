@@ -5,9 +5,14 @@ import {
   SEEDED_SITE_DESIGN_FIXTURES,
   SITE_ASSET_CATALOG,
   canonicalSiteDesign,
+  compatibleSitePortTargets,
   createBlankSiteDesign,
+  orthogonalSiteConnectionRoute,
   parseSiteDesign,
   serializeSiteDesign,
+  siteConnectionLengthM,
+  siteConnectionRoutePoints,
+  sitePortConnectionCompatibility,
   snapSiteCoordinate,
   snapSiteHeading,
   siteAssetsForEnvironment,
@@ -218,6 +223,41 @@ describe("site design validation", () => {
     expect(ids).toContain("connection.endpoint.missing");
     expect(ids).toContain("connection.incompatible.incompatible");
   });
+
+  test("reports stream, declared-kind, and port multiplicity violations", () => {
+    const design = clone(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
+    design.connections.push(
+      {
+        id: "stream-mismatch",
+        kind: "material",
+        from: { assetId: "eq-reactor-1", portId: "oxygen-out" },
+        to: { assetId: "eq-hauler-1", portId: "regolith-in" },
+        route: [],
+        configuration: {}
+      },
+      {
+        id: "kind-mismatch",
+        kind: "logistics",
+        from: { assetId: "eq-excavator-1", portId: "regolith-out" },
+        to: { assetId: "eq-hauler-1", portId: "regolith-in" },
+        route: [],
+        configuration: {}
+      },
+      {
+        id: "port-overflow",
+        kind: "power",
+        from: { assetId: "eq-power-1", portId: "grid-out" },
+        to: { assetId: "eq-reactor-1", portId: "power-in" },
+        route: [],
+        configuration: {}
+      }
+    );
+
+    const ids = errors(design);
+    expect(ids).toContain("connection.incompatible.stream-mismatch");
+    expect(ids).toContain("connection.incompatible.kind-mismatch");
+    expect(ids).toContain("port.multiplicity.eq-reactor-1.power-in");
+  });
 });
 
 describe("site placement geometry", () => {
@@ -274,5 +314,73 @@ describe("site placement geometry", () => {
 
     expect(validateSiteAssetPlacement(design, candidate).map((finding) => finding.id))
       .toContain("placement.boundary.rim-towers");
+  });
+});
+
+describe("site connection geometry and compatibility", () => {
+  test("resolves compatible typed targets and rejects a reversed direction", () => {
+    const design = clone(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
+    design.connections = design.connections.filter((connection) =>
+      connection.id !== "eq-reactor-power"
+    );
+    const source = { assetId: "eq-power-1", portId: "grid-out" };
+    const target = { assetId: "eq-reactor-1", portId: "power-in" };
+
+    expect(sitePortConnectionCompatibility(design, source, target)).toMatchObject({
+      compatible: true,
+      kind: "power",
+      sharedStreams: ["electricity"]
+    });
+    expect(compatibleSitePortTargets(design, source)).toContainEqual(target);
+    expect(sitePortConnectionCompatibility(design, target, source).compatible).toBe(false);
+  });
+
+  test("honors port multiplicity and duplicate endpoint contracts", () => {
+    const design = clone(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
+    const source = { assetId: "eq-power-1", portId: "grid-out" };
+    const target = { assetId: "eq-reactor-1", portId: "power-in" };
+    const result = sitePortConnectionCompatibility(design, source, target);
+
+    expect(result.compatible).toBe(false);
+    expect(result.reasons.some((reason) =>
+      reason.includes("no open connection slots") || reason.includes("already connected")
+    )).toBe(true);
+  });
+
+  test("builds deterministic orthogonal routes", () => {
+    const design = clone(SEEDED_SITE_DESIGN_FIXTURES.polar);
+    const from = { assetId: "polar-excavator-1", portId: "icy-feed-out" };
+    const to = { assetId: "polar-sublimation-1", portId: "icy-feed-in" };
+
+    expect(orthogonalSiteConnectionRoute(design, from, to, "x-first")).toEqual([
+      { xM: -18, zM: 18 }
+    ]);
+    expect(orthogonalSiteConnectionRoute(design, from, to, "z-first")).toEqual([
+      { xM: -36, zM: 12 }
+    ]);
+  });
+
+  test("measures the live endpoint route after equipment moves", () => {
+    const design = clone(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
+    const connection = design.connections.find((item) =>
+      item.id === "eq-regolith-pickup"
+    )!;
+    connection.route = [{ xM: -40, zM: 8 }];
+    expect(siteConnectionRoutePoints(design, connection)).toEqual([
+      { xM: -45, zM: 0 },
+      { xM: -40, zM: 8 },
+      { xM: -34, zM: 3 }
+    ]);
+    const before = siteConnectionLengthM(design, connection);
+
+    design.assets.find((asset) => asset.id === "eq-hauler-1")!.transform.xM = -25;
+    const after = siteConnectionLengthM(design, connection);
+
+    expect(before).toBeCloseTo(17.24, 1);
+    expect(after).toBeGreaterThan(before);
+    expect(siteConnectionRoutePoints(design, connection).at(-1)).toEqual({
+      xM: -25,
+      zM: 3
+    });
   });
 });

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { DEFAULTS } from "@selene-isru/engine";
+import { DEFAULTS, siteConnectionLengthM } from "@selene-isru/engine";
 import { beforeEach, describe, expect, it } from "vitest";
 import { CUSTOM_SITE_DRAFT_KEY } from "../src/site-design/draft";
 import { useStore } from "../src/state/store";
@@ -207,5 +207,57 @@ describe("store wiring (§5)", () => {
     useStore.getState().placeCustomAsset("equatorial.landing-system", 90, 0);
 
     expect(useStore.getState().customSite.design.assets).toHaveLength(1);
+  });
+
+  it("authors, persists, reroutes, deletes, and restores typed connections", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().placeCustomAsset("equatorial.excavator", -40, 0);
+    useStore.getState().placeCustomAsset("equatorial.hauler", -20, 0);
+    const [excavator, hauler] = useStore.getState().customSite.design.assets;
+    expect(excavator).toBeDefined();
+    expect(hauler).toBeDefined();
+
+    useStore.getState().beginCustomConnection({
+      assetId: excavator!.id,
+      portId: "regolith-out"
+    });
+    expect(useStore.getState().customSite.editor.tool).toBe("connect");
+    useStore.getState().completeCustomConnection({
+      assetId: hauler!.id,
+      portId: "regolith-in"
+    });
+
+    let state = useStore.getState();
+    const connection = state.customSite.design.connections[0]!;
+    expect(connection).toMatchObject({
+      kind: "material",
+      from: { assetId: excavator!.id, portId: "regolith-out" },
+      to: { assetId: hauler!.id, portId: "regolith-in" }
+    });
+    expect(state.customSite.editor.selectedConnectionId).toBe(connection.id);
+    expect(JSON.parse(
+      window.localStorage.getItem(CUSTOM_SITE_DRAFT_KEY) ?? "{}"
+    ).connections).toHaveLength(1);
+
+    const initialRoute = connection.route;
+    const initialLength = siteConnectionLengthM(state.customSite.design, connection);
+    useStore.getState().rerouteCustomConnection(connection.id);
+    state = useStore.getState();
+    expect(state.customSite.design.connections[0]?.route).not.toEqual(initialRoute);
+
+    useStore.getState().moveCustomAsset(excavator!.id, -50, -10);
+    state = useStore.getState();
+    expect(siteConnectionLengthM(
+      state.customSite.design,
+      state.customSite.design.connections[0]!
+    )).not.toBe(initialLength);
+
+    useStore.getState().deleteCustomConnection(connection.id);
+    expect(useStore.getState().customSite.design.connections).toEqual([]);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.connections).toHaveLength(1);
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design.connections).toEqual([]);
   });
 });

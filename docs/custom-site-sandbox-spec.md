@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–2 implemented; Milestone 3 next |
+| Status | Milestones 0–3 implemented; Milestone 4 next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -912,6 +912,13 @@ Acceptance:
 ### Milestone 3 — ports, connections, and graph validation
 
 **Goal:** turn a layout into a process topology.
+
+**Implementation status (2026-07-28):** Delivered on the working branch.
+Planner ports expose typed connection contracts, compatible targets highlight
+during authoring, persisted orthogonal routes remain attached as assets move,
+and the inspector reports live route length and graph findings. These
+connections are structural only until Milestone 4 makes topology gate custom
+simulation output.
 
 Deliver:
 

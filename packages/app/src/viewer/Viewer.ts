@@ -6,12 +6,16 @@ import type {
   SiteAssetInstance,
   SiteDesignDocument,
   SiteEnvironment,
+  SitePortRef,
   SiteViewMode,
   WorkspaceMode
 } from "@selene-isru/engine";
 import {
+  siteConnectionLengthM,
+  sitePortConnectionCompatibility,
   snapSiteCoordinate,
-  validateSiteAssetPlacement
+  validateSiteAssetPlacement,
+  validateSiteDesign
 } from "@selene-isru/engine";
 import type { TimeseriesPoint } from "@selene-isru/engine";
 import {
@@ -132,6 +136,9 @@ interface ProcessOverlayPath extends ProcessEdgeView {
 
 export interface ViewerCallbacks {
   onSelectAsset?: (assetKey: string | null) => void;
+  onBeginCustomConnection?: (source: SitePortRef) => void;
+  onCompleteCustomConnection?: (target: SitePortRef) => void;
+  onSelectCustomConnection?: (connectionId: string | null) => void;
   onPlaceCustomAsset?: (kind: string, xM: number, zM: number) => void;
   onMoveCustomAsset?: (assetId: string, xM: number, zM: number) => void;
 }
@@ -174,6 +181,7 @@ export class Viewer {
   private processSvg: SVGSVGElement;
   private learningLabels = new Map<string, HTMLButtonElement>();
   private customLabels = new Map<string, HTMLButtonElement>();
+  private customConnectionLabels = new Map<string, HTMLButtonElement>();
   private processPaths: ProcessOverlayPath[] = [];
   private learningMode = false;
   private showProcessFlow = false;
@@ -203,11 +211,15 @@ export class Viewer {
   private activeSite: SiteMode | null = null;
   private customDesign: SiteDesignDocument | null = null;
   private customPlacementKind: string | null = null;
+  private customConnectionSource: SitePortRef | null = null;
+  private customSelectedConnectionId: string | null = null;
   private customGridSnapM = 5;
   private customPlacementPoint: THREE.Vector3 | null = null;
   private customPlacementBlocked = false;
   private customDragCandidate: string | null = null;
   private customDragging = false;
+  private customDownPort: SitePortRef | null = null;
+  private customDownConnection: string | null = null;
 
   private lastResult: SimResult | null = null;
   private lastParams: SimParams | null = null;
@@ -222,6 +234,7 @@ export class Viewer {
     this.container = container;
     this.mobile = mobile;
     this.callbacks = callbacks;
+    this.raycaster.params.Line = { threshold: 1.4 };
     this.graphicsPrefs = loadGraphicsPrefs();
     this.activeTier = effectiveTier(this.graphicsPrefs.tier, mobile);
     this.debugHud = new URLSearchParams(window.location.search).get("debug") === "1";
@@ -441,6 +454,9 @@ export class Viewer {
       this.applyWorkspaceCamera();
     }
     if (mode === "custom") {
+      if (this.diorama instanceof CustomSiteDiorama) {
+        this.diorama.setPlannerMode(viewMode === "planner");
+      }
       this.learningOverlay.hidden = true;
       this.customLabelOverlay.hidden = this.customDesign?.assets.length === 0;
       this.assetTooltip.hidden = true;
@@ -452,27 +468,45 @@ export class Viewer {
   }
 
   /** Synchronize the persisted custom document with its dynamic scene instances. */
-  setCustomDesign(design: SiteDesignDocument, selectedAssetId: string | null): void {
+  setCustomDesign(
+    design: SiteDesignDocument,
+    selectedAssetId: string | null,
+    selectedConnectionId: string | null = null
+  ): void {
     this.customDesign = design;
+    this.customSelectedConnectionId = selectedConnectionId;
     this.customGridSnapM = design.planner.gridSnapM;
     if (this.diorama instanceof CustomSiteDiorama) {
-      this.diorama.syncDesign(design, selectedAssetId);
+      this.diorama.syncDesign(design, selectedAssetId, selectedConnectionId);
+      this.diorama.setConnectionState(design, this.customConnectionSource);
     }
     this.rebuildCustomLabels();
     this.setSelectedAsset(selectedAssetId);
     this.wake();
   }
 
-  /** Enter or leave placement mode without mutating the durable document. */
-  setCustomEditorTool(placementKind: string | null, gridSnapM: number): void {
+  /** Synchronize transient placement and connection-authoring state. */
+  setCustomEditorState(
+    placementKind: string | null,
+    connectionSource: SitePortRef | null,
+    gridSnapM: number
+  ): void {
     this.customPlacementKind = placementKind;
+    this.customConnectionSource = connectionSource;
     this.customGridSnapM = gridSnapM;
     this.customPlacementPoint = null;
     this.customPlacementBlocked = false;
-    if (placementKind === null && this.diorama instanceof CustomSiteDiorama) {
-      this.diorama.clearPlacementPreview();
+    if (this.diorama instanceof CustomSiteDiorama) {
+      if (placementKind === null) {
+        this.diorama.clearPlacementPreview();
+      }
+      this.diorama.clearConnectionPreview();
+      if (this.customDesign !== null) {
+        this.diorama.setConnectionState(this.customDesign, connectionSource);
+      }
     }
-    this.renderer.domElement.style.cursor = placementKind === null ? "grab" : "crosshair";
+    this.renderer.domElement.style.cursor =
+      placementKind !== null || connectionSource !== null ? "crosshair" : "grab";
     this.wake();
   }
 
@@ -504,10 +538,15 @@ export class Viewer {
     }
     if (this.workspaceMode === "custom") {
       const asset = this.diorama?.assets[key];
-      if (asset === undefined) {
+      const target = asset?.getWorldPosition(new THREE.Vector3()) ??
+        (
+          this.diorama instanceof CustomSiteDiorama
+            ? this.diorama.connectionWorldPoint(key)
+            : null
+        );
+      if (target === null || target === undefined) {
         return;
       }
-      const target = asset.getWorldPosition(new THREE.Vector3());
       const offset = this.camera.position.clone().sub(this.controls.target);
       const position = target.clone().add(
         this.customViewMode === "planner"
@@ -627,8 +666,14 @@ export class Viewer {
     if (this.workspaceMode === "custom") {
       const custom = new CustomSiteDiorama(site, this.quality, () => this.wake());
       if (this.customDesign !== null) {
-        custom.syncDesign(this.customDesign, this.selectedAssetKey);
+        custom.syncDesign(
+          this.customDesign,
+          this.selectedAssetKey,
+          this.customSelectedConnectionId
+        );
+        custom.setConnectionState(this.customDesign, this.customConnectionSource);
       }
+      custom.setPlannerMode(this.customViewMode === "planner");
       this.diorama = custom;
     } else if (site === "equatorial") {
       const equatorial = new EquatorialDiorama(this.quality, () => {
@@ -969,6 +1014,11 @@ export class Viewer {
     }
     asset.getWorldPosition(this.overlayPoint);
     this.overlayPoint.y += height;
+    return this.worldScreenPoint(this.overlayPoint);
+  }
+
+  private worldScreenPoint(world: THREE.Vector3): { x: number; y: number } | null {
+    this.overlayPoint.copy(world);
     this.overlayPoint.project(this.camera);
     if (this.overlayPoint.z < -1 || this.overlayPoint.z > 1) {
       return null;
@@ -1035,10 +1085,19 @@ export class Viewer {
   private rebuildCustomLabels(): void {
     this.customLabelOverlay.replaceChildren();
     this.customLabels.clear();
+    this.customConnectionLabels.clear();
     if (this.customDesign === null) {
       this.customLabelOverlay.hidden = true;
       return;
     }
+    const invalidConnectionIds = new Set(
+      validateSiteDesign(this.customDesign)
+        .filter((finding) => finding.severity === "error")
+        .flatMap((finding) => finding.entityIds)
+        .filter((id) =>
+          this.customDesign?.connections.some((connection) => connection.id === id)
+        )
+    );
     for (const asset of this.customDesign.assets) {
       const label = document.createElement("button");
       label.type = "button";
@@ -1050,8 +1109,21 @@ export class Viewer {
       this.customLabelOverlay.appendChild(label);
       this.customLabels.set(asset.id, label);
     }
+    for (const connection of this.customDesign.connections) {
+      const label = document.createElement("button");
+      label.type = "button";
+      label.className = `custom-connection-label custom-connection-${connection.kind}`;
+      label.textContent =
+        `${connection.kind.toUpperCase()} · ${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} M`;
+      label.classList.toggle("active", connection.id === this.customSelectedConnectionId);
+      label.classList.toggle("invalid", invalidConnectionIds.has(connection.id));
+      label.addEventListener("click", () => this.selectPickedConnection(connection.id));
+      this.customLabelOverlay.appendChild(label);
+      this.customConnectionLabels.set(connection.id, label);
+    }
     this.customLabelOverlay.hidden =
-      this.workspaceMode !== "custom" || this.customLabels.size === 0;
+      this.workspaceMode !== "custom" ||
+      (this.customLabels.size === 0 && this.customConnectionLabels.size === 0);
     this.updateCustomLabels();
   }
 
@@ -1071,6 +1143,18 @@ export class Viewer {
         const x = Math.min(width - 80, Math.max(80, point.x));
         const y = Math.max(36, point.y);
         label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+      }
+    }
+    if (this.diorama instanceof CustomSiteDiorama) {
+      for (const [key, label] of this.customConnectionLabels) {
+        const world = this.diorama.connectionWorldPoint(key);
+        const point = world === null ? null : this.worldScreenPoint(world);
+        label.hidden = point === null || this.customViewMode !== "planner";
+        if (point !== null) {
+          const x = Math.min(width - 80, Math.max(80, point.x));
+          const y = Math.max(36, point.y);
+          label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+        }
       }
     }
   }
@@ -1226,6 +1310,30 @@ export class Viewer {
         this.wake();
         return;
       }
+      if (this.customConnectionSource !== null) {
+        const hoveredPort = this.diorama.pickPort(this.raycaster);
+        const compatibility = hoveredPort === null || this.customDesign === null
+          ? null
+          : sitePortConnectionCompatibility(
+              this.customDesign,
+              this.customConnectionSource,
+              hoveredPort
+            );
+        const target = hoveredPort === null
+          ? point
+          : this.diorama.portWorldPoint(hoveredPort);
+        this.diorama.setConnectionPreview(
+          this.customConnectionSource,
+          target,
+          compatibility?.compatible ?? false
+        );
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = hoveredPort === null
+          ? "crosshair"
+          : compatibility?.compatible === true ? "pointer" : "not-allowed";
+        this.wake();
+        return;
+      }
       if (
         this.customDragCandidate !== null &&
         (event.buttons & 1) === 1 &&
@@ -1245,6 +1353,18 @@ export class Viewer {
         this.wake();
         return;
       }
+      const port = this.diorama.pickPort(this.raycaster);
+      if (port !== null) {
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = "pointer";
+        return;
+      }
+      const connection = this.diorama.pickConnection(this.raycaster);
+      if (connection !== null) {
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = "pointer";
+        return;
+      }
       this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
       return;
     }
@@ -1255,11 +1375,22 @@ export class Viewer {
   private onPointerLeave = (): void => {
     if (this.diorama instanceof CustomSiteDiorama) {
       this.diorama.clearPlacementPreview();
+      this.diorama.clearConnectionPreview();
       if (this.customDesign !== null) {
-        this.diorama.syncDesign(this.customDesign, this.selectedAssetKey);
+        this.diorama.syncDesign(
+          this.customDesign,
+          this.selectedAssetKey,
+          this.customSelectedConnectionId
+        );
+        this.diorama.setConnectionState(
+          this.customDesign,
+          this.customConnectionSource
+        );
       }
       this.customDragCandidate = null;
       this.customDragging = false;
+      this.customDownPort = null;
+      this.customDownConnection = null;
       this.controls.enabled = true;
     }
     this.setHoveredAsset(null);
@@ -1273,6 +1404,16 @@ export class Viewer {
         return;
       }
       this.updateRaycaster(event);
+      this.customDownPort = this.diorama.pickPort(this.raycaster);
+      if (this.customDownPort !== null) {
+        this.controls.enabled = false;
+        return;
+      }
+      this.customDownConnection = this.diorama.pickConnection(this.raycaster);
+      if (this.customDownConnection !== null) {
+        this.controls.enabled = false;
+        return;
+      }
       this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
       if (this.customDragCandidate !== null) {
         this.controls.enabled = false;
@@ -1284,6 +1425,10 @@ export class Viewer {
     if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
       const movement = this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY));
       const placing = this.customPlacementKind !== null;
+      this.updateRaycaster(event);
+      const releasedPort = movement <= 6
+        ? this.diorama.pickPort(this.raycaster)
+        : null;
       if (
         placing &&
         this.customPlacementKind !== null &&
@@ -1296,6 +1441,18 @@ export class Viewer {
           this.customPlacementPoint.x,
           this.customPlacementPoint.z
         );
+      } else if (!placing && this.customDownPort !== null && releasedPort !== null) {
+        if (this.customConnectionSource === null) {
+          this.callbacks.onBeginCustomConnection?.(releasedPort);
+        } else {
+          this.callbacks.onCompleteCustomConnection?.(releasedPort);
+        }
+      } else if (
+        !placing &&
+        this.customDownConnection !== null &&
+        movement <= 6
+      ) {
+        this.selectPickedConnection(this.customDownConnection);
       } else if (!placing && (
         this.customDragging &&
         this.customDragCandidate !== null &&
@@ -1307,15 +1464,25 @@ export class Viewer {
           this.customPlacementPoint.z
         );
       } else if (!placing && movement <= 6) {
-        this.updateRaycaster(event);
         this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
       }
       this.controls.enabled = true;
       this.customDragCandidate = null;
       this.customDragging = false;
+      this.customDownPort = null;
+      this.customDownConnection = null;
       this.customPlacementPoint = null;
+      this.diorama.clearConnectionPreview();
       if (!placing && this.customDesign !== null) {
-        this.diorama.syncDesign(this.customDesign, this.selectedAssetKey);
+        this.diorama.syncDesign(
+          this.customDesign,
+          this.selectedAssetKey,
+          this.customSelectedConnectionId
+        );
+        this.diorama.setConnectionState(
+          this.customDesign,
+          this.customConnectionSource
+        );
       }
       return;
     }
@@ -1365,6 +1532,14 @@ export class Viewer {
     if (assetKey !== null && this.workspaceMode !== "custom") {
       this.flyTo(assetKey);
     }
+  }
+
+  private selectPickedConnection(connectionId: string | null): void {
+    this.setHoveredAsset(null);
+    this.callbacks.onSelectCustomConnection?.(connectionId);
+    this.customSelectedConnectionId = connectionId;
+    this.rebuildCustomLabels();
+    this.wake();
   }
 
   private updateRaycaster(event: MouseEvent | PointerEvent): void {

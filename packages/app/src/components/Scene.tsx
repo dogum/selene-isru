@@ -51,7 +51,13 @@ export function Scene(): React.JSX.Element {
       onPlaceCustomAsset: (kind, xM, zM) =>
         useStore.getState().placeCustomAsset(kind, xM, zM),
       onMoveCustomAsset: (assetId, xM, zM) =>
-        useStore.getState().moveCustomAsset(assetId, xM, zM)
+        useStore.getState().moveCustomAsset(assetId, xM, zM),
+      onBeginCustomConnection: (source) =>
+        useStore.getState().beginCustomConnection(source),
+      onCompleteCustomConnection: (target) =>
+        useStore.getState().completeCustomConnection(target),
+      onSelectCustomConnection: (connectionId) =>
+        useStore.getState().selectCustomConnection(connectionId)
     });
     const initial = useStore.getState();
     viewer.setWorkspaceState(
@@ -61,10 +67,12 @@ export function Scene(): React.JSX.Element {
     );
     viewer.setCustomDesign(
       initial.customSite.design,
-      initial.customSite.editor.selectedAssetId
+      initial.customSite.editor.selectedAssetId,
+      initial.customSite.editor.selectedConnectionId
     );
-    viewer.setCustomEditorTool(
+    viewer.setCustomEditorState(
       initial.customSite.editor.placementKind,
+      initial.customSite.editor.connectionSource,
       initial.customSite.design.planner.gridSnapM
     );
     viewer.apply(initial.result, initial.params);
@@ -115,19 +123,24 @@ export function Scene(): React.JSX.Element {
       }
       if (
         state.customSite.design !== prev.customSite.design ||
-        state.customSite.editor.selectedAssetId !== prev.customSite.editor.selectedAssetId
+        state.customSite.editor.selectedAssetId !== prev.customSite.editor.selectedAssetId ||
+        state.customSite.editor.selectedConnectionId !==
+          prev.customSite.editor.selectedConnectionId
       ) {
         viewer.setCustomDesign(
           state.customSite.design,
-          state.customSite.editor.selectedAssetId
+          state.customSite.editor.selectedAssetId,
+          state.customSite.editor.selectedConnectionId
         );
       }
       if (
         state.customSite.editor.placementKind !== prev.customSite.editor.placementKind ||
+        state.customSite.editor.connectionSource !== prev.customSite.editor.connectionSource ||
         state.customSite.design.planner.gridSnapM !== prev.customSite.design.planner.gridSnapM
       ) {
-        viewer.setCustomEditorTool(
+        viewer.setCustomEditorState(
           state.customSite.editor.placementKind,
+          state.customSite.editor.connectionSource,
           state.customSite.design.planner.gridSnapM
         );
       }

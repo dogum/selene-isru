@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { createBlankSiteDesign } from "@selene-isru/engine";
+import {
+  createBlankSiteDesign,
+  SEEDED_SITE_DESIGN_FIXTURES
+} from "@selene-isru/engine";
 import {
   CUSTOM_SITE_DRAFT_KEY,
   clearCustomSiteDraft,
@@ -62,6 +65,25 @@ describe("custom site draft persistence", () => {
       xM: 20,
       zM: -15,
       headingDeg: 45
+    });
+  });
+
+  it("preserves typed endpoints and routed connection geometry", () => {
+    const storage = memoryStorage();
+    const design = SEEDED_SITE_DESIGN_FIXTURES.equatorial;
+    saveCustomSiteDraft(design, storage);
+
+    const restored = loadCustomSiteDraft(storage);
+    expect(restored?.connections).toHaveLength(design.connections.length);
+    expect(restored?.connections.find(
+      (connection) => connection.id === "eq-regolith-pickup"
+    )).toMatchObject({
+      kind: "material",
+      from: { portId: "regolith-out" },
+      to: { portId: "regolith-in" },
+      route: design.connections.find(
+        (connection) => connection.id === "eq-regolith-pickup"
+      )?.route
     });
   });
 

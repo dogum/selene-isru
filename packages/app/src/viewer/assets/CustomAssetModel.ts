@@ -30,7 +30,7 @@ const URLS: Record<string, string> = {
   "equatorial.habitat": habitatUrl,
   "polar.ice-excavator": polarExcavatorUrl,
   "polar.sublimation-camp": sublimationCampUrl,
-  "polar.receiver-plant": receiverPlantUrl,
+  "polar.receiver-sabatier": receiverPlantUrl,
   "polar.cryo-farm": polarCryogenicFarmUrl,
   "polar.power-towers": polarPowerTowersUrl,
   "polar.nuclear-station": polarNuclearStationUrl,

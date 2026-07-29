@@ -1,13 +1,22 @@
-import { createBlankSiteDesign } from "@selene-isru/engine";
+import {
+  createBlankSiteDesign,
+  SEEDED_SITE_DESIGN_FIXTURES,
+  siteConnectionLengthM,
+  validateSiteDesign
+} from "@selene-isru/engine";
+import type { SiteDesignDocument } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
 import {
   CUSTOM_HISTORY_LIMIT,
+  createSiteConnection,
   duplicateSiteAsset,
   emptyCustomHistory,
   placeSiteAsset,
   pushCustomHistory,
   redoCustomDesign,
+  removeSiteConnection,
   removeSiteAsset,
+  rerouteSiteConnection,
   undoCustomDesign,
   updateSiteAsset
 } from "../src/site-design/editor";
@@ -74,6 +83,60 @@ describe("custom site editor commands", () => {
     const removed = removeSiteAsset(design, "a");
     expect(removed.assets.map((asset) => asset.id)).toEqual(["b"]);
     expect(removed.connections).toEqual([]);
+  });
+
+  it.each(["equatorial", "polar"] as const)(
+    "assembles the valid %s reference topology through editor commands",
+    (environment) => {
+      const fixture = SEEDED_SITE_DESIGN_FIXTURES[environment];
+      let design: SiteDesignDocument = {
+        ...createBlankSiteDesign(environment),
+        assets: fixture.assets,
+        connections: []
+      };
+      for (const connection of fixture.connections) {
+        design = createSiteConnection(
+          design,
+          connection.from,
+          connection.to,
+          {
+            id: connection.id,
+            updatedAt: "2026-01-01T00:00:00.000Z"
+          }
+        )!;
+      }
+      expect(design.connections).toHaveLength(fixture.connections.length);
+      expect(validateSiteDesign(design).filter((finding) =>
+        finding.severity === "error"
+      )).toEqual([]);
+    }
+  );
+
+  it("creates, measures, reroutes, rejects duplicates, and removes a route", () => {
+    const fixture = SEEDED_SITE_DESIGN_FIXTURES.equatorial;
+    const reference = fixture.connections[0]!;
+    const blank = {
+      ...createBlankSiteDesign("equatorial"),
+      assets: fixture.assets,
+      connections: []
+    };
+    const connected = createSiteConnection(
+      blank,
+      reference.from,
+      reference.to,
+      { id: "route-1", orientation: "x-first" }
+    )!;
+    expect(connected.connections[0]?.route).toHaveLength(1);
+    expect(siteConnectionLengthM(connected, connected.connections[0]!))
+      .toBeGreaterThan(0);
+    expect(createSiteConnection(connected, reference.from, reference.to)).toBeNull();
+    expect(createSiteConnection(connected, reference.to, reference.from)).toBeNull();
+
+    const rerouted = rerouteSiteConnection(connected, "route-1");
+    expect(rerouted.connections[0]?.route).not.toEqual(
+      connected.connections[0]?.route
+    );
+    expect(removeSiteConnection(rerouted, "route-1").connections).toEqual([]);
   });
 
   it("bounds snapshot history and supports undo/redo", () => {

@@ -1,21 +1,28 @@
 import {
+  orthogonalSiteConnectionRoute,
   siteAssetDefinition,
+  sitePortConnectionCompatibility,
   snapSiteCoordinate,
   snapSiteHeading
 } from "@selene-isru/engine";
 import type {
   PlannerDocumentState,
   SiteAssetInstance,
+  SiteConnection,
   SiteDesignDocument,
-  SiteEnvironment
+  SiteEnvironment,
+  SitePortRef,
+  SiteRoutePoint
 } from "@selene-isru/engine";
 
 export const CUSTOM_HISTORY_LIMIT = 50;
 
 export interface CustomEditorSession {
-  tool: "select" | "place";
+  tool: "select" | "place" | "connect";
   placementKind: string | null;
+  connectionSource: SitePortRef | null;
   selectedAssetId: string | null;
+  selectedConnectionId: string | null;
 }
 
 export interface CustomDesignHistory {
@@ -24,6 +31,7 @@ export interface CustomDesignHistory {
 }
 
 let assetNonce = 0;
+let connectionNonce = 0;
 
 function timestamp(value?: string): string {
   return value ?? new Date().toISOString();
@@ -39,6 +47,11 @@ function nextAssetName(design: SiteDesignDocument, kind: string): string {
   const definition = siteAssetDefinition(kind);
   const count = design.assets.filter((asset) => asset.kind === kind).length + 1;
   return `${definition?.label ?? kind} ${String(count).padStart(2, "0")}`;
+}
+
+function nextConnectionId(kind: string): string {
+  connectionNonce += 1;
+  return `${kind}-route-${Date.now().toString(36)}-${connectionNonce.toString(36)}`;
 }
 
 function withAssets(
@@ -165,6 +178,113 @@ export function removeSiteAsset(
     connections: design.connections.filter((connection) =>
       connection.from.assetId !== assetId && connection.to.assetId !== assetId
     )
+  };
+}
+
+export function createSiteConnection(
+  design: SiteDesignDocument,
+  from: SitePortRef,
+  to: SitePortRef,
+  options: {
+    id?: string;
+    orientation?: "x-first" | "z-first";
+    updatedAt?: string;
+  } = {}
+): SiteDesignDocument | null {
+  const compatibility = sitePortConnectionCompatibility(design, from, to);
+  if (!compatibility.compatible || compatibility.kind === null) {
+    return null;
+  }
+  const connection: SiteConnection = {
+    id: options.id ?? nextConnectionId(compatibility.kind),
+    kind: compatibility.kind,
+    from: { ...from },
+    to: { ...to },
+    route: orthogonalSiteConnectionRoute(
+      design,
+      from,
+      to,
+      options.orientation ?? "x-first"
+    ),
+    configuration: {}
+  };
+  return {
+    ...design,
+    connections: [...design.connections, connection],
+    updatedAt: timestamp(options.updatedAt)
+  };
+}
+
+export function updateSiteConnectionRoute(
+  design: SiteDesignDocument,
+  connectionId: string,
+  route: SiteRoutePoint[],
+  updatedAt?: string
+): SiteDesignDocument {
+  return {
+    ...design,
+    connections: design.connections.map((connection) =>
+      connection.id === connectionId
+        ? {
+            ...connection,
+            route: route
+              .filter((point) => Number.isFinite(point.xM) && Number.isFinite(point.zM))
+              .slice(0, 256)
+              .map((point) => ({
+                xM: snapSiteCoordinate(point.xM, design.planner.gridSnapM),
+                zM: snapSiteCoordinate(point.zM, design.planner.gridSnapM)
+              }))
+          }
+        : connection
+    ),
+    updatedAt: timestamp(updatedAt)
+  };
+}
+
+export function rerouteSiteConnection(
+  design: SiteDesignDocument,
+  connectionId: string,
+  updatedAt?: string
+): SiteDesignDocument {
+  const connection = design.connections.find((item) => item.id === connectionId);
+  if (connection === undefined) {
+    return design;
+  }
+  const xFirst = orthogonalSiteConnectionRoute(
+    design,
+    connection.from,
+    connection.to,
+    "x-first"
+  );
+  const current = connection.route[0];
+  const usesXFirst = current !== undefined &&
+    xFirst[0] !== undefined &&
+    Math.abs(current.xM - xFirst[0].xM) < 1e-6 &&
+    Math.abs(current.zM - xFirst[0].zM) < 1e-6;
+  return updateSiteConnectionRoute(
+    design,
+    connectionId,
+    orthogonalSiteConnectionRoute(
+      design,
+      connection.from,
+      connection.to,
+      usesXFirst ? "z-first" : "x-first"
+    ),
+    updatedAt
+  );
+}
+
+export function removeSiteConnection(
+  design: SiteDesignDocument,
+  connectionId: string,
+  updatedAt?: string
+): SiteDesignDocument {
+  return {
+    ...design,
+    connections: design.connections.filter((connection) =>
+      connection.id !== connectionId
+    ),
+    updatedAt: timestamp(updatedAt)
   };
 }
 

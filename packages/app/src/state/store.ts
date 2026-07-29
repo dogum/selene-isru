@@ -1,5 +1,6 @@
 import {
   DEFAULTS,
+  siteAssetDefinition,
   simulate,
   simulateTimeseries,
   validateSiteAssetPlacement,
@@ -12,6 +13,7 @@ import type {
   SiteDesignDocument,
   SiteDesignFinding,
   SiteEnvironment,
+  SitePortRef,
   SiteViewMode,
   TimeseriesPoint,
   TimeseriesResult,
@@ -25,13 +27,16 @@ import {
   saveCustomSiteDraft
 } from "../site-design/draft";
 import {
+  createSiteConnection,
   duplicateSiteAsset,
   emptyCustomHistory,
   isKindAvailable,
   placeSiteAsset,
   pushCustomHistory,
   redoCustomDesign,
+  removeSiteConnection,
   removeSiteAsset,
+  rerouteSiteConnection,
   type CustomDesignHistory,
   type CustomEditorSession,
   undoCustomDesign,
@@ -113,6 +118,19 @@ export const MAX_STUDY_SCENARIOS = 8;
 export const MAX_PINNED_SCENARIOS = 4;
 let scenarioNonce = 0;
 
+function customEditorSession(
+  patch: Partial<CustomEditorSession> = {}
+): CustomEditorSession {
+  return {
+    tool: "select",
+    placementKind: null,
+    connectionSource: null,
+    selectedAssetId: null,
+    selectedConnectionId: null,
+    ...patch
+  };
+}
+
 interface Store {
   workspaceMode: WorkspaceMode;
   customSite: CustomSiteState;
@@ -137,7 +155,11 @@ interface Store {
   resetCustomDesign: () => void;
   beginCustomPlacement: (kind: string) => void;
   cancelCustomPlacement: () => void;
+  beginCustomConnection: (source: SitePortRef) => void;
+  cancelCustomConnection: () => void;
+  completeCustomConnection: (target: SitePortRef) => void;
   selectCustomAsset: (assetId: string | null) => void;
+  selectCustomConnection: (connectionId: string | null) => void;
   placeCustomAsset: (kind: string, xM: number, zM: number) => void;
   moveCustomAsset: (assetId: string, xM: number, zM: number) => void;
   updateCustomAsset: (
@@ -153,6 +175,8 @@ interface Store {
   rotateCustomAsset: (assetId: string, deltaDeg: number) => void;
   duplicateCustomAsset: (assetId: string) => void;
   deleteCustomAsset: (assetId: string) => void;
+  rerouteCustomConnection: (connectionId: string) => void;
+  deleteCustomConnection: (connectionId: string) => void;
   setCustomPlannerSnaps: (
     patch: Partial<Pick<PlannerDocumentState, "gridSnapM" | "rotationSnapDeg">>
   ) => void;
@@ -330,17 +354,14 @@ export const useStore = create<Store>((set, get) => {
     design: customDesign,
     viewMode: "planner",
     findings: validateSiteDesign(customDesign),
-    editor: {
-      tool: "select",
-      placementKind: null,
-      selectedAssetId: null
-    },
+    editor: customEditorSession(),
     history: emptyCustomHistory()
   };
 
   const commitCustomDesign = (
     design: SiteDesignDocument,
     selectedAssetId: string | null,
+    selectedConnectionId: string | null = null,
     recordHistory = true
   ): void => {
     const current = get().customSite;
@@ -350,11 +371,7 @@ export const useStore = create<Store>((set, get) => {
         ...current,
         design,
         findings: validateSiteDesign(design),
-        editor: {
-          tool: "select",
-          placementKind: null,
-          selectedAssetId
-        },
+        editor: customEditorSession({ selectedAssetId, selectedConnectionId }),
         history: recordHistory
           ? pushCustomHistory(current.history, current.design)
           : current.history
@@ -459,11 +476,7 @@ export const useStore = create<Store>((set, get) => {
           ...get().customSite,
           design,
           findings,
-          editor: {
-            tool: "select",
-            placementKind: null,
-            selectedAssetId: null
-          },
+          editor: customEditorSession(),
           history: emptyCustomHistory()
         },
         params: design.params,
@@ -506,11 +519,7 @@ export const useStore = create<Store>((set, get) => {
           design,
           viewMode: "planner",
           findings: validateSiteDesign(design),
-          editor: {
-            tool: "select",
-            placementKind: null,
-            selectedAssetId: null
-          },
+          editor: customEditorSession(),
           history: emptyCustomHistory()
         }
       });
@@ -527,11 +536,10 @@ export const useStore = create<Store>((set, get) => {
       set({
         customSite: {
           ...current,
-          editor: {
+          editor: customEditorSession({
             tool: "place",
-            placementKind: kind,
-            selectedAssetId: null
-          }
+            placementKind: kind
+          })
         }
       });
     },
@@ -541,13 +549,73 @@ export const useStore = create<Store>((set, get) => {
       set({
         customSite: {
           ...current,
-          editor: {
-            ...current.editor,
-            tool: "select",
-            placementKind: null
-          }
+          editor: customEditorSession({
+            selectedAssetId: current.editor.selectedAssetId,
+            selectedConnectionId: current.editor.selectedConnectionId
+          })
         }
       });
+    },
+
+    beginCustomConnection: (source) => {
+      const current = get().customSite;
+      const asset = current.design.assets.find((item) => item.id === source.assetId);
+      const definition = asset === undefined ? null : siteAssetDefinition(asset.kind);
+      const port = definition?.ports.find((item) => item.id === source.portId);
+      const usage = current.design.connections.filter((connection) =>
+        (
+          connection.from.assetId === source.assetId &&
+          connection.from.portId === source.portId
+        ) || (
+          connection.to.assetId === source.assetId &&
+          connection.to.portId === source.portId
+        )
+      ).length;
+      if (
+        asset?.enabled !== true ||
+        port === undefined ||
+        (port.direction !== "output" && port.direction !== "bidirectional") ||
+        (port.maxConnections !== undefined && usage >= port.maxConnections)
+      ) {
+        return;
+      }
+      set({
+        customSite: {
+          ...current,
+          editor: customEditorSession({
+            tool: "connect",
+            connectionSource: { ...source },
+            selectedAssetId: source.assetId
+          })
+        }
+      });
+    },
+
+    cancelCustomConnection: () => {
+      const current = get().customSite;
+      set({
+        customSite: {
+          ...current,
+          editor: customEditorSession({
+            selectedAssetId: current.editor.connectionSource?.assetId ??
+              current.editor.selectedAssetId
+          })
+        }
+      });
+    },
+
+    completeCustomConnection: (target) => {
+      const current = get().customSite;
+      const source = current.editor.connectionSource;
+      if (source === null) {
+        return;
+      }
+      const design = createSiteConnection(current.design, source, target);
+      const connection = design?.connections.at(-1);
+      if (design === null || connection === undefined) {
+        return;
+      }
+      commitCustomDesign(design, null, connection.id);
     },
 
     selectCustomAsset: (assetId) => {
@@ -559,11 +627,21 @@ export const useStore = create<Store>((set, get) => {
       set({
         customSite: {
           ...current,
-          editor: {
-            tool: "select",
-            placementKind: null,
-            selectedAssetId
-          }
+          editor: customEditorSession({ selectedAssetId })
+        }
+      });
+    },
+
+    selectCustomConnection: (connectionId) => {
+      const current = get().customSite;
+      const selectedConnectionId = connectionId !== null &&
+        current.design.connections.some((connection) => connection.id === connectionId)
+        ? connectionId
+        : null;
+      set({
+        customSite: {
+          ...current,
+          editor: customEditorSession({ selectedConnectionId })
         }
       });
     },
@@ -657,11 +735,35 @@ export const useStore = create<Store>((set, get) => {
       commitCustomDesign(removeSiteAsset(current.design, assetId), null);
     },
 
+    rerouteCustomConnection: (connectionId) => {
+      const current = get().customSite;
+      if (!current.design.connections.some((connection) => connection.id === connectionId)) {
+        return;
+      }
+      commitCustomDesign(
+        rerouteSiteConnection(current.design, connectionId),
+        null,
+        connectionId
+      );
+    },
+
+    deleteCustomConnection: (connectionId) => {
+      const current = get().customSite;
+      if (!current.design.connections.some((connection) => connection.id === connectionId)) {
+        return;
+      }
+      commitCustomDesign(
+        removeSiteConnection(current.design, connectionId),
+        null
+      );
+    },
+
     setCustomPlannerSnaps: (patch) => {
       const current = get().customSite;
       commitCustomDesign(
         updatePlannerSnaps(current.design, patch),
-        current.editor.selectedAssetId
+        current.editor.selectedAssetId,
+        current.editor.selectedConnectionId
       );
     },
 
@@ -675,17 +777,21 @@ export const useStore = create<Store>((set, get) => {
         restored.design.assets.some((asset) => asset.id === current.editor.selectedAssetId)
         ? current.editor.selectedAssetId
         : null;
+      const selectedConnectionId = current.editor.selectedConnectionId !== null &&
+        restored.design.connections.some((connection) =>
+          connection.id === current.editor.selectedConnectionId)
+        ? current.editor.selectedConnectionId
+        : null;
       saveCustomSiteDraft(restored.design);
       set({
         customSite: {
           ...current,
           design: restored.design,
           findings: validateSiteDesign(restored.design),
-          editor: {
-            tool: "select",
-            placementKind: null,
-            selectedAssetId
-          },
+          editor: customEditorSession({
+            selectedAssetId,
+            selectedConnectionId
+          }),
           history: restored.history
         }
       });
@@ -703,11 +809,10 @@ export const useStore = create<Store>((set, get) => {
           ...current,
           design: restored.design,
           findings: validateSiteDesign(restored.design),
-          editor: {
-            tool: "select",
-            placementKind: null,
-            selectedAssetId: current.editor.selectedAssetId
-          },
+          editor: customEditorSession({
+            selectedAssetId: current.editor.selectedAssetId,
+            selectedConnectionId: current.editor.selectedConnectionId
+          }),
           history: restored.history
         }
       });

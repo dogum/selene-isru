@@ -31,7 +31,7 @@ describe("custom site workspace", () => {
       "CLICK PLACE, THEN CHOOSE A VALID FOOTPRINT · ESC CANCELS"
     )).toBeTruthy();
     expect(screen.getByText(
-      "CONNECTIONS AND CUSTOM OUTPUT EVALUATION ARRIVE IN THE NEXT MILESTONES"
+      "CONNECTIONS ARE STRUCTURAL · CUSTOM OUTPUT EVALUATION ARRIVES IN MILESTONE 4"
     )).toBeTruthy();
   });
 
@@ -69,5 +69,40 @@ describe("custom site workspace", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "DISABLE" }));
     expect(useStore.getState().customSite.design.assets[0]?.enabled).toBe(false);
+  });
+
+  it("starts a typed route from an asset port and inspects the result", () => {
+    render(<CustomSiteWorkspace />);
+    act(() => {
+      useStore.getState().placeCustomAsset("equatorial.excavator", -40, 0);
+      useStore.getState().placeCustomAsset("equatorial.hauler", -20, 0);
+    });
+    const [excavator, hauler] = useStore.getState().customSite.design.assets;
+    act(() => {
+      useStore.getState().selectCustomAsset(excavator!.id);
+    });
+
+    expect(screen.getByText("TYPED INTERFACES")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "CONNECT" }));
+    expect(useStore.getState().customSite.editor).toMatchObject({
+      tool: "connect",
+      connectionSource: {
+        assetId: excavator!.id,
+        portId: "regolith-out"
+      }
+    });
+
+    act(() => {
+      useStore.getState().completeCustomConnection({
+        assetId: hauler!.id,
+        portId: "regolith-in"
+      });
+    });
+    expect(screen.getAllByText("MATERIAL ROUTE").length).toBeGreaterThan(0);
+    expect(screen.getByText(/m measured length/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "REROUTE" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "DELETE" }));
+    expect(useStore.getState().customSite.design.connections).toEqual([]);
   });
 });

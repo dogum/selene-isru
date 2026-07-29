@@ -1,8 +1,15 @@
 import {
+  compatibleSitePortTargets,
   siteAssetDefinition,
+  siteConnectionRoutePoints,
+  validateSiteDesign,
+  type SiteConnection,
+  type SiteConnectionKind,
   type SiteDesignDocument,
   type SiteDesignFindingSeverity,
-  type SiteEnvironment
+  type SiteEnvironment,
+  type SitePortDefinition,
+  type SitePortRef
 } from "@selene-isru/engine";
 import * as THREE from "three";
 import { CustomAssetModel } from "../assets/CustomAssetModel";
@@ -19,7 +26,20 @@ interface RuntimeAsset {
   root: THREE.Group;
   model: CustomAssetModel;
   footprint: THREE.Mesh;
+  ports: THREE.Group;
 }
+
+interface RuntimeConnection {
+  root: THREE.Group;
+  line: THREE.Line;
+}
+
+const CONNECTION_COLORS: Record<SiteConnectionKind, number> = {
+  material: 0x74d8ff,
+  power: 0xffd166,
+  construction: 0xff8a3d,
+  logistics: 0xb8c0cc
+};
 
 function planningGrid(environment: SiteEnvironment): THREE.Group {
   const group = new THREE.Group();
@@ -112,6 +132,33 @@ function footprintMesh(
   return mesh;
 }
 
+function portColor(port: SitePortDefinition): number {
+  return CONNECTION_COLORS[port.kind];
+}
+
+function portLocalPosition(
+  definition: NonNullable<ReturnType<typeof siteAssetDefinition>>,
+  port: SitePortDefinition
+): THREE.Vector3 {
+  const peers = definition.ports.filter((candidate) =>
+    candidate.direction === port.direction
+  );
+  const index = Math.max(0, peers.findIndex((candidate) => candidate.id === port.id));
+  const spacing = Math.min(2.4, definition.footprint.depthM / (peers.length + 1));
+  const z = (index - (peers.length - 1) / 2) * spacing;
+  if (port.direction === "input") {
+    return new THREE.Vector3(-definition.footprint.widthM / 2 - 0.75, 0.58, z);
+  }
+  if (port.direction === "output") {
+    return new THREE.Vector3(definition.footprint.widthM / 2 + 0.75, 0.58, z);
+  }
+  return new THREE.Vector3(0, 0.58, definition.footprint.depthM / 2 + 0.75);
+}
+
+function portRefKey(ref: SitePortRef): string {
+  return `${ref.assetId}:${ref.portId}`;
+}
+
 export class CustomSiteDiorama implements Diorama {
   readonly group = new THREE.Group();
   readonly assets: Record<string, THREE.Object3D> = {};
@@ -120,9 +167,15 @@ export class CustomSiteDiorama implements Diorama {
   private readonly grid: THREE.Group;
   private readonly sampleTerrain: (x: number, z: number) => number;
   private readonly instances = new Map<string, RuntimeAsset>();
+  private readonly connections = new Map<string, RuntimeConnection>();
   private readonly onReady: () => void;
+  private plannerMode = true;
+  private currentDesign: SiteDesignDocument | null = null;
+  private connectionSource: SitePortRef | null = null;
+  private compatiblePorts = new Set<string>();
   private placementPreview: THREE.Group | null = null;
   private placementPreviewKind: string | null = null;
+  private connectionPreview: THREE.Line | null = null;
 
   constructor(
     environment: SiteEnvironment,
@@ -145,7 +198,12 @@ export class CustomSiteDiorama implements Diorama {
     this.group.add(this.terrain, this.grid);
   }
 
-  syncDesign(design: SiteDesignDocument, selectedAssetId: string | null): void {
+  syncDesign(
+    design: SiteDesignDocument,
+    selectedAssetId: string | null,
+    selectedConnectionId: string | null = null
+  ): void {
+    this.currentDesign = design;
     const ids = new Set(design.assets.map((asset) => asset.id));
     for (const [id, runtime] of this.instances) {
       if (ids.has(id)) {
@@ -154,6 +212,7 @@ export class CustomSiteDiorama implements Diorama {
       this.group.remove(runtime.root);
       runtime.model.dispose();
       disposeObject(runtime.footprint);
+      disposeObject(runtime.ports);
       delete this.assets[id];
       this.instances.delete(id);
     }
@@ -172,8 +231,30 @@ export class CustomSiteDiorama implements Diorama {
         footprint.userData.assetId = asset.id;
         const model = new CustomAssetModel(asset.kind, this.onReady);
         model.group.userData.assetId = asset.id;
-        root.add(footprint, model.group);
-        runtime = { root, model, footprint };
+        const ports = new THREE.Group();
+        ports.name = `${asset.name} ports`;
+        const definition = siteAssetDefinition(asset.kind);
+        for (const port of definition?.ports ?? []) {
+          const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 16, 10),
+            new THREE.MeshBasicMaterial({
+              color: portColor(port),
+              transparent: true,
+              opacity: 0.86,
+              depthTest: false,
+              depthWrite: false
+            })
+          );
+          marker.position.copy(portLocalPosition(definition!, port));
+          marker.renderOrder = 26;
+          marker.userData.portAssetId = asset.id;
+          marker.userData.portId = port.id;
+          marker.userData.assetId = asset.id;
+          marker.name = `${asset.name} · ${port.label}`;
+          ports.add(marker);
+        }
+        root.add(footprint, model.group, ports);
+        runtime = { root, model, footprint, ports };
         this.instances.set(asset.id, runtime);
         this.assets[asset.id] = root;
         this.group.add(root);
@@ -189,8 +270,36 @@ export class CustomSiteDiorama implements Diorama {
       const footprintMaterial = runtime.footprint.material as THREE.MeshBasicMaterial;
       footprintMaterial.color.setHex(asset.enabled ? 0x74d8ff : 0x7a808b);
       footprintMaterial.opacity = selectedAssetId === asset.id ? 0.34 : 0.1;
+      runtime.ports.visible = this.plannerMode && asset.enabled;
+    }
+    this.rebuildConnections(design, selectedConnectionId);
+    this.applyPortState(design);
+    this.onReady();
+  }
+
+  setPlannerMode(plannerMode: boolean): void {
+    this.plannerMode = plannerMode;
+    if (this.currentDesign !== null) {
+      this.applyPortState(this.currentDesign);
+    } else {
+      for (const runtime of this.instances.values()) {
+        runtime.ports.visible = plannerMode;
+      }
     }
     this.onReady();
+  }
+
+  setConnectionState(
+    design: SiteDesignDocument,
+    source: SitePortRef | null
+  ): void {
+    this.connectionSource = source;
+    this.compatiblePorts = new Set(
+      source === null
+        ? []
+        : compatibleSitePortTargets(design, source).map(portRefKey)
+    );
+    this.applyPortState(design);
   }
 
   surfacePoint(raycaster: THREE.Raycaster): THREE.Vector3 | null {
@@ -210,6 +319,48 @@ export class CustomSiteDiorama implements Diorama {
     return null;
   }
 
+  pickPort(raycaster: THREE.Raycaster): SitePortRef | null {
+    if (!this.plannerMode) {
+      return null;
+    }
+    const roots = [...this.instances.values()].map((runtime) => runtime.ports);
+    const hit = raycaster.intersectObjects(roots, true)[0]?.object;
+    return hit !== undefined &&
+      typeof hit.userData.portAssetId === "string" &&
+      typeof hit.userData.portId === "string"
+      ? {
+          assetId: hit.userData.portAssetId,
+          portId: hit.userData.portId
+        }
+      : null;
+  }
+
+  pickConnection(raycaster: THREE.Raycaster): string | null {
+    const lines = [...this.connections.values()].map((connection) => connection.line);
+    const hit = raycaster.intersectObjects(lines, false)[0]?.object;
+    return hit !== undefined && typeof hit.userData.connectionId === "string"
+      ? hit.userData.connectionId
+      : null;
+  }
+
+  portWorldPoint(ref: SitePortRef): THREE.Vector3 | null {
+    const runtime = this.instances.get(ref.assetId);
+    const marker = runtime?.ports.children.find((child) =>
+      child.userData.portId === ref.portId
+    );
+    return marker?.getWorldPosition(new THREE.Vector3()) ?? null;
+  }
+
+  connectionWorldPoint(connectionId: string): THREE.Vector3 | null {
+    const runtime = this.connections.get(connectionId);
+    if (runtime === undefined) {
+      return null;
+    }
+    return new THREE.Box3()
+      .setFromObject(runtime.root)
+      .getCenter(new THREE.Vector3());
+  }
+
   previewAssetTransform(assetId: string, point: THREE.Vector3): void {
     const runtime = this.instances.get(assetId);
     if (runtime === undefined) {
@@ -220,6 +371,45 @@ export class CustomSiteDiorama implements Diorama {
       this.sampleTerrain(point.x, point.z) + 0.045,
       point.z
     );
+  }
+
+  setConnectionPreview(
+    source: SitePortRef,
+    target: THREE.Vector3 | null,
+    compatible: boolean
+  ): void {
+    this.clearConnectionPreview();
+    const start = this.portWorldPoint(source);
+    if (start === null || target === null) {
+      return;
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints([
+      start,
+      new THREE.Vector3(target.x, target.y + 0.5, target.z)
+    ]);
+    const material = new THREE.LineDashedMaterial({
+      color: compatible ? 0x4ade80 : 0xffb347,
+      transparent: true,
+      opacity: 0.8,
+      dashSize: 1.5,
+      gapSize: 0.9,
+      depthTest: false,
+      depthWrite: false
+    });
+    this.connectionPreview = new THREE.Line(geometry, material);
+    this.connectionPreview.computeLineDistances();
+    this.connectionPreview.renderOrder = 24;
+    this.group.add(this.connectionPreview);
+    this.onReady();
+  }
+
+  clearConnectionPreview(): void {
+    if (this.connectionPreview === null) {
+      return;
+    }
+    this.group.remove(this.connectionPreview);
+    disposeObject(this.connectionPreview);
+    this.connectionPreview = null;
   }
 
   setPlacementPreview(
@@ -302,13 +492,137 @@ export class CustomSiteDiorama implements Diorama {
 
   dispose(): void {
     this.clearPlacementPreview();
+    this.clearConnectionPreview();
     for (const runtime of this.instances.values()) {
       runtime.model.dispose();
       disposeObject(runtime.footprint);
+      disposeObject(runtime.ports);
     }
     this.instances.clear();
+    this.clearConnections();
     disposeObject(this.terrain);
     disposeObject(this.grid);
     this.group.clear();
+  }
+
+  private applyPortState(design: SiteDesignDocument): void {
+    for (const asset of design.assets) {
+      const runtime = this.instances.get(asset.id);
+      if (runtime === undefined) {
+        continue;
+      }
+      runtime.ports.visible = this.plannerMode && asset.enabled;
+      for (const child of runtime.ports.children) {
+        const material = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+        const ref = {
+          assetId: asset.id,
+          portId: String(child.userData.portId)
+        };
+        const key = portRefKey(ref);
+        const source = this.connectionSource !== null &&
+          portRefKey(this.connectionSource) === key;
+        const compatible = this.compatiblePorts.has(key);
+        material.color.setHex(source ? 0xffffff : compatible ? 0x4ade80 : (() => {
+          const definition = siteAssetDefinition(asset.kind);
+          const port = definition?.ports.find((candidate) => candidate.id === ref.portId);
+          return port === undefined ? 0x7a808b : portColor(port);
+        })());
+        material.opacity = this.connectionSource === null || source || compatible ? 0.9 : 0.18;
+        child.scale.setScalar(source || compatible ? 1.35 : 1);
+      }
+    }
+  }
+
+  private rebuildConnections(
+    design: SiteDesignDocument,
+    selectedConnectionId: string | null
+  ): void {
+    this.clearConnections();
+    const invalidIds = new Set(
+      validateSiteDesign(design)
+        .filter((finding) => finding.severity === "error")
+        .flatMap((finding) => finding.entityIds)
+        .filter((id) => design.connections.some((connection) => connection.id === id))
+    );
+    for (const connection of design.connections) {
+      const runtime = this.makeConnection(
+        design,
+        connection,
+        connection.id === selectedConnectionId,
+        invalidIds.has(connection.id)
+      );
+      if (runtime === null) {
+        continue;
+      }
+      this.connections.set(connection.id, runtime);
+      this.group.add(runtime.root);
+    }
+  }
+
+  private makeConnection(
+    design: SiteDesignDocument,
+    connection: SiteConnection,
+    selected: boolean,
+    invalid: boolean
+  ): RuntimeConnection | null {
+    const route = siteConnectionRoutePoints(design, connection);
+    if (route.length < 2) {
+      return null;
+    }
+    const start = this.portWorldPoint(connection.from);
+    const end = this.portWorldPoint(connection.to);
+    if (start === null || end === null) {
+      return null;
+    }
+    const points = route.map((point, index) =>
+      index === 0
+        ? start
+        : index === route.length - 1
+          ? end
+          : new THREE.Vector3(
+              point.xM,
+              this.sampleTerrain(point.xM, point.zM) + 0.55,
+              point.zM
+            )
+    );
+    const material = invalid
+      ? new THREE.LineDashedMaterial({
+          color: 0xff4d4d,
+          dashSize: 1.2,
+          gapSize: 0.8,
+          transparent: true,
+          opacity: selected ? 1 : 0.84,
+          depthTest: false,
+          depthWrite: false
+        })
+      : new THREE.LineBasicMaterial({
+          color: CONNECTION_COLORS[connection.kind],
+          transparent: true,
+          opacity: selected ? 1 : 0.72,
+          depthTest: false,
+          depthWrite: false
+        });
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(points),
+      material
+    );
+    if (invalid) {
+      line.computeLineDistances();
+    }
+    line.userData.connectionId = connection.id;
+    line.name = connection.id;
+    line.renderOrder = selected ? 23 : 21;
+    const root = new THREE.Group();
+    root.userData.connectionId = connection.id;
+    root.add(line);
+    return { root, line };
+  }
+
+  private clearConnections(): void {
+    for (const runtime of this.connections.values()) {
+      this.group.remove(runtime.root);
+      disposeObject(runtime.root);
+    }
+    this.connections.clear();
   }
 }

@@ -5,6 +5,14 @@ export {
   siteAssetsForEnvironment
 } from "./catalog";
 export {
+  compatibleSitePortTargets,
+  orthogonalSiteConnectionRoute,
+  resolveSitePort,
+  siteConnectionLengthM,
+  siteConnectionRoutePoints,
+  sitePortConnectionCompatibility
+} from "./connections";
+export {
   BLANK_SITE_DESIGN_FIXTURES,
   SEEDED_SITE_DESIGN_FIXTURES,
   createBlankSiteDesign,
@@ -23,6 +31,10 @@ export {
   validateSitePlacementLayout
 } from "./placement";
 export { validateSiteDesign } from "./validate";
+export type {
+  ResolvedSitePort,
+  SiteConnectionCompatibility
+} from "./connections";
 export type {
   PlannerDocumentState,
   SiteAnnotation,
