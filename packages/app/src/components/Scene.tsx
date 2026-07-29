@@ -1,14 +1,24 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  createBlankSiteDesign,
+  SEEDED_SITE_DESIGN_FIXTURES
+} from "@selene-isru/engine";
+import type { SiteDesignDocument, SiteViewMode } from "@selene-isru/engine";
 import { useIsMobile } from "../lib/hooks";
 import { useStore } from "../state/store";
 import { Viewer } from "../viewer/Viewer";
 
 type DemoVector3 = readonly [number, number, number];
+type CustomDemoStage = 0 | 1 | 2 | 3;
 
 interface SeleneDemoBridge {
   ready: () => boolean;
   setCameraPose: (position: DemoVector3, target: DemoVector3) => void;
   setTargetKgPerDay: (value: number) => void;
+  setCustomStage: (stage: CustomDemoStage) => void;
+  setCustomViewMode: (viewMode: SiteViewMode) => void;
+  selectCustomAsset: (assetId: string | null) => void;
+  selectCustomConnection: (connectionId: string | null) => void;
   snapshot: () => {
     site: string;
     targetKgPerDay: number;
@@ -18,12 +28,91 @@ interface SeleneDemoBridge {
     leverageL: number;
     missions: number;
   };
+  customSnapshot: () => {
+    assets: number;
+    connections: number;
+    topologyValid: boolean;
+    plannedTargetKgPerDay: number;
+    achievableOutputKgPerDay: number;
+    cableMassKg: number;
+    routeLoadW: number;
+  };
 }
 
 declare global {
   interface Window {
     __SELENE_DEMO__?: SeleneDemoBridge;
   }
+}
+
+const CUSTOM_DEMO_STAGE_ASSET_COUNTS: Record<CustomDemoStage, number> = {
+  0: 0,
+  1: 3,
+  2: 6,
+  3: 8
+};
+
+const CUSTOM_DEMO_STAGE_CONNECTION_IDS: Record<CustomDemoStage, string[]> = {
+  0: [],
+  1: ["eq-regolith-pickup", "eq-reactor-feed"],
+  2: [
+    "eq-regolith-pickup",
+    "eq-reactor-feed",
+    "eq-reactor-power",
+    "eq-oxygen-storage",
+    "eq-slag-casting"
+  ],
+  3: SEEDED_SITE_DESIGN_FIXTURES.equatorial.connections.map(
+    (connection) => connection.id
+  )
+};
+
+function customDemoDesign(stage: CustomDemoStage): SiteDesignDocument {
+  if (stage === 0) {
+    return createBlankSiteDesign("equatorial", {
+      id: "demo-equatorial-first-camp",
+      name: "Equatorial First Camp",
+      timestamp: "2026-07-29T00:00:00.000Z"
+    });
+  }
+  const fixture = SEEDED_SITE_DESIGN_FIXTURES.equatorial;
+  const assets = fixture.assets
+    .slice(0, CUSTOM_DEMO_STAGE_ASSET_COUNTS[stage])
+    .map((asset) => ({
+      ...asset,
+      transform: { ...asset.transform },
+      configuration: { ...asset.configuration }
+    }));
+  const assetIds = new Set(assets.map((asset) => asset.id));
+  const connectionIds = new Set(CUSTOM_DEMO_STAGE_CONNECTION_IDS[stage]);
+  return {
+    ...fixture,
+    id: "demo-equatorial-first-camp",
+    name: "Equatorial First Camp",
+    assets,
+    connections: fixture.connections
+      .filter((connection) =>
+        connectionIds.has(connection.id) &&
+        assetIds.has(connection.from.assetId) &&
+        assetIds.has(connection.to.assetId)
+      )
+      .map((connection) => ({
+        ...connection,
+        from: { ...connection.from },
+        to: { ...connection.to },
+        route: connection.route.map((point) => ({ ...point })),
+        configuration: { ...connection.configuration }
+      })),
+    planner: {
+      ...fixture.planner,
+      annotations: fixture.planner.annotations.map((annotation) => ({
+        ...annotation
+      }))
+    },
+    params: { ...fixture.params },
+    createdAt: "2026-07-29T00:00:00.000Z",
+    updatedAt: "2026-07-29T00:00:00.000Z"
+  };
 }
 
 /**
@@ -114,6 +203,17 @@ export function Scene(): React.JSX.Element {
           ready: () => viewer.isReady(),
           setCameraPose: (position, target) => viewer.setCameraPose(position, target),
           setTargetKgPerDay: (value) => useStore.getState().setParam("targetKgPerDay", value),
+          setCustomStage: (stage) => {
+            const state = useStore.getState();
+            state.importCustomDesign(customDemoDesign(stage));
+            useStore.getState().setCustomViewMode("planner");
+          },
+          setCustomViewMode: (viewMode) =>
+            useStore.getState().setCustomViewMode(viewMode),
+          selectCustomAsset: (assetId) =>
+            useStore.getState().selectCustomAsset(assetId),
+          selectCustomConnection: (connectionId) =>
+            useStore.getState().selectCustomConnection(connectionId),
           snapshot: () => {
             const state = useStore.getState();
             return {
@@ -124,6 +224,19 @@ export function Scene(): React.JSX.Element {
               massThroughputDays: state.result.logistics.plantMassThroughputDays,
               leverageL: state.result.logistics.leverageL,
               missions: state.result.logistics.nMissions
+            };
+          },
+          customSnapshot: () => {
+            const state = useStore.getState();
+            const evaluation = state.customSite.evaluation;
+            return {
+              assets: state.customSite.design.assets.length,
+              connections: state.customSite.design.connections.length,
+              topologyValid: evaluation.topologyValid,
+              plannedTargetKgPerDay: evaluation.plannedTargetKgPerDay,
+              achievableOutputKgPerDay: evaluation.achievableOutputKgPerDay,
+              cableMassKg: evaluation.spatial.cableMassKg,
+              routeLoadW: evaluation.spatial.supplementalLoadW
             };
           }
         }

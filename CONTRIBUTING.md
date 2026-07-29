@@ -41,4 +41,7 @@ Keep changes focused, explain the engineering or product motivation, and
 include screenshots for visible UI changes. The full `pnpm run ci` command must
 pass before review. Visible Custom Site changes should also regenerate
 `docs/performance/custom-site-release.json`, the reference screenshots, and the
-short demo with `pnpm evidence:custom`.
+short demo with `pnpm evidence:custom`. Changes to the capture bridge or
+Custom Site storytelling should additionally regenerate the detailed and fast
+cinematics with `pnpm demo:custom-cinematic`; see
+`docs/video-showcase.md` for the complete media set.

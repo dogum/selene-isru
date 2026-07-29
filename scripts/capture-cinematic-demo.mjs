@@ -58,15 +58,15 @@ const executablePath = await firstExecutable([
   "/tmp/chromium"
 ]);
 
+console.log("launching headless Chrome for cinematic capture");
 const browser = await puppeteer.launch({
   executablePath,
   headless: "shell",
+  timeout: 120_000,
   protocolTimeout: 600_000,
   args: [
     "--hide-scrollbars",
     "--no-sandbox",
-    "--no-zygote",
-    "--single-process",
     "--disable-setuid-sandbox",
     "--disable-background-networking",
     "--disable-component-update",
@@ -80,8 +80,11 @@ const browser = await puppeteer.launch({
     `--window-size=${VIEW_WIDTH},${VIEW_HEIGHT}`
   ]
 });
+console.log("headless Chrome ready; opening production preview");
 
 const page = await browser.newPage();
+page.setDefaultTimeout(180_000);
+page.setDefaultNavigationTimeout(180_000);
 await page.setViewport({ width: VIEW_WIDTH, height: VIEW_HEIGHT, deviceScaleFactor: 1 });
 await page.evaluateOnNewDocument(() => {
   window.localStorage.setItem(
@@ -100,17 +103,23 @@ await page.evaluateOnNewDocument(() => {
 
 const demoUrl = new URL(BASE);
 demoUrl.searchParams.set("demo", "1");
-await page.goto(demoUrl.href, { waitUntil: "networkidle0", timeout: 60_000 });
+await page.goto(demoUrl.href, {
+  waitUntil: "domcontentloaded",
+  timeout: 60_000
+});
+console.log("production preview loaded; waiting for scene assets");
 await page.waitForSelector('[aria-label="3D site diorama"] canvas', { timeout: 30_000 });
 await page.waitForFunction(() => window.__SELENE_DEMO__?.ready() === true, {
   timeout: 60_000
 });
+console.log("cinematic scene ready; loading capture compositor");
 await page.addScriptTag({
   path: resolve("node_modules/webm-muxer/build/webm-muxer.js")
 });
 
 let rawBase64;
 try {
+  console.log("capture compositor ready; rendering deterministic frames");
   rawBase64 = await page.evaluate(
     async ({ width, height, fps, durationSeconds }) => {
       const api = window.__SELENE_DEMO__;
@@ -470,6 +479,7 @@ try {
   await browser.close();
 }
 
+console.log("browser frames complete; writing raw video");
 await writeFile(RAW_OUTPUT, Buffer.from(rawBase64, "base64"));
 
 const { stdout: packetOutput } = await execFileAsync("ffprobe", [
@@ -495,6 +505,7 @@ if (lastPacketTime === undefined || lastPacketTime <= 0) {
 const rawDuration = lastPacketTime + 1 / FPS;
 const timeScale = TARGET_DURATION_S / rawDuration;
 
+console.log("raw video ready; encoding 32-second MP4");
 await run("ffmpeg", [
   "-y",
   "-i",

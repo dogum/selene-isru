@@ -10,6 +10,19 @@ qualification or a claim of operational fidelity.
 The recording uses the production build with no browser chrome and follows the
 same import, evaluation, Planner, and Explore paths exercised by the smoke test.
 
+Two presentation-oriented companions tell the same product story at different
+paces:
+
+- [Watch the 60-second detailed Custom Site cinematic](media/custom-site-cinematic-60s.mp4).
+- [Watch the 30-second fast Custom Site cinematic](media/custom-site-cinematic-30s.mp4).
+
+The detailed master stages the real seeded design from blank terrain through
+process placement, connections, topology validation, route inspection, and a
+Planner-to-Explore fly-around. The fast cut is derived from the same master at
+two-times speed. Both are silent 1080p H.264 MP4s intended for narration,
+music, or platform-native audio in post. The complete media catalog and
+reproduction commands are recorded in the [video showcase](video-showcase.md).
+
 | Blank starting point | Connected Planner | Saved design in Explore |
 |---|---|---|
 | ![Blank Equatorial Custom Site with the equipment catalog and planning grid](screenshots/custom-site/blank-planner-desktop.png) | ![Connected Equatorial reference design with footprints, labels, and typed routes](screenshots/custom-site/reference-planner-desktop.png) | ![The same connected design in selection-only Explore mode](screenshots/custom-site/reference-explore-desktop.png) |

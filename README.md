@@ -72,6 +72,23 @@ Release screenshots, the reproducible browser smoke flow, performance sample,
 and known limits are recorded in the
 [Custom Site release evidence](docs/custom-site-release.md).
 
+## Cinematic demonstrations
+
+The repository includes four production-app videos: a branded simulator tour,
+the release-evidence workflow, a one-minute Custom Site story, and a fast
+30-second companion. All are silent 1080p H.264 MP4s so narration, music, or
+platform-native audio can be added in post.
+
+| Product cinematic | Detailed Custom Site cinematic |
+|---|---|
+| [![Equatorial lunar industry overview](docs/screenshots/equatorial-assets/base-overview-after-desktop.png)](docs/media/selene-isru-cinematic-demo.mp4) | [![Connected Custom Site in Planner](docs/screenshots/custom-site/reference-planner-desktop.png)](docs/media/custom-site-cinematic-60s.mp4) |
+| [Watch the 31.6-second product tour](docs/media/selene-isru-cinematic-demo.mp4) | [Watch the 60-second detailed story](docs/media/custom-site-cinematic-60s.mp4) |
+
+Also available: the [30-second fast Custom Site cut](docs/media/custom-site-cinematic-30s.mp4)
+and the [24.8-second release workflow](docs/media/custom-site-sandbox-demo.mp4).
+See the [video showcase](docs/video-showcase.md) for storyboards, intended uses,
+and reproducible capture commands.
+
 ## Equipment that explains itself
 
 Select a subsystem to focus the camera, inspect its live engineering state, and
@@ -197,6 +214,9 @@ pnpm demo:analysis -- http://localhost:5173
                              # record the short engineering-analysis browser tour
 pnpm demo:cinematic -- http://localhost:4173/selene-isru/ docs/media/selene-isru-cinematic-demo.mp4
                              # record the scripted 32 s / 1080p cinematic product tour
+pnpm demo:custom-cinematic -- http://localhost:4173/selene-isru/ \
+  docs/media/custom-site-cinematic-60s.mp4 docs/media/custom-site-cinematic-30s.mp4
+                             # record the detailed Custom Site story and fast cut
 pnpm evidence:custom -- http://localhost:4173/selene-isru/
                              # smoke-test Custom Site and regenerate screenshots,
                              # the short demo, and performance evidence
