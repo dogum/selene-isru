@@ -3,11 +3,11 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dist = fileURLToPath(new URL("../dist", import.meta.url));
-// The custom-site planner includes its versioned schema, catalog, graph
-// validation, connection compatibility, route generation, and route
-// measurement contracts. The engine remains dependency-free; this cap still
-// catches accidental bulk.
-const limitBytes = 128 * 1024;
+// The custom-site engine includes its versioned schema, graph compiler,
+// installed-capacity evaluator, and disclosed cable/haul spatial models. It
+// remains dependency-free; this narrow post-Milestone-5 increase still catches
+// accidental bulk.
+const limitBytes = 144 * 1024;
 
 function jsSize(dir) {
   let total = 0;

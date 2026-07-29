@@ -235,6 +235,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
               {definitions.map((definition) => {
                 const available = isKindAvailable(design, definition.kind);
                 const active = editor.placementKind === definition.kind;
+                const capacity = definition.capacityModel;
                 return (
                   <article
                     className={`custom-catalog-card${active ? " active" : ""}`}
@@ -245,6 +246,15 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                       <span>{definition.footprint.widthM} × {definition.footprint.depthM} m</span>
                     </div>
                     <p>{definition.purpose}</p>
+                    <p className="custom-catalog-rating">
+                      {capacity === undefined
+                        ? "CAPACITY · NOT MODELED"
+                        : `RATING · ${formatQtyText(
+                            capacity.rating,
+                            capacity.unit,
+                            4
+                          )} / ${capacity.quantityMode === "bank" ? "UNIT" : "INSTANCE"}`}
+                    </p>
                     <footer>
                       <span>{definition.modelMaturity}</span>
                       <span>{definition.ports.length} PORT{definition.ports.length === 1 ? "" : "S"}</span>
@@ -362,6 +372,43 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   </label>
                 ))}
               </div>
+              {selectedDefinition.capacityModel?.quantityMode === "bank" && (
+                <label className="custom-field">
+                  <span>INSTALLED UNITS</span>
+                  <input
+                    key={`${selectedAsset.id}-quantity-${selectedAssetEvaluation?.quantity ?? 1}`}
+                    type="number"
+                    min={1}
+                    max={selectedDefinition.capacityModel.maxQuantity ?? 8}
+                    step={1}
+                    defaultValue={selectedAssetEvaluation?.quantity ?? 1}
+                    onBlur={(event) => {
+                      const parsed = Number(event.target.value);
+                      if (!Number.isFinite(parsed)) {
+                        return;
+                      }
+                      const quantity = Math.max(
+                        1,
+                        Math.min(
+                          selectedDefinition.capacityModel?.maxQuantity ?? 8,
+                          Math.trunc(parsed)
+                        )
+                      );
+                      updateCustomAsset(selectedAsset.id, {
+                        configuration: {
+                          [selectedDefinition.capacityModel?.quantityKey ??
+                            "unitCount"]: quantity
+                        }
+                      });
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.currentTarget.blur();
+                      }
+                    }}
+                  />
+                </label>
+              )}
               <div className="custom-rotation-actions">
                 <button onClick={() =>
                   rotateCustomAsset(selectedAsset.id, -design.planner.rotationSnapDeg)}>
@@ -396,9 +443,61 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 </div>
                 <div>
                   <dt>Capacity</dt>
-                  <dd>CONTINUOUSLY SIZED</dd>
+                  <dd>
+                    {selectedAssetEvaluation?.capacityStatus === "modeled"
+                      ? formatQtyText(
+                          selectedAssetEvaluation.installedCapacity ?? 0,
+                          selectedAssetEvaluation.unit ?? "",
+                          4
+                        )
+                      : "NOT MODELED"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Group duty</dt>
+                  <dd>
+                    {selectedAssetEvaluation?.requiredDuty === null ||
+                    selectedAssetEvaluation?.requiredDuty === undefined
+                      ? "UNAVAILABLE"
+                      : formatQtyText(
+                          selectedAssetEvaluation.requiredDuty,
+                          selectedAssetEvaluation.unit ?? "",
+                          4
+                        )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Group margin</dt>
+                  <dd>
+                    {selectedAssetEvaluation?.margin === null ||
+                    selectedAssetEvaluation?.margin === undefined
+                      ? "UNAVAILABLE"
+                      : formatQtyText(
+                          selectedAssetEvaluation.margin,
+                          selectedAssetEvaluation.unit ?? "",
+                          4
+                        )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Utilization</dt>
+                  <dd>
+                    {selectedAssetEvaluation?.utilization === null ||
+                    selectedAssetEvaluation?.utilization === undefined ||
+                    !Number.isFinite(selectedAssetEvaluation.utilization)
+                      ? "UNAVAILABLE"
+                      : `${(selectedAssetEvaluation.utilization * 100).toFixed(1)}%`}
+                  </dd>
                 </div>
               </dl>
+              {selectedAssetEvaluation?.capacityStatus === "modeled" && (
+                <section className="custom-model-disclosure">
+                  <p className="custom-eyebrow">CAPACITY MODEL</p>
+                  <strong>{selectedAssetEvaluation.modelMaturity}</strong>
+                  <p>{selectedAssetEvaluation.basis}</p>
+                  <small>{selectedAssetEvaluation.evidence}</small>
+                </section>
+              )}
               <section className="custom-port-section">
                 <div className="custom-port-heading">
                   <div>
@@ -542,7 +641,54 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                       : selectedConnectionEvaluation?.compatible ? "STANDBY" : "INVALID"}
                   </dd>
                 </div>
+                <div>
+                  <dt>Route model</dt>
+                  <dd>
+                    {selectedConnectionEvaluation?.modelStatus
+                      .replaceAll("-", " ")
+                      .toUpperCase() ?? "MEASURED ONLY"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Cable mass</dt>
+                  <dd>{formatQtyText(
+                    selectedConnectionEvaluation?.cableMassKg ?? 0,
+                    "kg"
+                  )}</dd>
+                </div>
+                <div>
+                  <dt>Power loss</dt>
+                  <dd>{formatQtyText(
+                    selectedConnectionEvaluation?.powerLossW ?? 0,
+                    "W"
+                  )}</dd>
+                </div>
+                <div>
+                  <dt>Transport load</dt>
+                  <dd>{formatQtyText(
+                    selectedConnectionEvaluation?.transportPowerW ?? 0,
+                    "W"
+                  )}</dd>
+                </div>
+                <div>
+                  <dt>Utilization</dt>
+                  <dd>
+                    {selectedConnectionEvaluation?.utilization === null ||
+                    selectedConnectionEvaluation?.utilization === undefined
+                      ? "NOT APPLICABLE"
+                      : `${(selectedConnectionEvaluation.utilization * 100).toFixed(1)}%`}
+                  </dd>
+                </div>
               </dl>
+              <section className="custom-model-disclosure">
+                <p className="custom-eyebrow">ROUTE CONSEQUENCE</p>
+                <strong>
+                  {selectedConnectionEvaluation?.equation ??
+                    "MEASURED X/Z LENGTH ONLY"}
+                </strong>
+                <p>{selectedConnectionEvaluation?.assumption}</p>
+                <small>{selectedConnectionEvaluation?.evidence}</small>
+              </section>
               <div className="custom-asset-actions">
                 <button onClick={() => flyTo(selectedConnection.id)}>FOCUS</button>
                 <button onClick={() => rerouteCustomConnection(selectedConnection.id)}>
@@ -649,6 +795,29 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 </div>
               </dl>
 
+              <section className="custom-capacity-groups" aria-label="Installed capacity groups">
+                <div className="custom-validation-heading">
+                  <div>
+                    <p className="custom-eyebrow">INSTALLED CAPACITY</p>
+                    <h2>{evaluation.capacityGroups.length} rated stages</h2>
+                  </div>
+                </div>
+                {evaluation.capacityGroups.map((group) => (
+                  <div className={group.margin < 0 ? "limited" : ""} key={group.id}>
+                    <span>{group.label}</span>
+                    <strong>
+                      {formatQtyText(group.available, group.unit, 4)}
+                    </strong>
+                    <small>
+                      {formatQtyText(group.required, group.unit, 4)} required ·{" "}
+                      {Number.isFinite(group.utilization)
+                        ? `${(group.utilization * 100).toFixed(0)}%`
+                        : "NO CAPACITY"}
+                    </small>
+                  </div>
+                ))}
+              </section>
+
               <section className="custom-validation">
                 <div className="custom-validation-heading">
                   <div>
@@ -728,19 +897,34 @@ export function CustomSiteWorkspace(): React.JSX.Element {
           )}</strong>
         </div>
         <div>
-          <span>REQUIRED GRID</span>
+          <span>INSTALLED TRAIN</span>
           <strong>{formatQtyText(
-            evaluation.baseResult.energy.gridPowerW,
+            evaluation.installedThroughputKgPerDay,
+            "kg/day",
+            4
+          )}</strong>
+        </div>
+        <div>
+          <span>GRID REQUIRED</span>
+          <strong>{formatQtyText(
+            evaluation.requiredGridPowerW,
             "W"
           )}</strong>
         </div>
         <div>
-          <span>INSTALLED SOURCE</span>
-          <strong>{powerStrategyLabel}</strong>
+          <span>POWER AVAILABLE</span>
+          <strong title={`${powerStrategyLabel} · ${formatQtyText(
+            evaluation.installedPowerW,
+            "W"
+          )} nameplate`}>
+            {formatQtyText(evaluation.deliveredPowerW, "W")}
+          </strong>
         </div>
         <div>
-          <span>TOPOLOGY</span>
-          <strong>{evaluation.topologyValid ? "OPERATING" : "STOPPED"}</strong>
+          <span>BOTTLENECK</span>
+          <strong>
+            {evaluation.bottleneck?.kind.toUpperCase() ?? "DESIGN MARGIN"}
+          </strong>
         </div>
       </section>
 
@@ -751,7 +935,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
             ? `TOPOLOGY GATE OPEN · ${evaluation.achievableOutputKgPerDay.toLocaleString()} KG/DAY ACHIEVABLE`
             : `TOPOLOGY GATE CLOSED · ${errorCount} ERROR${errorCount === 1 ? "" : "S"} · ZERO ACHIEVABLE OUTPUT`}
         </span>
-        <span>REQUIRED CONTINUOUS DESIGN REMAINS VISIBLE · INSTALLED CAPACITY ARRIVES IN MILESTONE 5</span>
+        <span>
+          {formatQtyText(evaluation.spatial.cableMassKg, "kg")} CABLE ·{" "}
+          {formatQtyText(evaluation.spatial.supplementalLoadW, "W")} ROUTE LOAD ·{" "}
+          SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS
+        </span>
       </div>
     </div>
   );

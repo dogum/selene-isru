@@ -34,6 +34,25 @@ export interface SitePortDefinition {
   maxConnections?: number;
 }
 
+export type SiteCapacityMetric =
+  | "product-throughput"
+  | "electrical-output";
+
+export interface SiteAssetCapacityModel {
+  groupId: string;
+  groupLabel: string;
+  metric: SiteCapacityMetric;
+  rating: number;
+  unit: "kg/day" | "W";
+  requiredPortIds: readonly string[];
+  quantityMode: "instances" | "bank";
+  quantityKey?: string;
+  maxQuantity?: number;
+  modelMaturity: SiteAssetModelMaturity;
+  basis: string;
+  evidence: string;
+}
+
 export interface SiteAssetDefinition {
   kind: string;
   label: string;
@@ -44,6 +63,7 @@ export interface SiteAssetDefinition {
   footprint: SiteFootprintDefinition;
   multiplicity: SiteAssetMultiplicity;
   ports: readonly SitePortDefinition[];
+  capacityModel?: SiteAssetCapacityModel;
 }
 
 export interface SiteAssetInstance {
@@ -113,6 +133,8 @@ export interface SiteDesignFinding {
   message: string;
   entityIds: string[];
   suggestedAction?: string;
+  modelMaturity?: SiteAssetModelMaturity;
+  evidence?: string;
 }
 
 export interface SiteDesignParseResult {
@@ -126,34 +148,92 @@ export type SitePowerInterpretation =
   | "unavailable";
 
 export interface SiteBottleneck {
-  kind: "topology";
+  kind: "topology" | "capacity";
   label: string;
   entityIds: string[];
+  required?: number;
+  installed?: number;
+  unit?: "kg/day" | "W";
+}
+
+export interface SiteCapacityGroupEvaluation {
+  id: string;
+  label: string;
+  metric: SiteCapacityMetric;
+  unit: "kg/day" | "W";
+  required: number;
+  installed: number;
+  available: number;
+  margin: number;
+  utilization: number;
+  assetIds: string[];
+  modelMaturity: SiteAssetModelMaturity;
+  basis: string;
+  evidence: string;
 }
 
 export interface SiteAssetEvaluation {
   assetId: string;
   operational: boolean;
   connected: boolean;
-  capacityStatus: "not-modeled";
+  capacityStatus: "modeled" | "not-modeled";
+  capacityGroupId: string | null;
+  rating: number | null;
+  quantity: number;
+  installedCapacity: number | null;
+  unit: "kg/day" | "W" | null;
+  requiredDuty: number | null;
+  installedGroupCapacity: number | null;
+  margin: number | null;
+  utilization: number | null;
+  modelMaturity: SiteAssetModelMaturity | null;
+  basis: string | null;
+  evidence: string | null;
 }
+
+export type SiteConnectionModelStatus =
+  | "power-cable"
+  | "granular-haul"
+  | "measured-only";
 
 export interface SiteConnectionEvaluation {
   connectionId: string;
   operational: boolean;
   compatible: boolean;
   lengthM: number;
+  modelStatus: SiteConnectionModelStatus;
+  cableMassKg: number;
+  powerLossW: number;
+  transportPowerW: number;
+  utilization: number | null;
+  equation: string | null;
+  assumption: string;
+  evidence: string;
+}
+
+export interface SiteSpatialEvaluation {
+  cableMassKg: number;
+  cableLossW: number;
+  transportPowerW: number;
+  supplementalLoadW: number;
 }
 
 export interface SiteDesignEvaluation {
   normalizedDesign: SiteDesignDocument;
   effectiveParams: SimParams;
   baseResult: SimResult;
+  achievedResult: SimResult;
   plannedTargetKgPerDay: number;
   achievableOutputKgPerDay: number;
   topologyValid: boolean;
   powerStrategy: SitePowerInterpretation;
   bottleneck: SiteBottleneck | null;
+  capacityGroups: SiteCapacityGroupEvaluation[];
+  installedThroughputKgPerDay: number;
+  requiredGridPowerW: number;
+  installedPowerW: number;
+  deliveredPowerW: number;
+  spatial: SiteSpatialEvaluation;
   assetEvaluations: SiteAssetEvaluation[];
   connectionEvaluations: SiteConnectionEvaluation[];
   findings: SiteDesignFinding[];

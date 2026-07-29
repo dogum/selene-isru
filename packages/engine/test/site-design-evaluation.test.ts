@@ -30,7 +30,7 @@ describe("custom site topology-backed evaluation", () => {
     });
     expect(polar.baseResult.power.architecture).toBe("solar");
     expect(equatorial.findings).toContainEqual(expect.objectContaining({
-      id: "evaluation.capacity-boundary",
+      id: "spatial.power-cable-model",
       severity: "info"
     }));
   });

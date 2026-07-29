@@ -544,6 +544,20 @@ export interface SimResult {
 
 export interface SimulationOptions {
   powerStrategy?: PowerStrategy;
+  supplementalLoads?: readonly SimulationSupplementalLoad[];
+  supplementalMasses?: readonly SimulationSupplementalMass[];
+}
+
+export interface SimulationSupplementalLoad {
+  id: string;
+  label: string;
+  powerW: number;
+  disposition: "useful" | "loss";
+}
+
+export interface SimulationSupplementalMass {
+  subsystem: string;
+  massKg: number;
 }
 
 export interface TimeseriesOptions {

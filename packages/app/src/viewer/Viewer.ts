@@ -1135,13 +1135,21 @@ export class Viewer {
       label.textContent =
         `${(stream ?? connection.kind).toUpperCase()} · ` +
         `${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} M · ` +
-        `${connectionEvaluation?.operational === true ? "FLOW" : "STANDBY"}`;
+        `${connectionEvaluation?.operational === true ? "FLOW" : "STANDBY"}` +
+        `${connectionEvaluation?.utilization === null ||
+          connectionEvaluation?.utilization === undefined
+          ? ""
+          : ` · ${(connectionEvaluation.utilization * 100).toFixed(0)}%`}`;
       label.classList.toggle("active", connection.id === this.customSelectedConnectionId);
       label.classList.toggle("invalid", invalidConnectionIds.has(connection.id));
       label.classList.toggle(
         "standby",
         !invalidConnectionIds.has(connection.id) &&
         connectionEvaluation?.operational !== true
+      );
+      label.classList.toggle(
+        "loaded",
+        (connectionEvaluation?.utilization ?? 0) > 1
       );
       label.addEventListener("click", () => this.selectPickedConnection(connection.id));
       this.customLabelOverlay.appendChild(label);

@@ -1,5 +1,9 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
-import type { ManifestRow, SimParams } from "../types";
+import type {
+  ManifestRow,
+  SimParams,
+  SimulationSupplementalMass
+} from "../types";
 
 export interface LogisticsOutput {
   payloadPerMissionKg: number;
@@ -23,10 +27,20 @@ export function simulateLogistics(
   fleetMassKg: number,
   reactorMassKg: number,
   powerMassKg: number,
-  cryoMassKg: number
+  cryoMassKg: number,
+  supplementalMasses: readonly SimulationSupplementalMass[] = []
 ): LogisticsOutput {
   const payload = payloadPerMissionKg(params);
-  const totalInfraMassKg = fleetMassKg + reactorMassKg + powerMassKg + cryoMassKg;
+  const supplementalMassKg = supplementalMasses.reduce(
+    (total, item) => total + Math.max(0, item.massKg),
+    0
+  );
+  const totalInfraMassKg =
+    fleetMassKg +
+    reactorMassKg +
+    powerMassKg +
+    cryoMassKg +
+    supplementalMassKg;
   const capacity = params.etaPack * payload;
   const nMissions = capacity > 0 ? Math.max(0, Math.ceil(totalInfraMassKg / capacity)) : 0;
   const plantMassThroughputDays = totalInfraMassKg / params.targetKgPerDay;
@@ -36,7 +50,13 @@ export function simulateLogistics(
     { subsystem: "excavation fleet", massKg: fleetMassKg },
     { subsystem: "reactor/plant", massKg: reactorMassKg },
     { subsystem: "power system", massKg: powerMassKg },
-    { subsystem: "cryo block", massKg: cryoMassKg }
+    { subsystem: "cryo block", massKg: cryoMassKg },
+    ...supplementalMasses
+      .filter((item) => item.massKg > 0)
+      .map((item) => ({
+        subsystem: item.subsystem,
+        massKg: item.massKg
+      }))
   ];
 
   return {

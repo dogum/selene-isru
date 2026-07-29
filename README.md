@@ -73,13 +73,19 @@ when they are useful:
 
 ## Implementation parity and evidence
 
-Every implemented equation lives twice:
+Every core process equation used by the authored simulation lives twice:
 
 - **TypeScript** (`packages/engine`) — the runtime engine the app calls on
-  every input event. Zero dependencies, pure ESM, with a 128 KiB CI budget
-  including the versioned custom-site schema and graph validator.
+  every input event. Zero dependencies, pure ESM, with a 144 KiB CI budget
+  including the versioned custom-site schema, graph validator, installed
+  capacity evaluator, and disclosed cable/haul screening models.
 - **Python** (`python/selene_isru`) — an independent mirror used for
   derivations, citations, and golden-vector generation.
+
+The custom-site compiler is a TypeScript-only evaluation layer around that
+shared process model. Its screening capacity and route equations are isolated,
+disclosed in the planner, and covered by dedicated deterministic unit tests;
+they are not represented as Python-parity-validated hardware models.
 
 `python/tools/generate_golden.py` Latin-hypercube samples **200 points**
 across the full parameter box (plus named corner scenarios), runs the Python

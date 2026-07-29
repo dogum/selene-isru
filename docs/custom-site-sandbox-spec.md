@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–4 implemented; Milestone 5 next |
+| Status | Milestones 0–5 implemented; Milestone 6 next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -972,6 +972,19 @@ Acceptance:
 ### Milestone 5 — installed capacities and spatial consequences
 
 **Goal:** make quantity and organization matter within supported models.
+
+**Implementation status (2026-07-29):** Delivered on the working branch as a
+bounded screening model. Rated process instances represent 1,000 kg/day
+baseline trains; bank-configured power sources represent 1.25 MW per installed
+unit. The evaluator now reports required, installed, available, margin,
+utilization, capacity-limited achievable output, and the limiting stage.
+Persisted power routes apply a disclosed 1.5 kV DC aluminum-feeder mass/loss
+model, and granular feed routes apply a lunar rolling-resistance haul term.
+Those contributions flow into achieved grid load, the landed mass manifest,
+mission count, throughput-days, and leverage. Product, construction, and
+logistics routes remain explicitly measured-only until route-specific duty
+models are defensible; X/Z length remains a planning approximation rather than
+terrain-following cable or traverse length.
 
 Deliver:
 

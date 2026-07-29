@@ -30,12 +30,12 @@ describe("custom site workspace", () => {
     expect(screen.getByText(
       "CLICK PLACE, THEN CHOOSE A VALID FOOTPRINT · ESC CANCELS"
     )).toBeTruthy();
-    expect(screen.getByText(
-      "REQUIRED CONTINUOUS DESIGN REMAINS VISIBLE · INSTALLED CAPACITY ARRIVES IN MILESTONE 5"
-    )).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain(
+      "SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS"
+    );
     const evaluation = screen.getByLabelText("Custom site evaluation");
     expect(evaluation.textContent).toContain("ACHIEVABLE OUTPUT");
-    expect(evaluation.textContent).toContain("TOPOLOGYSTOPPED");
+    expect(evaluation.textContent).toContain("BOTTLENECKTOPOLOGY");
   });
 
   it("edits the persisted name and switches the registry environment", () => {
@@ -107,5 +107,30 @@ describe("custom site workspace", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "DELETE" }));
     expect(useStore.getState().customSite.design.connections).toEqual([]);
+  });
+
+  it("edits the installed-unit count for a bank-rated asset", () => {
+    act(() => {
+      useStore.getState().placeCustomAsset("equatorial.power-hub", -30, -30);
+    });
+    const power = useStore.getState().customSite.design.assets[0]!;
+    act(() => {
+      useStore.getState().selectCustomAsset(power.id);
+    });
+    render(<CustomSiteWorkspace />);
+
+    const quantity = screen.getByLabelText("INSTALLED UNITS");
+    fireEvent.change(quantity, { target: { value: "2" } });
+    fireEvent.blur(quantity);
+
+    expect(
+      useStore.getState().customSite.design.assets[0]?.configuration.unitCount
+    ).toBe(2);
+    expect(
+      useStore.getState().customSite.evaluation.assetEvaluations[0]
+        ?.installedCapacity
+    ).toBe(2_500_000);
+    expect(screen.getByLabelText("Custom site inspector").textContent)
+      .toContain("2.5");
   });
 });

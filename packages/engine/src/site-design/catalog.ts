@@ -1,4 +1,5 @@
 import type {
+  SiteAssetCapacityModel,
   SiteAssetDefinition,
   SiteConnectionKind,
   SiteEnvironment
@@ -6,6 +7,56 @@ import type {
 
 function asset(definition: SiteAssetDefinition): SiteAssetDefinition {
   return definition;
+}
+
+const BASELINE_THROUGHPUT_KG_PER_DAY = 1_000;
+const BASELINE_SOURCE_POWER_W = 1_250_000;
+
+function throughputCapacity(
+  groupId: string,
+  groupLabel: string,
+  requiredPortIds: readonly string[],
+  quantityMode: SiteAssetCapacityModel["quantityMode"] = "instances"
+): SiteAssetCapacityModel {
+  return {
+    groupId,
+    groupLabel,
+    metric: "product-throughput",
+    rating: BASELINE_THROUGHPUT_KG_PER_DAY,
+    unit: "kg/day",
+    requiredPortIds,
+    quantityMode,
+    ...(quantityMode === "bank"
+      ? { quantityKey: "unitCount", maxQuantity: 8 }
+      : {}),
+    modelMaturity: "DESIGN ASSUMPTION",
+    basis:
+      "One placed instance represents one complete 1,000 kg/day baseline process train.",
+    evidence:
+      "SELENE v0.1 default production target and continuously sized subsystem correlations; screening allocation, not a vendor hardware rating."
+  };
+}
+
+function powerCapacity(
+  groupId: string,
+  groupLabel: string
+): SiteAssetCapacityModel {
+  return {
+    groupId,
+    groupLabel,
+    metric: "electrical-output",
+    rating: BASELINE_SOURCE_POWER_W,
+    unit: "W",
+    requiredPortIds: ["grid-out"],
+    quantityMode: "bank",
+    quantityKey: "unitCount",
+    maxQuantity: 8,
+    modelMaturity: "DESIGN ASSUMPTION",
+    basis:
+      "One placed source represents 1.25 MW of nameplate electrical output before route loss.",
+    evidence:
+      "Screening allocation set above the v0.1 default equatorial grid regression point (~1.03 MW); replace with project hardware data for design decisions."
+  };
 }
 
 export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
@@ -18,6 +69,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["equatorial"],
     footprint: { widthM: 4.8, depthM: 3.2, clearanceM: 2 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "equatorial-excavation",
+      "Excavation fleet",
+      ["regolith-out"]
+    ),
     ports: [
       {
         id: "regolith-out",
@@ -37,6 +93,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["equatorial"],
     footprint: { widthM: 5.2, depthM: 3.2, clearanceM: 2 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "equatorial-haul",
+      "Regolith haul",
+      ["regolith-in", "regolith-out"]
+    ),
     ports: [
       {
         id: "regolith-in",
@@ -63,6 +124,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["equatorial"],
     footprint: { widthM: 13, depthM: 11, clearanceM: 4 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "equatorial-mre",
+      "MRE processing",
+      ["regolith-in", "power-in", "oxygen-out"]
+    ),
     ports: [
       {
         id: "regolith-in",
@@ -132,6 +198,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["equatorial"],
     footprint: { widthM: 18, depthM: 12, clearanceM: 5 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "equatorial-storage",
+      "Product storage",
+      ["product-in"]
+    ),
     ports: [
       {
         id: "product-in",
@@ -159,6 +230,10 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["equatorial"],
     footprint: { widthM: 24, depthM: 16, clearanceM: 8 },
     multiplicity: "single",
+    capacityModel: powerCapacity(
+      "equatorial-power",
+      "Installed surface power"
+    ),
     ports: [
       {
         id: "grid-out",
@@ -233,6 +308,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["polar"],
     footprint: { widthM: 5.2, depthM: 3.6, clearanceM: 2 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "polar-excavation",
+      "Ice excavation",
+      ["icy-feed-out"]
+    ),
     ports: [
       {
         id: "icy-feed-out",
@@ -252,6 +332,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["polar"],
     footprint: { widthM: 20, depthM: 16, clearanceM: 5 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "polar-sublimation",
+      "Sublimation recovery",
+      ["icy-feed-in", "water-out"]
+    ),
     ports: [
       {
         id: "icy-feed-in",
@@ -279,6 +364,12 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["polar"],
     footprint: { widthM: 16, depthM: 14, clearanceM: 6 },
     multiplicity: "single",
+    capacityModel: throughputCapacity(
+      "polar-receiver",
+      "Receiver processing",
+      ["water-in", "power-in", "product-out"],
+      "bank"
+    ),
     ports: [
       {
         id: "water-in",
@@ -286,7 +377,7 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
         kind: "material",
         direction: "input",
         streams: ["water"],
-        maxConnections: 1
+        maxConnections: 8
       },
       {
         id: "power-in",
@@ -314,6 +405,11 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["polar"],
     footprint: { widthM: 18, depthM: 12, clearanceM: 5 },
     multiplicity: "multiple",
+    capacityModel: throughputCapacity(
+      "polar-storage",
+      "Product storage",
+      ["product-in"]
+    ),
     ports: [
       {
         id: "product-in",
@@ -341,6 +437,10 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["polar"],
     footprint: { widthM: 32, depthM: 14, clearanceM: 10 },
     multiplicity: "single",
+    capacityModel: powerCapacity(
+      "polar-power",
+      "Installed surface power"
+    ),
     ports: [
       {
         id: "grid-out",
@@ -360,6 +460,10 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
     compatibleEnvironments: ["polar"],
     footprint: { widthM: 22, depthM: 18, clearanceM: 12 },
     multiplicity: "single",
+    capacityModel: powerCapacity(
+      "polar-power",
+      "Installed surface power"
+    ),
     ports: [
       {
         id: "grid-out",

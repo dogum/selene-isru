@@ -351,17 +351,19 @@ describe("store wiring (§5)", () => {
     );
   });
 
-  it("updates planned and achievable output together for a valid custom graph", () => {
+  it("keeps planned output distinct from a capacity-limited valid graph", () => {
     buildOperatingEquatorialSite();
     useStore.getState().setParam("targetKgPerDay", 1775);
     const state = useStore.getState();
 
     expect(state.customSite.design.params.targetKgPerDay).toBe(1775);
     expect(state.customSite.evaluation.plannedTargetKgPerDay).toBe(1775);
-    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(1775);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(1000);
+    expect(state.customSite.evaluation.bottleneck?.kind).toBe("capacity");
+    expect(state.result.production.targetKgPerDay).toBe(1000);
     expect(state.result.warnings).toContainEqual(expect.objectContaining({
-      id: "site-design:evaluation.capacity-boundary",
-      severity: "info"
+      id: "site-design:capacity.shortfall.equatorial-storage",
+      severity: "caution"
     }));
   });
 });

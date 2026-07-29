@@ -11,7 +11,10 @@ import { simulatePower } from "./modules/power";
 import { simulateSabatier } from "./modules/sabatier";
 import { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 import { simulateThermal } from "./modules/thermal";
-import { compileSiteDesign } from "./site-design/evaluate";
+import {
+  compileSiteDesign,
+  evaluateSiteInstallation
+} from "./site-design/evaluate";
 import type {
   SiteDesignDocument,
   SiteDesignEvaluation
@@ -60,6 +63,8 @@ export type {
   SimParams,
   SimResult,
   SimulationOptions,
+  SimulationSupplementalLoad,
+  SimulationSupplementalMass,
   ProcessBalance,
   EnergyProcessBalance,
   StorageInventory,
@@ -96,7 +101,7 @@ export function simulate(
 
   const production = productionState(params, excavation.regolithPerKgProduct, sabatier);
   const cryo = simulateCryo(params, storageDemands(params, production), siteProfile.profile);
-  const energyLines = energyLineItems(
+  const processEnergyLines = energyLineItems(
     params,
     excavation.secExcavation_JPerKg,
     electrolysis,
@@ -105,6 +110,17 @@ export function simulate(
     cryo.cryocoolerPowerW,
     sabatier
   );
+  const supplementalLoads = (options.supplementalLoads ?? [])
+    .filter((load) => Number.isFinite(load.powerW) && load.powerW > 0);
+  const productMassFlowKgPerS = params.targetKgPerDay / SECONDS_PER_DAY;
+  const energyLines = [
+    ...processEnergyLines,
+    ...supplementalLoads.map((load) => ({
+      from: "grid",
+      to: `site-${load.id}`,
+      jPerKg: load.powerW / productMassFlowKgPerS
+    }))
+  ];
   const flows = energyLines.map((line) => ({
     from: line.from,
     to: line.to,
@@ -113,7 +129,16 @@ export function simulate(
   const secTotal_JPerKg = energyLines.reduce((total, line) => total + line.jPerKg, 0);
   const secTotal_kWhPerKg = secTotal_JPerKg / J_PER_KWH;
   const gridPowerW = (params.targetKgPerDay / SECONDS_PER_DAY) * secTotal_JPerKg;
-  const energyAccounting = energyLedger(params, gridPowerW, energyLines, excavation.mechPowerW, electrolysis, cryo, sabatier);
+  const energyAccounting = energyLedger(
+    params,
+    gridPowerW,
+    energyLines,
+    excavation.mechPowerW,
+    electrolysis,
+    cryo,
+    sabatier,
+    supplementalLoads
+  );
   const power = simulatePower(
     params,
     gridPowerW,
@@ -129,7 +154,8 @@ export function simulate(
     excavation.fleetMassKg,
     reactorMassKg,
     power.selectedPowerMassKg,
-    cryo.cryoMassKg
+    cryo.cryoMassKg,
+    options.supplementalMasses
   );
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);
@@ -504,7 +530,7 @@ export function simulateTimeseries(
 }
 
 function evaluationPowerStrategy(
-  evaluation: Omit<SiteDesignEvaluation, "baseResult">
+  evaluation: Pick<SiteDesignEvaluation, "powerStrategy">
 ): PowerStrategy {
   return evaluation.powerStrategy === "solar" ||
     evaluation.powerStrategy === "nuclear"
@@ -524,22 +550,69 @@ export function evaluateSiteDesign(
   const requiredResult = simulate(compiled.effectiveParams, {
     powerStrategy: evaluationPowerStrategy(compiled)
   });
-  const designWarnings: Warning[] = compiled.findings.map((finding) => ({
+  const plan = evaluateSiteInstallation(compiled, requiredResult);
+  const designWarnings: Warning[] = plan.evaluation.findings.map((finding) => ({
     id: `site-design:${finding.id}`,
     severity: finding.severity === "error"
       ? "alarm"
       : finding.severity,
     module: "site-design",
     message: finding.message,
-    value: compiled.achievableOutputKgPerDay,
-    limit: compiled.plannedTargetKgPerDay
+    value: plan.evaluation.achievableOutputKgPerDay,
+    limit: plan.evaluation.plannedTargetKgPerDay
   }));
+  const baseResult = {
+    ...requiredResult,
+    warnings: [...requiredResult.warnings, ...designWarnings]
+  };
+  const achievedResult = (
+    plan.evaluation.topologyValid &&
+    plan.evaluation.achievableOutputKgPerDay > 0
+  )
+    ? simulate({
+        ...plan.evaluation.effectiveParams,
+        targetKgPerDay: plan.evaluation.achievableOutputKgPerDay
+      }, plan.achievedSimulationOptions)
+    : requiredResult;
   return {
-    ...compiled,
-    baseResult: {
-      ...requiredResult,
-      warnings: [...requiredResult.warnings, ...designWarnings]
+    ...plan.evaluation,
+    baseResult,
+    achievedResult: {
+      ...achievedResult,
+      warnings: [...achievedResult.warnings, ...designWarnings]
     }
+  };
+}
+
+function siteEvaluationSimulationOptions(
+  evaluation: SiteDesignEvaluation
+): SimulationOptions {
+  return {
+    powerStrategy: evaluationPowerStrategy(evaluation),
+    supplementalLoads: [
+      ...(evaluation.spatial.transportPowerW > 0
+        ? [{
+            id: "route-transport",
+            label: "Granular route transport",
+            powerW: evaluation.spatial.transportPowerW,
+            disposition: "useful" as const
+          }]
+        : []),
+      ...(evaluation.spatial.cableLossW > 0
+        ? [{
+            id: "power-distribution-loss",
+            label: "Site power distribution loss",
+            powerW: evaluation.spatial.cableLossW,
+            disposition: "loss" as const
+          }]
+        : [])
+    ],
+    supplementalMasses: evaluation.spatial.cableMassKg > 0
+      ? [{
+          subsystem: "site power cabling",
+          massKg: evaluation.spatial.cableMassKg
+        }]
+      : []
   };
 }
 
@@ -554,11 +627,19 @@ export function simulateSiteDesignTimeseries(
 ): TimeseriesResult {
   const evaluation = evaluateSiteDesign(design);
   const timeseries = simulateTimeseries(
-    evaluation.effectiveParams,
+    {
+      ...evaluation.effectiveParams,
+      targetKgPerDay: evaluation.topologyValid
+        ? evaluation.achievableOutputKgPerDay
+        : evaluation.plannedTargetKgPerDay
+    },
     opts,
-    { powerStrategy: evaluationPowerStrategy(evaluation) }
+    siteEvaluationSimulationOptions(evaluation)
   );
-  if (evaluation.topologyValid) {
+  if (
+    evaluation.topologyValid &&
+    evaluation.achievableOutputKgPerDay > 0
+  ) {
     return timeseries;
   }
   const sourceAvailable =

@@ -15,6 +15,7 @@ import type {
   SiteDesignEvaluation,
   SiteDesignFinding,
   SiteEnvironment,
+  SiteConfigurationValue,
   SitePortRef,
   SiteViewMode,
   TimeseriesPoint,
@@ -173,6 +174,7 @@ interface Store {
       zM?: number;
       headingDeg?: number;
       enabled?: boolean;
+      configuration?: Record<string, SiteConfigurationValue>;
     }
   ) => void;
   rotateCustomAsset: (assetId: string, deltaDeg: number) => void;
@@ -277,7 +279,9 @@ function evaluateCustomRuntime(design: SiteDesignDocument): {
   const evaluation = evaluateSiteDesign(design);
   return {
     evaluation,
-    result: evaluation.baseResult,
+    result: evaluation.topologyValid
+      ? evaluation.achievedResult
+      : evaluation.baseResult,
     timeseries: simulateSiteDesignTimeseries(design, {
       cycles: 1,
       samplesPerCycle: 96

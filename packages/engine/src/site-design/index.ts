@@ -38,15 +38,19 @@ export type {
 export type {
   PlannerDocumentState,
   SiteAnnotation,
+  SiteAssetCapacityModel,
   SiteAssetDefinition,
   SiteAssetEvaluation,
   SiteAssetInstance,
   SiteAssetModelMaturity,
   SiteAssetMultiplicity,
+  SiteCapacityGroupEvaluation,
+  SiteCapacityMetric,
   SiteConfigurationValue,
   SiteConnection,
   SiteConnectionEvaluation,
   SiteConnectionKind,
+  SiteConnectionModelStatus,
   SiteDesignDocument,
   SiteDesignEvaluation,
   SiteDesignFinding,
@@ -60,6 +64,7 @@ export type {
   SitePortRef,
   SitePowerInterpretation,
   SiteRoutePoint,
+  SiteSpatialEvaluation,
   SiteViewMode,
   WorkspaceMode
 } from "./types";

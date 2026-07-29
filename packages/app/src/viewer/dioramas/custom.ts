@@ -269,8 +269,17 @@ export class CustomSiteDiorama implements Diorama {
       );
       runtime.root.rotation.y = THREE.MathUtils.degToRad(-asset.transform.headingDeg);
       runtime.model.setEnabled(asset.enabled);
+      const assetEvaluation = evaluation?.assetEvaluations.find((item) =>
+        item.assetId === asset.id
+      );
       const footprintMaterial = runtime.footprint.material as THREE.MeshBasicMaterial;
-      footprintMaterial.color.setHex(asset.enabled ? 0x74d8ff : 0x7a808b);
+      footprintMaterial.color.setHex(
+        !asset.enabled
+          ? 0x7a808b
+          : (assetEvaluation?.utilization ?? 0) > 1
+            ? 0xffb347
+            : assetEvaluation?.operational ? 0x4ade80 : 0x74d8ff
+      );
       footprintMaterial.opacity = selectedAssetId === asset.id ? 0.34 : 0.1;
       runtime.ports.visible = this.plannerMode && asset.enabled;
     }
@@ -557,7 +566,8 @@ export class CustomSiteDiorama implements Diorama {
         connection.id === selectedConnectionId,
         invalidIds.has(connection.id),
         connectionEvaluation?.operational ??
-          (evaluation?.topologyValid ?? invalidIds.size === 0)
+          (evaluation?.topologyValid ?? invalidIds.size === 0),
+        connectionEvaluation?.utilization ?? null
       );
       if (runtime === null) {
         continue;
@@ -572,7 +582,8 @@ export class CustomSiteDiorama implements Diorama {
     connection: SiteConnection,
     selected: boolean,
     invalid: boolean,
-    operational: boolean
+    operational: boolean,
+    utilization: number | null
   ): RuntimeConnection | null {
     const route = siteConnectionRoutePoints(design, connection);
     if (route.length < 2) {
@@ -605,7 +616,9 @@ export class CustomSiteDiorama implements Diorama {
           depthWrite: false
         })
       : new THREE.LineBasicMaterial({
-          color: CONNECTION_COLORS[connection.kind],
+          color: utilization !== null && utilization > 1
+            ? 0xffb347
+            : CONNECTION_COLORS[connection.kind],
           transparent: true,
           opacity: selected ? 1 : 0.72,
           depthTest: false,

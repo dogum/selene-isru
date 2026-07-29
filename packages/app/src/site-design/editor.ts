@@ -7,6 +7,7 @@ import {
 } from "@selene-isru/engine";
 import type {
   PlannerDocumentState,
+  SiteConfigurationValue,
   SiteAssetInstance,
   SiteConnection,
   SiteDesignDocument,
@@ -108,6 +109,7 @@ export function updateSiteAsset(
     zM?: number;
     headingDeg?: number;
     enabled?: boolean;
+    configuration?: Record<string, SiteConfigurationValue>;
   },
   updatedAt?: string
 ): SiteDesignDocument {
@@ -119,6 +121,14 @@ export function updateSiteAsset(
       ...asset,
       ...(patch.name === undefined ? {} : { name: patch.name.trim().slice(0, 120) || asset.name }),
       ...(patch.enabled === undefined ? {} : { enabled: patch.enabled }),
+      ...(patch.configuration === undefined
+        ? {}
+        : {
+            configuration: {
+              ...asset.configuration,
+              ...patch.configuration
+            }
+          }),
       transform: {
         xM: patch.xM === undefined
           ? asset.transform.xM
