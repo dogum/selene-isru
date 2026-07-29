@@ -4,7 +4,8 @@ import {
   downloadText,
   reportSnapshot,
   scenariosCsv,
-  studyExport
+  studyExport,
+  studyScenarioResult
 } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
 import { paramsToUrl } from "../../lib/url";
@@ -22,11 +23,11 @@ function energyRows(result: ReturnType<typeof simulate>): Array<{ label: string;
 
 export function EngineeringReport(): React.JSX.Element {
   const params = useStore((s) => s.params);
+  const result = useStore((s) => s.result);
   const currentName = useStore((s) => s.ui.currentScenarioName);
   const scenarios = useStore((s) => s.scenarioLibrary);
   const pinned = scenarios.filter((scenario) => scenario.pinned);
   const snapshot = useMemo(() => reportSnapshot(params), [params]);
-  const result = snapshot.result;
   const flows = energyRows(result);
   const generatedAt = new Date().toLocaleString();
   const alarmCount = result.warnings.filter((warning) => warning.severity === "alarm").length;
@@ -236,7 +237,7 @@ export function EngineeringReport(): React.JSX.Element {
             <thead><tr><th>Case</th><th>Site</th><th>SEC</th><th>Power</th><th>Infra mass</th><th>Missions</th></tr></thead>
             <tbody>
               {pinned.map((scenario) => {
-                const compared = simulate(scenario.params);
+                const compared = studyScenarioResult(scenario);
                 return (
                   <tr key={scenario.id}>
                     <th>{scenario.name}</th>

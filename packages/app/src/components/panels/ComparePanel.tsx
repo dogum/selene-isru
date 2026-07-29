@@ -73,6 +73,7 @@ export function ComparePanel(): React.JSX.Element {
   const result = useStore((s) => s.result);
   const compareResult = useStore((s) => s.compareResult);
   const compareParams = useStore((s) => s.compareParams);
+  const workspaceMode = useStore((s) => s.workspaceMode);
   const currentName = useStore((s) => s.ui.currentScenarioName);
   const compareName = useStore((s) => s.ui.compareScenarioName);
   const setUi = useStore((s) => s.setUi);
@@ -113,7 +114,14 @@ export function ComparePanel(): React.JSX.Element {
         <button className="topbar-btn" onClick={setCompareFromCurrent}>
           SAVE CURRENT AS B
         </button>
-        <button className="topbar-btn" onClick={swapCompare}>
+        <button
+          className="topbar-btn"
+          disabled={workspaceMode === "custom"}
+          title={workspaceMode === "custom"
+            ? "Save and pin custom designs in the library for reproducible comparison."
+            : undefined}
+          onClick={swapCompare}
+        >
           SWAP A / B
         </button>
       </div>

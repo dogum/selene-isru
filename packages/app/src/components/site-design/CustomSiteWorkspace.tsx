@@ -1,7 +1,8 @@
 import {
   siteAssetDefinition,
   siteAssetsForEnvironment,
-  siteConnectionLengthM
+  siteConnectionLengthM,
+  serializeSiteDesign
 } from "@selene-isru/engine";
 import type {
   PlannerDocumentState,
@@ -9,8 +10,13 @@ import type {
   SiteDesignFinding,
   SiteDesignFindingSeverity
 } from "@selene-isru/engine";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { downloadText } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
+import {
+  previewCustomSiteImport,
+  type CustomSiteImportPreview
+} from "../../site-design/draft";
 import { isKindAvailable } from "../../site-design/editor";
 import { useStore } from "../../state/store";
 
@@ -74,7 +80,12 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const setCustomPlannerSnaps = useStore((state) => state.setCustomPlannerSnaps);
   const undoCustomEdit = useStore((state) => state.undoCustomEdit);
   const redoCustomEdit = useStore((state) => state.redoCustomEdit);
+  const importCustomDesign = useStore((state) => state.importCustomDesign);
+  const saveCurrentScenario = useStore((state) => state.saveCurrentScenario);
   const flyTo = useStore((state) => state.flyTo);
+  const importFileRef = useRef<HTMLInputElement | null>(null);
+  const [importPreview, setImportPreview] =
+    useState<CustomSiteImportPreview | null>(null);
   const { design, evaluation, findings, editor, history } = customSite;
   const groups = useMemo(
     () => groupedCatalog(siteAssetsForEnvironment(design.environment)),
@@ -863,16 +874,94 @@ export function CustomSiteWorkspace(): React.JSX.Element {
         </div>
 
         {selectedAsset === null && selectedConnection === null && (
-          <button
-            className="custom-reset"
-            onClick={() => {
-              if (design.assets.length === 0 || window.confirm("Reset this custom site to a blank design?")) {
-                resetCustomDesign();
-              }
-            }}
-          >
-            RESET BLANK DESIGN
-          </button>
+          <div className="custom-project-footer">
+            {importPreview !== null && (
+              <section
+                className="custom-import-preview"
+                aria-label="Custom design import preview"
+              >
+                <strong>
+                  {importPreview.document === null
+                    ? "IMPORT BLOCKED"
+                    : `${importPreview.document.name} · REVIEW`}
+                </strong>
+                <span>
+                  {importPreview.findings.filter((finding) =>
+                    finding.severity === "error"
+                  ).length} errors ·{" "}
+                  {importPreview.findings.filter((finding) =>
+                    finding.severity === "caution"
+                  ).length} cautions ·{" "}
+                  {importPreview.findings.filter((finding) =>
+                    finding.severity === "info"
+                  ).length} notes
+                </span>
+                <ol>
+                  {importPreview.findings.slice(0, 6).map((finding, index) => (
+                    <li className={finding.severity} key={`${finding.id}-${index}`}>
+                      <span>{finding.severity.toUpperCase()}</span>
+                      <p>{finding.message}</p>
+                    </li>
+                  ))}
+                </ol>
+                <div>
+                  <button
+                    disabled={importPreview.document === null}
+                    onClick={() => {
+                      if (importPreview.document !== null) {
+                        importCustomDesign(importPreview.document);
+                        setImportPreview(null);
+                      }
+                    }}
+                  >
+                    ACCEPT DESIGN
+                  </button>
+                  <button onClick={() => setImportPreview(null)}>CANCEL</button>
+                </div>
+              </section>
+            )}
+            <div className="custom-project-actions">
+              <button onClick={() => saveCurrentScenario(design.name)}>
+                SAVE TO STUDY
+              </button>
+              <button onClick={() => downloadText(
+                `${design.name.replaceAll(/[^a-z0-9]+/gi, "-").toLowerCase() || "selene-custom-site"}.json`,
+                serializeSiteDesign(design),
+                "application/json"
+              )}>
+                EXPORT DESIGN
+              </button>
+              <button onClick={() => importFileRef.current?.click()}>
+                IMPORT DESIGN
+              </button>
+              <input
+                ref={importFileRef}
+                hidden
+                type="file"
+                accept="application/json,.json"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file === undefined) {
+                    return;
+                  }
+                  void file.text().then((text) => {
+                    setImportPreview(previewCustomSiteImport(text));
+                    event.target.value = "";
+                  });
+                }}
+              />
+            </div>
+            <button
+              className="custom-reset"
+              onClick={() => {
+                if (design.assets.length === 0 || window.confirm("Reset this custom site to a blank design?")) {
+                  resetCustomDesign();
+                }
+              }}
+            >
+              RESET BLANK DESIGN
+            </button>
+          </div>
         )}
       </aside>
 

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–5 implemented; Milestone 6 next |
+| Status | Milestones 0–6 implemented; Milestone 7 next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -1009,6 +1009,21 @@ Acceptance:
 ### Milestone 6 — durable project workflow
 
 **Goal:** make custom designs dependable working artifacts.
+
+**Implementation status (2026-07-29):** Delivered on the working branch.
+Custom designs are first-class versioned cases in the local scenario library,
+including load, rename, duplicate, delete, pin, comparison, standalone design
+export, and version 2 study export. Version 1 study files migrate to authored
+cases. Both study and standalone design imports now stop at a findings preview
+until the user explicitly accepts them; unsupported documents leave the live
+project untouched. Autosave maintains a last-known-valid backup, canonical
+serialization makes design files deterministic, and the blank/seeded engine
+fixtures serve as representative round-trip examples. Project parameters,
+name, environment clearing, reset, asset/configuration edits, planner snaps,
+and connection commands all participate in the bounded undo/redo history.
+Custom achieved results now flow through the scenario matrix, CSV export, and
+engineering report rather than being recomputed as authored parameter-only
+cases.
 
 Deliver:
 

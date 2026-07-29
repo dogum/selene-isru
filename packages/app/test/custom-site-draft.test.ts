@@ -2,12 +2,15 @@
 import { describe, expect, it } from "vitest";
 import {
   createBlankSiteDesign,
-  SEEDED_SITE_DESIGN_FIXTURES
+  SEEDED_SITE_DESIGN_FIXTURES,
+  serializeSiteDesign
 } from "@selene-isru/engine";
 import {
+  CUSTOM_SITE_DRAFT_BACKUP_KEY,
   CUSTOM_SITE_DRAFT_KEY,
   clearCustomSiteDraft,
   loadCustomSiteDraft,
+  previewCustomSiteImport,
   saveCustomSiteDraft
 } from "../src/site-design/draft";
 import { placeSiteAsset, updateSiteAsset } from "../src/site-design/editor";
@@ -98,11 +101,78 @@ describe("custom site draft persistence", () => {
     expect(loadCustomSiteDraft(storage)).toBeNull();
   });
 
-  it("clears a saved draft", () => {
+  it("recovers the previous valid draft when the primary copy is corrupt", () => {
     const storage = memoryStorage();
-    saveCustomSiteDraft(createBlankSiteDesign("equatorial"), storage);
+    const previous = {
+      ...SEEDED_SITE_DESIGN_FIXTURES.equatorial,
+      name: "Previous safe copy"
+    };
+    const latest = {
+      ...SEEDED_SITE_DESIGN_FIXTURES.polar,
+      name: "Latest working copy"
+    };
+
+    saveCustomSiteDraft(previous, storage);
+    saveCustomSiteDraft(latest, storage);
+    expect(storage.getItem(CUSTOM_SITE_DRAFT_BACKUP_KEY)).toBe(
+      serializeSiteDesign(previous)
+    );
+
+    storage.setItem(CUSTOM_SITE_DRAFT_KEY, "{corrupt");
+    expect(loadCustomSiteDraft(storage)?.name).toBe("Previous safe copy");
+  });
+
+  it("previews and canonicalizes imports without mutating draft storage", () => {
+    const storage = memoryStorage();
+    const current = SEEDED_SITE_DESIGN_FIXTURES.polar;
+    saveCustomSiteDraft(current, storage);
+    const before = storage.getItem(CUSTOM_SITE_DRAFT_KEY);
+    const unsorted = {
+      ...SEEDED_SITE_DESIGN_FIXTURES.equatorial,
+      assets: [...SEEDED_SITE_DESIGN_FIXTURES.equatorial.assets].reverse()
+    };
+
+    const preview = previewCustomSiteImport(JSON.stringify(unsorted));
+
+    expect(preview.document).not.toBeNull();
+    expect(preview.canonicalJson).toBe(
+      serializeSiteDesign(preview.document!)
+    );
+    expect(preview.document?.assets.map((asset) => asset.id)).toEqual(
+      [...(preview.document?.assets ?? [])]
+        .map((asset) => asset.id)
+        .sort()
+    );
+    expect(storage.getItem(CUSTOM_SITE_DRAFT_KEY)).toBe(before);
+  });
+
+  it("blocks malformed import text without changing the current draft", () => {
+    const storage = memoryStorage();
+    saveCustomSiteDraft(SEEDED_SITE_DESIGN_FIXTURES.equatorial, storage);
+    const before = storage.getItem(CUSTOM_SITE_DRAFT_KEY);
+
+    const preview = previewCustomSiteImport("{not json");
+
+    expect(preview.document).toBeNull();
+    expect(preview.findings).toContainEqual(expect.objectContaining({
+      severity: "error",
+      id: "import.json"
+    }));
+    expect(storage.getItem(CUSTOM_SITE_DRAFT_KEY)).toBe(before);
+  });
+
+  it("clears saved primary and recovery drafts", () => {
+    const storage = memoryStorage();
+    saveCustomSiteDraft(createBlankSiteDesign("equatorial", {
+      name: "First"
+    }), storage);
+    saveCustomSiteDraft(createBlankSiteDesign("equatorial", {
+      name: "Second"
+    }), storage);
 
     expect(clearCustomSiteDraft(storage)).toBe(true);
+    expect(storage.getItem(CUSTOM_SITE_DRAFT_KEY)).toBeNull();
+    expect(storage.getItem(CUSTOM_SITE_DRAFT_BACKUP_KEY)).toBeNull();
     expect(loadCustomSiteDraft(storage)).toBeNull();
   });
 });

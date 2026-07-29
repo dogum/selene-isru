@@ -1,6 +1,7 @@
 import {
   DEFAULTS,
   evaluateSiteDesign,
+  parseSiteDesign,
   siteAssetDefinition,
   simulate,
   simulateSiteDesignTimeseries,
@@ -57,7 +58,9 @@ export type KpiKey = "sec" | "power" | "missions" | "mass-throughput" | "leverag
 export interface StudyScenario {
   id: string;
   name: string;
+  kind: "authored" | "custom";
   params: SimParams;
+  design?: SiteDesignDocument;
   createdAt: number;
   updatedAt: number;
   pinned: boolean;
@@ -204,6 +207,7 @@ interface Store {
   deleteScenario: (id: string) => void;
   toggleScenarioPin: (id: string) => void;
   importScenarios: (scenarios: StudyScenario[]) => void;
+  importCustomDesign: (design: SiteDesignDocument) => void;
   startTour: (id: string) => void;
   stopTour: () => void;
   advanceTour: () => void;
@@ -298,12 +302,13 @@ function scenarioId(): string {
   return `case-${Date.now().toString(36)}-${scenarioNonce.toString(36)}`;
 }
 
-function validScenario(value: unknown): value is StudyScenario {
+function normalizeScenario(value: unknown): StudyScenario | null {
   if (typeof value !== "object" || value === null) {
-    return false;
+    return null;
   }
   const candidate = value as Partial<StudyScenario>;
-  return (
+  const candidateKind = (value as { kind?: unknown }).kind;
+  const baseValid = (
     typeof candidate.id === "string" &&
     typeof candidate.name === "string" &&
     typeof candidate.params === "object" &&
@@ -312,6 +317,36 @@ function validScenario(value: unknown): value is StudyScenario {
     typeof candidate.updatedAt === "number" &&
     typeof candidate.pinned === "boolean"
   );
+  if (!baseValid) {
+    return null;
+  }
+  if (
+    candidateKind !== undefined &&
+    candidateKind !== "authored" &&
+    candidateKind !== "custom"
+  ) {
+    return null;
+  }
+  const parsedDesign = candidateKind === "custom"
+    ? parseSiteDesign(candidate.design).document
+    : null;
+  if (candidateKind === "custom" && parsedDesign === null) {
+    return null;
+  }
+  const kind = parsedDesign === null ? "authored" : "custom";
+  return {
+    id: candidate.id!,
+    name: candidate.name!.slice(0, 80),
+    kind,
+    params: parsedDesign?.params ?? {
+      ...DEFAULTS,
+      ...candidate.params
+    },
+    ...(parsedDesign === null ? {} : { design: parsedDesign }),
+    createdAt: candidate.createdAt!,
+    updatedAt: candidate.updatedAt!,
+    pinned: candidate.pinned!
+  };
 }
 
 function initialScenarioLibrary(params: SimParams, compareParams: SimParams): StudyScenario[] {
@@ -321,7 +356,10 @@ function initialScenarioLibrary(params: SimParams, compareParams: SimParams): St
       if (raw !== null) {
         const parsed = JSON.parse(raw) as unknown;
         if (Array.isArray(parsed)) {
-          const valid = parsed.filter(validScenario).slice(0, MAX_STUDY_SCENARIOS);
+          const valid = parsed
+            .map(normalizeScenario)
+            .filter((scenario): scenario is StudyScenario => scenario !== null)
+            .slice(0, MAX_STUDY_SCENARIOS);
           if (valid.length > 0) {
             return valid;
           }
@@ -336,6 +374,7 @@ function initialScenarioLibrary(params: SimParams, compareParams: SimParams): St
     {
       id: scenarioId(),
       name: `${params.site === "polar" ? "Polar" : "Equatorial"} baseline`,
+      kind: "authored",
       params: { ...params },
       createdAt: now,
       updatedAt: now,
@@ -344,6 +383,7 @@ function initialScenarioLibrary(params: SimParams, compareParams: SimParams): St
     {
       id: scenarioId(),
       name: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
+      kind: "authored",
       params: { ...compareParams },
       createdAt: now,
       updatedAt: now,
@@ -424,6 +464,54 @@ export const useStore = create<Store>((set, get) => {
     });
   };
 
+  const activateCustomDesign = (
+    source: SiteDesignDocument,
+    resetHistory = false,
+    scenarioName?: string
+  ): void => {
+    const runtime = evaluateCustomRuntime(source);
+    const design = runtime.evaluation.normalizedDesign;
+    const nextTime = {
+      ...get().time,
+      playing: false,
+      tHours: get().time.tHours % cycleHours(runtime.timeseries)
+    };
+    saveCustomSiteDraft(design);
+    set({
+      workspaceMode: "custom",
+      customSite: {
+        ...get().customSite,
+        design,
+        evaluation: runtime.evaluation,
+        findings: runtime.evaluation.findings,
+        editor: resetHistory
+          ? customEditorSession()
+          : get().customSite.editor,
+        history: resetHistory
+          ? emptyCustomHistory()
+          : get().customSite.history
+      },
+      params: runtime.evaluation.effectiveParams,
+      result: runtime.result,
+      timeseries: runtime.timeseries,
+      time: nextTime,
+      timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
+      secHistory: pushHistory(
+        get().secHistory,
+        runtime.result.energy.secTotal_kWhPerKg
+      ),
+      ui: {
+        ...get().ui,
+        selectedAsset: null,
+        learningMode: false,
+        processFlow: false,
+        ...(scenarioName === undefined
+          ? {}
+          : { currentScenarioName: scenarioName })
+      }
+    });
+  };
+
   return {
     workspaceMode: "authored",
     customSite,
@@ -465,74 +553,29 @@ export const useStore = create<Store>((set, get) => {
     },
 
     enterCustomSite: () => {
-      const design = get().customSite.design;
-      const runtime = evaluateCustomRuntime(design);
-      const nextTime = {
-        ...get().time,
-        playing: false,
-        tHours: get().time.tHours % cycleHours(runtime.timeseries)
-      };
-      set({
-        workspaceMode: "custom",
-        customSite: {
-          ...get().customSite,
-          evaluation: runtime.evaluation,
-          findings: runtime.evaluation.findings
-        },
-        params: runtime.evaluation.effectiveParams,
-        result: runtime.result,
-        timeseries: runtime.timeseries,
-        time: nextTime,
-        timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
-        secHistory: pushHistory(
-          get().secHistory,
-          runtime.result.energy.secTotal_kWhPerKg
-        ),
-        ui: {
-          ...get().ui,
-          selectedAsset: null,
-          learningMode: false,
-          processFlow: false
-        }
-      });
+      activateCustomDesign(
+        get().customSite.design,
+        false,
+        get().customSite.design.name
+      );
     },
 
     setCustomEnvironment: (environment) => {
       const current = get().customSite.design;
-      const timestamp = new Date().toISOString();
       const design: SiteDesignDocument = {
         ...current,
         environment,
         params: { ...current.params, site: environment },
         assets: [],
         connections: [],
-        updatedAt: timestamp
+        updatedAt: new Date().toISOString()
       };
-      const runtime = evaluateCustomRuntime(design);
-      saveCustomSiteDraft(design);
-      const nextTime = {
-        ...get().time,
-        playing: false,
-        tHours: get().time.tHours % cycleHours(runtime.timeseries)
-      };
+      commitCustomDesign(design, null);
       set({
         customSite: {
           ...get().customSite,
-          design,
-          evaluation: runtime.evaluation,
-          findings: runtime.evaluation.findings,
-          editor: customEditorSession(),
-          history: emptyCustomHistory()
+          viewMode: "planner"
         },
-        params: runtime.evaluation.effectiveParams,
-        result: runtime.result,
-        timeseries: runtime.timeseries,
-        time: nextTime,
-        timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
-        secHistory: pushHistory(
-          get().secHistory,
-          runtime.result.energy.secTotal_kWhPerKg
-        ),
         ui: { ...get().ui, selectedAsset: null }
       });
     },
@@ -548,35 +591,39 @@ export const useStore = create<Store>((set, get) => {
         name: name.slice(0, 120),
         updatedAt: new Date().toISOString()
       };
-      const evaluation = evaluateSiteDesign(design);
-      saveCustomSiteDraft(design);
-      set({
-        customSite: {
-          ...get().customSite,
-          design,
-          evaluation,
-          findings: evaluation.findings
-        }
-      });
+      commitCustomDesign(
+        design,
+        get().customSite.editor.selectedAssetId,
+        get().customSite.editor.selectedConnectionId
+      );
+      if (get().workspaceMode === "custom") {
+        set({
+          ui: {
+            ...get().ui,
+            currentScenarioName: design.name
+          }
+        });
+      }
     },
 
     resetCustomDesign: () => {
       const current = get().customSite.design;
       const design = createWorkingSiteDesign(current.environment);
-      const runtime = evaluateCustomRuntime(design);
-      saveCustomSiteDraft(design);
+      commitCustomDesign(design, null);
       set({
         customSite: {
-          design,
-          evaluation: runtime.evaluation,
+          ...get().customSite,
           viewMode: "planner",
-          findings: runtime.evaluation.findings,
-          editor: customEditorSession(),
-          history: emptyCustomHistory()
+          editor: customEditorSession()
         }
       });
       if (get().workspaceMode === "custom") {
-        get().enterCustomSite();
+        set({
+          ui: {
+            ...get().ui,
+            currentScenarioName: design.name
+          }
+        });
       }
     },
 
@@ -924,29 +971,11 @@ export const useStore = create<Store>((set, get) => {
           params: nextParams,
           updatedAt: new Date().toISOString()
         };
-        const runtime = evaluateCustomRuntime(nextCustomDesign);
-        const nextTime = {
-          ...get().time,
-          tHours: get().time.tHours % cycleHours(runtime.timeseries)
-        };
-        saveCustomSiteDraft(nextCustomDesign);
-        set({
-          customSite: {
-            ...get().customSite,
-            design: nextCustomDesign,
-            evaluation: runtime.evaluation,
-            findings: runtime.evaluation.findings
-          },
-          params: runtime.evaluation.effectiveParams,
-          result: runtime.result,
-          timeseries: runtime.timeseries,
-          time: nextTime,
-          timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
-          secHistory: pushHistory(
-            get().secHistory,
-            runtime.result.energy.secTotal_kWhPerKg
-          )
-        });
+        commitCustomDesign(
+          nextCustomDesign,
+          get().customSite.editor.selectedAssetId,
+          get().customSite.editor.selectedConnectionId
+        );
         return;
       }
       const nextResult = simulate(nextParams);
@@ -1059,17 +1088,34 @@ export const useStore = create<Store>((set, get) => {
     },
 
     saveCurrentScenario: (name) => {
-      const { params, ui, scenarioLibrary: current } = get();
+      const {
+        customSite,
+        params,
+        ui,
+        workspaceMode,
+        scenarioLibrary: current
+      } = get();
       if (current.length >= MAX_STUDY_SCENARIOS) {
         return;
       }
       const now = Date.now();
+      const scenarioName =
+        name?.trim() ||
+        (workspaceMode === "custom"
+          ? customSite.design.name.trim()
+          : ui.currentScenarioName.trim()) ||
+        `Study case ${current.length + 1}`;
+      const design = workspaceMode === "custom"
+        ? structuredClone(customSite.evaluation.normalizedDesign)
+        : undefined;
       const next: StudyScenario[] = [
         ...current,
         {
           id: scenarioId(),
-          name: name?.trim() || ui.currentScenarioName.trim() || `Study case ${current.length + 1}`,
-          params: { ...params },
+          name: scenarioName,
+          kind: workspaceMode,
+          params: design?.params ?? { ...params },
+          ...(design === undefined ? {} : { design }),
           createdAt: now,
           updatedAt: now,
           pinned: current.filter((scenario) => scenario.pinned).length < 2
@@ -1084,6 +1130,15 @@ export const useStore = create<Store>((set, get) => {
       if (scenario === undefined) {
         return;
       }
+      if (scenario.kind === "custom" && scenario.design !== undefined) {
+        activateCustomDesign(
+          structuredClone(scenario.design),
+          true,
+          scenario.name
+        );
+        return;
+      }
+      set({ workspaceMode: "authored" });
       get().applyPatch(scenario.params);
       set({ ui: { ...get().ui, currentScenarioName: scenario.name } });
     },
@@ -1091,7 +1146,20 @@ export const useStore = create<Store>((set, get) => {
     renameScenario: (id, name) => {
       const next = get().scenarioLibrary.map((scenario) =>
         scenario.id === id
-          ? { ...scenario, name: name.slice(0, 80), updatedAt: Date.now() }
+          ? {
+              ...scenario,
+              name: name.slice(0, 80),
+              ...(scenario.design === undefined
+                ? {}
+                : {
+                    design: {
+                      ...scenario.design,
+                      name: name.slice(0, 120),
+                      updatedAt: new Date().toISOString()
+                    }
+                  }),
+              updatedAt: Date.now()
+            }
           : scenario
       );
       persistScenarioLibrary(next);
@@ -1105,13 +1173,26 @@ export const useStore = create<Store>((set, get) => {
         return;
       }
       const now = Date.now();
+      const duplicateName = `${scenario.name} copy`;
+      const duplicatedDesign = scenario.design === undefined
+        ? undefined
+        : {
+            ...structuredClone(scenario.design),
+            id: `custom-${now.toString(36)}-${scenarioNonce.toString(36)}`,
+            name: duplicateName,
+            createdAt: new Date(now).toISOString(),
+            updatedAt: new Date(now).toISOString()
+          };
       const next: StudyScenario[] = [
         ...current,
         {
           ...scenario,
           id: scenarioId(),
-          name: `${scenario.name} copy`,
+          name: duplicateName,
           params: { ...scenario.params },
+          ...(duplicatedDesign === undefined
+            ? {}
+            : { design: duplicatedDesign }),
           createdAt: now,
           updatedAt: now,
           pinned: false
@@ -1147,7 +1228,9 @@ export const useStore = create<Store>((set, get) => {
     },
 
     importScenarios: (scenarios) => {
-      const incoming = scenarios.filter(validScenario);
+      const incoming = scenarios
+        .map(normalizeScenario)
+        .filter((scenario): scenario is StudyScenario => scenario !== null);
       const byId = new Map(get().scenarioLibrary.map((scenario) => [scenario.id, scenario]));
       for (const scenario of incoming) {
         if (byId.size >= MAX_STUDY_SCENARIOS && !byId.has(scenario.id)) {
@@ -1170,6 +1253,14 @@ export const useStore = create<Store>((set, get) => {
       });
       persistScenarioLibrary(normalized);
       set({ scenarioLibrary: normalized });
+    },
+
+    importCustomDesign: (design) => {
+      const parsed = parseSiteDesign(design);
+      if (parsed.document === null) {
+        return;
+      }
+      activateCustomDesign(parsed.document, true, parsed.document.name);
     },
 
     startTour: (id) => {

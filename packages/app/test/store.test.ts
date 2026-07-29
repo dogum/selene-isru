@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
-import { DEFAULTS, siteConnectionLengthM } from "@selene-isru/engine";
+import {
+  DEFAULTS,
+  SEEDED_SITE_DESIGN_FIXTURES,
+  serializeSiteDesign,
+  siteConnectionLengthM
+} from "@selene-isru/engine";
 import { beforeEach, describe, expect, it } from "vitest";
 import { CUSTOM_SITE_DRAFT_KEY } from "../src/site-design/draft";
 import { useStore } from "../src/state/store";
@@ -204,6 +209,158 @@ describe("store wiring (§5)", () => {
       environment: "polar",
       params: { site: "polar", targetKgPerDay: 1440 }
     });
+  });
+
+  it("saves, reloads, renames, duplicates, and deletes custom projects", () => {
+    const beforeIds = new Set(
+      useStore.getState().scenarioLibrary.map((scenario) => scenario.id)
+    );
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    useStore.getState().setCustomDesignName("Library source site");
+    useStore.getState().setParam("targetKgPerDay", 1575);
+    const expectedDesign = serializeSiteDesign(
+      useStore.getState().customSite.evaluation.normalizedDesign
+    );
+    const expectedResult = useStore.getState().result;
+
+    useStore.getState().saveCurrentScenario("Saved custom site");
+    const saved = useStore.getState().scenarioLibrary.find((scenario) =>
+      !beforeIds.has(scenario.id)
+    );
+
+    expect(saved).toMatchObject({
+      name: "Saved custom site",
+      kind: "custom",
+      params: { targetKgPerDay: 1575 }
+    });
+    expect(saved?.design).toBeDefined();
+    expect(window.localStorage.getItem("selene-isru.study-scenarios.v2"))
+      .toContain('"kind":"custom"');
+    if (saved === undefined) return;
+
+    useStore.getState().resetCustomDesign();
+    useStore.getState().loadScenario(saved.id);
+    expect(serializeSiteDesign(useStore.getState().customSite.design))
+      .toBe(expectedDesign);
+    expect(useStore.getState().result).toEqual(expectedResult);
+    expect(useStore.getState().customSite.history).toEqual({
+      past: [],
+      future: []
+    });
+
+    useStore.getState().renameScenario(saved.id, "Renamed custom site");
+    const renamed = useStore.getState().scenarioLibrary.find(
+      (scenario) => scenario.id === saved.id
+    );
+    expect(renamed?.name).toBe("Renamed custom site");
+    expect(renamed?.design?.name).toBe("Renamed custom site");
+
+    useStore.getState().duplicateScenario(saved.id);
+    const duplicate = useStore.getState().scenarioLibrary.find((scenario) =>
+      scenario.name === "Renamed custom site copy"
+    );
+    expect(duplicate?.kind).toBe("custom");
+    expect(duplicate?.id).not.toBe(saved.id);
+    expect(duplicate?.design?.id).not.toBe(renamed?.design?.id);
+    expect(duplicate?.design).not.toBe(renamed?.design);
+
+    if (duplicate !== undefined) {
+      useStore.getState().deleteScenario(duplicate.id);
+    }
+    useStore.getState().deleteScenario(saved.id);
+  });
+
+  it("keeps all project mutations in the custom undo and redo history", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    const initial = useStore.getState().customSite.design;
+    const power = initial.assets.find((asset) =>
+      asset.kind === "equatorial.power-hub"
+    )!;
+
+    useStore.getState().updateCustomAsset(power.id, {
+      configuration: { unitCount: 3 }
+    });
+    useStore.getState().setCustomPlannerSnaps({ gridSnapM: 1 });
+    useStore.getState().setParam("targetKgPerDay", 1432);
+    useStore.getState().setCustomDesignName("Undoable project");
+
+    expect(useStore.getState().customSite.design.name).toBe(
+      "Undoable project"
+    );
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.name).toBe(initial.name);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().params.targetKgPerDay).toBe(
+      initial.params.targetKgPerDay
+    );
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.planner.gridSnapM).toBe(
+      initial.planner.gridSnapM
+    );
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets.find((asset) =>
+      asset.id === power.id
+    )?.configuration.unitCount).toBeUndefined();
+
+    useStore.getState().redoCustomEdit();
+    useStore.getState().redoCustomEdit();
+    useStore.getState().redoCustomEdit();
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design).toMatchObject({
+      name: "Undoable project",
+      params: { targetKgPerDay: 1432 },
+      planner: { gridSnapM: 1 }
+    });
+    expect(useStore.getState().customSite.design.assets.find((asset) =>
+      asset.id === power.id
+    )?.configuration.unitCount).toBe(3);
+  });
+
+  it("undoes environment clearing and blank-project reset", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    const original = useStore.getState().customSite.design;
+
+    useStore.getState().setCustomEnvironment("polar");
+    expect(useStore.getState().customSite.design).toMatchObject({
+      environment: "polar",
+      assets: []
+    });
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.environment).toBe(
+      "equatorial"
+    );
+    expect(useStore.getState().customSite.design.assets).toHaveLength(
+      original.assets.length
+    );
+
+    useStore.getState().resetCustomDesign();
+    const blankId = useStore.getState().customSite.design.id;
+    expect(blankId).not.toBe(original.id);
+    expect(useStore.getState().customSite.design.assets).toEqual([]);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.id).toBe(original.id);
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design.id).toBe(blankId);
+  });
+
+  it("ignores invalid direct imports and preserves the current project", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.polar
+    );
+    const before = serializeSiteDesign(useStore.getState().customSite.design);
+
+    useStore.getState().importCustomDesign({
+      schema: "not-a-selene-design"
+    } as unknown as typeof SEEDED_SITE_DESIGN_FIXTURES.polar);
+
+    expect(serializeSiteDesign(useStore.getState().customSite.design))
+      .toBe(before);
   });
 
   it("keeps the working custom draft when returning to an authored site", () => {

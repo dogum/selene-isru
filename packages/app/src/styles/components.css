@@ -2309,6 +2309,77 @@ body.selene-photo-mode .custom-scene-label-overlay {
   font: 500 9px/1.4 var(--font-mono);
 }
 
+.scenario-import-preview,
+.custom-import-preview {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(116, 216, 255, 0.35);
+  background: rgba(116, 216, 255, 0.035);
+}
+
+.scenario-import-preview > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scenario-import-preview strong,
+.custom-import-preview strong {
+  color: var(--text-hi);
+  font: 600 9px/1.3 var(--font-mono);
+}
+
+.scenario-import-preview > div:first-child > span,
+.custom-import-preview > span {
+  color: var(--text-low);
+  font: 500 8px/1.3 var(--font-mono);
+}
+
+.scenario-import-preview ol,
+.custom-import-preview ol {
+  display: grid;
+  gap: 4px;
+  max-height: 150px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.scenario-import-preview li,
+.custom-import-preview li {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 7px;
+  padding: 6px 7px;
+  border-left: 2px solid var(--cryo);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.scenario-import-preview li.error,
+.custom-import-preview li.error {
+  border-left-color: var(--alarm);
+}
+
+.scenario-import-preview li.caution,
+.custom-import-preview li.caution {
+  border-left-color: var(--caution);
+}
+
+.scenario-import-preview li > span,
+.custom-import-preview li > span {
+  color: var(--text-low);
+  font: 600 7px/1.3 var(--font-mono);
+}
+
+.scenario-import-preview li > p,
+.custom-import-preview li > p {
+  margin: 0;
+  color: var(--text-mid);
+  font: 400 9px/1.4 var(--font-body);
+}
+
 .scenario-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4083,8 +4154,36 @@ body.selene-photo-mode .custom-scene-label-overlay {
   margin: 0;
 }
 
+.custom-project-footer {
+  display: grid;
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+
+.custom-project-actions,
+.custom-import-preview > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.custom-project-actions button,
+.custom-import-preview button {
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  color: var(--text-low);
+  font: 500 8px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.custom-project-actions button:hover,
+.custom-import-preview button:hover:not(:disabled) {
+  color: var(--cryo);
+  border-color: var(--cryo);
+}
+
 .custom-reset {
-  margin: 0 16px 14px;
+  margin: 0;
   padding: 9px;
   border: 1px solid var(--line);
   color: var(--text-low);

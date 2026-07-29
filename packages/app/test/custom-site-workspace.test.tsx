@@ -1,5 +1,16 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  SEEDED_SITE_DESIGN_FIXTURES,
+  serializeSiteDesign
+} from "@selene-isru/engine";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CustomSiteWorkspace } from "../src/components/site-design/CustomSiteWorkspace";
 import { useStore } from "../src/state/store";
@@ -132,5 +143,33 @@ describe("custom site workspace", () => {
     ).toBe(2_500_000);
     expect(screen.getByLabelText("Custom site inspector").textContent)
       .toContain("2.5");
+  });
+
+  it("previews a design file and changes the project only after acceptance", async () => {
+    const { container } = render(<CustomSiteWorkspace />);
+    const before = serializeSiteDesign(useStore.getState().customSite.design);
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="file"]'
+    )!;
+    const file = new File(["site"], "polar-site.json", {
+      type: "application/json"
+    });
+    Object.defineProperty(file, "text", {
+      value: () => Promise.resolve(JSON.stringify(
+        SEEDED_SITE_DESIGN_FIXTURES.polar
+      ))
+    });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(await screen.findByLabelText("Custom design import preview"))
+      .toBeTruthy();
+    expect(serializeSiteDesign(useStore.getState().customSite.design))
+      .toBe(before);
+
+    fireEvent.click(screen.getByRole("button", { name: "ACCEPT DESIGN" }));
+    await waitFor(() => {
+      expect(useStore.getState().customSite.design.environment).toBe("polar");
+    });
   });
 });
