@@ -1,11 +1,13 @@
-import { simulate } from "@selene-isru/engine";
+import { serializeSiteDesign } from "@selene-isru/engine";
 import { useRef, useState } from "react";
 import {
   downloadText,
-  parseStudyExport,
+  previewStudyExport,
   scenariosCsv,
-  studyExport
+  studyExport,
+  studyScenarioResult
 } from "../../analysis/studyExport";
+import type { StudyImportPreview } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
 import { paramsToUrl } from "../../lib/url";
 import {
@@ -23,15 +25,17 @@ const COMPARISON_METRICS = [
   { label: "Plant-mass throughput equivalent", value: (id: string) => formatQtyText(simulateFor(id).logistics.plantMassThroughputDays, "days") }
 ];
 
-const resultCache = new Map<string, ReturnType<typeof simulate>>();
-function simulateFor(id: string): ReturnType<typeof simulate> {
+const resultCache = new Map<string, ReturnType<typeof studyScenarioResult>>();
+function simulateFor(id: string): ReturnType<typeof studyScenarioResult> {
   const state = useStore.getState();
   const scenario = state.scenarioLibrary.find((item) => item.id === id);
   const cached = resultCache.get(id);
   if (cached !== undefined && scenario !== undefined) {
     return cached;
   }
-  const result = simulate(scenario?.params ?? state.params);
+  const result = scenario === undefined
+    ? state.result
+    : studyScenarioResult(scenario);
   resultCache.set(id, result);
   return result;
 }
@@ -49,6 +53,8 @@ export function ScenarioLibrary(): React.JSX.Element {
   const [saveName, setSaveName] = useState(currentName);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [importPreview, setImportPreview] =
+    useState<StudyImportPreview | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const pinned = scenarios.filter((scenario) => scenario.pinned).slice(0, MAX_PINNED_SCENARIOS);
 
@@ -114,11 +120,17 @@ export function ScenarioLibrary(): React.JSX.Element {
             }
             void file.text().then((text) => {
               try {
-                const imported = parseStudyExport(JSON.parse(text) as unknown);
-                importScenarios(imported);
-                setImportStatus(`${imported.length} case${imported.length === 1 ? "" : "s"} imported`);
+                const preview = previewStudyExport(
+                  JSON.parse(text) as unknown
+                );
+                setImportPreview(preview);
+                setImportStatus(
+                  `${preview.scenarios.length} ready · ` +
+                  `${preview.rejectedCount} rejected · review before import`
+                );
               } catch {
                 setImportStatus("Import failed: choose a SELENE study JSON file");
+                setImportPreview(null);
               } finally {
                 event.target.value = "";
               }
@@ -127,10 +139,72 @@ export function ScenarioLibrary(): React.JSX.Element {
         />
       </div>
       {importStatus !== null && <p className="scenario-import-status" role="status">{importStatus}</p>}
+      {importPreview !== null && (
+        <section className="scenario-import-preview" aria-label="Study import preview">
+          <div>
+            <strong>
+              VERSION {importPreview.sourceVersion ?? "?"} ·{" "}
+              {importPreview.scenarios.length} ACCEPTABLE CASES
+            </strong>
+            <span>
+              {importPreview.findings.filter((finding) =>
+                finding.severity === "error"
+              ).length} errors ·{" "}
+              {importPreview.findings.filter((finding) =>
+                finding.severity === "caution"
+              ).length} cautions ·{" "}
+              {importPreview.findings.filter((finding) =>
+                finding.severity === "info"
+              ).length} notes
+            </span>
+          </div>
+          {importPreview.findings.length > 0 && (
+            <ol>
+              {importPreview.findings.slice(0, 8).map((finding, index) => (
+                <li className={finding.severity} key={`${finding.message}-${index}`}>
+                  <span>{finding.severity.toUpperCase()}</span>
+                  <p>
+                    {finding.scenarioName === undefined
+                      ? ""
+                      : `${finding.scenarioName}: `}
+                    {finding.message}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          )}
+          <div className="scenario-card-actions">
+            <button
+              type="button"
+              disabled={importPreview.scenarios.length === 0}
+              onClick={() => {
+                importScenarios(importPreview.scenarios);
+                setImportStatus(
+                  `${importPreview.scenarios.length} case${
+                    importPreview.scenarios.length === 1 ? "" : "s"
+                  } imported`
+                );
+                setImportPreview(null);
+              }}
+            >
+              ACCEPT IMPORT
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setImportPreview(null);
+                setImportStatus("Import cancelled; the library was not changed");
+              }}
+            >
+              CANCEL
+            </button>
+          </div>
+        </section>
+      )}
 
       <div className="scenario-cards">
         {scenarios.map((scenario) => {
-          const result = simulate(scenario.params);
+          const result = studyScenarioResult(scenario);
           return (
             <article key={scenario.id} className={scenario.pinned ? "pinned" : ""}>
               <div className="scenario-card-head">
@@ -139,7 +213,11 @@ export function ScenarioLibrary(): React.JSX.Element {
                   aria-label={`Rename ${scenario.name}`}
                   onChange={(event) => renameScenario(scenario.id, event.target.value)}
                 />
-                <span>{scenario.params.site.toUpperCase()} · {result.power.architecture.toUpperCase()}</span>
+                <span>
+                  {scenario.kind.toUpperCase()} ·{" "}
+                  {scenario.params.site.toUpperCase()} ·{" "}
+                  {result.power.architecture.toUpperCase()}
+                </span>
               </div>
               <div className="scenario-card-metrics mono">
                 <span>{formatQtyText(result.production.targetKgPerDay, "kg/day")}</span>
@@ -152,17 +230,30 @@ export function ScenarioLibrary(): React.JSX.Element {
                   {scenario.pinned ? "UNPIN" : "PIN"}
                 </button>
                 <button type="button" onClick={() => duplicateScenario(scenario.id)}>COPY</button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(paramsToUrl(scenario.params)).then(() => {
-                      setCopiedId(scenario.id);
-                      setTimeout(() => setCopiedId(null), 1200);
-                    });
-                  }}
-                >
-                  {copiedId === scenario.id ? "COPIED" : "LINK"}
-                </button>
+                {scenario.kind === "custom" && scenario.design !== undefined ? (
+                  <button
+                    type="button"
+                    onClick={() => downloadText(
+                      `${scenario.design!.name.replaceAll(/[^a-z0-9]+/gi, "-").toLowerCase() || "selene-custom-site"}.json`,
+                      serializeSiteDesign(scenario.design!),
+                      "application/json"
+                    )}
+                  >
+                    DESIGN JSON
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(paramsToUrl(scenario.params)).then(() => {
+                        setCopiedId(scenario.id);
+                        setTimeout(() => setCopiedId(null), 1200);
+                      });
+                    }}
+                  >
+                    {copiedId === scenario.id ? "COPIED" : "LINK"}
+                  </button>
+                )}
                 <button type="button" onClick={() => deleteScenario(scenario.id)}>DELETE</button>
               </div>
             </article>

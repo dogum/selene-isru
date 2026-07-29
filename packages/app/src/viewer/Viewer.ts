@@ -1,12 +1,31 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { SimParams, SimResult } from "@selene-isru/engine";
+import type {
+  SimParams,
+  SimResult,
+  SiteAssetInstance,
+  SiteDesignDocument,
+  SiteDesignEvaluation,
+  SiteEnvironment,
+  SitePortRef,
+  SiteViewMode,
+  WorkspaceMode
+} from "@selene-isru/engine";
+import {
+  siteConnectionLengthM,
+  sitePortConnectionCompatibility,
+  resolveSitePort,
+  snapSiteCoordinate,
+  validateSiteAssetPlacement,
+  validateSiteDesign
+} from "@selene-isru/engine";
 import type { TimeseriesPoint } from "@selene-isru/engine";
 import {
   connectedAssets,
   processEdges,
   type ProcessEdgeView
 } from "../analysis/process";
+import { siteLayoutSummary } from "../site-design/editor";
 import {
   type SiteMode,
   CAMERA_POSES,
@@ -20,6 +39,10 @@ import {
 } from "./bindings";
 import { EquatorialDiorama } from "./dioramas/equatorial";
 import { PolarDiorama } from "./dioramas/polar";
+import {
+  CustomSiteDiorama,
+  type PickedRouteHandle
+} from "./dioramas/custom";
 import {
   effectiveTier,
   GRAPHICS_EVENT,
@@ -118,7 +141,21 @@ interface ProcessOverlayPath extends ProcessEdgeView {
 }
 
 export interface ViewerCallbacks {
-  onSelectAsset?: (assetKey: string | null) => void;
+  onSelectAsset?: (assetKey: string | null, additive?: boolean) => void;
+  onBeginCustomConnection?: (source: SitePortRef) => void;
+  onCompleteCustomConnection?: (target: SitePortRef) => void;
+  onSelectCustomConnection?: (connectionId: string | null) => void;
+  onPlaceCustomAsset?: (kind: string, xM: number, zM: number) => void;
+  onMoveCustomAsset?: (assetId: string, xM: number, zM: number) => void;
+  onMoveCustomRoutePoint?: (
+    connectionId: string,
+    routePointIndex: number,
+    xM: number,
+    zM: number
+  ) => void;
+  onRendererStatus?: (
+    status: "ready" | "lost" | "restoring" | "failed"
+  ) => void;
 }
 
 /**
@@ -133,7 +170,9 @@ export class Viewer {
   private renderer!: THREE.WebGLRenderer;
   private post!: PostPipeline;
   private scene!: THREE.Scene;
-  private camera!: THREE.PerspectiveCamera;
+  private camera!: THREE.PerspectiveCamera | THREE.OrthographicCamera;
+  private perspectiveCamera!: THREE.PerspectiveCamera;
+  private plannerCamera!: THREE.OrthographicCamera;
   private controls!: OrbitControls;
   private sun!: THREE.DirectionalLight;
   private hemi!: THREE.HemisphereLight;
@@ -148,13 +187,17 @@ export class Viewer {
   private pointerDown = new THREE.Vector2();
   private hoveredAssetKey: string | null = null;
   private selectedAssetKey: string | null = null;
+  private selectedAssetKeys: string[] = [];
   private hoverOutline: THREE.Mesh | null = null;
   private selectionOutline: THREE.Mesh | null = null;
   private connectionOutlines: THREE.Mesh[] = [];
   private assetTooltip: HTMLDivElement;
   private learningOverlay: HTMLDivElement;
+  private customLabelOverlay: HTMLDivElement;
   private processSvg: SVGSVGElement;
   private learningLabels = new Map<string, HTMLButtonElement>();
+  private customLabels = new Map<string, HTMLButtonElement>();
+  private customConnectionLabels = new Map<string, HTMLButtonElement>();
   private processPaths: ProcessOverlayPath[] = [];
   private learningMode = false;
   private showProcessFlow = false;
@@ -178,9 +221,38 @@ export class Viewer {
   private reducedMotion: boolean;
   private lastInputAt = 0;
   private transitioning = false;
+  private workspaceMode: WorkspaceMode = "authored";
+  private customEnvironment: SiteEnvironment = "equatorial";
+  private customViewMode: SiteViewMode = "planner";
+  private activeSite: SiteMode | null = null;
+  private customDesign: SiteDesignDocument | null = null;
+  private customEvaluation: SiteDesignEvaluation | null = null;
+  private customPlacementKind: string | null = null;
+  private customConnectionSource: SitePortRef | null = null;
+  private customSelectedConnectionId: string | null = null;
+  private customGridSnapM = 5;
+  private customPlacementPoint: THREE.Vector3 | null = null;
+  private customPlacementBlocked = false;
+  private customDragCandidate: string | null = null;
+  private customDragging = false;
+  private customDownPort: SitePortRef | null = null;
+  private customDownConnection: string | null = null;
+  private customDownRouteHandle: PickedRouteHandle | null = null;
+  private customDraggingRouteHandle = false;
 
   private lastResult: SimResult | null = null;
   private lastParams: SimParams | null = null;
+  private lastTimeState: {
+    point: TimeseriesPoint;
+    params: SimParams;
+    result: SimResult;
+    cycleHours: number;
+  } | null = null;
+  private contextRecoveryCamera: {
+    position: THREE.Vector3;
+    target: THREE.Vector3;
+    plannerZoom: number;
+  } | null = null;
   private warnedIds = new Set<string>();
   private resizeObserver: ResizeObserver;
   private mediaQuery: MediaQueryList;
@@ -192,6 +264,7 @@ export class Viewer {
     this.container = container;
     this.mobile = mobile;
     this.callbacks = callbacks;
+    this.raycaster.params.Line = { threshold: 1.4 };
     this.graphicsPrefs = loadGraphicsPrefs();
     this.activeTier = effectiveTier(this.graphicsPrefs.tier, mobile);
     this.debugHud = new URLSearchParams(window.location.search).get("debug") === "1";
@@ -248,6 +321,11 @@ export class Viewer {
     this.learningOverlay.appendChild(this.processSvg);
     container.appendChild(this.learningOverlay);
 
+    this.customLabelOverlay = document.createElement("div");
+    this.customLabelOverlay.className = "custom-scene-label-overlay";
+    this.customLabelOverlay.hidden = true;
+    container.appendChild(this.customLabelOverlay);
+
     this.initGL();
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -271,6 +349,12 @@ export class Viewer {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     setProceduralTextureAnisotropy(this.renderer.capabilities.getMaxAnisotropy());
+    this.renderer.domElement.tabIndex = 0;
+    this.renderer.domElement.setAttribute("role", "img");
+    this.renderer.domElement.setAttribute(
+      "aria-label",
+      "Interactive lunar site scene. Use the equipment roster and numeric fields for keyboard review and editing."
+    );
     this.container.insertBefore(this.renderer.domElement, this.veil);
 
     this.renderer.domElement.addEventListener("webglcontextlost", this.onContextLost, false);
@@ -307,18 +391,18 @@ export class Viewer {
     this.scene.add(this.fill);
 
     const aspect = Math.max(0.1, this.container.clientWidth / Math.max(1, this.container.clientHeight));
-    this.camera = new THREE.PerspectiveCamera(42, aspect, 0.5, 1400);
-
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
-    this.controls.minPolarAngle = (15 * Math.PI) / 180;
-    this.controls.maxPolarAngle = (80 * Math.PI) / 180;
-    this.controls.minDistance = 18;
-    this.controls.maxDistance = 140;
-    this.controls.enablePan = false;
-    this.controls.addEventListener("change", this.onUserInput);
-    this.controls.addEventListener("start", this.onUserInput);
+    this.perspectiveCamera = new THREE.PerspectiveCamera(42, aspect, 0.5, 1400);
+    this.plannerCamera = new THREE.OrthographicCamera(
+      -54 * aspect,
+      54 * aspect,
+      54,
+      -54,
+      0.5,
+      1400
+    );
+    this.plannerCamera.up.set(0, 0, -1);
+    this.camera = this.perspectiveCamera;
+    this.controls = this.createControls(this.camera);
 
     this.post = new PostPipeline(this.renderer, this.scene, this.camera, {
       mobile: this.mobile,
@@ -334,6 +418,26 @@ export class Viewer {
     // Apply user lighting after the camera and post stack are ready. Starting
     // the render loop earlier could leave the first frame in the dark defaults.
     this.applyLightingMode();
+  }
+
+  private createControls(
+    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  ): OrbitControls {
+    const controls = new OrbitControls(camera, this.renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minPolarAngle = (15 * Math.PI) / 180;
+    controls.maxPolarAngle = (80 * Math.PI) / 180;
+    controls.minDistance = 18;
+    controls.maxDistance = 180;
+    controls.enablePan = camera instanceof THREE.OrthographicCamera;
+    controls.enableRotate = camera instanceof THREE.PerspectiveCamera;
+    controls.screenSpacePanning = camera instanceof THREE.OrthographicCamera;
+    controls.minZoom = 0.65;
+    controls.maxZoom = 3.2;
+    controls.addEventListener("change", this.onUserInput);
+    controls.addEventListener("start", this.onUserInput);
+    return controls;
   }
 
   dispose(): void {
@@ -358,21 +462,123 @@ export class Viewer {
     this.assetTooltip.remove();
     this.assetLoadStatus.remove();
     this.learningOverlay.remove();
+    this.customLabelOverlay.remove();
   }
 
   /* ---------------- public API ---------------- */
 
+  setWorkspaceState(
+    mode: WorkspaceMode,
+    environment: SiteEnvironment,
+    viewMode: SiteViewMode
+  ): void {
+    const rebuild =
+      mode !== this.workspaceMode ||
+      environment !== this.customEnvironment ||
+      this.activeSite !== environment;
+    const viewChanged = viewMode !== this.customViewMode;
+    this.workspaceMode = mode;
+    this.customEnvironment = environment;
+    this.customViewMode = viewMode;
+
+    if (rebuild && this.diorama !== null) {
+      this.buildSite(mode === "custom" ? environment : this.lastResult?.site ?? environment);
+      if (this.lastResult !== null && this.lastParams !== null) {
+        this.applyToDiorama(this.lastResult, this.lastParams, true);
+      }
+    } else if (viewChanged || mode === "custom") {
+      this.applyWorkspaceCamera();
+    }
+    if (mode === "custom") {
+      if (this.diorama instanceof CustomSiteDiorama) {
+        this.diorama.setPlannerMode(viewMode === "planner");
+      }
+      if (viewChanged) {
+        this.rebuildCustomLabels();
+      }
+      this.learningOverlay.hidden = true;
+      this.customLabelOverlay.hidden = this.customDesign?.assets.length === 0;
+      this.assetTooltip.hidden = true;
+      this.setHoveredAsset(null);
+    } else {
+      this.customLabelOverlay.hidden = true;
+    }
+    this.wake();
+  }
+
+  /** Synchronize the persisted custom document with its dynamic scene instances. */
+  setCustomDesign(
+    design: SiteDesignDocument,
+    selectedAssetId: string | null,
+    selectedConnectionId: string | null = null,
+    evaluation: SiteDesignEvaluation | null = null,
+    selectedAssetIds: readonly string[] = selectedAssetId === null
+      ? []
+      : [selectedAssetId]
+  ): void {
+    this.customDesign = design;
+    this.customEvaluation = evaluation;
+    this.customSelectedConnectionId = selectedConnectionId;
+    this.selectedAssetKeys = [...selectedAssetIds];
+    this.customGridSnapM = design.planner.gridSnapM;
+    if (this.diorama instanceof CustomSiteDiorama) {
+      this.diorama.syncDesign(
+        design,
+        selectedAssetId,
+        selectedConnectionId,
+        evaluation,
+        selectedAssetIds
+      );
+      this.diorama.setConnectionState(design, this.customConnectionSource);
+    }
+    this.rebuildCustomLabels();
+    this.setSelectedAsset(selectedAssetId);
+    this.wake();
+  }
+
+  /** Synchronize transient placement and connection-authoring state. */
+  setCustomEditorState(
+    placementKind: string | null,
+    connectionSource: SitePortRef | null,
+    gridSnapM: number
+  ): void {
+    this.customPlacementKind = this.mobile ? null : placementKind;
+    this.customConnectionSource = this.mobile ? null : connectionSource;
+    this.customGridSnapM = gridSnapM;
+    this.customPlacementPoint = null;
+    this.customPlacementBlocked = false;
+    if (this.diorama instanceof CustomSiteDiorama) {
+      if (this.customPlacementKind === null) {
+        this.diorama.clearPlacementPreview();
+      }
+      this.diorama.clearConnectionPreview();
+      if (this.customDesign !== null) {
+        this.diorama.setConnectionState(
+          this.customDesign,
+          this.customConnectionSource
+        );
+      }
+    }
+    this.renderer.domElement.style.cursor =
+      this.customPlacementKind !== null || this.customConnectionSource !== null
+        ? "crosshair"
+        : "grab";
+    this.wake();
+  }
+
   /** Idempotent. Called after every simulate (§3.1). */
   apply(result: SimResult, params: SimParams): void {
-    const prevSite = this.lastResult?.site ?? null;
     this.lastResult = result;
     this.lastParams = params;
+    const desiredSite = this.workspaceMode === "custom"
+      ? this.customEnvironment
+      : result.site;
 
-    if (prevSite === null || this.diorama === null) {
-      this.buildSite(result.site);
+    if (this.activeSite === null || this.diorama === null) {
+      this.buildSite(desiredSite);
       this.applyToDiorama(result, params, true);
-    } else if (result.site !== prevSite && !this.transitioning) {
-      this.siteTransition(result.site);
+    } else if (desiredSite !== this.activeSite && !this.transitioning) {
+      this.siteTransition(desiredSite);
     } else {
       this.applyToDiorama(result, params, false);
     }
@@ -384,6 +590,71 @@ export class Viewer {
   /** fly the camera (1s) to a named pose for the current site */
   flyTo(key: string): void {
     if (this.lastResult === null) {
+      return;
+    }
+    if (this.workspaceMode === "custom") {
+      const selection = key === "__selection__" &&
+        this.customDesign !== null
+        ? this.customDesign.assets.filter((asset) =>
+            this.selectedAssetKeys.includes(asset.id)
+          )
+        : [];
+      const selectionLayout = selection.length === 0 ||
+        this.customDesign === null
+        ? null
+        : siteLayoutSummary({
+            ...this.customDesign,
+            assets: selection,
+            connections: []
+          });
+      const asset = this.diorama?.assets[key];
+      const target = selectionLayout === null
+        ? asset?.getWorldPosition(new THREE.Vector3()) ??
+          (
+            this.diorama instanceof CustomSiteDiorama
+              ? this.diorama.connectionWorldPoint(key)
+              : null
+          )
+        : new THREE.Vector3(
+            (selectionLayout.minXM + selectionLayout.maxXM) / 2,
+            0,
+            (selectionLayout.minZM + selectionLayout.maxZM) / 2
+          );
+      if (target === null || target === undefined) {
+        return;
+      }
+      const offset = this.camera.position.clone().sub(this.controls.target);
+      const selectionSpan = selectionLayout === null
+        ? 20
+        : Math.max(selectionLayout.widthM, selectionLayout.depthM, 12);
+      if (
+        this.customViewMode === "planner" &&
+        selectionLayout !== null &&
+        this.camera === this.plannerCamera
+      ) {
+        this.plannerCamera.zoom = Math.max(
+          0.65,
+          Math.min(3.2, 74 / (selectionSpan + 16))
+        );
+        this.plannerCamera.updateProjectionMatrix();
+      }
+      const position = target.clone().add(
+        this.customViewMode === "planner"
+          ? offset
+          : new THREE.Vector3(
+              selectionSpan * 1.25,
+              selectionSpan * 0.9,
+              selectionSpan * 1.25
+            )
+      );
+      this.flyToPose(
+        {
+          position: [position.x, position.y, position.z],
+          target: [target.x, target.y, target.z]
+        },
+        this.reducedMotion ? 0 : 700
+      );
+      this.lastInputAt = performance.now();
       return;
     }
     const poses = CAMERA_POSES[this.lastResult.site];
@@ -409,6 +680,9 @@ export class Viewer {
 
   /** True once every authored asset for the active site has loaded. */
   isReady(): boolean {
+    if (this.workspaceMode === "custom") {
+      return this.diorama !== null;
+    }
     return (
       this.diorama !== null &&
       this.expectedAssetCount > 0 &&
@@ -431,6 +705,14 @@ export class Viewer {
   /** Synchronize React inspector state with the scene selection treatment. */
   setSelectedAsset(assetKey: string | null): void {
     this.selectedAssetKey = assetKey;
+    for (const [key, label] of this.customLabels) {
+      label.classList.toggle(
+        "active",
+        this.workspaceMode === "custom"
+          ? this.selectedAssetKeys.includes(key)
+          : key === assetKey
+      );
+    }
     this.refreshSelectionOutline();
     this.updateLearningOverlay();
     this.wake();
@@ -452,6 +734,7 @@ export class Viewer {
   }
 
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
+    this.lastTimeState = { point, params, result, cycleHours };
     this.applyCycleLighting(point, result.site, cycleHours);
     if (this.diorama !== null) {
       this.diorama.applyTime(point, params, result, cycleHours, this.reducedMotion);
@@ -463,6 +746,7 @@ export class Viewer {
   /* ---------------- site handling ---------------- */
 
   private buildSite(site: SiteMode): void {
+    this.activeSite = site;
     this.setHoveredAsset(null);
     this.removeOutline("selection");
     if (this.diorama !== null) {
@@ -472,10 +756,35 @@ export class Viewer {
     }
     this.setEnvironment(site);
     this.loadedAssetCount = 0;
-    this.expectedAssetCount = site === "equatorial" ? 8 : 7;
-    this.assetLoadStatus.hidden = false;
-    this.assetLoadStatus.textContent = `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
-    if (site === "equatorial") {
+    this.expectedAssetCount = this.workspaceMode === "custom"
+      ? 0
+      : site === "equatorial" ? 8 : 7;
+    this.assetLoadStatus.hidden = this.workspaceMode === "custom";
+    this.assetLoadStatus.textContent = this.workspaceMode === "custom"
+      ? ""
+      : `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
+    if (this.workspaceMode === "custom") {
+      const custom = new CustomSiteDiorama(site, this.quality, () => {
+        if (this.diorama !== custom || this.disposed) {
+          return;
+        }
+        this.rebuildCustomLabels();
+        this.refreshSelectionOutline();
+        this.wake();
+      });
+      if (this.customDesign !== null) {
+        custom.syncDesign(
+          this.customDesign,
+          this.selectedAssetKey,
+          this.customSelectedConnectionId,
+          this.customEvaluation,
+          this.selectedAssetKeys
+        );
+        custom.setConnectionState(this.customDesign, this.customConnectionSource);
+      }
+      custom.setPlannerMode(this.customViewMode === "planner");
+      this.diorama = custom;
+    } else if (site === "equatorial") {
       const equatorial = new EquatorialDiorama(this.quality, () => {
         if (this.diorama !== equatorial || this.disposed) {
           return;
@@ -504,6 +813,9 @@ export class Viewer {
     }
     this.scene.add(this.diorama.group);
     this.rebuildLearningOverlay();
+    if (this.workspaceMode === "custom") {
+      this.rebuildCustomLabels();
+    }
 
     // lighting per site: equatorial high sun, polar raking 2° light (§3.1)
     if (site === "equatorial") {
@@ -524,10 +836,7 @@ export class Viewer {
     }
     this.sun.target.position.set(0, 0, 0);
 
-    const pose = CAMERA_POSES[site].overview;
-    this.camera.position.set(...pose.position);
-    this.controls.target.set(...pose.target);
-    this.controls.update();
+    this.applyWorkspaceCamera();
     this.needsRender = true;
   }
 
@@ -665,6 +974,67 @@ export class Viewer {
 
   /* ---------------- camera ---------------- */
 
+  private switchCamera(
+    next: THREE.PerspectiveCamera | THREE.OrthographicCamera
+  ): void {
+    if (this.camera === next) {
+      return;
+    }
+    this.controls.dispose();
+    this.camera = next;
+    this.controls = this.createControls(next);
+    this.post.setCamera(next);
+  }
+
+  private applyWorkspaceCamera(): void {
+    const site = this.activeSite ?? this.customEnvironment;
+    const layout = this.customDesign === null
+      ? null
+      : siteLayoutSummary(this.customDesign);
+    const customCenter = layout === null
+      ? new THREE.Vector3()
+      : new THREE.Vector3(
+          (layout.minXM + layout.maxXM) / 2,
+          0,
+          (layout.minZM + layout.maxZM) / 2
+        );
+    const customSpan = layout === null
+      ? 80
+      : Math.max(24, layout.widthM, layout.depthM);
+    if (this.workspaceMode === "custom" && this.customViewMode === "planner") {
+      this.switchCamera(this.plannerCamera);
+      this.plannerCamera.position.set(customCenter.x, 135, customCenter.z);
+      this.plannerCamera.zoom =
+        Math.max(0.48, Math.min(2.2, 88 / (customSpan + 24))) *
+        (this.mobile ? 0.82 : 1);
+      this.plannerCamera.updateProjectionMatrix();
+      this.controls.target.copy(customCenter);
+      this.controls.update();
+      return;
+    }
+
+    this.switchCamera(this.perspectiveCamera);
+    if (this.workspaceMode === "custom") {
+      const distance = Math.max(42, Math.min(160, customSpan * 1.55));
+      const position = customCenter.clone().add(
+        new THREE.Vector3(distance, distance * 0.68, distance)
+      );
+      this.flyToPose(
+        {
+          position: [position.x, position.y, position.z],
+          target: [customCenter.x, customCenter.y, customCenter.z]
+        },
+        this.reducedMotion ? 0 : 650
+      );
+      return;
+    } else {
+      const pose = CAMERA_POSES[site].overview;
+      this.perspectiveCamera.position.set(...pose.position);
+      this.controls.target.set(...pose.target);
+    }
+    this.controls.update();
+  }
+
   private flyToPose(pose: CameraPose, ms: number): void {
     const fromPos = this.camera.position.clone();
     const fromTarget = this.controls.target.clone();
@@ -781,6 +1151,11 @@ export class Viewer {
     }
     asset.getWorldPosition(this.overlayPoint);
     this.overlayPoint.y += height;
+    return this.worldScreenPoint(this.overlayPoint);
+  }
+
+  private worldScreenPoint(world: THREE.Vector3): { x: number; y: number } | null {
+    this.overlayPoint.copy(world);
     this.overlayPoint.project(this.camera);
     if (this.overlayPoint.z < -1 || this.overlayPoint.z > 1) {
       return null;
@@ -841,6 +1216,164 @@ export class Viewer {
       path.line.setAttribute("y2", String(to.y));
       path.text.setAttribute("x", String((from.x + to.x) / 2));
       path.text.setAttribute("y", String((from.y + to.y) / 2 - 6));
+    }
+  }
+
+  private rebuildCustomLabels(): void {
+    this.customLabelOverlay.replaceChildren();
+    this.customLabels.clear();
+    this.customConnectionLabels.clear();
+    if (this.customDesign === null) {
+      this.customLabelOverlay.hidden = true;
+      return;
+    }
+    const invalidConnectionIds = new Set(
+      validateSiteDesign(this.customDesign)
+        .filter((finding) => finding.severity === "error")
+        .flatMap((finding) => finding.entityIds)
+        .filter((id) =>
+          this.customDesign?.connections.some((connection) => connection.id === id)
+        )
+    );
+    for (const asset of this.customDesign.assets) {
+      const renderStatus = this.diorama instanceof CustomSiteDiorama
+        ? this.diorama.assetRenderStatus(asset.id)
+        : null;
+      const renderStatusLabel = renderStatus === "fallback"
+        ? " · MODEL FALLBACK"
+        : renderStatus === "simplified" ? " · LIGHTWEIGHT" : "";
+      const assetEvaluation = this.customEvaluation?.assetEvaluations.find(
+        (item) => item.assetId === asset.id
+      );
+      const assetStateLabel = !asset.enabled
+        ? "DISABLED"
+        : (assetEvaluation?.utilization ?? 0) > 1
+          ? "OVER CAPACITY"
+          : assetEvaluation?.operational === true ? "OPERATIONAL" : "STANDBY";
+      const label = document.createElement("button");
+      label.type = "button";
+      label.className = "custom-scene-label";
+      label.textContent = this.customViewMode === "planner"
+        ? `${asset.name.toUpperCase()} · X ${asset.transform.xM.toFixed(1)} · Z ${asset.transform.zM.toFixed(1)} · ${assetStateLabel}${renderStatusLabel}`
+        : `${asset.name.toUpperCase()} · ${assetStateLabel}${renderStatusLabel}`;
+      label.setAttribute(
+        "aria-label",
+        `${asset.name}, ${assetStateLabel.toLowerCase()}, X ${asset.transform.xM.toFixed(1)} meters, Z ${asset.transform.zM.toFixed(1)} meters${renderStatusLabel.toLowerCase()}`
+      );
+      label.title =
+        `Select ${asset.name} · ${assetStateLabel}${renderStatusLabel}`;
+      label.classList.toggle("disabled", !asset.enabled);
+      label.classList.toggle(
+        "loaded",
+        (assetEvaluation?.utilization ?? 0) > 1
+      );
+      label.classList.toggle(
+        "standby",
+        asset.enabled && assetEvaluation?.operational !== true
+      );
+      label.classList.toggle(
+        "fallback",
+        renderStatus === "fallback" || renderStatus === "simplified"
+      );
+      label.classList.toggle(
+        "active",
+        this.selectedAssetKeys.includes(asset.id)
+      );
+      label.addEventListener("click", (event) => this.selectPickedAsset(
+        asset.id,
+        event.shiftKey || event.ctrlKey || event.metaKey
+      ));
+      this.customLabelOverlay.appendChild(label);
+      this.customLabels.set(asset.id, label);
+    }
+    for (const connection of this.customDesign.connections) {
+      const connectionEvaluation = this.customEvaluation?.connectionEvaluations.find(
+        (item) => item.connectionId === connection.id
+      );
+      const fromPort = resolveSitePort(this.customDesign, connection.from)?.port;
+      const toPort = resolveSitePort(this.customDesign, connection.to)?.port;
+      const stream = fromPort?.streams.find((candidate) =>
+        toPort?.streams.includes(candidate)
+      );
+      const invalid = invalidConnectionIds.has(connection.id);
+      const overloaded = (connectionEvaluation?.utilization ?? 0) > 1;
+      const connectionStatus = invalid
+        ? "INVALID"
+        : overloaded
+          ? "OVER CAPACITY"
+          : connectionEvaluation?.operational === true ? "FLOW" : "STANDBY";
+      const fromAsset = this.customDesign.assets.find((asset) =>
+        asset.id === connection.from.assetId
+      );
+      const toAsset = this.customDesign.assets.find((asset) =>
+        asset.id === connection.to.assetId
+      );
+      const label = document.createElement("button");
+      label.type = "button";
+      label.className = `custom-connection-label custom-connection-${connection.kind}`;
+      label.textContent =
+        `${(stream ?? connection.kind).toUpperCase()} · ` +
+        `${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} M · ` +
+        connectionStatus +
+        `${connectionEvaluation?.utilization === null ||
+          connectionEvaluation?.utilization === undefined
+          ? ""
+          : ` · ${(connectionEvaluation.utilization * 100).toFixed(0)}%`}`;
+      label.setAttribute(
+        "aria-label",
+        `${connection.kind} route from ${fromAsset?.name ?? connection.from.assetId} to ${toAsset?.name ?? connection.to.assetId}, ${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} meters, ${connectionStatus.toLowerCase()}`
+      );
+      label.title = `Select route · ${connectionStatus}`;
+      label.classList.toggle("active", connection.id === this.customSelectedConnectionId);
+      label.classList.toggle("invalid", invalid);
+      label.classList.toggle(
+        "standby",
+        !invalid &&
+        connectionEvaluation?.operational !== true
+      );
+      label.classList.toggle(
+        "loaded",
+        overloaded
+      );
+      label.addEventListener("click", () => this.selectPickedConnection(connection.id));
+      this.customLabelOverlay.appendChild(label);
+      this.customConnectionLabels.set(connection.id, label);
+    }
+    this.customLabelOverlay.hidden =
+      this.workspaceMode !== "custom" ||
+      (this.customLabels.size === 0 && this.customConnectionLabels.size === 0);
+    this.updateCustomLabels();
+  }
+
+  private updateCustomLabels(): void {
+    if (
+      this.workspaceMode !== "custom" ||
+      this.customLabelOverlay.hidden ||
+      this.diorama === null
+    ) {
+      return;
+    }
+    const width = Math.max(1, this.container.clientWidth);
+    for (const [key, label] of this.customLabels) {
+      const point = this.assetScreenPoint(key, 4.2);
+      label.hidden = point === null;
+      if (point !== null) {
+        const x = Math.min(width - 80, Math.max(80, point.x));
+        const y = Math.max(36, point.y);
+        label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+      }
+    }
+    if (this.diorama instanceof CustomSiteDiorama) {
+      for (const [key, label] of this.customConnectionLabels) {
+        const world = this.diorama.connectionWorldPoint(key);
+        const point = world === null ? null : this.worldScreenPoint(world);
+        label.hidden = point === null || this.customViewMode !== "planner";
+        if (point !== null) {
+          const x = Math.min(width - 80, Math.max(80, point.x));
+          const y = Math.max(36, point.y);
+          label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+        }
+      }
     }
   }
 
@@ -915,7 +1448,12 @@ export class Viewer {
     }
 
     // idle slow orbit after 30s of no input (disabled by reduced motion)
-    if (!this.reducedMotion && now - this.lastInputAt > IDLE_ORBIT_DELAY_MS && !this.transitioning) {
+    if (
+      !this.reducedMotion &&
+      !(this.workspaceMode === "custom" && this.customViewMode === "planner") &&
+      now - this.lastInputAt > IDLE_ORBIT_DELAY_MS &&
+      !this.transitioning
+    ) {
       const offset = this.camera.position.clone().sub(this.controls.target);
       offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), IDLE_ORBIT_RATE * dt);
       this.camera.position.copy(this.controls.target).add(offset);
@@ -924,6 +1462,7 @@ export class Viewer {
 
     this.controls.update();
     this.updateLearningOverlay();
+    this.updateCustomLabels();
 
     const rendered = active || this.needsRender;
     if (rendered) {
@@ -946,19 +1485,346 @@ export class Viewer {
   };
 
   private onPointerMove = (event: PointerEvent): void => {
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      this.updateRaycaster(event);
+      const point = this.diorama.surfacePoint(this.raycaster);
+      if (this.mobile) {
+        const connection = this.diorama.pickConnection(this.raycaster);
+        if (connection !== null) {
+          this.setHoveredAsset(null);
+          this.renderer.domElement.style.cursor = "pointer";
+          return;
+        }
+        this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
+        return;
+      }
+      if (this.customViewMode === "explore") {
+        const connection = this.diorama.pickConnection(this.raycaster);
+        if (connection !== null) {
+          this.setHoveredAsset(null);
+          this.renderer.domElement.style.cursor = "pointer";
+          return;
+        }
+        this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
+        return;
+      }
+      if (this.customPlacementKind !== null) {
+        this.customPlacementPoint = point === null ? null : new THREE.Vector3(
+          snapSiteCoordinate(point.x, this.customGridSnapM),
+          point.y,
+          snapSiteCoordinate(point.z, this.customGridSnapM)
+        );
+        const candidate: SiteAssetInstance | null =
+          this.customDesign === null || this.customPlacementPoint === null
+            ? null
+            : {
+                id: "__placement-preview__",
+                kind: this.customPlacementKind,
+                name: "Placement preview",
+                transform: {
+                  xM: this.customPlacementPoint.x,
+                  zM: this.customPlacementPoint.z,
+                  headingDeg: 0
+                },
+                enabled: true,
+                configuration: {}
+              };
+        const findings = candidate === null || this.customDesign === null
+          ? []
+          : validateSiteAssetPlacement(this.customDesign, candidate);
+        this.customPlacementBlocked = findings.some((finding) => finding.severity === "error");
+        const severity = this.customPlacementBlocked
+          ? "error"
+          : findings.some((finding) => finding.severity === "caution") ? "caution" : "ok";
+        this.diorama.setPlacementPreview(
+          this.customPlacementKind,
+          this.customPlacementPoint,
+          severity
+        );
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = this.customPlacementBlocked
+          ? "not-allowed"
+          : "crosshair";
+        this.wake();
+        return;
+      }
+      if (this.customConnectionSource !== null) {
+        const hoveredPort = this.diorama.pickPort(this.raycaster);
+        const compatibility = hoveredPort === null || this.customDesign === null
+          ? null
+          : sitePortConnectionCompatibility(
+              this.customDesign,
+              this.customConnectionSource,
+              hoveredPort
+            );
+        const target = hoveredPort === null
+          ? point
+          : this.diorama.portWorldPoint(hoveredPort);
+        this.diorama.setConnectionPreview(
+          this.customConnectionSource,
+          target,
+          compatibility?.compatible ?? false
+        );
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = hoveredPort === null
+          ? "crosshair"
+          : compatibility?.compatible === true ? "pointer" : "not-allowed";
+        this.wake();
+        return;
+      }
+      if (
+        this.customDownRouteHandle !== null &&
+        (event.buttons & 1) === 1 &&
+        this.pointerDown.distanceTo(
+          new THREE.Vector2(event.clientX, event.clientY)
+        ) > 4 &&
+        point !== null
+      ) {
+        this.customDraggingRouteHandle = true;
+        this.controls.enabled = false;
+        const snapped = new THREE.Vector3(
+          snapSiteCoordinate(point.x, this.customGridSnapM),
+          point.y,
+          snapSiteCoordinate(point.z, this.customGridSnapM)
+        );
+        this.customPlacementPoint = snapped;
+        this.diorama.previewRouteHandle(
+          this.customDownRouteHandle,
+          snapped
+        );
+        this.renderer.domElement.style.cursor = "grabbing";
+        this.wake();
+        return;
+      }
+      if (
+        this.customDragCandidate !== null &&
+        (event.buttons & 1) === 1 &&
+        this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 4 &&
+        point !== null
+      ) {
+        this.customDragging = true;
+        this.controls.enabled = false;
+        const snapped = new THREE.Vector3(
+          snapSiteCoordinate(point.x, this.customGridSnapM),
+          point.y,
+          snapSiteCoordinate(point.z, this.customGridSnapM)
+        );
+        this.customPlacementPoint = snapped;
+        this.diorama.previewAssetTransform(
+          this.customDragCandidate,
+          snapped,
+          this.selectedAssetKeys
+        );
+        this.renderer.domElement.style.cursor = "grabbing";
+        this.wake();
+        return;
+      }
+      const port = this.diorama.pickPort(this.raycaster);
+      if (port !== null) {
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = "pointer";
+        return;
+      }
+      const connection = this.diorama.pickConnection(this.raycaster);
+      if (connection !== null) {
+        this.setHoveredAsset(null);
+        this.renderer.domElement.style.cursor = "pointer";
+        return;
+      }
+      this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
+      return;
+    }
     const key = this.pickAsset(event);
     this.setHoveredAsset(key, event);
   };
 
   private onPointerLeave = (): void => {
+    if (this.diorama instanceof CustomSiteDiorama) {
+      this.diorama.clearPlacementPreview();
+      this.diorama.clearConnectionPreview();
+      if (this.customDesign !== null) {
+        this.diorama.syncDesign(
+          this.customDesign,
+          this.selectedAssetKey,
+          this.customSelectedConnectionId,
+          this.customEvaluation,
+          this.selectedAssetKeys
+        );
+        this.diorama.setConnectionState(
+          this.customDesign,
+          this.customConnectionSource
+        );
+      }
+      this.customDragCandidate = null;
+      this.customDragging = false;
+      this.customDownPort = null;
+      this.customDownConnection = null;
+      this.customDownRouteHandle = null;
+      this.customDraggingRouteHandle = false;
+      this.controls.enabled = true;
+    }
     this.setHoveredAsset(null);
   };
 
   private onPointerDown = (event: PointerEvent): void => {
     this.pointerDown.set(event.clientX, event.clientY);
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      if (this.mobile) {
+        this.updateRaycaster(event);
+        this.customDownConnection =
+          this.diorama.pickConnection(this.raycaster);
+        this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
+        return;
+      }
+      if (this.customViewMode === "explore") {
+        this.updateRaycaster(event);
+        this.customDownConnection =
+          this.diorama.pickConnection(this.raycaster);
+        this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
+        return;
+      }
+      if (this.customPlacementKind !== null) {
+        this.controls.enabled = false;
+        return;
+      }
+      this.updateRaycaster(event);
+      this.customDownRouteHandle =
+        this.diorama.pickRouteHandle(this.raycaster);
+      if (this.customDownRouteHandle !== null) {
+        this.controls.enabled = false;
+        return;
+      }
+      this.customDownPort = this.diorama.pickPort(this.raycaster);
+      if (this.customDownPort !== null) {
+        this.controls.enabled = false;
+        return;
+      }
+      this.customDownConnection = this.diorama.pickConnection(this.raycaster);
+      if (this.customDownConnection !== null) {
+        this.controls.enabled = false;
+        return;
+      }
+      this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
+      if (this.customDragCandidate !== null) {
+        this.controls.enabled = false;
+      }
+    }
   };
 
   private onPointerUp = (event: PointerEvent): void => {
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      const movement = this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY));
+      if (this.mobile) {
+        this.updateRaycaster(event);
+        if (movement <= 6 && this.customDownConnection !== null) {
+          this.selectPickedConnection(this.customDownConnection);
+        } else if (movement <= 6) {
+          this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
+        }
+        this.customDownConnection = null;
+        this.customDragCandidate = null;
+        return;
+      }
+      if (this.customViewMode === "explore") {
+        this.updateRaycaster(event);
+        if (movement <= 6 && this.customDownConnection !== null) {
+          this.selectPickedConnection(this.customDownConnection);
+        } else if (movement <= 6) {
+          this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
+        }
+        this.customDownConnection = null;
+        this.customDragCandidate = null;
+        return;
+      }
+      const placing = this.customPlacementKind !== null;
+      this.updateRaycaster(event);
+      const releasedPort = movement <= 6
+        ? this.diorama.pickPort(this.raycaster)
+        : null;
+      if (
+        placing &&
+        this.customPlacementKind !== null &&
+        movement <= 6 &&
+        this.customPlacementPoint !== null &&
+        !this.customPlacementBlocked
+      ) {
+        this.callbacks.onPlaceCustomAsset?.(
+          this.customPlacementKind,
+          this.customPlacementPoint.x,
+          this.customPlacementPoint.z
+        );
+      } else if (
+        !placing &&
+        this.customDownRouteHandle !== null &&
+        this.customDraggingRouteHandle &&
+        this.customPlacementPoint !== null
+      ) {
+        this.callbacks.onMoveCustomRoutePoint?.(
+          this.customDownRouteHandle.connectionId,
+          this.customDownRouteHandle.routePointIndex,
+          this.customPlacementPoint.x,
+          this.customPlacementPoint.z
+        );
+      } else if (
+        !placing &&
+        this.customDownRouteHandle !== null &&
+        movement <= 6
+      ) {
+        this.selectPickedConnection(
+          this.customDownRouteHandle.connectionId
+        );
+      } else if (!placing && this.customDownPort !== null && releasedPort !== null) {
+        if (this.customConnectionSource === null) {
+          this.callbacks.onBeginCustomConnection?.(releasedPort);
+        } else {
+          this.callbacks.onCompleteCustomConnection?.(releasedPort);
+        }
+      } else if (
+        !placing &&
+        this.customDownConnection !== null &&
+        movement <= 6
+      ) {
+        this.selectPickedConnection(this.customDownConnection);
+      } else if (!placing && (
+        this.customDragging &&
+        this.customDragCandidate !== null &&
+        this.customPlacementPoint !== null
+      )) {
+        this.callbacks.onMoveCustomAsset?.(
+          this.customDragCandidate,
+          this.customPlacementPoint.x,
+          this.customPlacementPoint.z
+        );
+      } else if (!placing && movement <= 6) {
+        this.selectPickedAsset(
+          this.diorama.pickAsset(this.raycaster),
+          event.shiftKey || event.ctrlKey || event.metaKey
+        );
+      }
+      this.controls.enabled = true;
+      this.customDragCandidate = null;
+      this.customDragging = false;
+      this.customDownPort = null;
+      this.customDownConnection = null;
+      this.customDownRouteHandle = null;
+      this.customDraggingRouteHandle = false;
+      this.customPlacementPoint = null;
+      this.diorama.clearConnectionPreview();
+      if (!placing && this.customDesign !== null) {
+        this.diorama.syncDesign(
+          this.customDesign,
+          this.selectedAssetKey,
+          this.customSelectedConnectionId,
+          this.customEvaluation,
+          this.selectedAssetKeys
+        );
+        this.diorama.setConnectionState(
+          this.customDesign,
+          this.customConnectionSource
+        );
+      }
+      return;
+    }
     if (this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6) {
       return;
     }
@@ -978,13 +1844,11 @@ export class Viewer {
     if (this.diorama === null || this.lastResult === null) {
       return null;
     }
+    this.updateRaycaster(event);
+    if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      return this.diorama.pickAsset(this.raycaster);
+    }
     const labels = INTERACTIVE_ASSET_LABELS[this.lastResult.site];
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    this.pointer.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1
-    );
-    this.raycaster.setFromCamera(this.pointer, this.camera);
     const roots = Object.entries(this.diorama.assets)
       .filter(([key, asset]) => key in labels && asset.children.length > 0)
       .map(([, asset]) => asset);
@@ -1000,13 +1864,35 @@ export class Viewer {
     return null;
   }
 
-  private selectPickedAsset(assetKey: string | null): void {
+  private selectPickedAsset(
+    assetKey: string | null,
+    additive = false
+  ): void {
     this.setHoveredAsset(null);
-    this.callbacks.onSelectAsset?.(assetKey);
-    this.setSelectedAsset(assetKey);
-    if (assetKey !== null) {
+    this.callbacks.onSelectAsset?.(assetKey, additive);
+    if (!additive) {
+      this.setSelectedAsset(assetKey);
+    }
+    if (assetKey !== null && this.workspaceMode !== "custom") {
       this.flyTo(assetKey);
     }
+  }
+
+  private selectPickedConnection(connectionId: string | null): void {
+    this.setHoveredAsset(null);
+    this.callbacks.onSelectCustomConnection?.(connectionId);
+    this.customSelectedConnectionId = connectionId;
+    this.rebuildCustomLabels();
+    this.wake();
+  }
+
+  private updateRaycaster(event: MouseEvent | PointerEvent): void {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    this.raycaster.setFromCamera(this.pointer, this.camera);
   }
 
   private setHoveredAsset(assetKey: string | null, event?: PointerEvent): void {
@@ -1053,7 +1939,9 @@ export class Viewer {
       this.scene.add(this.selectionOutline);
     }
     if (this.lastResult !== null && this.lastParams !== null) {
-      for (const key of connectedAssets(this.lastResult, this.lastParams, this.selectedAssetKey)) {
+      for (const key of this.workspaceMode === "custom"
+        ? []
+        : connectedAssets(this.lastResult, this.lastParams, this.selectedAssetKey)) {
         const connected = this.diorama.assets[key];
         if (connected === undefined || connected.children.length === 0) {
           continue;
@@ -1113,39 +2001,95 @@ export class Viewer {
 
   private onContextLost = (e: Event): void => {
     e.preventDefault();
+    this.contextRecoveryCamera = {
+      position: this.camera.position.clone(),
+      target: this.controls.target.clone(),
+      plannerZoom: this.plannerCamera.zoom
+    };
     this.stop();
+    this.callbacks.onRendererStatus?.("lost");
   };
 
   private onContextRestored = (): void => {
-    // rebuild the whole GL state with the current sim state (§8.9)
-    const result = this.lastResult;
-    const params = this.lastParams;
-    this.controls.dispose();
-    if (this.diorama !== null) {
-      this.diorama.dispose();
-      this.diorama = null;
+    if (this.disposed) {
+      return;
     }
-    this.disposeEnvironment();
-    disposeObject(this.scene);
-    this.post.dispose();
-    this.renderer.domElement.remove();
-    this.renderer.dispose();
-    disposeProceduralTextures();
-    this.tweens.clear();
-    this.initGL();
-    this.resize();
-    if (result !== null && params !== null) {
-      this.lastResult = null;
-      this.apply(result, params);
+    this.callbacks.onRendererStatus?.("restoring");
+    // Leave the browser's context-restored event before disposing the old
+    // renderer and allocating its replacement. Some drivers deadlock when
+    // those operations occur synchronously inside the restoration callback.
+    window.setTimeout(this.restoreContext, 0);
+  };
+
+  private restoreContext = (): void => {
+    try {
+      const result = this.lastResult;
+      const params = this.lastParams;
+      const timeState = this.lastTimeState;
+      const camera = this.contextRecoveryCamera;
+      this.controls.dispose();
+      if (this.diorama !== null) {
+        this.diorama.dispose();
+        this.diorama = null;
+      }
+      this.disposeEnvironment();
+      disposeObject(this.scene);
+      this.post.dispose();
+      this.renderer.domElement.remove();
+      this.renderer.dispose();
+      disposeProceduralTextures();
+      this.tweens.clear();
+      this.activeSite = null;
+      this.initGL();
+      this.resize();
+      const site = this.workspaceMode === "custom"
+        ? this.customEnvironment
+        : result?.site ?? this.customEnvironment;
+      this.buildSite(site);
+      if (result !== null && params !== null) {
+        this.applyToDiorama(result, params, true);
+        this.refreshProcessOverlayData();
+      }
+      if (timeState !== null) {
+        this.applyTime(
+          timeState.point,
+          timeState.params,
+          timeState.result,
+          timeState.cycleHours
+        );
+      }
+      if (camera !== null) {
+        this.tweens.cancel("camera");
+        this.camera.position.copy(camera.position);
+        this.controls.target.copy(camera.target);
+        if (this.camera === this.plannerCamera) {
+          this.plannerCamera.zoom = camera.plannerZoom;
+          this.plannerCamera.updateProjectionMatrix();
+        }
+        this.controls.update();
+      }
+      this.rebuildCustomLabels();
+      this.setLearningState(this.learningMode, this.showProcessFlow);
+      this.contextRecoveryCamera = null;
+      this.callbacks.onRendererStatus?.("ready");
+      this.wake();
+    } catch (error: unknown) {
+      console.error("[selene] WebGL context restoration failed", error);
+      this.callbacks.onRendererStatus?.("failed");
     }
-    this.wake();
   };
 
   private resize(): void {
     const w = Math.max(1, this.container.clientWidth);
     const h = Math.max(1, this.container.clientHeight);
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    const aspect = w / h;
+    this.perspectiveCamera.aspect = aspect;
+    this.perspectiveCamera.updateProjectionMatrix();
+    this.plannerCamera.left = -54 * aspect;
+    this.plannerCamera.right = 54 * aspect;
+    this.plannerCamera.top = 54;
+    this.plannerCamera.bottom = -54;
+    this.plannerCamera.updateProjectionMatrix();
     const dpr = this.pixelRatio();
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(w, h);

@@ -1,10 +1,73 @@
 // @vitest-environment jsdom
-import { DEFAULTS } from "@selene-isru/engine";
+import {
+  DEFAULTS,
+  SEEDED_SITE_DESIGN_FIXTURES,
+  serializeSiteDesign,
+  siteConnectionLengthM
+} from "@selene-isru/engine";
 import { beforeEach, describe, expect, it } from "vitest";
+import { CUSTOM_SITE_DRAFT_KEY } from "../src/site-design/draft";
 import { useStore } from "../src/state/store";
+
+function buildOperatingEquatorialSite(): void {
+  const store = useStore.getState();
+  store.resetCustomDesign();
+  store.setCustomEnvironment("equatorial");
+  store.enterCustomSite();
+  store.placeCustomAsset("equatorial.excavator", -60, -40);
+  store.placeCustomAsset("equatorial.hauler", -35, -40);
+  store.placeCustomAsset("equatorial.mre-reactor", -10, -20);
+  store.placeCustomAsset("equatorial.cryo-farm", 20, 20);
+  store.placeCustomAsset("equatorial.power-hub", -45, 20);
+
+  const asset = (kind: string): string =>
+    useStore.getState().customSite.design.assets.find((item) =>
+      item.kind === kind
+    )!.id;
+  const connect = (
+    fromKind: string,
+    fromPortId: string,
+    toKind: string,
+    toPortId: string
+  ): void => {
+    useStore.getState().beginCustomConnection({
+      assetId: asset(fromKind),
+      portId: fromPortId
+    });
+    useStore.getState().completeCustomConnection({
+      assetId: asset(toKind),
+      portId: toPortId
+    });
+  };
+  connect(
+    "equatorial.excavator",
+    "regolith-out",
+    "equatorial.hauler",
+    "regolith-in"
+  );
+  connect(
+    "equatorial.hauler",
+    "regolith-out",
+    "equatorial.mre-reactor",
+    "regolith-in"
+  );
+  connect(
+    "equatorial.power-hub",
+    "grid-out",
+    "equatorial.mre-reactor",
+    "power-in"
+  );
+  connect(
+    "equatorial.mre-reactor",
+    "oxygen-out",
+    "equatorial.cryo-farm",
+    "product-in"
+  );
+}
 
 describe("store wiring (§5)", () => {
   beforeEach(() => {
+    useStore.getState().enterAuthoredSite(DEFAULTS.site);
     useStore.getState().applyPatch({});
   });
 
@@ -108,5 +171,461 @@ describe("store wiring (§5)", () => {
 
     if (copy !== undefined) useStore.getState().deleteScenario(copy.id);
     useStore.getState().deleteScenario(saved.id);
+  });
+
+  it("enters the custom planner without claiming an authored site graph", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().enterCustomSite();
+    const state = useStore.getState();
+
+    expect(state.workspaceMode).toBe("custom");
+    expect(state.customSite.viewMode).toBe("planner");
+    expect(state.customSite.design.assets).toEqual([]);
+    expect(state.customSite.design.connections).toEqual([]);
+    expect(state.customSite.findings.some((finding) =>
+      finding.id.startsWith("topology.required.")
+    )).toBe(true);
+
+    useStore.getState().setCustomViewMode("explore");
+    expect(useStore.getState().customSite.viewMode).toBe("explore");
+  });
+
+  it("persists custom environment, name, and parameter edits", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().enterCustomSite();
+    useStore.getState().setCustomEnvironment("polar");
+    useStore.getState().setCustomDesignName("South-pole logistics study");
+    useStore.getState().setParam("targetKgPerDay", 1440);
+
+    const state = useStore.getState();
+    const saved = window.localStorage.getItem(CUSTOM_SITE_DRAFT_KEY);
+
+    expect(state.customSite.design.environment).toBe("polar");
+    expect(state.customSite.design.params.site).toBe("polar");
+    expect(state.customSite.design.params.targetKgPerDay).toBe(1440);
+    expect(saved).not.toBeNull();
+    expect(JSON.parse(saved ?? "{}")).toMatchObject({
+      name: "South-pole logistics study",
+      environment: "polar",
+      params: { site: "polar", targetKgPerDay: 1440 }
+    });
+  });
+
+  it("saves, reloads, renames, duplicates, and deletes custom projects", () => {
+    const beforeIds = new Set(
+      useStore.getState().scenarioLibrary.map((scenario) => scenario.id)
+    );
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    useStore.getState().setCustomDesignName("Library source site");
+    useStore.getState().setParam("targetKgPerDay", 1575);
+    const expectedDesign = serializeSiteDesign(
+      useStore.getState().customSite.evaluation.normalizedDesign
+    );
+    const expectedResult = useStore.getState().result;
+
+    useStore.getState().saveCurrentScenario("Saved custom site");
+    const saved = useStore.getState().scenarioLibrary.find((scenario) =>
+      !beforeIds.has(scenario.id)
+    );
+
+    expect(saved).toMatchObject({
+      name: "Saved custom site",
+      kind: "custom",
+      params: { targetKgPerDay: 1575 }
+    });
+    expect(saved?.design).toBeDefined();
+    expect(window.localStorage.getItem("selene-isru.study-scenarios.v2"))
+      .toContain('"kind":"custom"');
+    if (saved === undefined) return;
+
+    useStore.getState().resetCustomDesign();
+    useStore.getState().loadScenario(saved.id);
+    expect(serializeSiteDesign(useStore.getState().customSite.design))
+      .toBe(expectedDesign);
+    expect(useStore.getState().result).toEqual(expectedResult);
+    expect(useStore.getState().customSite.history).toEqual({
+      past: [],
+      future: []
+    });
+
+    useStore.getState().renameScenario(saved.id, "Renamed custom site");
+    const renamed = useStore.getState().scenarioLibrary.find(
+      (scenario) => scenario.id === saved.id
+    );
+    expect(renamed?.name).toBe("Renamed custom site");
+    expect(renamed?.design?.name).toBe("Renamed custom site");
+
+    useStore.getState().duplicateScenario(saved.id);
+    const duplicate = useStore.getState().scenarioLibrary.find((scenario) =>
+      scenario.name === "Renamed custom site copy"
+    );
+    expect(duplicate?.kind).toBe("custom");
+    expect(duplicate?.id).not.toBe(saved.id);
+    expect(duplicate?.design?.id).not.toBe(renamed?.design?.id);
+    expect(duplicate?.design).not.toBe(renamed?.design);
+
+    if (duplicate !== undefined) {
+      useStore.getState().deleteScenario(duplicate.id);
+    }
+    useStore.getState().deleteScenario(saved.id);
+  });
+
+  it("keeps all project mutations in the custom undo and redo history", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    const initial = useStore.getState().customSite.design;
+    const power = initial.assets.find((asset) =>
+      asset.kind === "equatorial.power-hub"
+    )!;
+
+    useStore.getState().updateCustomAsset(power.id, {
+      configuration: { unitCount: 3 }
+    });
+    useStore.getState().setCustomPlannerSnaps({ gridSnapM: 1 });
+    useStore.getState().setParam("targetKgPerDay", 1432);
+    useStore.getState().setCustomDesignName("Undoable project");
+
+    expect(useStore.getState().customSite.design.name).toBe(
+      "Undoable project"
+    );
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.name).toBe(initial.name);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().params.targetKgPerDay).toBe(
+      initial.params.targetKgPerDay
+    );
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.planner.gridSnapM).toBe(
+      initial.planner.gridSnapM
+    );
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets.find((asset) =>
+      asset.id === power.id
+    )?.configuration.unitCount).toBeUndefined();
+
+    useStore.getState().redoCustomEdit();
+    useStore.getState().redoCustomEdit();
+    useStore.getState().redoCustomEdit();
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design).toMatchObject({
+      name: "Undoable project",
+      params: { targetKgPerDay: 1432 },
+      planner: { gridSnapM: 1 }
+    });
+    expect(useStore.getState().customSite.design.assets.find((asset) =>
+      asset.id === power.id
+    )?.configuration.unitCount).toBe(3);
+  });
+
+  it("undoes environment clearing and blank-project reset", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    const original = useStore.getState().customSite.design;
+
+    useStore.getState().setCustomEnvironment("polar");
+    expect(useStore.getState().customSite.design).toMatchObject({
+      environment: "polar",
+      assets: []
+    });
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.environment).toBe(
+      "equatorial"
+    );
+    expect(useStore.getState().customSite.design.assets).toHaveLength(
+      original.assets.length
+    );
+
+    useStore.getState().resetCustomDesign();
+    const blankId = useStore.getState().customSite.design.id;
+    expect(blankId).not.toBe(original.id);
+    expect(useStore.getState().customSite.design.assets).toEqual([]);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.id).toBe(original.id);
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design.id).toBe(blankId);
+  });
+
+  it("seeds an editable reference copy with a fresh project identity", () => {
+    useStore.getState().resetCustomDesign();
+    const previousId = useStore.getState().customSite.design.id;
+
+    useStore.getState().seedCustomDesign("polar");
+    const state = useStore.getState();
+
+    expect(state.workspaceMode).toBe("custom");
+    expect(state.customSite.design).toMatchObject({
+      environment: "polar",
+      name: "Polar reference copy"
+    });
+    expect(state.customSite.design.id).not.toBe(previousId);
+    expect(state.customSite.design.assets.length).toBeGreaterThan(5);
+    expect(state.customSite.design.connections.length).toBeGreaterThan(4);
+    expect(state.customSite.history.past.length).toBeGreaterThan(0);
+  });
+
+  it("multi-selects assets and applies one-command group transforms", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    const [first, second, third] =
+      useStore.getState().customSite.design.assets;
+    const before = [first!, second!, third!].map((asset) => ({
+      id: asset.id,
+      transform: { ...asset.transform }
+    }));
+
+    useStore.getState().selectCustomAsset(first!.id);
+    useStore.getState().selectCustomAsset(second!.id, true);
+    useStore.getState().selectCustomAsset(third!.id, true);
+    expect(useStore.getState().customSite.editor.selectedAssetIds).toEqual([
+      first!.id,
+      second!.id,
+      third!.id
+    ]);
+
+    useStore.getState().moveCustomAssetGroup(5, -5);
+    let assets = useStore.getState().customSite.design.assets;
+    expect(assets.find((asset) => asset.id === first!.id)?.transform.xM)
+      .toBe(before[0]!.transform.xM + 5);
+    expect(assets.find((asset) => asset.id === second!.id)?.transform.zM)
+      .toBe(before[1]!.transform.zM - 5);
+
+    useStore.getState().undoCustomEdit();
+    assets = useStore.getState().customSite.design.assets;
+    expect(assets.find((asset) => asset.id === first!.id)?.transform)
+      .toEqual(before[0]!.transform);
+    expect(useStore.getState().customSite.editor.selectedAssetIds).toHaveLength(
+      3
+    );
+
+    useStore.getState().distributeCustomAssets("x");
+    const x = useStore.getState().customSite.design.assets
+      .filter((asset) => [first!.id, second!.id, third!.id].includes(asset.id))
+      .map((asset) => asset.transform.xM)
+      .sort((a, b) => a - b);
+    const originalX = before.map((asset) => asset.transform.xM)
+      .sort((a, b) => a - b);
+    expect(x).toEqual([
+      Math.round(originalX[0]! / 5) * 5,
+      Math.round(((originalX[0]! + originalX[2]!) / 2) / 5) * 5,
+      Math.round(originalX[2]! / 5) * 5
+    ]);
+
+    useStore.getState().deleteCustomAssetGroup();
+    expect(useStore.getState().customSite.design.assets.some((asset) =>
+      [first!.id, second!.id, third!.id].includes(asset.id)
+    )).toBe(false);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets).toHaveLength(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial.assets.length
+    );
+  });
+
+  it("edits persisted route handles and restores them with undo", () => {
+    buildOperatingEquatorialSite();
+    const connection = useStore.getState().customSite.design.connections[0]!;
+    const before = connection.route;
+
+    useStore.getState().updateCustomConnectionRoute(connection.id, [{
+      xM: -48,
+      zM: -28
+    }]);
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual([{ xM: -50, zM: -30 }]);
+
+    useStore.getState().moveCustomConnectionRoutePoint(
+      connection.id,
+      0,
+      -41,
+      -19
+    );
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual([{ xM: -40, zM: -20 }]);
+
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual([{ xM: -50, zM: -30 }]);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual(before);
+  });
+
+  it("ignores invalid direct imports and preserves the current project", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.polar
+    );
+    const before = serializeSiteDesign(useStore.getState().customSite.design);
+
+    useStore.getState().importCustomDesign({
+      schema: "not-a-selene-design"
+    } as unknown as typeof SEEDED_SITE_DESIGN_FIXTURES.polar);
+
+    expect(serializeSiteDesign(useStore.getState().customSite.design))
+      .toBe(before);
+  });
+
+  it("keeps the working custom draft when returning to an authored site", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomDesignName("Keep this draft");
+    const id = useStore.getState().customSite.design.id;
+    useStore.getState().enterCustomSite();
+    useStore.getState().enterAuthoredSite("equatorial");
+
+    expect(useStore.getState().workspaceMode).toBe("authored");
+    expect(useStore.getState().customSite.design.id).toBe(id);
+    expect(useStore.getState().customSite.design.name).toBe("Keep this draft");
+  });
+
+  it("edits a custom layout through one-command undo and redo snapshots", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().enterCustomSite();
+    useStore.getState().placeCustomAsset("equatorial.excavator", -30, -30);
+    const asset = useStore.getState().customSite.design.assets[0]!;
+
+    expect(asset.transform).toMatchObject({ xM: -30, zM: -30 });
+    expect(useStore.getState().customSite.editor.selectedAssetId).toBe(asset.id);
+    useStore.getState().moveCustomAsset(asset.id, -20, -15);
+    useStore.getState().rotateCustomAsset(asset.id, 20);
+    expect(useStore.getState().customSite.design.assets[0]?.transform)
+      .toMatchObject({ xM: -20, zM: -15, headingDeg: 15 });
+
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets[0]?.transform.headingDeg).toBe(0);
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design.assets[0]?.transform.headingDeg).toBe(15);
+  });
+
+  it("duplicates, disables, deletes, and restores custom assets", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().placeCustomAsset("equatorial.excavator", -30, -30);
+    const original = useStore.getState().customSite.design.assets[0]!;
+    useStore.getState().duplicateCustomAsset(original.id);
+    expect(useStore.getState().customSite.design.assets).toHaveLength(2);
+
+    const duplicate = useStore.getState().customSite.design.assets[1]!;
+    useStore.getState().updateCustomAsset(duplicate.id, { enabled: false });
+    expect(useStore.getState().customSite.design.assets[1]?.enabled).toBe(false);
+    useStore.getState().deleteCustomAsset(duplicate.id);
+    expect(useStore.getState().customSite.design.assets).toHaveLength(1);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets).toHaveLength(2);
+  });
+
+  it("rejects placements that collide or exceed the planner boundary", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().placeCustomAsset("equatorial.excavator", 0, 0);
+    useStore.getState().placeCustomAsset("equatorial.hauler", 0, 0);
+    useStore.getState().placeCustomAsset("equatorial.landing-system", 90, 0);
+
+    expect(useStore.getState().customSite.design.assets).toHaveLength(1);
+  });
+
+  it("authors, persists, reroutes, deletes, and restores typed connections", () => {
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().placeCustomAsset("equatorial.excavator", -40, 0);
+    useStore.getState().placeCustomAsset("equatorial.hauler", -20, 0);
+    const [excavator, hauler] = useStore.getState().customSite.design.assets;
+    expect(excavator).toBeDefined();
+    expect(hauler).toBeDefined();
+
+    useStore.getState().beginCustomConnection({
+      assetId: excavator!.id,
+      portId: "regolith-out"
+    });
+    expect(useStore.getState().customSite.editor.tool).toBe("connect");
+    useStore.getState().completeCustomConnection({
+      assetId: hauler!.id,
+      portId: "regolith-in"
+    });
+
+    let state = useStore.getState();
+    const connection = state.customSite.design.connections[0]!;
+    expect(connection).toMatchObject({
+      kind: "material",
+      from: { assetId: excavator!.id, portId: "regolith-out" },
+      to: { assetId: hauler!.id, portId: "regolith-in" }
+    });
+    expect(state.customSite.editor.selectedConnectionId).toBe(connection.id);
+    expect(JSON.parse(
+      window.localStorage.getItem(CUSTOM_SITE_DRAFT_KEY) ?? "{}"
+    ).connections).toHaveLength(1);
+
+    const initialRoute = connection.route;
+    const initialLength = siteConnectionLengthM(state.customSite.design, connection);
+    useStore.getState().rerouteCustomConnection(connection.id);
+    state = useStore.getState();
+    expect(state.customSite.design.connections[0]?.route).not.toEqual(initialRoute);
+
+    useStore.getState().moveCustomAsset(excavator!.id, -50, -10);
+    state = useStore.getState();
+    expect(siteConnectionLengthM(
+      state.customSite.design,
+      state.customSite.design.connections[0]!
+    )).not.toBe(initialLength);
+
+    useStore.getState().deleteCustomConnection(connection.id);
+    expect(useStore.getState().customSite.design.connections).toEqual([]);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.connections).toHaveLength(1);
+    useStore.getState().redoCustomEdit();
+    expect(useStore.getState().customSite.design.connections).toEqual([]);
+  });
+
+  it("gates custom output and timeseries from the persisted topology", () => {
+    buildOperatingEquatorialSite();
+    let state = useStore.getState();
+    expect(state.customSite.evaluation).toMatchObject({
+      topologyValid: true,
+      achievableOutputKgPerDay:
+        state.customSite.evaluation.plannedTargetKgPerDay
+    });
+    expect(state.timeseries.points.some((point) =>
+      point.loadW > 0 && point.netProductionKgPerDay > 0
+    )).toBe(true);
+
+    const processConnection = state.customSite.design.connections.find(
+      (connection) => connection.to.portId === "regolith-in" &&
+        state.customSite.design.assets.find((asset) =>
+          asset.id === connection.to.assetId
+        )?.kind === "equatorial.mre-reactor"
+    )!;
+    useStore.getState().deleteCustomConnection(processConnection.id);
+    state = useStore.getState();
+    expect(state.customSite.evaluation.topologyValid).toBe(false);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(0);
+    expect(state.timeseries.points.every((point) =>
+      point.loadW === 0 && point.netProductionKgPerDay === 0
+    )).toBe(true);
+
+    useStore.getState().undoCustomEdit();
+    state = useStore.getState();
+    expect(state.customSite.evaluation.topologyValid).toBe(true);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(
+      state.params.targetKgPerDay
+    );
+  });
+
+  it("keeps planned output distinct from a capacity-limited valid graph", () => {
+    buildOperatingEquatorialSite();
+    useStore.getState().setParam("targetKgPerDay", 1775);
+    const state = useStore.getState();
+
+    expect(state.customSite.design.params.targetKgPerDay).toBe(1775);
+    expect(state.customSite.evaluation.plannedTargetKgPerDay).toBe(1775);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(1000);
+    expect(state.customSite.evaluation.bottleneck?.kind).toBe("capacity");
+    expect(state.result.production.targetKgPerDay).toBe(1000);
+    expect(state.result.warnings).toContainEqual(expect.objectContaining({
+      id: "site-design:capacity.shortfall.equatorial-storage",
+      severity: "caution"
+    }));
   });
 });

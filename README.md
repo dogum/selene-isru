@@ -26,12 +26,68 @@ rim power towers, nuclear station, and occupied habitat.
 **Live demo:** [dogum.github.io/selene-isru](https://dogum.github.io/selene-isru/)
 (deployed from `main` by GitHub Actions).
 
-## Two sites, one live engineering model
+## Two reference sites, one live engineering model
 
 | Equatorial MRE industry | Shackleton ice industry |
 |---|---|
 | [![Equatorial lunar ISRU site with MRE reactor, excavation, power, landing, cryogenic, and habitat systems](docs/screenshots/equatorial-assets/base-overview-after-desktop.png)](https://dogum.github.io/selene-isru/) | [![Polar lunar ISRU site with ice excavation, beam receiver, Sabatier plant, cryogenics, power, and habitat systems](docs/screenshots/polar-assets/base-overview-after-desktop.png)](https://dogum.github.io/selene-isru/?site=polar) |
 | Molten-regolith electrolysis, casting, surface power, and reusable logistics. | Ice excavation, sublimation, beamed power, Sabatier processing, and cryogenic storage. |
+
+## Build a custom lunar site
+
+**Custom Site** turns the same model and equipment catalog into a durable site
+planning sandbox. Start with blank Equatorial or Polar terrain—or seed either
+reference layout—then place equipment, connect typed ports, route links, inspect
+clearances, and compare planned output with topology- and capacity-limited
+achievable output.
+
+| Blank Planner | Connected Planner | Explore |
+|---|---|---|
+| ![Blank custom Equatorial terrain with catalog and top-down planning grid](docs/screenshots/custom-site/blank-planner-desktop.png) | ![Connected Equatorial custom site in Planner mode with equipment labels and routed links](docs/screenshots/custom-site/reference-planner-desktop.png) | ![The same saved custom site shown in perspective Explore mode](docs/screenshots/custom-site/reference-explore-desktop.png) |
+
+The complete desktop loop is:
+
+1. Open **CUSTOM SITE**, choose an environment, and place equipment from the
+   catalog.
+2. Select an output port and then a compatible input port. Design Check keeps
+   incomplete, dangling, or incompatible topology from reporting nominal output.
+3. Use numeric X/Z/heading and route-bend fields, snapping, multi-select, group
+   transforms, clearances, and measured extents to refine the plan.
+4. Review installed capacity, route consequences, bottleneck, and achievable
+   output; switch to **EXPLORE** without creating a second scene document.
+5. Save the design into Trade Study or export its versioned JSON. Imports show
+   findings and require explicit acceptance before replacing the working design.
+
+Mobile intentionally provides select-and-inspect review rather than suggesting
+unsupported precision editing. Designs autosave locally with a valid backup,
+and large layouts retain selectable lightweight placeholders after the active
+graphics tier’s detailed-model budget.
+
+Importable v1 examples:
+
+- [Equatorial First Camp](docs/examples/custom-equatorial-first-camp.v1.json)
+- [Shackleton Ice Camp](docs/examples/custom-shackleton-ice-camp.v1.json)
+
+Release screenshots, the reproducible browser smoke flow, performance sample,
+and known limits are recorded in the
+[Custom Site release evidence](docs/custom-site-release.md).
+
+## Cinematic demonstrations
+
+The repository includes four production-app videos: a branded simulator tour,
+the release-evidence workflow, a one-minute Custom Site story, and a fast
+30-second companion. All are silent 1080p H.264 MP4s so narration, music, or
+platform-native audio can be added in post.
+
+| Product cinematic | Detailed Custom Site cinematic |
+|---|---|
+| [![Equatorial lunar industry overview](docs/screenshots/equatorial-assets/base-overview-after-desktop.png)](docs/media/selene-isru-cinematic-demo.mp4) | [![Connected Custom Site in Planner](docs/screenshots/custom-site/reference-planner-desktop.png)](docs/media/custom-site-cinematic-60s.mp4) |
+| [Watch the 31.6-second product tour](docs/media/selene-isru-cinematic-demo.mp4) | [Watch the 60-second detailed story](docs/media/custom-site-cinematic-60s.mp4) |
+
+Also available: the [30-second fast Custom Site cut](docs/media/custom-site-cinematic-30s.mp4)
+and the [24.8-second release workflow](docs/media/custom-site-sandbox-demo.mp4).
+See the [video showcase](docs/video-showcase.md) for storyboards, intended uses,
+and reproducible capture commands.
 
 ## Equipment that explains itself
 
@@ -73,12 +129,19 @@ when they are useful:
 
 ## Implementation parity and evidence
 
-Every implemented equation lives twice:
+Every core process equation used by the authored simulation lives twice:
 
 - **TypeScript** (`packages/engine`) — the runtime engine the app calls on
-  every input event. Zero dependencies, pure ESM, with a 96 KiB CI budget.
+  every input event. Zero dependencies, pure ESM, with a 144 KiB CI budget
+  including the versioned custom-site schema, graph validator, installed
+  capacity evaluator, and disclosed cable/haul screening models.
 - **Python** (`python/selene_isru`) — an independent mirror used for
   derivations, citations, and golden-vector generation.
+
+The custom-site compiler is a TypeScript-only evaluation layer around that
+shared process model. Its screening capacity and route equations are isolated,
+disclosed in the planner, and covered by dedicated deterministic unit tests;
+they are not represented as Python-parity-validated hardware models.
 
 `python/tools/generate_golden.py` Latin-hypercube samples **200 points**
 across the full parameter box (plus named corner scenarios), runs the Python
@@ -108,7 +171,7 @@ packages/app (React + Three.js)         notebooks / golden vectors
   │   ├─ bindings.ts   SimResult → scene contract + graphics tiers (§ tested)
   │   ├─ post.ts       EffectComposer chain: GTAO, bloom, SMAA, output
   │   ├─ textures.ts   generated PBR maps + PMREM environment
-  │   └─ dioramas/     equatorial + polar hybrid mission scenes
+  │   └─ dioramas/     equatorial + polar authored scenes + dynamic custom planner
   └─ components/       control rail, KPI strip, Sankey/Mass/Power panels
 assets/blender/         reproducible hero-asset generators + editable .blend source
 ```
@@ -123,6 +186,10 @@ the dev HUD, photo mode, and PNG export.
 
 Visual QA and performance notes are recorded in the [MRE vertical slice](docs/vertical-slice-mre.md), the [equatorial equipment overhaul](docs/equatorial-asset-overhaul.md), the [polar equipment overhaul](docs/polar-asset-overhaul.md), and the [analysis and explainability sprint](docs/analysis-polish-sprint.md).
 
+The implemented model-backed site editor is defined in the
+[Custom Site Sandbox product and implementation specification](docs/custom-site-sandbox-spec.md)
+and reviewed in the [release evidence](docs/custom-site-release.md).
+
 ## Workspace
 
 - `constants/constants.json` — constants, defaults, slider bounds, units, citations.
@@ -131,6 +198,7 @@ Visual QA and performance notes are recorded in the [MRE vertical slice](docs/ve
 - `assets/blender` — original Blender/Python source for reproducible 3D assets.
 - `python/` — mirror package, pytest suite, derivation notebook, golden generator.
 - `docs/screenshots/` — captured via `pnpm screenshots` against a dev server.
+- `docs/examples/` — importable site profiles and versioned custom-site documents.
 
 ## Commands
 
@@ -146,6 +214,14 @@ pnpm demo:analysis -- http://localhost:5173
                              # record the short engineering-analysis browser tour
 pnpm demo:cinematic -- http://localhost:4173/selene-isru/ docs/media/selene-isru-cinematic-demo.mp4
                              # record the scripted 32 s / 1080p cinematic product tour
+pnpm demo:custom-cinematic -- http://localhost:4173/selene-isru/ \
+  docs/media/custom-site-cinematic-60s.mp4 docs/media/custom-site-cinematic-30s.mp4
+                             # record the detailed Custom Site story and fast cut
+pnpm evidence:custom -- http://localhost:4173/selene-isru/
+                             # smoke-test Custom Site and regenerate screenshots,
+                             # the short demo, and performance evidence
+pnpm smoke:custom -- http://localhost:4173/selene-isru/
+                             # run the same browser workflow without writing evidence
 
 # Python mirror (uv creates and manages the project environment)
 uv sync --project python --locked --group dev

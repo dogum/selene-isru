@@ -1,5 +1,6 @@
 export type SiteMode = "equatorial" | "polar";
 export type PowerArchitecture = "solar" | "nuclear";
+export type PowerStrategy = "auto" | PowerArchitecture;
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -539,6 +540,24 @@ export interface SimResult {
     daysToShieldHabitat: number;
   };
   warnings: Warning[];
+}
+
+export interface SimulationOptions {
+  powerStrategy?: PowerStrategy;
+  supplementalLoads?: readonly SimulationSupplementalLoad[];
+  supplementalMasses?: readonly SimulationSupplementalMass[];
+}
+
+export interface SimulationSupplementalLoad {
+  id: string;
+  label: string;
+  powerW: number;
+  disposition: "useful" | "loss";
+}
+
+export interface SimulationSupplementalMass {
+  subsystem: string;
+  massKg: number;
 }
 
 export interface TimeseriesOptions {

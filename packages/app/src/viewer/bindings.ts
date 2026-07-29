@@ -134,6 +134,8 @@ export interface QualityProfile {
   terrainSegments: number;
   /** segment multiplier for curved hero primitives */
   meshDetail: number;
+  /** maximum custom-site assets that receive a detailed GLB model */
+  customModelCap: number;
   /** screen-space ambient occlusion pass */
   ao: boolean;
   /** bloom pass enabled at this tier */
@@ -156,6 +158,7 @@ export function qualityProfile(mobile: boolean, tier: GraphicsTier = mobile ? "m
       detailLevel: 0,
       terrainSegments: 120,
       meshDetail: 1,
+      customModelCap: mobile ? 18 : 36,
       ao: false,
       bloom: true,
       bloomStrength: 0.28
@@ -173,6 +176,7 @@ export function qualityProfile(mobile: boolean, tier: GraphicsTier = mobile ? "m
       detailLevel: 1,
       terrainSegments: mobile ? 160 : 200,
       meshDetail: 1,
+      customModelCap: mobile ? 24 : 54,
       ao: !mobile,
       bloom: true,
       bloomStrength: mobile ? 0.35 : 0.46
@@ -190,6 +194,7 @@ export function qualityProfile(mobile: boolean, tier: GraphicsTier = mobile ? "m
       detailLevel: mobile ? 1 : 2,
       terrainSegments: mobile ? 180 : 256,
       meshDetail: mobile ? 1 : 2,
+      customModelCap: mobile ? 28 : 72,
       ao: !mobile,
       bloom: true,
       bloomStrength: mobile ? 0.4 : 0.58
@@ -207,6 +212,7 @@ export function qualityProfile(mobile: boolean, tier: GraphicsTier = mobile ? "m
       detailLevel: mobile ? 2 : 3,
       terrainSegments: mobile ? 200 : 300,
       meshDetail: 2,
+      customModelCap: mobile ? 32 : 96,
       ao: !mobile,
       bloom: true,
       bloomStrength: mobile ? 0.46 : 0.64

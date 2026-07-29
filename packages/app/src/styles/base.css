@@ -101,6 +101,14 @@ select {
     "kpi kpi";
 }
 
+.app.custom-site-app {
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "topbar"
+    "stage";
+}
+
 .app-topbar {
   grid-area: topbar;
   border-bottom: 1px solid var(--line);
@@ -129,6 +137,7 @@ select {
   background: var(--bg-panel);
 }
 
+.stage-scene,
 .stage-canvas {
   position: absolute;
   inset: 0;
@@ -192,5 +201,10 @@ select {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .process-flow-line {
+    animation: none !important;
   }
 }

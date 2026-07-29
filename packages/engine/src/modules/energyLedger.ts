@@ -1,5 +1,9 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
-import type { EnergyProcessBalance, SimParams } from "../types";
+import type {
+  EnergyProcessBalance,
+  SimParams,
+  SimulationSupplementalLoad
+} from "../types";
 import type { CryoOutput } from "./cryo";
 import type { ElectrolysisOutput } from "./electrolysis";
 
@@ -57,7 +61,8 @@ export function energyLedger(
   excavationMechPowerW: number,
   electrolysis: ElectrolysisOutput,
   cryo: CryoOutput,
-  sabatier: SabatierEnergy | null
+  sabatier: SabatierEnergy | null,
+  supplementalLoads: readonly SimulationSupplementalLoad[] = []
 ): EnergyLedger {
   const productMassFlowKgPerS = params.targetKgPerDay / 86_400;
   const powerFor = (from: string, to: string): number =>
@@ -97,6 +102,18 @@ export function energyLedger(
 
   balances.push(balance("storage-conditioning-energy", "Product conditioning", cryo.totalConditioningPowerW, 0, 0, 0, cryo.totalConditioningPowerW));
   balances.push(balance("storage-cooling-energy", "Storage heat lift", cryo.cryocoolerPowerW, cryo.qRemovedW, 0, cryo.cryocoolerPowerW + cryo.qRemovedW, 0));
+  for (const load of supplementalLoads) {
+    const powerW = Math.max(0, load.powerW);
+    balances.push(balance(
+      `supplemental-${load.id}`,
+      load.label,
+      powerW,
+      0,
+      load.disposition === "useful" ? powerW : 0,
+      load.disposition === "loss" ? powerW : 0,
+      0
+    ));
+  }
 
   const allocatedElectricalW = balances.reduce((total, item) => total + item.electricalInputW, 0);
   const gridAllocationRaw = gridPowerW - allocatedElectricalW;
