@@ -6,6 +6,7 @@ import {
   type SiteConnection,
   type SiteConnectionKind,
   type SiteDesignDocument,
+  type SiteDesignEvaluation,
   type SiteDesignFindingSeverity,
   type SiteEnvironment,
   type SitePortDefinition,
@@ -201,7 +202,8 @@ export class CustomSiteDiorama implements Diorama {
   syncDesign(
     design: SiteDesignDocument,
     selectedAssetId: string | null,
-    selectedConnectionId: string | null = null
+    selectedConnectionId: string | null = null,
+    evaluation: SiteDesignEvaluation | null = null
   ): void {
     this.currentDesign = design;
     const ids = new Set(design.assets.map((asset) => asset.id));
@@ -272,7 +274,7 @@ export class CustomSiteDiorama implements Diorama {
       footprintMaterial.opacity = selectedAssetId === asset.id ? 0.34 : 0.1;
       runtime.ports.visible = this.plannerMode && asset.enabled;
     }
-    this.rebuildConnections(design, selectedConnectionId);
+    this.rebuildConnections(design, selectedConnectionId, evaluation);
     this.applyPortState(design);
     this.onReady();
   }
@@ -535,7 +537,8 @@ export class CustomSiteDiorama implements Diorama {
 
   private rebuildConnections(
     design: SiteDesignDocument,
-    selectedConnectionId: string | null
+    selectedConnectionId: string | null,
+    evaluation: SiteDesignEvaluation | null
   ): void {
     this.clearConnections();
     const invalidIds = new Set(
@@ -545,11 +548,16 @@ export class CustomSiteDiorama implements Diorama {
         .filter((id) => design.connections.some((connection) => connection.id === id))
     );
     for (const connection of design.connections) {
+      const connectionEvaluation = evaluation?.connectionEvaluations.find((item) =>
+        item.connectionId === connection.id
+      );
       const runtime = this.makeConnection(
         design,
         connection,
         connection.id === selectedConnectionId,
-        invalidIds.has(connection.id)
+        invalidIds.has(connection.id),
+        connectionEvaluation?.operational ??
+          (evaluation?.topologyValid ?? invalidIds.size === 0)
       );
       if (runtime === null) {
         continue;
@@ -563,7 +571,8 @@ export class CustomSiteDiorama implements Diorama {
     design: SiteDesignDocument,
     connection: SiteConnection,
     selected: boolean,
-    invalid: boolean
+    invalid: boolean,
+    operational: boolean
   ): RuntimeConnection | null {
     const route = siteConnectionRoutePoints(design, connection);
     if (route.length < 2) {
@@ -585,9 +594,9 @@ export class CustomSiteDiorama implements Diorama {
               point.zM
             )
     );
-    const material = invalid
+    const material = invalid || !operational
       ? new THREE.LineDashedMaterial({
-          color: 0xff4d4d,
+          color: invalid ? 0xff4d4d : 0xffb347,
           dashSize: 1.2,
           gapSize: 0.8,
           transparent: true,
@@ -606,7 +615,7 @@ export class CustomSiteDiorama implements Diorama {
       new THREE.BufferGeometry().setFromPoints(points),
       material
     );
-    if (invalid) {
+    if (invalid || !operational) {
       line.computeLineDistances();
     }
     line.userData.connectionId = connection.id;

@@ -5,6 +5,7 @@ import type {
   SimResult,
   SiteAssetInstance,
   SiteDesignDocument,
+  SiteDesignEvaluation,
   SiteEnvironment,
   SitePortRef,
   SiteViewMode,
@@ -13,6 +14,7 @@ import type {
 import {
   siteConnectionLengthM,
   sitePortConnectionCompatibility,
+  resolveSitePort,
   snapSiteCoordinate,
   validateSiteAssetPlacement,
   validateSiteDesign
@@ -210,6 +212,7 @@ export class Viewer {
   private customViewMode: SiteViewMode = "planner";
   private activeSite: SiteMode | null = null;
   private customDesign: SiteDesignDocument | null = null;
+  private customEvaluation: SiteDesignEvaluation | null = null;
   private customPlacementKind: string | null = null;
   private customConnectionSource: SitePortRef | null = null;
   private customSelectedConnectionId: string | null = null;
@@ -471,13 +474,20 @@ export class Viewer {
   setCustomDesign(
     design: SiteDesignDocument,
     selectedAssetId: string | null,
-    selectedConnectionId: string | null = null
+    selectedConnectionId: string | null = null,
+    evaluation: SiteDesignEvaluation | null = null
   ): void {
     this.customDesign = design;
+    this.customEvaluation = evaluation;
     this.customSelectedConnectionId = selectedConnectionId;
     this.customGridSnapM = design.planner.gridSnapM;
     if (this.diorama instanceof CustomSiteDiorama) {
-      this.diorama.syncDesign(design, selectedAssetId, selectedConnectionId);
+      this.diorama.syncDesign(
+        design,
+        selectedAssetId,
+        selectedConnectionId,
+        evaluation
+      );
       this.diorama.setConnectionState(design, this.customConnectionSource);
     }
     this.rebuildCustomLabels();
@@ -669,7 +679,8 @@ export class Viewer {
         custom.syncDesign(
           this.customDesign,
           this.selectedAssetKey,
-          this.customSelectedConnectionId
+          this.customSelectedConnectionId,
+          this.customEvaluation
         );
         custom.setConnectionState(this.customDesign, this.customConnectionSource);
       }
@@ -1110,13 +1121,28 @@ export class Viewer {
       this.customLabels.set(asset.id, label);
     }
     for (const connection of this.customDesign.connections) {
+      const connectionEvaluation = this.customEvaluation?.connectionEvaluations.find(
+        (item) => item.connectionId === connection.id
+      );
+      const fromPort = resolveSitePort(this.customDesign, connection.from)?.port;
+      const toPort = resolveSitePort(this.customDesign, connection.to)?.port;
+      const stream = fromPort?.streams.find((candidate) =>
+        toPort?.streams.includes(candidate)
+      );
       const label = document.createElement("button");
       label.type = "button";
       label.className = `custom-connection-label custom-connection-${connection.kind}`;
       label.textContent =
-        `${connection.kind.toUpperCase()} · ${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} M`;
+        `${(stream ?? connection.kind).toUpperCase()} · ` +
+        `${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} M · ` +
+        `${connectionEvaluation?.operational === true ? "FLOW" : "STANDBY"}`;
       label.classList.toggle("active", connection.id === this.customSelectedConnectionId);
       label.classList.toggle("invalid", invalidConnectionIds.has(connection.id));
+      label.classList.toggle(
+        "standby",
+        !invalidConnectionIds.has(connection.id) &&
+        connectionEvaluation?.operational !== true
+      );
       label.addEventListener("click", () => this.selectPickedConnection(connection.id));
       this.customLabelOverlay.appendChild(label);
       this.customConnectionLabels.set(connection.id, label);
@@ -1380,7 +1406,8 @@ export class Viewer {
         this.diorama.syncDesign(
           this.customDesign,
           this.selectedAssetKey,
-          this.customSelectedConnectionId
+          this.customSelectedConnectionId,
+          this.customEvaluation
         );
         this.diorama.setConnectionState(
           this.customDesign,
@@ -1477,7 +1504,8 @@ export class Viewer {
         this.diorama.syncDesign(
           this.customDesign,
           this.selectedAssetKey,
-          this.customSelectedConnectionId
+          this.customSelectedConnectionId,
+          this.customEvaluation
         );
         this.diorama.setConnectionState(
           this.customDesign,

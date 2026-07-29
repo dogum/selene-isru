@@ -1,6 +1,11 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
 import { resolvePolarProfile } from "./siteProfile";
-import type { PolarProfileSummary, SimParams, Warning } from "../types";
+import type {
+  PolarProfileSummary,
+  PowerStrategy,
+  SimParams,
+  Warning
+} from "../types";
 
 export interface PowerOutput {
   architecture: "solar" | "nuclear";
@@ -58,7 +63,12 @@ export function siteCycleHours(params: SimParams, profile?: PolarProfileSummary)
   return { dayHours, nightHours };
 }
 
-export function simulatePower(params: SimParams, gridPowerW: number, profile?: PolarProfileSummary): PowerOutput {
+export function simulatePower(
+  params: SimParams,
+  gridPowerW: number,
+  profile?: PolarProfileSummary,
+  strategy: PowerStrategy = "auto"
+): PowerOutput {
   const Pgrid = gridPowerW;
   const activeProfile = profile ?? resolvePolarProfile(params).profile;
   const { dayHours, nightHours } = siteCycleHours(params, activeProfile);
@@ -97,7 +107,9 @@ export function simulatePower(params: SimParams, gridPowerW: number, profile?: P
     (params.Tsink ** 4 - params.Tenv ** 4);
   const radiatorM2 = Qreject / Math.max(1e-9, radiatorDenominator);
   const nuclearMassKg = params.MshieldKg + params.alphaSpecific * (Pgrid / 1000);
-  const architecture = solarMassKg <= nuclearMassKg ? "solar" : "nuclear";
+  const architecture = strategy === "auto"
+    ? solarMassKg <= nuclearMassKg ? "solar" : "nuclear"
+    : strategy;
   const selectedPowerMassKg = architecture === "solar" ? solarMassKg : nuclearMassKg;
   const pCrit = pCritKw(params.MshieldKg, betaSolar, params.alphaSpecific);
   const pCritDynamic = pCritDynamicKw(

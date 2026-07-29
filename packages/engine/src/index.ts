@@ -11,10 +11,17 @@ import { simulatePower } from "./modules/power";
 import { simulateSabatier } from "./modules/sabatier";
 import { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 import { simulateThermal } from "./modules/thermal";
+import { compileSiteDesign } from "./site-design/evaluate";
+import type {
+  SiteDesignDocument,
+  SiteDesignEvaluation
+} from "./site-design/types";
 import type {
   FlowEdge,
+  PowerStrategy,
   SimParams,
   SimResult,
+  SimulationOptions,
   TimeseriesOptions,
   TimeseriesResult,
   UncertaintyBand,
@@ -49,8 +56,10 @@ export type {
   MaterialFlow,
   OxideYield,
   ParamMeta,
+  PowerStrategy,
   SimParams,
   SimResult,
+  SimulationOptions,
   ProcessBalance,
   EnergyProcessBalance,
   StorageInventory,
@@ -70,7 +79,10 @@ export type {
 } from "./types";
 export * from "./site-design";
 
-export function simulate(input: Partial<SimParams> = {}): SimResult {
+export function simulate(
+  input: Partial<SimParams> = {},
+  options: SimulationOptions = {}
+): SimResult {
   const normalized = normalizeParams(input);
   const params = normalized.params;
   const electrolysis = simulateElectrolysis(params);
@@ -102,7 +114,12 @@ export function simulate(input: Partial<SimParams> = {}): SimResult {
   const secTotal_kWhPerKg = secTotal_JPerKg / J_PER_KWH;
   const gridPowerW = (params.targetKgPerDay / SECONDS_PER_DAY) * secTotal_JPerKg;
   const energyAccounting = energyLedger(params, gridPowerW, energyLines, excavation.mechPowerW, electrolysis, cryo, sabatier);
-  const power = simulatePower(params, gridPowerW, siteProfile.profile);
+  const power = simulatePower(
+    params,
+    gridPowerW,
+    siteProfile.profile,
+    options.powerStrategy ?? "auto"
+  );
   const reactorMassKg =
     params.site === "equatorial" || params.enableSabatier
       ? params.kReactorMass * params.targetKgPerDay
@@ -384,10 +401,11 @@ function energyLineItems(
  */
 export function simulateTimeseries(
   input: Partial<SimParams> = {},
-  opts: Partial<TimeseriesOptions> = {}
+  opts: Partial<TimeseriesOptions> = {},
+  simulationOptions: SimulationOptions = {}
 ): TimeseriesResult {
   const params = normalizeParams(input).params;
-  const result = simulate(params);
+  const result = simulate(params, simulationOptions);
   const cycles = Math.max(1, Math.trunc(opts.cycles ?? 1));
   const samplesPerCycle = Math.max(2, Math.trunc(opts.samplesPerCycle ?? 96));
   const tDay = result.power.siteDayHours;
@@ -481,6 +499,86 @@ export function simulateTimeseries(
       dutyCycle,
       tankPeakKg,
       curtailedFraction
+    }
+  };
+}
+
+function evaluationPowerStrategy(
+  evaluation: Omit<SiteDesignEvaluation, "baseResult">
+): PowerStrategy {
+  return evaluation.powerStrategy === "solar" ||
+    evaluation.powerStrategy === "nuclear"
+    ? evaluation.powerStrategy
+    : "auto";
+}
+
+/**
+ * Compile and evaluate a persisted custom-site graph without consulting
+ * rendering or editor state. The steady-state result remains the continuously
+ * sized requirement; achievable output is gated by design validity.
+ */
+export function evaluateSiteDesign(
+  design: SiteDesignDocument
+): SiteDesignEvaluation {
+  const compiled = compileSiteDesign(design);
+  const requiredResult = simulate(compiled.effectiveParams, {
+    powerStrategy: evaluationPowerStrategy(compiled)
+  });
+  const designWarnings: Warning[] = compiled.findings.map((finding) => ({
+    id: `site-design:${finding.id}`,
+    severity: finding.severity === "error"
+      ? "alarm"
+      : finding.severity,
+    module: "site-design",
+    message: finding.message,
+    value: compiled.achievableOutputKgPerDay,
+    limit: compiled.plannedTargetKgPerDay
+  }));
+  return {
+    ...compiled,
+    baseResult: {
+      ...requiredResult,
+      warnings: [...requiredResult.warnings, ...designWarnings]
+    }
+  };
+}
+
+/**
+ * Apply the custom topology gate to the transient operating profile. A broken
+ * graph may still expose the required steady-state design for diagnosis, but
+ * it carries no operating load or production through the timeseries.
+ */
+export function simulateSiteDesignTimeseries(
+  design: SiteDesignDocument,
+  opts: Partial<TimeseriesOptions> = {}
+): TimeseriesResult {
+  const evaluation = evaluateSiteDesign(design);
+  const timeseries = simulateTimeseries(
+    evaluation.effectiveParams,
+    opts,
+    { powerStrategy: evaluationPowerStrategy(evaluation) }
+  );
+  if (evaluation.topologyValid) {
+    return timeseries;
+  }
+  const sourceAvailable =
+    evaluation.powerStrategy !== "unavailable" &&
+    evaluation.powerStrategy !== "conflict";
+  return {
+    points: timeseries.points.map((point) => ({
+      ...point,
+      solarOutputW: sourceAvailable ? point.solarOutputW : 0,
+      loadW: 0,
+      batterySoC: 1,
+      tankFillKg: 0,
+      boiloffKgPerDay: 0,
+      netProductionKgPerDay: 0
+    })),
+    summary: {
+      minSoC: 1,
+      dutyCycle: 0,
+      tankPeakKg: 0,
+      curtailedFraction: 1
     }
   };
 }

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–3 implemented; Milestone 4 next |
+| Status | Milestones 0–4 implemented; Milestone 5 next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -942,6 +942,15 @@ Acceptance:
 ### Milestone 4 — topology-backed simulation
 
 **Goal:** make the graph control whether the site can operate.
+
+**Implementation status (2026-07-29):** Delivered on the working branch.
+Custom-site evaluation is now a pure engine operation: the persisted graph
+selects the connected power strategy, gates achievable output and timeseries
+behavior, and produces asset, connection, bottleneck, and warning state for the
+planner and process overlays. The planner distinguishes requested production,
+the continuously sized required grid, the interpreted installed source, and
+achievable production. Equipment quantity ratings, installed capacity margins,
+and distance-dependent penalties remain explicitly deferred to Milestone 5.
 
 Deliver:
 

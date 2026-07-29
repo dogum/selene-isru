@@ -1,4 +1,9 @@
-import type { SimParams, SiteMode } from "../types";
+import type {
+  PowerStrategy,
+  SimParams,
+  SimResult,
+  SiteMode
+} from "../types";
 
 export type WorkspaceMode = "authored" | "custom";
 export type SiteEnvironment = SiteMode;
@@ -112,6 +117,45 @@ export interface SiteDesignFinding {
 
 export interface SiteDesignParseResult {
   document: SiteDesignDocument | null;
+  findings: SiteDesignFinding[];
+}
+
+export type SitePowerInterpretation =
+  | PowerStrategy
+  | "conflict"
+  | "unavailable";
+
+export interface SiteBottleneck {
+  kind: "topology";
+  label: string;
+  entityIds: string[];
+}
+
+export interface SiteAssetEvaluation {
+  assetId: string;
+  operational: boolean;
+  connected: boolean;
+  capacityStatus: "not-modeled";
+}
+
+export interface SiteConnectionEvaluation {
+  connectionId: string;
+  operational: boolean;
+  compatible: boolean;
+  lengthM: number;
+}
+
+export interface SiteDesignEvaluation {
+  normalizedDesign: SiteDesignDocument;
+  effectiveParams: SimParams;
+  baseResult: SimResult;
+  plannedTargetKgPerDay: number;
+  achievableOutputKgPerDay: number;
+  topologyValid: boolean;
+  powerStrategy: SitePowerInterpretation;
+  bottleneck: SiteBottleneck | null;
+  assetEvaluations: SiteAssetEvaluation[];
+  connectionEvaluations: SiteConnectionEvaluation[];
   findings: SiteDesignFinding[];
 }
 

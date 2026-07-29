@@ -31,8 +31,11 @@ describe("custom site workspace", () => {
       "CLICK PLACE, THEN CHOOSE A VALID FOOTPRINT · ESC CANCELS"
     )).toBeTruthy();
     expect(screen.getByText(
-      "CONNECTIONS ARE STRUCTURAL · CUSTOM OUTPUT EVALUATION ARRIVES IN MILESTONE 4"
+      "REQUIRED CONTINUOUS DESIGN REMAINS VISIBLE · INSTALLED CAPACITY ARRIVES IN MILESTONE 5"
     )).toBeTruthy();
+    const evaluation = screen.getByLabelText("Custom site evaluation");
+    expect(evaluation.textContent).toContain("ACHIEVABLE OUTPUT");
+    expect(evaluation.textContent).toContain("TOPOLOGYSTOPPED");
   });
 
   it("edits the persisted name and switches the registry environment", () => {

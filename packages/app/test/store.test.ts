@@ -4,6 +4,62 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { CUSTOM_SITE_DRAFT_KEY } from "../src/site-design/draft";
 import { useStore } from "../src/state/store";
 
+function buildOperatingEquatorialSite(): void {
+  const store = useStore.getState();
+  store.resetCustomDesign();
+  store.setCustomEnvironment("equatorial");
+  store.enterCustomSite();
+  store.placeCustomAsset("equatorial.excavator", -60, -40);
+  store.placeCustomAsset("equatorial.hauler", -35, -40);
+  store.placeCustomAsset("equatorial.mre-reactor", -10, -20);
+  store.placeCustomAsset("equatorial.cryo-farm", 20, 20);
+  store.placeCustomAsset("equatorial.power-hub", -45, 20);
+
+  const asset = (kind: string): string =>
+    useStore.getState().customSite.design.assets.find((item) =>
+      item.kind === kind
+    )!.id;
+  const connect = (
+    fromKind: string,
+    fromPortId: string,
+    toKind: string,
+    toPortId: string
+  ): void => {
+    useStore.getState().beginCustomConnection({
+      assetId: asset(fromKind),
+      portId: fromPortId
+    });
+    useStore.getState().completeCustomConnection({
+      assetId: asset(toKind),
+      portId: toPortId
+    });
+  };
+  connect(
+    "equatorial.excavator",
+    "regolith-out",
+    "equatorial.hauler",
+    "regolith-in"
+  );
+  connect(
+    "equatorial.hauler",
+    "regolith-out",
+    "equatorial.mre-reactor",
+    "regolith-in"
+  );
+  connect(
+    "equatorial.power-hub",
+    "grid-out",
+    "equatorial.mre-reactor",
+    "power-in"
+  );
+  connect(
+    "equatorial.mre-reactor",
+    "oxygen-out",
+    "equatorial.cryo-farm",
+    "product-in"
+  );
+}
+
 describe("store wiring (§5)", () => {
   beforeEach(() => {
     useStore.getState().enterAuthoredSite(DEFAULTS.site);
@@ -259,5 +315,53 @@ describe("store wiring (§5)", () => {
     expect(useStore.getState().customSite.design.connections).toHaveLength(1);
     useStore.getState().redoCustomEdit();
     expect(useStore.getState().customSite.design.connections).toEqual([]);
+  });
+
+  it("gates custom output and timeseries from the persisted topology", () => {
+    buildOperatingEquatorialSite();
+    let state = useStore.getState();
+    expect(state.customSite.evaluation).toMatchObject({
+      topologyValid: true,
+      achievableOutputKgPerDay:
+        state.customSite.evaluation.plannedTargetKgPerDay
+    });
+    expect(state.timeseries.points.some((point) =>
+      point.loadW > 0 && point.netProductionKgPerDay > 0
+    )).toBe(true);
+
+    const processConnection = state.customSite.design.connections.find(
+      (connection) => connection.to.portId === "regolith-in" &&
+        state.customSite.design.assets.find((asset) =>
+          asset.id === connection.to.assetId
+        )?.kind === "equatorial.mre-reactor"
+    )!;
+    useStore.getState().deleteCustomConnection(processConnection.id);
+    state = useStore.getState();
+    expect(state.customSite.evaluation.topologyValid).toBe(false);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(0);
+    expect(state.timeseries.points.every((point) =>
+      point.loadW === 0 && point.netProductionKgPerDay === 0
+    )).toBe(true);
+
+    useStore.getState().undoCustomEdit();
+    state = useStore.getState();
+    expect(state.customSite.evaluation.topologyValid).toBe(true);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(
+      state.params.targetKgPerDay
+    );
+  });
+
+  it("updates planned and achievable output together for a valid custom graph", () => {
+    buildOperatingEquatorialSite();
+    useStore.getState().setParam("targetKgPerDay", 1775);
+    const state = useStore.getState();
+
+    expect(state.customSite.design.params.targetKgPerDay).toBe(1775);
+    expect(state.customSite.evaluation.plannedTargetKgPerDay).toBe(1775);
+    expect(state.customSite.evaluation.achievableOutputKgPerDay).toBe(1775);
+    expect(state.result.warnings).toContainEqual(expect.objectContaining({
+      id: "site-design:evaluation.capacity-boundary",
+      severity: "info"
+    }));
   });
 });

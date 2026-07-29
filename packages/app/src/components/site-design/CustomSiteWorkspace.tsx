@@ -10,6 +10,7 @@ import type {
   SiteDesignFindingSeverity
 } from "@selene-isru/engine";
 import { useEffect, useMemo } from "react";
+import { formatQtyText } from "../../lib/format";
 import { isKindAvailable } from "../../site-design/editor";
 import { useStore } from "../../state/store";
 
@@ -74,7 +75,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const undoCustomEdit = useStore((state) => state.undoCustomEdit);
   const redoCustomEdit = useStore((state) => state.redoCustomEdit);
   const flyTo = useStore((state) => state.flyTo);
-  const { design, findings, editor, history } = customSite;
+  const { design, evaluation, findings, editor, history } = customSite;
   const groups = useMemo(
     () => groupedCatalog(siteAssetsForEnvironment(design.environment)),
     [design.environment]
@@ -111,6 +112,19 @@ export function CustomSiteWorkspace(): React.JSX.Element {
     : connectionFromPort.streams.filter((stream) =>
         connectionToPort.streams.includes(stream)
       );
+  const selectedAssetEvaluation = selectedAsset === null
+    ? null
+    : evaluation.assetEvaluations.find((item) =>
+        item.assetId === selectedAsset.id
+      ) ?? null;
+  const selectedConnectionEvaluation = selectedConnection === null
+    ? null
+    : evaluation.connectionEvaluations.find((item) =>
+        item.connectionId === selectedConnection.id
+      ) ?? null;
+  const powerStrategyLabel = evaluation.powerStrategy === "auto"
+    ? `AUTO → ${evaluation.baseResult.power.architecture.toUpperCase()}`
+    : evaluation.powerStrategy.toUpperCase();
   const selectedEntityId = selectedAsset?.id ?? selectedConnection?.id ?? null;
   const selectedFindings = selectedEntityId === null
     ? []
@@ -372,6 +386,18 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <dt>Status</dt>
                   <dd>{selectedAsset.enabled ? "ENABLED" : "DISABLED"}</dd>
                 </div>
+                <div>
+                  <dt>Graph role</dt>
+                  <dd>
+                    {selectedAssetEvaluation?.operational
+                      ? "OPERATIONAL"
+                      : selectedAssetEvaluation?.connected ? "STANDBY" : "UNCONNECTED"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Capacity</dt>
+                  <dd>CONTINUOUSLY SIZED</dd>
+                </div>
               </dl>
               <section className="custom-port-section">
                 <div className="custom-port-heading">
@@ -482,7 +508,10 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <span>
                   {connectionStreams.length > 0
                     ? connectionStreams.join(" / ")
-                    : "NO COMPATIBLE STREAM"}
+                    : "NO COMPATIBLE STREAM"} ·{" "}
+                  {selectedConnectionEvaluation?.operational
+                    ? "FLOW ACTIVE"
+                    : "FLOW STANDBY"}
                 </span>
               </div>
               <section className="custom-endpoint-list" aria-label="Connection endpoints">
@@ -507,9 +536,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 </div>
                 <div>
                   <dt>Topology</dt>
-                  <dd>{selectedFindings.some((finding) => finding.severity === "error")
-                    ? "INVALID"
-                    : "CONNECTED"}</dd>
+                  <dd>
+                    {selectedConnectionEvaluation?.operational
+                      ? "OPERATIONAL"
+                      : selectedConnectionEvaluation?.compatible ? "STANDBY" : "INVALID"}
+                  </dd>
                 </div>
               </dl>
               <div className="custom-asset-actions">
@@ -608,13 +639,23 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <div><dt>Version</dt><dd>v{design.version}</dd></div>
                 <div><dt>Assets</dt><dd>{design.assets.length}</dd></div>
                 <div><dt>Connections</dt><dd>{design.connections.length}</dd></div>
+                <div>
+                  <dt>Power source</dt>
+                  <dd>{powerStrategyLabel}</dd>
+                </div>
+                <div>
+                  <dt>Topology gate</dt>
+                  <dd>{evaluation.topologyValid ? "OPEN" : "CLOSED"}</dd>
+                </div>
               </dl>
 
               <section className="custom-validation">
                 <div className="custom-validation-heading">
                   <div>
                     <p className="custom-eyebrow">DESIGN CHECK</p>
-                    <h2>{errorCount === 0 ? "Topology complete" : `${errorCount} open steps`}</h2>
+                    <h2>{evaluation.topologyValid
+                      ? "Operating topology"
+                      : `${errorCount} open steps`}</h2>
                   </div>
                   <span className={errorCount === 0 ? "ok" : "error"}>
                     {errorCount === 0 ? "VALID" : "INCOMPLETE"}
@@ -625,6 +666,12 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <span>{cautionCount} cautions</span>
                   <span>{infoCount} notes</span>
                 </div>
+                {evaluation.bottleneck !== null && (
+                  <p className="custom-bottleneck">
+                    <span>PRIMARY BLOCKER</span>
+                    {evaluation.bottleneck.label}
+                  </p>
+                )}
                 <ol className="custom-findings">
                   {findings.slice(0, 8).map((finding) => (
                     <li className={`finding-${finding.severity}`} key={finding.id}>
@@ -660,14 +707,51 @@ export function CustomSiteWorkspace(): React.JSX.Element {
         )}
       </aside>
 
+      <section
+        className={`custom-evaluation-strip${evaluation.topologyValid ? "" : " stopped"}`}
+        aria-label="Custom site evaluation"
+      >
+        <div>
+          <span>PLANNED TARGET</span>
+          <strong>{formatQtyText(
+            evaluation.plannedTargetKgPerDay,
+            "kg/day",
+            4
+          )}</strong>
+        </div>
+        <div className="achievable">
+          <span>ACHIEVABLE OUTPUT</span>
+          <strong>{formatQtyText(
+            evaluation.achievableOutputKgPerDay,
+            "kg/day",
+            4
+          )}</strong>
+        </div>
+        <div>
+          <span>REQUIRED GRID</span>
+          <strong>{formatQtyText(
+            evaluation.baseResult.energy.gridPowerW,
+            "W"
+          )}</strong>
+        </div>
+        <div>
+          <span>INSTALLED SOURCE</span>
+          <strong>{powerStrategyLabel}</strong>
+        </div>
+        <div>
+          <span>TOPOLOGY</span>
+          <strong>{evaluation.topologyValid ? "OPERATING" : "STOPPED"}</strong>
+        </div>
+      </section>
+
       <div className="custom-statusbar" role="status">
         <span>
           <i className={`custom-status-dot${errorCount > 0 ? " incomplete" : ""}`} />
-          {errorCount === 0
-            ? "TOPOLOGY VALID · PLANNER EDITING ACTIVE"
-            : `TOPOLOGY INCOMPLETE · ${errorCount} ERROR${errorCount === 1 ? "" : "S"}`}
+          {evaluation.topologyValid
+            ? `TOPOLOGY GATE OPEN · ${evaluation.achievableOutputKgPerDay.toLocaleString()} KG/DAY ACHIEVABLE`
+            : `TOPOLOGY GATE CLOSED · ${errorCount} ERROR${errorCount === 1 ? "" : "S"} · ZERO ACHIEVABLE OUTPUT`}
         </span>
-        <span>CONNECTIONS ARE STRUCTURAL · CUSTOM OUTPUT EVALUATION ARRIVES IN MILESTONE 4</span>
+        <span>REQUIRED CONTINUOUS DESIGN REMAINS VISIBLE · INSTALLED CAPACITY ARRIVES IN MILESTONE 5</span>
       </div>
     </div>
   );

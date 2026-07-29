@@ -1,16 +1,18 @@
 import {
   DEFAULTS,
+  evaluateSiteDesign,
   siteAssetDefinition,
   simulate,
+  simulateSiteDesignTimeseries,
   simulateTimeseries,
-  validateSiteAssetPlacement,
-  validateSiteDesign
+  validateSiteAssetPlacement
 } from "@selene-isru/engine";
 import type {
   PlannerDocumentState,
   SimParams,
   SimResult,
   SiteDesignDocument,
+  SiteDesignEvaluation,
   SiteDesignFinding,
   SiteEnvironment,
   SitePortRef,
@@ -106,6 +108,7 @@ export interface TourState {
 
 export interface CustomSiteState {
   design: SiteDesignDocument;
+  evaluation: SiteDesignEvaluation;
   viewMode: SiteViewMode;
   findings: SiteDesignFinding[];
   editor: CustomEditorSession;
@@ -266,6 +269,22 @@ function cycleHours(timeseries: TimeseriesResult): number {
   return Math.max(1, timeseries.points.at(-1)?.tHours ?? 1);
 }
 
+function evaluateCustomRuntime(design: SiteDesignDocument): {
+  evaluation: SiteDesignEvaluation;
+  result: SimResult;
+  timeseries: TimeseriesResult;
+} {
+  const evaluation = evaluateSiteDesign(design);
+  return {
+    evaluation,
+    result: evaluation.baseResult,
+    timeseries: simulateSiteDesignTimeseries(design, {
+      cycles: 1,
+      samplesPerCycle: 96
+    })
+  };
+}
+
 function initialCompareParams(params: SimParams): SimParams {
   return { ...params, site: params.site === "polar" ? "equatorial" : "polar" };
 }
@@ -350,10 +369,12 @@ export const useStore = create<Store>((set, get) => {
   const timePoint = sampleTimeseries(timeseries, time.tHours);
   const scenarioLibrary = initialScenarioLibrary(params, compareParams);
   const customDesign = loadCustomSiteDraft() ?? createWorkingSiteDesign(params.site);
+  const customRuntime = evaluateCustomRuntime(customDesign);
   const customSite: CustomSiteState = {
     design: customDesign,
+    evaluation: customRuntime.evaluation,
     viewMode: "planner",
-    findings: validateSiteDesign(customDesign),
+    findings: customRuntime.evaluation.findings,
     editor: customEditorSession(),
     history: emptyCustomHistory()
   };
@@ -365,17 +386,37 @@ export const useStore = create<Store>((set, get) => {
     recordHistory = true
   ): void => {
     const current = get().customSite;
+    const runtime = evaluateCustomRuntime(design);
+    const nextCustomSite: CustomSiteState = {
+      ...current,
+      design,
+      evaluation: runtime.evaluation,
+      findings: runtime.evaluation.findings,
+      editor: customEditorSession({ selectedAssetId, selectedConnectionId }),
+      history: recordHistory
+        ? pushCustomHistory(current.history, current.design)
+        : current.history
+    };
     saveCustomSiteDraft(design);
+    if (get().workspaceMode !== "custom") {
+      set({ customSite: nextCustomSite });
+      return;
+    }
+    const nextTime = {
+      ...get().time,
+      tHours: get().time.tHours % cycleHours(runtime.timeseries)
+    };
     set({
-      customSite: {
-        ...current,
-        design,
-        findings: validateSiteDesign(design),
-        editor: customEditorSession({ selectedAssetId, selectedConnectionId }),
-        history: recordHistory
-          ? pushCustomHistory(current.history, current.design)
-          : current.history
-      }
+      customSite: nextCustomSite,
+      params: runtime.evaluation.effectiveParams,
+      result: runtime.result,
+      timeseries: runtime.timeseries,
+      time: nextTime,
+      timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
+      secHistory: pushHistory(
+        get().secHistory,
+        runtime.result.energy.secTotal_kWhPerKg
+      )
     });
   };
 
@@ -421,24 +462,28 @@ export const useStore = create<Store>((set, get) => {
 
     enterCustomSite: () => {
       const design = get().customSite.design;
-      const nextResult = simulate(design.params);
-      const nextTimeseries = simulateTimeseries(design.params, {
-        cycles: 1,
-        samplesPerCycle: 96
-      });
+      const runtime = evaluateCustomRuntime(design);
       const nextTime = {
         ...get().time,
         playing: false,
-        tHours: get().time.tHours % cycleHours(nextTimeseries)
+        tHours: get().time.tHours % cycleHours(runtime.timeseries)
       };
       set({
         workspaceMode: "custom",
-        params: design.params,
-        result: nextResult,
-        timeseries: nextTimeseries,
+        customSite: {
+          ...get().customSite,
+          evaluation: runtime.evaluation,
+          findings: runtime.evaluation.findings
+        },
+        params: runtime.evaluation.effectiveParams,
+        result: runtime.result,
+        timeseries: runtime.timeseries,
         time: nextTime,
-        timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
-        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+        timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
+        secHistory: pushHistory(
+          get().secHistory,
+          runtime.result.energy.secTotal_kWhPerKg
+        ),
         ui: {
           ...get().ui,
           selectedAsset: null,
@@ -459,32 +504,31 @@ export const useStore = create<Store>((set, get) => {
         connections: [],
         updatedAt: timestamp
       };
-      const findings = validateSiteDesign(design);
+      const runtime = evaluateCustomRuntime(design);
       saveCustomSiteDraft(design);
-      const nextResult = simulate(design.params);
-      const nextTimeseries = simulateTimeseries(design.params, {
-        cycles: 1,
-        samplesPerCycle: 96
-      });
       const nextTime = {
         ...get().time,
         playing: false,
-        tHours: get().time.tHours % cycleHours(nextTimeseries)
+        tHours: get().time.tHours % cycleHours(runtime.timeseries)
       };
       set({
         customSite: {
           ...get().customSite,
           design,
-          findings,
+          evaluation: runtime.evaluation,
+          findings: runtime.evaluation.findings,
           editor: customEditorSession(),
           history: emptyCustomHistory()
         },
-        params: design.params,
-        result: nextResult,
-        timeseries: nextTimeseries,
+        params: runtime.evaluation.effectiveParams,
+        result: runtime.result,
+        timeseries: runtime.timeseries,
         time: nextTime,
-        timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
-        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+        timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
+        secHistory: pushHistory(
+          get().secHistory,
+          runtime.result.energy.secTotal_kWhPerKg
+        ),
         ui: { ...get().ui, selectedAsset: null }
       });
     },
@@ -500,12 +544,14 @@ export const useStore = create<Store>((set, get) => {
         name: name.slice(0, 120),
         updatedAt: new Date().toISOString()
       };
+      const evaluation = evaluateSiteDesign(design);
       saveCustomSiteDraft(design);
       set({
         customSite: {
           ...get().customSite,
           design,
-          findings: validateSiteDesign(design)
+          evaluation,
+          findings: evaluation.findings
         }
       });
     },
@@ -513,12 +559,14 @@ export const useStore = create<Store>((set, get) => {
     resetCustomDesign: () => {
       const current = get().customSite.design;
       const design = createWorkingSiteDesign(current.environment);
+      const runtime = evaluateCustomRuntime(design);
       saveCustomSiteDraft(design);
       set({
         customSite: {
           design,
+          evaluation: runtime.evaluation,
           viewMode: "planner",
-          findings: validateSiteDesign(design),
+          findings: runtime.evaluation.findings,
           editor: customEditorSession(),
           history: emptyCustomHistory()
         }
@@ -782,18 +830,34 @@ export const useStore = create<Store>((set, get) => {
           connection.id === current.editor.selectedConnectionId)
         ? current.editor.selectedConnectionId
         : null;
+      const runtime = evaluateCustomRuntime(restored.design);
+      const nextCustomSite: CustomSiteState = {
+        ...current,
+        design: restored.design,
+        evaluation: runtime.evaluation,
+        findings: runtime.evaluation.findings,
+        editor: customEditorSession({
+          selectedAssetId,
+          selectedConnectionId
+        }),
+        history: restored.history
+      };
       saveCustomSiteDraft(restored.design);
+      if (get().workspaceMode !== "custom") {
+        set({ customSite: nextCustomSite });
+        return;
+      }
+      const nextTime = {
+        ...get().time,
+        tHours: get().time.tHours % cycleHours(runtime.timeseries)
+      };
       set({
-        customSite: {
-          ...current,
-          design: restored.design,
-          findings: validateSiteDesign(restored.design),
-          editor: customEditorSession({
-            selectedAssetId,
-            selectedConnectionId
-          }),
-          history: restored.history
-        }
+        customSite: nextCustomSite,
+        params: runtime.evaluation.effectiveParams,
+        result: runtime.result,
+        timeseries: runtime.timeseries,
+        time: nextTime,
+        timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours)
       });
     },
 
@@ -803,18 +867,44 @@ export const useStore = create<Store>((set, get) => {
       if (restored === null) {
         return;
       }
+      const selectedAssetId = current.editor.selectedAssetId !== null &&
+        restored.design.assets.some((asset) =>
+          asset.id === current.editor.selectedAssetId)
+        ? current.editor.selectedAssetId
+        : null;
+      const selectedConnectionId = current.editor.selectedConnectionId !== null &&
+        restored.design.connections.some((connection) =>
+          connection.id === current.editor.selectedConnectionId)
+        ? current.editor.selectedConnectionId
+        : null;
+      const runtime = evaluateCustomRuntime(restored.design);
+      const nextCustomSite: CustomSiteState = {
+        ...current,
+        design: restored.design,
+        evaluation: runtime.evaluation,
+        findings: runtime.evaluation.findings,
+        editor: customEditorSession({
+          selectedAssetId,
+          selectedConnectionId
+        }),
+        history: restored.history
+      };
       saveCustomSiteDraft(restored.design);
+      if (get().workspaceMode !== "custom") {
+        set({ customSite: nextCustomSite });
+        return;
+      }
+      const nextTime = {
+        ...get().time,
+        tHours: get().time.tHours % cycleHours(runtime.timeseries)
+      };
       set({
-        customSite: {
-          ...current,
-          design: restored.design,
-          findings: validateSiteDesign(restored.design),
-          editor: customEditorSession({
-            selectedAssetId: current.editor.selectedAssetId,
-            selectedConnectionId: current.editor.selectedConnectionId
-          }),
-          history: restored.history
-        }
+        customSite: nextCustomSite,
+        params: runtime.evaluation.effectiveParams,
+        result: runtime.result,
+        timeseries: runtime.timeseries,
+        time: nextTime,
+        timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours)
       });
     },
 
@@ -824,30 +914,41 @@ export const useStore = create<Store>((set, get) => {
         return;
       }
       const nextParams = { ...get().params, [key]: value };
+      if (get().workspaceMode === "custom") {
+        const nextCustomDesign = {
+          ...get().customSite.design,
+          params: nextParams,
+          updatedAt: new Date().toISOString()
+        };
+        const runtime = evaluateCustomRuntime(nextCustomDesign);
+        const nextTime = {
+          ...get().time,
+          tHours: get().time.tHours % cycleHours(runtime.timeseries)
+        };
+        saveCustomSiteDraft(nextCustomDesign);
+        set({
+          customSite: {
+            ...get().customSite,
+            design: nextCustomDesign,
+            evaluation: runtime.evaluation,
+            findings: runtime.evaluation.findings
+          },
+          params: runtime.evaluation.effectiveParams,
+          result: runtime.result,
+          timeseries: runtime.timeseries,
+          time: nextTime,
+          timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
+          secHistory: pushHistory(
+            get().secHistory,
+            runtime.result.energy.secTotal_kWhPerKg
+          )
+        });
+        return;
+      }
       const nextResult = simulate(nextParams);
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
-      const customDesign = get().customSite.design;
-      const nextCustomDesign = get().workspaceMode === "custom"
-        ? {
-            ...customDesign,
-            params: nextParams,
-            updatedAt: new Date().toISOString()
-          }
-        : customDesign;
-      if (get().workspaceMode === "custom") {
-        saveCustomSiteDraft(nextCustomDesign);
-      }
       set({
-        ...(get().workspaceMode === "custom"
-          ? {
-              customSite: {
-                ...get().customSite,
-                design: nextCustomDesign,
-                findings: validateSiteDesign(nextCustomDesign)
-              }
-            }
-          : {}),
         params: nextParams,
         result: nextResult,
         timeseries: nextTimeseries,

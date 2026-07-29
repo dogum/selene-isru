@@ -39,13 +39,16 @@ export type {
   PlannerDocumentState,
   SiteAnnotation,
   SiteAssetDefinition,
+  SiteAssetEvaluation,
   SiteAssetInstance,
   SiteAssetModelMaturity,
   SiteAssetMultiplicity,
   SiteConfigurationValue,
   SiteConnection,
+  SiteConnectionEvaluation,
   SiteConnectionKind,
   SiteDesignDocument,
+  SiteDesignEvaluation,
   SiteDesignFinding,
   SiteDesignFindingSeverity,
   SiteDesignFixtureOptions,
@@ -55,8 +58,10 @@ export type {
   SitePortDefinition,
   SitePortDirection,
   SitePortRef,
+  SitePowerInterpretation,
   SiteRoutePoint,
   SiteViewMode,
   WorkspaceMode
 } from "./types";
+export type { SiteBottleneck } from "./types";
 export type { RequiredSiteConnection } from "./catalog";

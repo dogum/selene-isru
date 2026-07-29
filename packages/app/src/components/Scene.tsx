@@ -68,7 +68,8 @@ export function Scene(): React.JSX.Element {
     viewer.setCustomDesign(
       initial.customSite.design,
       initial.customSite.editor.selectedAssetId,
-      initial.customSite.editor.selectedConnectionId
+      initial.customSite.editor.selectedConnectionId,
+      initial.customSite.evaluation
     );
     viewer.setCustomEditorState(
       initial.customSite.editor.placementKind,
@@ -123,6 +124,7 @@ export function Scene(): React.JSX.Element {
       }
       if (
         state.customSite.design !== prev.customSite.design ||
+        state.customSite.evaluation !== prev.customSite.evaluation ||
         state.customSite.editor.selectedAssetId !== prev.customSite.editor.selectedAssetId ||
         state.customSite.editor.selectedConnectionId !==
           prev.customSite.editor.selectedConnectionId
@@ -130,7 +132,8 @@ export function Scene(): React.JSX.Element {
         viewer.setCustomDesign(
           state.customSite.design,
           state.customSite.editor.selectedAssetId,
-          state.customSite.editor.selectedConnectionId
+          state.customSite.editor.selectedConnectionId,
+          state.customSite.evaluation
         );
       }
       if (
