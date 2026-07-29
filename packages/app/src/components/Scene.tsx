@@ -40,10 +40,10 @@ export function Scene(): React.JSX.Element {
       return;
     }
     const viewer = new Viewer(el, isMobile, {
-      onSelectAsset: (assetKey) => {
+      onSelectAsset: (assetKey, additive = false) => {
         const state = useStore.getState();
         if (state.workspaceMode === "custom") {
-          state.selectCustomAsset(assetKey);
+          state.selectCustomAsset(assetKey, additive);
         } else {
           state.setUi({ selectedAsset: assetKey });
         }
@@ -52,6 +52,17 @@ export function Scene(): React.JSX.Element {
         useStore.getState().placeCustomAsset(kind, xM, zM),
       onMoveCustomAsset: (assetId, xM, zM) =>
         useStore.getState().moveCustomAsset(assetId, xM, zM),
+      onMoveCustomRoutePoint: (
+        connectionId,
+        routePointIndex,
+        xM,
+        zM
+      ) => useStore.getState().moveCustomConnectionRoutePoint(
+        connectionId,
+        routePointIndex,
+        xM,
+        zM
+      ),
       onBeginCustomConnection: (source) =>
         useStore.getState().beginCustomConnection(source),
       onCompleteCustomConnection: (target) =>
@@ -69,7 +80,8 @@ export function Scene(): React.JSX.Element {
       initial.customSite.design,
       initial.customSite.editor.selectedAssetId,
       initial.customSite.editor.selectedConnectionId,
-      initial.customSite.evaluation
+      initial.customSite.evaluation,
+      initial.customSite.editor.selectedAssetIds
     );
     viewer.setCustomEditorState(
       initial.customSite.editor.placementKind,
@@ -126,6 +138,8 @@ export function Scene(): React.JSX.Element {
         state.customSite.design !== prev.customSite.design ||
         state.customSite.evaluation !== prev.customSite.evaluation ||
         state.customSite.editor.selectedAssetId !== prev.customSite.editor.selectedAssetId ||
+        state.customSite.editor.selectedAssetIds !==
+          prev.customSite.editor.selectedAssetIds ||
         state.customSite.editor.selectedConnectionId !==
           prev.customSite.editor.selectedConnectionId
       ) {
@@ -133,7 +147,8 @@ export function Scene(): React.JSX.Element {
           state.customSite.design,
           state.customSite.editor.selectedAssetId,
           state.customSite.editor.selectedConnectionId,
-          state.customSite.evaluation
+          state.customSite.evaluation,
+          state.customSite.editor.selectedAssetIds
         );
       }
       if (

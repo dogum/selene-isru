@@ -1,8 +1,10 @@
 import {
+  createSeededSiteDesign,
   DEFAULTS,
   evaluateSiteDesign,
   parseSiteDesign,
   siteAssetDefinition,
+  siteConnectionRoutePoints,
   simulate,
   simulateSiteDesignTimeseries,
   simulateTimeseries,
@@ -32,18 +34,22 @@ import {
 } from "../site-design/draft";
 import {
   createSiteConnection,
+  distributeSiteAssets,
   duplicateSiteAsset,
   emptyCustomHistory,
   isKindAvailable,
+  moveSiteAssetGroup,
   placeSiteAsset,
   pushCustomHistory,
   redoCustomDesign,
   removeSiteConnection,
   removeSiteAsset,
   rerouteSiteConnection,
+  rotateSiteAssetGroup,
   type CustomDesignHistory,
   type CustomEditorSession,
   undoCustomDesign,
+  updateSiteConnectionRoute,
   updatePlannerSnaps,
   updateSiteAsset
 } from "../site-design/editor";
@@ -128,11 +134,19 @@ let scenarioNonce = 0;
 function customEditorSession(
   patch: Partial<CustomEditorSession> = {}
 ): CustomEditorSession {
+  const selectedAssetIds = patch.selectedAssetIds ??
+    (patch.selectedAssetId === undefined || patch.selectedAssetId === null
+      ? []
+      : [patch.selectedAssetId]);
+  const selectedAssetId = patch.selectedAssetId === undefined
+    ? selectedAssetIds.at(-1) ?? null
+    : patch.selectedAssetId;
   return {
     tool: "select",
     placementKind: null,
     connectionSource: null,
-    selectedAssetId: null,
+    selectedAssetId,
+    selectedAssetIds,
     selectedConnectionId: null,
     ...patch
   };
@@ -160,15 +174,20 @@ interface Store {
   setCustomViewMode: (viewMode: SiteViewMode) => void;
   setCustomDesignName: (name: string) => void;
   resetCustomDesign: () => void;
+  seedCustomDesign: (environment: SiteEnvironment) => void;
   beginCustomPlacement: (kind: string) => void;
   cancelCustomPlacement: () => void;
   beginCustomConnection: (source: SitePortRef) => void;
   cancelCustomConnection: () => void;
   completeCustomConnection: (target: SitePortRef) => void;
-  selectCustomAsset: (assetId: string | null) => void;
+  selectCustomAsset: (assetId: string | null, additive?: boolean) => void;
   selectCustomConnection: (connectionId: string | null) => void;
   placeCustomAsset: (kind: string, xM: number, zM: number) => void;
   moveCustomAsset: (assetId: string, xM: number, zM: number) => void;
+  moveCustomAssetGroup: (deltaXM: number, deltaZM: number) => void;
+  rotateCustomAssetGroup: (deltaDeg: number) => void;
+  distributeCustomAssets: (axis: "x" | "z") => void;
+  deleteCustomAssetGroup: () => void;
   updateCustomAsset: (
     assetId: string,
     patch: {
@@ -184,6 +203,16 @@ interface Store {
   duplicateCustomAsset: (assetId: string) => void;
   deleteCustomAsset: (assetId: string) => void;
   rerouteCustomConnection: (connectionId: string) => void;
+  updateCustomConnectionRoute: (
+    connectionId: string,
+    route: Array<{ xM: number; zM: number }>
+  ) => void;
+  moveCustomConnectionRoutePoint: (
+    connectionId: string,
+    routePointIndex: number,
+    xM: number,
+    zM: number
+  ) => void;
   deleteCustomConnection: (connectionId: string) => void;
   setCustomPlannerSnaps: (
     patch: Partial<Pick<PlannerDocumentState, "gridSnapM" | "rotationSnapDeg">>
@@ -427,6 +456,8 @@ export const useStore = create<Store>((set, get) => {
     design: SiteDesignDocument,
     selectedAssetId: string | null,
     selectedConnectionId: string | null = null,
+    selectedAssetIds: string[] =
+      selectedAssetId === null ? [] : [selectedAssetId],
     recordHistory = true
   ): void => {
     const current = get().customSite;
@@ -436,7 +467,11 @@ export const useStore = create<Store>((set, get) => {
       design,
       evaluation: runtime.evaluation,
       findings: runtime.evaluation.findings,
-      editor: customEditorSession({ selectedAssetId, selectedConnectionId }),
+      editor: customEditorSession({
+        selectedAssetId,
+        selectedAssetIds,
+        selectedConnectionId
+      }),
       history: recordHistory
         ? pushCustomHistory(current.history, current.design)
         : current.history
@@ -594,7 +629,8 @@ export const useStore = create<Store>((set, get) => {
       commitCustomDesign(
         design,
         get().customSite.editor.selectedAssetId,
-        get().customSite.editor.selectedConnectionId
+        get().customSite.editor.selectedConnectionId,
+        get().customSite.editor.selectedAssetIds
       );
       if (get().workspaceMode === "custom") {
         set({
@@ -627,6 +663,31 @@ export const useStore = create<Store>((set, get) => {
       }
     },
 
+    seedCustomDesign: (environment) => {
+      const identity = createWorkingSiteDesign(environment);
+      const design = createSeededSiteDesign(environment, {
+        id: identity.id,
+        name: `${environment === "polar" ? "Polar" : "Equatorial"} reference copy`,
+        timestamp: identity.createdAt
+      });
+      commitCustomDesign(design, null);
+      set({
+        customSite: {
+          ...get().customSite,
+          viewMode: "planner",
+          editor: customEditorSession()
+        },
+        ui: {
+          ...get().ui,
+          selectedAsset: null,
+          currentScenarioName: design.name
+        }
+      });
+      if (get().workspaceMode !== "custom") {
+        activateCustomDesign(design, false, design.name);
+      }
+    },
+
     beginCustomPlacement: (kind) => {
       const current = get().customSite;
       if (!isKindAvailable(current.design, kind)) {
@@ -650,6 +711,7 @@ export const useStore = create<Store>((set, get) => {
           ...current,
           editor: customEditorSession({
             selectedAssetId: current.editor.selectedAssetId,
+            selectedAssetIds: current.editor.selectedAssetIds,
             selectedConnectionId: current.editor.selectedConnectionId
           })
         }
@@ -684,7 +746,8 @@ export const useStore = create<Store>((set, get) => {
           editor: customEditorSession({
             tool: "connect",
             connectionSource: { ...source },
-            selectedAssetId: source.assetId
+            selectedAssetId: source.assetId,
+            selectedAssetIds: [source.assetId]
           })
         }
       });
@@ -697,7 +760,10 @@ export const useStore = create<Store>((set, get) => {
           ...current,
           editor: customEditorSession({
             selectedAssetId: current.editor.connectionSource?.assetId ??
-              current.editor.selectedAssetId
+              current.editor.selectedAssetId,
+            selectedAssetIds: current.editor.connectionSource === null
+              ? current.editor.selectedAssetIds
+              : [current.editor.connectionSource.assetId]
           })
         }
       });
@@ -717,16 +783,28 @@ export const useStore = create<Store>((set, get) => {
       commitCustomDesign(design, null, connection.id);
     },
 
-    selectCustomAsset: (assetId) => {
+    selectCustomAsset: (assetId, additive = false) => {
       const current = get().customSite;
       const selectedAssetId = assetId !== null &&
         current.design.assets.some((asset) => asset.id === assetId)
         ? assetId
         : null;
+      const selectedAssetIds = selectedAssetId === null
+        ? []
+        : additive
+          ? current.editor.selectedAssetIds.includes(selectedAssetId)
+            ? current.editor.selectedAssetIds.filter((id) =>
+                id !== selectedAssetId
+              )
+            : [...current.editor.selectedAssetIds, selectedAssetId]
+          : [selectedAssetId];
       set({
         customSite: {
           ...current,
-          editor: customEditorSession({ selectedAssetId })
+          editor: customEditorSession({
+            selectedAssetId: selectedAssetIds.at(-1) ?? null,
+            selectedAssetIds
+          })
         }
       });
     },
@@ -762,12 +840,72 @@ export const useStore = create<Store>((set, get) => {
 
     moveCustomAsset: (assetId, xM, zM) => {
       const current = get().customSite;
-      if (!current.design.assets.some((asset) => asset.id === assetId)) {
+      const asset = current.design.assets.find((item) => item.id === assetId);
+      if (asset === undefined) {
+        return;
+      }
+      if (
+        current.editor.selectedAssetIds.length > 1 &&
+        current.editor.selectedAssetIds.includes(assetId)
+      ) {
+        commitCustomDesign(
+          moveSiteAssetGroup(
+            current.design,
+            current.editor.selectedAssetIds,
+            xM - asset.transform.xM,
+            zM - asset.transform.zM
+          ),
+          assetId,
+          null,
+          current.editor.selectedAssetIds
+        );
         return;
       }
       commitCustomDesign(
         updateSiteAsset(current.design, assetId, { xM, zM }),
         assetId
+      );
+    },
+
+    moveCustomAssetGroup: (deltaXM, deltaZM) => {
+      const current = get().customSite;
+      const ids = current.editor.selectedAssetIds;
+      if (ids.length === 0) {
+        return;
+      }
+      commitCustomDesign(
+        moveSiteAssetGroup(current.design, ids, deltaXM, deltaZM),
+        ids.at(-1) ?? null,
+        null,
+        ids
+      );
+    },
+
+    rotateCustomAssetGroup: (deltaDeg) => {
+      const current = get().customSite;
+      const ids = current.editor.selectedAssetIds;
+      if (ids.length < 2) {
+        return;
+      }
+      commitCustomDesign(
+        rotateSiteAssetGroup(current.design, ids, deltaDeg),
+        ids.at(-1) ?? null,
+        null,
+        ids
+      );
+    },
+
+    distributeCustomAssets: (axis) => {
+      const current = get().customSite;
+      const ids = current.editor.selectedAssetIds;
+      if (ids.length < 3) {
+        return;
+      }
+      commitCustomDesign(
+        distributeSiteAssets(current.design, ids, axis),
+        ids.at(-1) ?? null,
+        null,
+        ids
       );
     },
 
@@ -834,6 +972,18 @@ export const useStore = create<Store>((set, get) => {
       commitCustomDesign(removeSiteAsset(current.design, assetId), null);
     },
 
+    deleteCustomAssetGroup: () => {
+      const current = get().customSite;
+      if (current.editor.selectedAssetIds.length === 0) {
+        return;
+      }
+      const design = current.editor.selectedAssetIds.reduce(
+        (next, assetId) => removeSiteAsset(next, assetId),
+        current.design
+      );
+      commitCustomDesign(design, null);
+    },
+
     rerouteCustomConnection: (connectionId) => {
       const current = get().customSite;
       if (!current.design.connections.some((connection) => connection.id === connectionId)) {
@@ -841,6 +991,48 @@ export const useStore = create<Store>((set, get) => {
       }
       commitCustomDesign(
         rerouteSiteConnection(current.design, connectionId),
+        null,
+        connectionId
+      );
+    },
+
+    updateCustomConnectionRoute: (connectionId, route) => {
+      const current = get().customSite;
+      if (!current.design.connections.some((connection) =>
+        connection.id === connectionId
+      )) {
+        return;
+      }
+      commitCustomDesign(
+        updateSiteConnectionRoute(current.design, connectionId, route),
+        null,
+        connectionId
+      );
+    },
+
+    moveCustomConnectionRoutePoint: (
+      connectionId,
+      routePointIndex,
+      xM,
+      zM
+    ) => {
+      const current = get().customSite;
+      const connection = current.design.connections.find((item) =>
+        item.id === connectionId
+      );
+      if (connection === undefined) {
+        return;
+      }
+      const route = siteConnectionRoutePoints(
+        current.design,
+        connection
+      ).slice(1, -1);
+      if (route[routePointIndex] === undefined) {
+        return;
+      }
+      route[routePointIndex] = { xM, zM };
+      commitCustomDesign(
+        updateSiteConnectionRoute(current.design, connectionId, route),
         null,
         connectionId
       );
@@ -862,7 +1054,8 @@ export const useStore = create<Store>((set, get) => {
       commitCustomDesign(
         updatePlannerSnaps(current.design, patch),
         current.editor.selectedAssetId,
-        current.editor.selectedConnectionId
+        current.editor.selectedConnectionId,
+        current.editor.selectedAssetIds
       );
     },
 
@@ -876,6 +1069,9 @@ export const useStore = create<Store>((set, get) => {
         restored.design.assets.some((asset) => asset.id === current.editor.selectedAssetId)
         ? current.editor.selectedAssetId
         : null;
+      const selectedAssetIds = current.editor.selectedAssetIds.filter((id) =>
+        restored.design.assets.some((asset) => asset.id === id)
+      );
       const selectedConnectionId = current.editor.selectedConnectionId !== null &&
         restored.design.connections.some((connection) =>
           connection.id === current.editor.selectedConnectionId)
@@ -888,7 +1084,8 @@ export const useStore = create<Store>((set, get) => {
         evaluation: runtime.evaluation,
         findings: runtime.evaluation.findings,
         editor: customEditorSession({
-          selectedAssetId,
+          selectedAssetId: selectedAssetId ?? selectedAssetIds.at(-1) ?? null,
+          selectedAssetIds,
           selectedConnectionId
         }),
         history: restored.history
@@ -923,6 +1120,9 @@ export const useStore = create<Store>((set, get) => {
           asset.id === current.editor.selectedAssetId)
         ? current.editor.selectedAssetId
         : null;
+      const selectedAssetIds = current.editor.selectedAssetIds.filter((id) =>
+        restored.design.assets.some((asset) => asset.id === id)
+      );
       const selectedConnectionId = current.editor.selectedConnectionId !== null &&
         restored.design.connections.some((connection) =>
           connection.id === current.editor.selectedConnectionId)
@@ -935,7 +1135,8 @@ export const useStore = create<Store>((set, get) => {
         evaluation: runtime.evaluation,
         findings: runtime.evaluation.findings,
         editor: customEditorSession({
-          selectedAssetId,
+          selectedAssetId: selectedAssetId ?? selectedAssetIds.at(-1) ?? null,
+          selectedAssetIds,
           selectedConnectionId
         }),
         history: restored.history
@@ -974,7 +1175,8 @@ export const useStore = create<Store>((set, get) => {
         commitCustomDesign(
           nextCustomDesign,
           get().customSite.editor.selectedAssetId,
-          get().customSite.editor.selectedConnectionId
+          get().customSite.editor.selectedConnectionId,
+          get().customSite.editor.selectedAssetIds
         );
         return;
       }

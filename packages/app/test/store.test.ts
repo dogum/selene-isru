@@ -349,6 +349,111 @@ describe("store wiring (§5)", () => {
     expect(useStore.getState().customSite.design.id).toBe(blankId);
   });
 
+  it("seeds an editable reference copy with a fresh project identity", () => {
+    useStore.getState().resetCustomDesign();
+    const previousId = useStore.getState().customSite.design.id;
+
+    useStore.getState().seedCustomDesign("polar");
+    const state = useStore.getState();
+
+    expect(state.workspaceMode).toBe("custom");
+    expect(state.customSite.design).toMatchObject({
+      environment: "polar",
+      name: "Polar reference copy"
+    });
+    expect(state.customSite.design.id).not.toBe(previousId);
+    expect(state.customSite.design.assets.length).toBeGreaterThan(5);
+    expect(state.customSite.design.connections.length).toBeGreaterThan(4);
+    expect(state.customSite.history.past.length).toBeGreaterThan(0);
+  });
+
+  it("multi-selects assets and applies one-command group transforms", () => {
+    useStore.getState().importCustomDesign(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial
+    );
+    const [first, second, third] =
+      useStore.getState().customSite.design.assets;
+    const before = [first!, second!, third!].map((asset) => ({
+      id: asset.id,
+      transform: { ...asset.transform }
+    }));
+
+    useStore.getState().selectCustomAsset(first!.id);
+    useStore.getState().selectCustomAsset(second!.id, true);
+    useStore.getState().selectCustomAsset(third!.id, true);
+    expect(useStore.getState().customSite.editor.selectedAssetIds).toEqual([
+      first!.id,
+      second!.id,
+      third!.id
+    ]);
+
+    useStore.getState().moveCustomAssetGroup(5, -5);
+    let assets = useStore.getState().customSite.design.assets;
+    expect(assets.find((asset) => asset.id === first!.id)?.transform.xM)
+      .toBe(before[0]!.transform.xM + 5);
+    expect(assets.find((asset) => asset.id === second!.id)?.transform.zM)
+      .toBe(before[1]!.transform.zM - 5);
+
+    useStore.getState().undoCustomEdit();
+    assets = useStore.getState().customSite.design.assets;
+    expect(assets.find((asset) => asset.id === first!.id)?.transform)
+      .toEqual(before[0]!.transform);
+    expect(useStore.getState().customSite.editor.selectedAssetIds).toHaveLength(
+      3
+    );
+
+    useStore.getState().distributeCustomAssets("x");
+    const x = useStore.getState().customSite.design.assets
+      .filter((asset) => [first!.id, second!.id, third!.id].includes(asset.id))
+      .map((asset) => asset.transform.xM)
+      .sort((a, b) => a - b);
+    const originalX = before.map((asset) => asset.transform.xM)
+      .sort((a, b) => a - b);
+    expect(x).toEqual([
+      Math.round(originalX[0]! / 5) * 5,
+      Math.round(((originalX[0]! + originalX[2]!) / 2) / 5) * 5,
+      Math.round(originalX[2]! / 5) * 5
+    ]);
+
+    useStore.getState().deleteCustomAssetGroup();
+    expect(useStore.getState().customSite.design.assets.some((asset) =>
+      [first!.id, second!.id, third!.id].includes(asset.id)
+    )).toBe(false);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.assets).toHaveLength(
+      SEEDED_SITE_DESIGN_FIXTURES.equatorial.assets.length
+    );
+  });
+
+  it("edits persisted route handles and restores them with undo", () => {
+    buildOperatingEquatorialSite();
+    const connection = useStore.getState().customSite.design.connections[0]!;
+    const before = connection.route;
+
+    useStore.getState().updateCustomConnectionRoute(connection.id, [{
+      xM: -48,
+      zM: -28
+    }]);
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual([{ xM: -50, zM: -30 }]);
+
+    useStore.getState().moveCustomConnectionRoutePoint(
+      connection.id,
+      0,
+      -41,
+      -19
+    );
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual([{ xM: -40, zM: -20 }]);
+
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual([{ xM: -50, zM: -30 }]);
+    useStore.getState().undoCustomEdit();
+    expect(useStore.getState().customSite.design.connections[0]?.route)
+      .toEqual(before);
+  });
+
   it("ignores invalid direct imports and preserves the current project", () => {
     useStore.getState().importCustomDesign(
       SEEDED_SITE_DESIGN_FIXTURES.polar

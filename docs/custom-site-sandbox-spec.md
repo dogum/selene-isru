@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–6 implemented; Milestone 7 next |
+| Status | Milestones 0–7 implemented; Milestone 8 next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -1046,6 +1046,22 @@ Acceptance:
 ### Milestone 7 — planner depth and operational polish
 
 **Goal:** make planning feel deliberate, creative, and readable at site scale.
+
+**Implementation status (2026-07-29):** Delivered on the working branch.
+Planner mode now exposes catalog clearances, collision/clearance coloring,
+centerline alignment guides, selected-group bounds, coordinate labels, site
+extent, summed equipment/clearance area, and total persisted route length.
+Shift/control-click and the layout roster build multi-selections; groups move
+as a unit, rotate about their centroid, distribute on X or Z, focus, delete,
+and remain one undoable command. Selected routes expose draggable 3D bend
+handles plus numeric add/edit/remove controls, while route-kind elevation and
+labels keep crossings legible. Blank projects can seed fresh editable copies
+of either authored reference layout. Planner and Explore cameras frame the
+actual saved extent, group and asset focus use selection scale, and the
+shortcut card documents keyboard operations. At mobile breakpoints the same
+document is available as an explicit select-and-inspect review surface:
+catalog placement, transforms, route editing, and destructive project controls
+are unavailable, while metrics and design inspection remain visible.
 
 Deliver:
 

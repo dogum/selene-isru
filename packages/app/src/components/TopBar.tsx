@@ -489,7 +489,9 @@ function MobileMenu(): React.JSX.Element {
                     setOpen(false);
                   }}
                 >
-                  {mode === "planner" ? "Planner — top down" : "Explore — orbit"}{viewMode === mode ? " ✓" : ""}
+                  {mode === "planner"
+                    ? "Planner review — top down"
+                    : "Explore — orbit"}{viewMode === mode ? " ✓" : ""}
                 </button>
               ))}
             </>

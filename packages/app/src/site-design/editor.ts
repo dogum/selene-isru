@@ -1,6 +1,7 @@
 import {
   orthogonalSiteConnectionRoute,
   siteAssetDefinition,
+  siteConnectionLengthM,
   sitePortConnectionCompatibility,
   snapSiteCoordinate,
   snapSiteHeading
@@ -23,12 +24,33 @@ export interface CustomEditorSession {
   placementKind: string | null;
   connectionSource: SitePortRef | null;
   selectedAssetId: string | null;
+  selectedAssetIds: string[];
   selectedConnectionId: string | null;
 }
 
 export interface CustomDesignHistory {
   past: SiteDesignDocument[];
   future: SiteDesignDocument[];
+}
+
+export interface SiteLayoutSummary {
+  minXM: number;
+  maxXM: number;
+  minZM: number;
+  maxZM: number;
+  widthM: number;
+  depthM: number;
+  occupiedAreaM2: number;
+  clearanceAreaM2: number;
+  totalRouteLengthM: number;
+}
+
+export interface SiteAlignmentGuide {
+  axis: "x" | "z";
+  valueM: number;
+  fromM: number;
+  toM: number;
+  assetIds: string[];
 }
 
 let assetNonce = 0;
@@ -249,6 +271,239 @@ export function updateSiteConnectionRoute(
     ),
     updatedAt: timestamp(updatedAt)
   };
+}
+
+function selectedAssets(
+  design: SiteDesignDocument,
+  assetIds: readonly string[]
+): SiteAssetInstance[] {
+  const ids = new Set(assetIds);
+  return design.assets.filter((asset) => ids.has(asset.id));
+}
+
+function withTransformedAssets(
+  design: SiteDesignDocument,
+  transformed: Map<string, SiteAssetInstance["transform"]>,
+  updatedAt?: string
+): SiteDesignDocument {
+  return withAssets(
+    design,
+    design.assets.map((asset) => {
+      const transform = transformed.get(asset.id);
+      return transform === undefined ? asset : { ...asset, transform };
+    }),
+    updatedAt
+  );
+}
+
+export function moveSiteAssetGroup(
+  design: SiteDesignDocument,
+  assetIds: readonly string[],
+  deltaXM: number,
+  deltaZM: number,
+  updatedAt?: string
+): SiteDesignDocument {
+  const transformed = new Map<string, SiteAssetInstance["transform"]>();
+  for (const asset of selectedAssets(design, assetIds)) {
+    transformed.set(asset.id, {
+      ...asset.transform,
+      xM: snapSiteCoordinate(asset.transform.xM + deltaXM, 0),
+      zM: snapSiteCoordinate(asset.transform.zM + deltaZM, 0)
+    });
+  }
+  return withTransformedAssets(design, transformed, updatedAt);
+}
+
+export function rotateSiteAssetGroup(
+  design: SiteDesignDocument,
+  assetIds: readonly string[],
+  deltaDeg: number,
+  updatedAt?: string
+): SiteDesignDocument {
+  const assets = selectedAssets(design, assetIds);
+  if (assets.length === 0) {
+    return design;
+  }
+  const centerX = assets.reduce(
+    (total, asset) => total + asset.transform.xM,
+    0
+  ) / assets.length;
+  const centerZ = assets.reduce(
+    (total, asset) => total + asset.transform.zM,
+    0
+  ) / assets.length;
+  const radians = deltaDeg * Math.PI / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const transformed = new Map<string, SiteAssetInstance["transform"]>();
+  for (const asset of assets) {
+    const dx = asset.transform.xM - centerX;
+    const dz = asset.transform.zM - centerZ;
+    transformed.set(asset.id, {
+      xM: Number(
+        snapSiteCoordinate(centerX + dx * cos - dz * sin, 0).toFixed(6)
+      ),
+      zM: Number(
+        snapSiteCoordinate(centerZ + dx * sin + dz * cos, 0).toFixed(6)
+      ),
+      headingDeg: snapSiteHeading(
+        asset.transform.headingDeg + deltaDeg,
+        design.planner.rotationSnapDeg
+      )
+    });
+  }
+  return withTransformedAssets(design, transformed, updatedAt);
+}
+
+export function distributeSiteAssets(
+  design: SiteDesignDocument,
+  assetIds: readonly string[],
+  axis: "x" | "z",
+  updatedAt?: string
+): SiteDesignDocument {
+  const coordinate = axis === "x" ? "xM" : "zM";
+  const assets = selectedAssets(design, assetIds)
+    .sort((a, b) => a.transform[coordinate] - b.transform[coordinate]);
+  if (assets.length < 3) {
+    return design;
+  }
+  const first = assets[0]!.transform[coordinate];
+  const last = assets.at(-1)!.transform[coordinate];
+  const spacing = (last - first) / (assets.length - 1);
+  const transformed = new Map<string, SiteAssetInstance["transform"]>();
+  for (const [index, asset] of assets.entries()) {
+    transformed.set(asset.id, {
+      ...asset.transform,
+      [coordinate]: snapSiteCoordinate(
+        first + spacing * index,
+        design.planner.gridSnapM
+      )
+    });
+  }
+  return withTransformedAssets(design, transformed, updatedAt);
+}
+
+function rotatedHalfExtents(asset: SiteAssetInstance): {
+  halfX: number;
+  halfZ: number;
+} {
+  const definition = siteAssetDefinition(asset.kind);
+  if (definition === null) {
+    return { halfX: 0, halfZ: 0 };
+  }
+  const radians = asset.transform.headingDeg * Math.PI / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
+  const halfWidth = definition.footprint.widthM / 2;
+  const halfDepth = definition.footprint.depthM / 2;
+  return {
+    halfX: halfWidth * cos + halfDepth * sin,
+    halfZ: halfWidth * sin + halfDepth * cos
+  };
+}
+
+export function siteLayoutSummary(
+  design: SiteDesignDocument
+): SiteLayoutSummary {
+  if (design.assets.length === 0) {
+    return {
+      minXM: 0,
+      maxXM: 0,
+      minZM: 0,
+      maxZM: 0,
+      widthM: 0,
+      depthM: 0,
+      occupiedAreaM2: 0,
+      clearanceAreaM2: 0,
+      totalRouteLengthM: design.connections.reduce(
+        (total, connection) =>
+          total + siteConnectionLengthM(design, connection),
+        0
+      )
+    };
+  }
+  let minXM = Number.POSITIVE_INFINITY;
+  let maxXM = Number.NEGATIVE_INFINITY;
+  let minZM = Number.POSITIVE_INFINITY;
+  let maxZM = Number.NEGATIVE_INFINITY;
+  let occupiedAreaM2 = 0;
+  let clearanceAreaM2 = 0;
+  for (const asset of design.assets) {
+    const definition = siteAssetDefinition(asset.kind);
+    if (definition === null) {
+      continue;
+    }
+    const { halfX, halfZ } = rotatedHalfExtents(asset);
+    minXM = Math.min(minXM, asset.transform.xM - halfX);
+    maxXM = Math.max(maxXM, asset.transform.xM + halfX);
+    minZM = Math.min(minZM, asset.transform.zM - halfZ);
+    maxZM = Math.max(maxZM, asset.transform.zM + halfZ);
+    occupiedAreaM2 +=
+      definition.footprint.widthM * definition.footprint.depthM;
+    const clearance = definition.footprint.clearanceM ?? 0;
+    clearanceAreaM2 +=
+      (definition.footprint.widthM + clearance * 2) *
+      (definition.footprint.depthM + clearance * 2);
+  }
+  if (!Number.isFinite(minXM)) {
+    minXM = maxXM = minZM = maxZM = 0;
+  }
+  return {
+    minXM,
+    maxXM,
+    minZM,
+    maxZM,
+    widthM: maxXM - minXM,
+    depthM: maxZM - minZM,
+    occupiedAreaM2,
+    clearanceAreaM2,
+    totalRouteLengthM: design.connections.reduce(
+      (total, connection) =>
+        total + siteConnectionLengthM(design, connection),
+      0
+    )
+  };
+}
+
+export function siteAlignmentGuides(
+  design: SiteDesignDocument,
+  assetIds: readonly string[],
+  toleranceM = 0.01
+): SiteAlignmentGuide[] {
+  const selected = selectedAssets(design, assetIds);
+  const guides: SiteAlignmentGuide[] = [];
+  for (const axis of ["x", "z"] as const) {
+    const coordinate = axis === "x" ? "xM" : "zM";
+    const spanCoordinate = axis === "x" ? "zM" : "xM";
+    for (const asset of selected) {
+      const aligned = design.assets.filter((candidate) =>
+        candidate.id !== asset.id &&
+        Math.abs(
+          candidate.transform[coordinate] - asset.transform[coordinate]
+        ) <= toleranceM
+      );
+      if (aligned.length === 0) {
+        continue;
+      }
+      const group = [asset, ...aligned];
+      const assetIds = [...new Set(group.map((item) => item.id))].sort();
+      if (guides.some((guide) =>
+        guide.axis === axis &&
+        guide.assetIds.join("|") === assetIds.join("|")
+      )) {
+        continue;
+      }
+      const spans = group.map((item) => item.transform[spanCoordinate]);
+      guides.push({
+        axis,
+        valueM: asset.transform[coordinate],
+        fromM: Math.min(...spans),
+        toM: Math.max(...spans),
+        assetIds
+      });
+    }
+  }
+  return guides;
 }
 
 export function rerouteSiteConnection(

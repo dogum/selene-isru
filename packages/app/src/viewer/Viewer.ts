@@ -25,6 +25,7 @@ import {
   processEdges,
   type ProcessEdgeView
 } from "../analysis/process";
+import { siteLayoutSummary } from "../site-design/editor";
 import {
   type SiteMode,
   CAMERA_POSES,
@@ -38,7 +39,10 @@ import {
 } from "./bindings";
 import { EquatorialDiorama } from "./dioramas/equatorial";
 import { PolarDiorama } from "./dioramas/polar";
-import { CustomSiteDiorama } from "./dioramas/custom";
+import {
+  CustomSiteDiorama,
+  type PickedRouteHandle
+} from "./dioramas/custom";
 import {
   effectiveTier,
   GRAPHICS_EVENT,
@@ -137,12 +141,18 @@ interface ProcessOverlayPath extends ProcessEdgeView {
 }
 
 export interface ViewerCallbacks {
-  onSelectAsset?: (assetKey: string | null) => void;
+  onSelectAsset?: (assetKey: string | null, additive?: boolean) => void;
   onBeginCustomConnection?: (source: SitePortRef) => void;
   onCompleteCustomConnection?: (target: SitePortRef) => void;
   onSelectCustomConnection?: (connectionId: string | null) => void;
   onPlaceCustomAsset?: (kind: string, xM: number, zM: number) => void;
   onMoveCustomAsset?: (assetId: string, xM: number, zM: number) => void;
+  onMoveCustomRoutePoint?: (
+    connectionId: string,
+    routePointIndex: number,
+    xM: number,
+    zM: number
+  ) => void;
 }
 
 /**
@@ -174,6 +184,7 @@ export class Viewer {
   private pointerDown = new THREE.Vector2();
   private hoveredAssetKey: string | null = null;
   private selectedAssetKey: string | null = null;
+  private selectedAssetKeys: string[] = [];
   private hoverOutline: THREE.Mesh | null = null;
   private selectionOutline: THREE.Mesh | null = null;
   private connectionOutlines: THREE.Mesh[] = [];
@@ -223,6 +234,8 @@ export class Viewer {
   private customDragging = false;
   private customDownPort: SitePortRef | null = null;
   private customDownConnection: string | null = null;
+  private customDownRouteHandle: PickedRouteHandle | null = null;
+  private customDraggingRouteHandle = false;
 
   private lastResult: SimResult | null = null;
   private lastParams: SimParams | null = null;
@@ -460,6 +473,9 @@ export class Viewer {
       if (this.diorama instanceof CustomSiteDiorama) {
         this.diorama.setPlannerMode(viewMode === "planner");
       }
+      if (viewChanged) {
+        this.rebuildCustomLabels();
+      }
       this.learningOverlay.hidden = true;
       this.customLabelOverlay.hidden = this.customDesign?.assets.length === 0;
       this.assetTooltip.hidden = true;
@@ -475,18 +491,23 @@ export class Viewer {
     design: SiteDesignDocument,
     selectedAssetId: string | null,
     selectedConnectionId: string | null = null,
-    evaluation: SiteDesignEvaluation | null = null
+    evaluation: SiteDesignEvaluation | null = null,
+    selectedAssetIds: readonly string[] = selectedAssetId === null
+      ? []
+      : [selectedAssetId]
   ): void {
     this.customDesign = design;
     this.customEvaluation = evaluation;
     this.customSelectedConnectionId = selectedConnectionId;
+    this.selectedAssetKeys = [...selectedAssetIds];
     this.customGridSnapM = design.planner.gridSnapM;
     if (this.diorama instanceof CustomSiteDiorama) {
       this.diorama.syncDesign(
         design,
         selectedAssetId,
         selectedConnectionId,
-        evaluation
+        evaluation,
+        selectedAssetIds
       );
       this.diorama.setConnectionState(design, this.customConnectionSource);
     }
@@ -501,22 +522,27 @@ export class Viewer {
     connectionSource: SitePortRef | null,
     gridSnapM: number
   ): void {
-    this.customPlacementKind = placementKind;
-    this.customConnectionSource = connectionSource;
+    this.customPlacementKind = this.mobile ? null : placementKind;
+    this.customConnectionSource = this.mobile ? null : connectionSource;
     this.customGridSnapM = gridSnapM;
     this.customPlacementPoint = null;
     this.customPlacementBlocked = false;
     if (this.diorama instanceof CustomSiteDiorama) {
-      if (placementKind === null) {
+      if (this.customPlacementKind === null) {
         this.diorama.clearPlacementPreview();
       }
       this.diorama.clearConnectionPreview();
       if (this.customDesign !== null) {
-        this.diorama.setConnectionState(this.customDesign, connectionSource);
+        this.diorama.setConnectionState(
+          this.customDesign,
+          this.customConnectionSource
+        );
       }
     }
     this.renderer.domElement.style.cursor =
-      placementKind !== null || connectionSource !== null ? "crosshair" : "grab";
+      this.customPlacementKind !== null || this.customConnectionSource !== null
+        ? "crosshair"
+        : "grab";
     this.wake();
   }
 
@@ -547,21 +573,59 @@ export class Viewer {
       return;
     }
     if (this.workspaceMode === "custom") {
+      const selection = key === "__selection__" &&
+        this.customDesign !== null
+        ? this.customDesign.assets.filter((asset) =>
+            this.selectedAssetKeys.includes(asset.id)
+          )
+        : [];
+      const selectionLayout = selection.length === 0 ||
+        this.customDesign === null
+        ? null
+        : siteLayoutSummary({
+            ...this.customDesign,
+            assets: selection,
+            connections: []
+          });
       const asset = this.diorama?.assets[key];
-      const target = asset?.getWorldPosition(new THREE.Vector3()) ??
-        (
-          this.diorama instanceof CustomSiteDiorama
-            ? this.diorama.connectionWorldPoint(key)
-            : null
-        );
+      const target = selectionLayout === null
+        ? asset?.getWorldPosition(new THREE.Vector3()) ??
+          (
+            this.diorama instanceof CustomSiteDiorama
+              ? this.diorama.connectionWorldPoint(key)
+              : null
+          )
+        : new THREE.Vector3(
+            (selectionLayout.minXM + selectionLayout.maxXM) / 2,
+            0,
+            (selectionLayout.minZM + selectionLayout.maxZM) / 2
+          );
       if (target === null || target === undefined) {
         return;
       }
       const offset = this.camera.position.clone().sub(this.controls.target);
+      const selectionSpan = selectionLayout === null
+        ? 20
+        : Math.max(selectionLayout.widthM, selectionLayout.depthM, 12);
+      if (
+        this.customViewMode === "planner" &&
+        selectionLayout !== null &&
+        this.camera === this.plannerCamera
+      ) {
+        this.plannerCamera.zoom = Math.max(
+          0.65,
+          Math.min(3.2, 74 / (selectionSpan + 16))
+        );
+        this.plannerCamera.updateProjectionMatrix();
+      }
       const position = target.clone().add(
         this.customViewMode === "planner"
           ? offset
-          : new THREE.Vector3(18, 14, 18)
+          : new THREE.Vector3(
+              selectionSpan * 1.25,
+              selectionSpan * 0.9,
+              selectionSpan * 1.25
+            )
       );
       this.flyToPose(
         {
@@ -622,7 +686,12 @@ export class Viewer {
   setSelectedAsset(assetKey: string | null): void {
     this.selectedAssetKey = assetKey;
     for (const [key, label] of this.customLabels) {
-      label.classList.toggle("active", key === assetKey);
+      label.classList.toggle(
+        "active",
+        this.workspaceMode === "custom"
+          ? this.selectedAssetKeys.includes(key)
+          : key === assetKey
+      );
     }
     this.refreshSelectionOutline();
     this.updateLearningOverlay();
@@ -680,7 +749,8 @@ export class Viewer {
           this.customDesign,
           this.selectedAssetKey,
           this.customSelectedConnectionId,
-          this.customEvaluation
+          this.customEvaluation,
+          this.selectedAssetKeys
         );
         custom.setConnectionState(this.customDesign, this.customConnectionSource);
       }
@@ -887,20 +957,45 @@ export class Viewer {
 
   private applyWorkspaceCamera(): void {
     const site = this.activeSite ?? this.customEnvironment;
+    const layout = this.customDesign === null
+      ? null
+      : siteLayoutSummary(this.customDesign);
+    const customCenter = layout === null
+      ? new THREE.Vector3()
+      : new THREE.Vector3(
+          (layout.minXM + layout.maxXM) / 2,
+          0,
+          (layout.minZM + layout.maxZM) / 2
+        );
+    const customSpan = layout === null
+      ? 80
+      : Math.max(24, layout.widthM, layout.depthM);
     if (this.workspaceMode === "custom" && this.customViewMode === "planner") {
       this.switchCamera(this.plannerCamera);
-      this.plannerCamera.position.set(0, 135, 0);
-      this.plannerCamera.zoom = this.mobile ? 0.78 : 1;
+      this.plannerCamera.position.set(customCenter.x, 135, customCenter.z);
+      this.plannerCamera.zoom =
+        Math.max(0.48, Math.min(2.2, 88 / (customSpan + 24))) *
+        (this.mobile ? 0.82 : 1);
       this.plannerCamera.updateProjectionMatrix();
-      this.controls.target.set(0, 0, 0);
+      this.controls.target.copy(customCenter);
       this.controls.update();
       return;
     }
 
     this.switchCamera(this.perspectiveCamera);
     if (this.workspaceMode === "custom") {
-      this.perspectiveCamera.position.set(88, 64, 88);
-      this.controls.target.set(0, 0, 0);
+      const distance = Math.max(42, Math.min(160, customSpan * 1.55));
+      const position = customCenter.clone().add(
+        new THREE.Vector3(distance, distance * 0.68, distance)
+      );
+      this.flyToPose(
+        {
+          position: [position.x, position.y, position.z],
+          target: [customCenter.x, customCenter.y, customCenter.z]
+        },
+        this.reducedMotion ? 0 : 650
+      );
+      return;
     } else {
       const pose = CAMERA_POSES[site].overview;
       this.perspectiveCamera.position.set(...pose.position);
@@ -1113,10 +1208,18 @@ export class Viewer {
       const label = document.createElement("button");
       label.type = "button";
       label.className = "custom-scene-label";
-      label.textContent = asset.name.toUpperCase();
+      label.textContent = this.customViewMode === "planner"
+        ? `${asset.name.toUpperCase()} · X ${asset.transform.xM.toFixed(1)} · Z ${asset.transform.zM.toFixed(1)}`
+        : asset.name.toUpperCase();
       label.classList.toggle("disabled", !asset.enabled);
-      label.classList.toggle("active", asset.id === this.selectedAssetKey);
-      label.addEventListener("click", () => this.selectPickedAsset(asset.id));
+      label.classList.toggle(
+        "active",
+        this.selectedAssetKeys.includes(asset.id)
+      );
+      label.addEventListener("click", (event) => this.selectPickedAsset(
+        asset.id,
+        event.shiftKey || event.ctrlKey || event.metaKey
+      ));
       this.customLabelOverlay.appendChild(label);
       this.customLabels.set(asset.id, label);
     }
@@ -1304,6 +1407,16 @@ export class Viewer {
     if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
       this.updateRaycaster(event);
       const point = this.diorama.surfacePoint(this.raycaster);
+      if (this.mobile) {
+        const connection = this.diorama.pickConnection(this.raycaster);
+        if (connection !== null) {
+          this.setHoveredAsset(null);
+          this.renderer.domElement.style.cursor = "pointer";
+          return;
+        }
+        this.setHoveredAsset(this.diorama.pickAsset(this.raycaster), event);
+        return;
+      }
       if (this.customPlacementKind !== null) {
         this.customPlacementPoint = point === null ? null : new THREE.Vector3(
           snapSiteCoordinate(point.x, this.customGridSnapM),
@@ -1369,6 +1482,30 @@ export class Viewer {
         return;
       }
       if (
+        this.customDownRouteHandle !== null &&
+        (event.buttons & 1) === 1 &&
+        this.pointerDown.distanceTo(
+          new THREE.Vector2(event.clientX, event.clientY)
+        ) > 4 &&
+        point !== null
+      ) {
+        this.customDraggingRouteHandle = true;
+        this.controls.enabled = false;
+        const snapped = new THREE.Vector3(
+          snapSiteCoordinate(point.x, this.customGridSnapM),
+          point.y,
+          snapSiteCoordinate(point.z, this.customGridSnapM)
+        );
+        this.customPlacementPoint = snapped;
+        this.diorama.previewRouteHandle(
+          this.customDownRouteHandle,
+          snapped
+        );
+        this.renderer.domElement.style.cursor = "grabbing";
+        this.wake();
+        return;
+      }
+      if (
         this.customDragCandidate !== null &&
         (event.buttons & 1) === 1 &&
         this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 4 &&
@@ -1382,7 +1519,11 @@ export class Viewer {
           snapSiteCoordinate(point.z, this.customGridSnapM)
         );
         this.customPlacementPoint = snapped;
-        this.diorama.previewAssetTransform(this.customDragCandidate, snapped);
+        this.diorama.previewAssetTransform(
+          this.customDragCandidate,
+          snapped,
+          this.selectedAssetKeys
+        );
         this.renderer.domElement.style.cursor = "grabbing";
         this.wake();
         return;
@@ -1415,7 +1556,8 @@ export class Viewer {
           this.customDesign,
           this.selectedAssetKey,
           this.customSelectedConnectionId,
-          this.customEvaluation
+          this.customEvaluation,
+          this.selectedAssetKeys
         );
         this.diorama.setConnectionState(
           this.customDesign,
@@ -1426,6 +1568,8 @@ export class Viewer {
       this.customDragging = false;
       this.customDownPort = null;
       this.customDownConnection = null;
+      this.customDownRouteHandle = null;
+      this.customDraggingRouteHandle = false;
       this.controls.enabled = true;
     }
     this.setHoveredAsset(null);
@@ -1434,11 +1578,24 @@ export class Viewer {
   private onPointerDown = (event: PointerEvent): void => {
     this.pointerDown.set(event.clientX, event.clientY);
     if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
+      if (this.mobile) {
+        this.updateRaycaster(event);
+        this.customDownConnection =
+          this.diorama.pickConnection(this.raycaster);
+        this.customDragCandidate = this.diorama.pickAsset(this.raycaster);
+        return;
+      }
       if (this.customPlacementKind !== null) {
         this.controls.enabled = false;
         return;
       }
       this.updateRaycaster(event);
+      this.customDownRouteHandle =
+        this.diorama.pickRouteHandle(this.raycaster);
+      if (this.customDownRouteHandle !== null) {
+        this.controls.enabled = false;
+        return;
+      }
       this.customDownPort = this.diorama.pickPort(this.raycaster);
       if (this.customDownPort !== null) {
         this.controls.enabled = false;
@@ -1459,6 +1616,17 @@ export class Viewer {
   private onPointerUp = (event: PointerEvent): void => {
     if (this.workspaceMode === "custom" && this.diorama instanceof CustomSiteDiorama) {
       const movement = this.pointerDown.distanceTo(new THREE.Vector2(event.clientX, event.clientY));
+      if (this.mobile) {
+        this.updateRaycaster(event);
+        if (movement <= 6 && this.customDownConnection !== null) {
+          this.selectPickedConnection(this.customDownConnection);
+        } else if (movement <= 6) {
+          this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
+        }
+        this.customDownConnection = null;
+        this.customDragCandidate = null;
+        return;
+      }
       const placing = this.customPlacementKind !== null;
       this.updateRaycaster(event);
       const releasedPort = movement <= 6
@@ -1475,6 +1643,26 @@ export class Viewer {
           this.customPlacementKind,
           this.customPlacementPoint.x,
           this.customPlacementPoint.z
+        );
+      } else if (
+        !placing &&
+        this.customDownRouteHandle !== null &&
+        this.customDraggingRouteHandle &&
+        this.customPlacementPoint !== null
+      ) {
+        this.callbacks.onMoveCustomRoutePoint?.(
+          this.customDownRouteHandle.connectionId,
+          this.customDownRouteHandle.routePointIndex,
+          this.customPlacementPoint.x,
+          this.customPlacementPoint.z
+        );
+      } else if (
+        !placing &&
+        this.customDownRouteHandle !== null &&
+        movement <= 6
+      ) {
+        this.selectPickedConnection(
+          this.customDownRouteHandle.connectionId
         );
       } else if (!placing && this.customDownPort !== null && releasedPort !== null) {
         if (this.customConnectionSource === null) {
@@ -1499,13 +1687,18 @@ export class Viewer {
           this.customPlacementPoint.z
         );
       } else if (!placing && movement <= 6) {
-        this.selectPickedAsset(this.diorama.pickAsset(this.raycaster));
+        this.selectPickedAsset(
+          this.diorama.pickAsset(this.raycaster),
+          event.shiftKey || event.ctrlKey || event.metaKey
+        );
       }
       this.controls.enabled = true;
       this.customDragCandidate = null;
       this.customDragging = false;
       this.customDownPort = null;
       this.customDownConnection = null;
+      this.customDownRouteHandle = null;
+      this.customDraggingRouteHandle = false;
       this.customPlacementPoint = null;
       this.diorama.clearConnectionPreview();
       if (!placing && this.customDesign !== null) {
@@ -1513,7 +1706,8 @@ export class Viewer {
           this.customDesign,
           this.selectedAssetKey,
           this.customSelectedConnectionId,
-          this.customEvaluation
+          this.customEvaluation,
+          this.selectedAssetKeys
         );
         this.diorama.setConnectionState(
           this.customDesign,
@@ -1561,10 +1755,15 @@ export class Viewer {
     return null;
   }
 
-  private selectPickedAsset(assetKey: string | null): void {
+  private selectPickedAsset(
+    assetKey: string | null,
+    additive = false
+  ): void {
     this.setHoveredAsset(null);
-    this.callbacks.onSelectAsset?.(assetKey);
-    this.setSelectedAsset(assetKey);
+    this.callbacks.onSelectAsset?.(assetKey, additive);
+    if (!additive) {
+      this.setSelectedAsset(assetKey);
+    }
     if (assetKey !== null && this.workspaceMode !== "custom") {
       this.flyTo(assetKey);
     }

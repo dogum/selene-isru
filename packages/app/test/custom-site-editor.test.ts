@@ -9,14 +9,19 @@ import { describe, expect, it } from "vitest";
 import {
   CUSTOM_HISTORY_LIMIT,
   createSiteConnection,
+  distributeSiteAssets,
   duplicateSiteAsset,
   emptyCustomHistory,
+  moveSiteAssetGroup,
   placeSiteAsset,
   pushCustomHistory,
   redoCustomDesign,
   removeSiteConnection,
   removeSiteAsset,
   rerouteSiteConnection,
+  rotateSiteAssetGroup,
+  siteAlignmentGuides,
+  siteLayoutSummary,
   undoCustomDesign,
   updateSiteAsset
 } from "../src/site-design/editor";
@@ -155,5 +160,88 @@ describe("custom site editor commands", () => {
     expect(undone.design.name).toBe(`Version ${CUSTOM_HISTORY_LIMIT + 7}`);
     const redone = redoCustomDesign(undone.design, undone.history)!;
     expect(redone.design.name).toBe("Current");
+  });
+
+  it("summarizes rotated site extents, footprint area, and route length", () => {
+    const design = {
+      ...SEEDED_SITE_DESIGN_FIXTURES.equatorial,
+      assets: SEEDED_SITE_DESIGN_FIXTURES.equatorial.assets.slice(0, 2),
+      connections: SEEDED_SITE_DESIGN_FIXTURES.equatorial.connections.slice(
+        0,
+        1
+      )
+    };
+    const summary = siteLayoutSummary(design);
+
+    expect(summary.widthM).toBeGreaterThan(10);
+    expect(summary.depthM).toBeGreaterThan(3);
+    expect(summary.occupiedAreaM2).toBeGreaterThan(0);
+    expect(summary.clearanceAreaM2).toBeGreaterThan(
+      summary.occupiedAreaM2
+    );
+    expect(summary.totalRouteLengthM).toBe(
+      siteConnectionLengthM(design, design.connections[0]!)
+    );
+  });
+
+  it("moves, rotates, aligns, and distributes a selected group", () => {
+    const blank = createBlankSiteDesign("equatorial");
+    blank.planner.gridSnapM = 1;
+    blank.planner.rotationSnapDeg = 5;
+    blank.assets = [
+      {
+        id: "a",
+        kind: "equatorial.excavator",
+        name: "A",
+        transform: { xM: -20, zM: 0, headingDeg: 0 },
+        enabled: true,
+        configuration: {}
+      },
+      {
+        id: "b",
+        kind: "equatorial.hauler",
+        name: "B",
+        transform: { xM: 0, zM: 0, headingDeg: 0 },
+        enabled: true,
+        configuration: {}
+      },
+      {
+        id: "c",
+        kind: "equatorial.cryo-farm",
+        name: "C",
+        transform: { xM: 30, zM: 20, headingDeg: 0 },
+        enabled: true,
+        configuration: {}
+      }
+    ];
+
+    expect(siteAlignmentGuides(blank, ["a", "b"])).toContainEqual(
+      expect.objectContaining({
+        axis: "z",
+        valueM: 0,
+        assetIds: ["a", "b"]
+      })
+    );
+
+    const moved = moveSiteAssetGroup(blank, ["a", "b"], 5, -5);
+    expect(moved.assets.map((asset) => asset.transform)).toEqual([
+      { xM: -15, zM: -5, headingDeg: 0 },
+      { xM: 5, zM: -5, headingDeg: 0 },
+      { xM: 30, zM: 20, headingDeg: 0 }
+    ]);
+
+    const rotated = rotateSiteAssetGroup(moved, ["a", "b"], 90);
+    expect(rotated.assets.slice(0, 2).map((asset) => asset.transform))
+      .toEqual([
+        { xM: -5, zM: -15, headingDeg: 90 },
+        { xM: -5, zM: 5, headingDeg: 90 }
+      ]);
+
+    const distributed = distributeSiteAssets(blank, ["a", "b", "c"], "x");
+    expect(distributed.assets.map((asset) => asset.transform.xM)).toEqual([
+      -20,
+      5,
+      30
+    ]);
   });
 });

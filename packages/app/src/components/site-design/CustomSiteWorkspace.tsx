@@ -2,6 +2,7 @@ import {
   siteAssetDefinition,
   siteAssetsForEnvironment,
   siteConnectionLengthM,
+  siteConnectionRoutePoints,
   serializeSiteDesign
 } from "@selene-isru/engine";
 import type {
@@ -13,11 +14,16 @@ import type {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { downloadText } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
+import { useIsMobile } from "../../lib/hooks";
 import {
   previewCustomSiteImport,
   type CustomSiteImportPreview
 } from "../../site-design/draft";
-import { isKindAvailable } from "../../site-design/editor";
+import {
+  isKindAvailable,
+  siteAlignmentGuides,
+  siteLayoutSummary
+} from "../../site-design/editor";
 import { useStore } from "../../state/store";
 
 const CATEGORY_ORDER = [
@@ -61,10 +67,12 @@ function isTextInput(target: EventTarget | null): boolean {
 }
 
 export function CustomSiteWorkspace(): React.JSX.Element {
+  const isMobile = useIsMobile();
   const customSite = useStore((state) => state.customSite);
   const setCustomEnvironment = useStore((state) => state.setCustomEnvironment);
   const setCustomDesignName = useStore((state) => state.setCustomDesignName);
   const resetCustomDesign = useStore((state) => state.resetCustomDesign);
+  const seedCustomDesign = useStore((state) => state.seedCustomDesign);
   const beginCustomPlacement = useStore((state) => state.beginCustomPlacement);
   const cancelCustomPlacement = useStore((state) => state.cancelCustomPlacement);
   const beginCustomConnection = useStore((state) => state.beginCustomConnection);
@@ -72,10 +80,20 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const selectCustomAsset = useStore((state) => state.selectCustomAsset);
   const selectCustomConnection = useStore((state) => state.selectCustomConnection);
   const updateCustomAsset = useStore((state) => state.updateCustomAsset);
+  const moveCustomAssetGroup = useStore((state) =>
+    state.moveCustomAssetGroup);
+  const rotateCustomAssetGroup = useStore((state) =>
+    state.rotateCustomAssetGroup);
+  const distributeCustomAssets = useStore((state) =>
+    state.distributeCustomAssets);
+  const deleteCustomAssetGroup = useStore((state) =>
+    state.deleteCustomAssetGroup);
   const rotateCustomAsset = useStore((state) => state.rotateCustomAsset);
   const duplicateCustomAsset = useStore((state) => state.duplicateCustomAsset);
   const deleteCustomAsset = useStore((state) => state.deleteCustomAsset);
   const rerouteCustomConnection = useStore((state) => state.rerouteCustomConnection);
+  const updateCustomConnectionRoute = useStore((state) =>
+    state.updateCustomConnectionRoute);
   const deleteCustomConnection = useStore((state) => state.deleteCustomConnection);
   const setCustomPlannerSnaps = useStore((state) => state.setCustomPlannerSnaps);
   const undoCustomEdit = useStore((state) => state.undoCustomEdit);
@@ -86,14 +104,21 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const [importPreview, setImportPreview] =
     useState<CustomSiteImportPreview | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const { design, evaluation, findings, editor, history } = customSite;
   const groups = useMemo(
     () => groupedCatalog(siteAssetsForEnvironment(design.environment)),
     [design.environment]
   );
-  const selectedAsset = editor.selectedAssetId === null
-    ? null
-    : design.assets.find((asset) => asset.id === editor.selectedAssetId) ?? null;
+  const selectedAssets = design.assets.filter((asset) =>
+    editor.selectedAssetIds.includes(asset.id)
+  );
+  const selectedAsset = selectedAssets.length === 1 &&
+    editor.selectedAssetId !== null
+    ? design.assets.find((asset) =>
+        asset.id === editor.selectedAssetId
+      ) ?? null
+    : null;
   const selectedDefinition = selectedAsset === null
     ? null
     : siteAssetDefinition(selectedAsset.kind);
@@ -143,6 +168,29 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const errorCount = severityCount(findings, "error");
   const cautionCount = severityCount(findings, "caution");
   const infoCount = severityCount(findings, "info");
+  const layout = useMemo(() => siteLayoutSummary(design), [design]);
+  const alignmentGuides = useMemo(
+    () => siteAlignmentGuides(design, editor.selectedAssetIds),
+    [design, editor.selectedAssetIds]
+  );
+  const selectedLayout = useMemo(
+    () => siteLayoutSummary({
+      ...design,
+      assets: selectedAssets,
+      connections: []
+    }),
+    [design, selectedAssets]
+  );
+  const editableRoutePoints = selectedConnection === null
+    ? []
+    : siteConnectionRoutePoints(design, selectedConnection).slice(1, -1);
+
+  const selectAllAssets = (): void => {
+    selectCustomAsset(null);
+    for (const asset of design.assets) {
+      useStore.getState().selectCustomAsset(asset.id, true);
+    }
+  };
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -160,6 +208,14 @@ export function CustomSiteWorkspace(): React.JSX.Element {
       if (isTextInput(event.target)) {
         return;
       }
+      if (event.key === "?") {
+        event.preventDefault();
+        setShowShortcuts((visible) => !visible);
+        return;
+      }
+      if (isMobile) {
+        return;
+      }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
         if (event.shiftKey) {
@@ -168,15 +224,53 @@ export function CustomSiteWorkspace(): React.JSX.Element {
           undoCustomEdit();
         }
       } else if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === "a"
+      ) {
+        event.preventDefault();
+        selectCustomAsset(null);
+        for (const asset of design.assets) {
+          useStore.getState().selectCustomAsset(asset.id, true);
+        }
+      } else if (
         (event.key === "Delete" || event.key === "Backspace") &&
-        (editor.selectedAssetId !== null || editor.selectedConnectionId !== null)
+        (
+          editor.selectedAssetIds.length > 0 ||
+          editor.selectedConnectionId !== null
+        )
       ) {
         event.preventDefault();
         if (editor.selectedConnectionId !== null) {
           deleteCustomConnection(editor.selectedConnectionId);
+        } else if (editor.selectedAssetIds.length > 1) {
+          deleteCustomAssetGroup();
         } else if (editor.selectedAssetId !== null) {
           deleteCustomAsset(editor.selectedAssetId);
         }
+      } else if (
+        editor.selectedAssetIds.length > 0 &&
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+      ) {
+        event.preventDefault();
+        const step = (design.planner.gridSnapM || 1) *
+          (event.shiftKey ? 5 : 1);
+        moveCustomAssetGroup(
+          event.key === "ArrowLeft"
+            ? -step
+            : event.key === "ArrowRight" ? step : 0,
+          event.key === "ArrowUp"
+            ? -step
+            : event.key === "ArrowDown" ? step : 0
+        );
+      } else if (
+        editor.selectedAssetIds.length > 1 &&
+        event.key.toLowerCase() === "r"
+      ) {
+        event.preventDefault();
+        rotateCustomAssetGroup(
+          (design.planner.rotationSnapDeg || 15) *
+          (event.shiftKey ? -1 : 1)
+        );
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -185,11 +279,19 @@ export function CustomSiteWorkspace(): React.JSX.Element {
     cancelCustomPlacement,
     cancelCustomConnection,
     deleteCustomAsset,
+    deleteCustomAssetGroup,
     deleteCustomConnection,
+    design.assets,
+    design.planner.gridSnapM,
+    design.planner.rotationSnapDeg,
     editor.selectedAssetId,
+    editor.selectedAssetIds,
     editor.selectedConnectionId,
     editor.tool,
+    isMobile,
+    moveCustomAssetGroup,
     redoCustomEdit,
+    rotateCustomAssetGroup,
     selectCustomAsset,
     selectCustomConnection,
     undoCustomEdit
@@ -231,7 +333,13 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   };
 
   return (
-    <div className="custom-site-workspace">
+    <div className={`custom-site-workspace${isMobile ? " mobile-review" : ""}`}>
+      {isMobile && (
+        <div className="custom-mobile-review-note" role="note">
+          MOBILE REVIEW · SELECT AND INSPECT ONLY · USE DESKTOP FOR PLACEMENT,
+          ROUTING, AND TRANSFORMS
+        </div>
+      )}
       <aside className="custom-catalog" aria-label="Site equipment catalog">
         <div className="custom-panel-header">
           <p className="custom-eyebrow">EQUIPMENT CATALOG</p>
@@ -272,13 +380,17 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                     </footer>
                     <button
                       className="custom-place-button"
-                      disabled={!available}
+                      disabled={!available || isMobile}
                       aria-pressed={active}
                       onClick={() => active
                         ? cancelCustomPlacement()
                         : beginCustomPlacement(definition.kind)}
                     >
-                      {!available ? "PLACED · SINGLE" : active ? "CANCEL PLACEMENT" : "PLACE"}
+                      {isMobile
+                        ? "DESKTOP ONLY"
+                        : !available
+                          ? "PLACED · SINGLE"
+                          : active ? "CANCEL PLACEMENT" : "PLACE"}
                     </button>
                   </article>
                 );
@@ -306,36 +418,80 @@ export function CustomSiteWorkspace(): React.JSX.Element {
             <span><strong>{design.connections.length}</strong> CONNECTIONS</span>
             <span><strong>{errorCount}</strong> OPEN PROCESS STEPS</span>
           </div>
+          {!isMobile && (
+            <div className="custom-seed-actions">
+              <button onClick={() => seedCustomDesign("equatorial")}>
+                START FROM EQUATORIAL REFERENCE
+              </button>
+              <button onClick={() => seedCustomDesign("polar")}>
+                START FROM POLAR REFERENCE
+              </button>
+            </div>
+          )}
         </section>
       ) : (
         <section className="custom-planner-toolbar" aria-label="Site planner tools">
           <div>
-            <button disabled={history.past.length === 0} onClick={undoCustomEdit}>UNDO</button>
-            <button disabled={history.future.length === 0} onClick={redoCustomEdit}>REDO</button>
+            <button
+              disabled={isMobile || history.past.length === 0}
+              onClick={undoCustomEdit}
+            >
+              UNDO
+            </button>
+            <button
+              disabled={isMobile || history.future.length === 0}
+              onClick={redoCustomEdit}
+            >
+              REDO
+            </button>
+            <button disabled={isMobile} onClick={selectAllAssets}>
+              SELECT ALL
+            </button>
+            <button onClick={() => setShowShortcuts((visible) => !visible)}>
+              ? KEYS
+            </button>
           </div>
           <span>
-            {editor.tool === "place"
+            {isMobile
+              ? "REVIEW MODE · TAP AN ASSET OR ROUTE TO INSPECT"
+              : editor.tool === "place"
               ? "PLACEMENT ACTIVE · CLICK TERRAIN · ESC CANCEL"
               : editor.tool === "connect"
                 ? "CONNECTION ACTIVE · CHOOSE A GREEN PORT · ESC CANCEL"
-                : "CLICK TO SELECT · DRAG TO MOVE · CLICK AN OUTPUT PORT TO CONNECT"}
+                : "CLICK TO SELECT · SHIFT/CTRL-CLICK MULTI · DRAG TO MOVE"}
           </span>
           <strong>
-            {design.assets.length} ASSET{design.assets.length === 1 ? "" : "S"} ·{" "}
-            {design.connections.length} ROUTE{design.connections.length === 1 ? "" : "S"}
+            {layout.widthM.toFixed(0)} × {layout.depthM.toFixed(0)} M EXTENT ·{" "}
+            {editor.selectedAssetIds.length} SELECTED
           </strong>
+          {showShortcuts && (
+            <div className="custom-shortcut-card" role="note">
+              <strong>PLANNER KEYS</strong>
+              <span>CTRL/⌘+A · select all</span>
+              <span>SHIFT/CTRL+click · multi-select</span>
+              <span>ARROWS · nudge · SHIFT ×5</span>
+              <span>R / SHIFT+R · rotate group</span>
+              <span>DELETE · remove selection</span>
+              <span>CTRL/⌘+Z · undo · +SHIFT redo</span>
+              <span>ESC · cancel / clear · ? help</span>
+            </div>
+          )}
         </section>
       )}
 
       <aside className="custom-inspector" aria-label="Custom site inspector">
         <div className="custom-panel-header">
           <p className="custom-eyebrow">
-            {selectedAsset !== null
+            {selectedAssets.length > 1
+              ? "GROUP INSPECTOR"
+              : selectedAsset !== null
               ? "ASSET INSPECTOR"
               : selectedConnection !== null ? "CONNECTION INSPECTOR" : "SITE INSPECTOR"}
           </p>
           <strong>
-            {selectedAsset?.name ??
+            {selectedAssets.length > 1
+              ? `${selectedAssets.length} ASSETS SELECTED`
+              : selectedAsset?.name ??
               (selectedConnection === null
                 ? "WORKING DESIGN"
                 : `${selectedConnection.kind.toUpperCase()} ROUTE`)}
@@ -344,7 +500,122 @@ export function CustomSiteWorkspace(): React.JSX.Element {
         </div>
 
         <div className="custom-inspector-scroll">
-          {selectedAsset !== null && selectedDefinition !== null ? (
+          {selectedAssets.length > 1 ? (
+            <>
+              <button
+                className="custom-back-button"
+                onClick={() => selectCustomAsset(null)}
+              >
+                ← SITE SETTINGS
+              </button>
+              <div className="custom-group-summary">
+                <p className="custom-eyebrow">GROUP FOOTPRINT</p>
+                <strong>
+                  {selectedLayout.widthM.toFixed(1)} ×{" "}
+                  {selectedLayout.depthM.toFixed(1)} m
+                </strong>
+                <span>
+                  {selectedLayout.occupiedAreaM2.toFixed(0)} m² equipment ·{" "}
+                  {alignmentGuides.length} active alignment guide
+                  {alignmentGuides.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <ol className="custom-group-members">
+                {selectedAssets.map((asset) => (
+                  <li key={asset.id}>
+                    <button
+                      onClick={() => selectCustomAsset(asset.id, true)}
+                      title="Remove from group selection"
+                    >
+                      <strong>{asset.name}</strong>
+                      <span>
+                        X {asset.transform.xM.toFixed(1)} · Z{" "}
+                        {asset.transform.zM.toFixed(1)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {alignmentGuides.length > 0 && (
+                <div className="custom-alignment-list">
+                  {alignmentGuides.map((guide) => (
+                    <span key={`${guide.axis}-${guide.valueM}-${guide.assetIds.join("-")}`}>
+                      {guide.axis.toUpperCase()} = {guide.valueM.toFixed(1)} m ·{" "}
+                      {guide.assetIds.length} centers aligned
+                    </span>
+                  ))}
+                </div>
+              )}
+              <fieldset
+                className="custom-fieldset custom-group-tools"
+                disabled={isMobile}
+              >
+                <legend>GROUP TRANSFORM</legend>
+                <div className="custom-nudge-grid">
+                  <button onClick={() => moveCustomAssetGroup(0, -(
+                    design.planner.gridSnapM || 1
+                  ))}>
+                    ↑ Z−
+                  </button>
+                  <button onClick={() => moveCustomAssetGroup(-(
+                    design.planner.gridSnapM || 1
+                  ), 0)}>
+                    ← X−
+                  </button>
+                  <button onClick={() => moveCustomAssetGroup(
+                    design.planner.gridSnapM || 1,
+                    0
+                  )}>
+                    X+ →
+                  </button>
+                  <button onClick={() => moveCustomAssetGroup(
+                    0,
+                    design.planner.gridSnapM || 1
+                  )}>
+                    Z+ ↓
+                  </button>
+                </div>
+                <div className="custom-rotation-actions">
+                  <button onClick={() => rotateCustomAssetGroup(-(
+                    design.planner.rotationSnapDeg || 15
+                  ))}>
+                    ↺ GROUP
+                  </button>
+                  <button onClick={() => rotateCustomAssetGroup(
+                    design.planner.rotationSnapDeg || 15
+                  )}>
+                    GROUP ↻
+                  </button>
+                </div>
+                <div className="custom-rotation-actions">
+                  <button
+                    disabled={selectedAssets.length < 3}
+                    onClick={() => distributeCustomAssets("x")}
+                  >
+                    DISTRIBUTE X
+                  </button>
+                  <button
+                    disabled={selectedAssets.length < 3}
+                    onClick={() => distributeCustomAssets("z")}
+                  >
+                    DISTRIBUTE Z
+                  </button>
+                </div>
+              </fieldset>
+              <div className="custom-asset-actions">
+                <button onClick={() => flyTo("__selection__")}>
+                  FOCUS GROUP
+                </button>
+                <button
+                  className="danger"
+                  disabled={isMobile}
+                  onClick={deleteCustomAssetGroup}
+                >
+                  DELETE GROUP
+                </button>
+              </div>
+            </>
+          ) : selectedAsset !== null && selectedDefinition !== null ? (
             <>
               <button className="custom-back-button" onClick={() => selectCustomAsset(null)}>
                 ← SITE SETTINGS
@@ -355,8 +626,14 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   key={`${selectedAsset.id}-name-${selectedAsset.name}`}
                   defaultValue={selectedAsset.name}
                   maxLength={120}
-                  onBlur={(event) =>
-                    updateCustomAsset(selectedAsset.id, { name: event.target.value })}
+                  readOnly={isMobile}
+                  onBlur={(event) => {
+                    if (!isMobile) {
+                      updateCustomAsset(selectedAsset.id, {
+                        name: event.target.value
+                      });
+                    }
+                  }}
                 />
               </label>
               <div className="custom-asset-summary">
@@ -372,8 +649,16 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                       key={`${selectedAsset.id}-${key}-${selectedAsset.transform[key]}`}
                       type="number"
                       defaultValue={selectedAsset.transform[key]}
-                      onBlur={(event) =>
-                        commitNumber(selectedAsset.id, key, event.target.value)}
+                      readOnly={isMobile}
+                      onBlur={(event) => {
+                        if (!isMobile) {
+                          commitNumber(
+                            selectedAsset.id,
+                            key,
+                            event.target.value
+                          );
+                        }
+                      }}
                       onKeyDown={(event) => {
                         if (event.key === "Enter") {
                           event.currentTarget.blur();
@@ -393,7 +678,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                     max={selectedDefinition.capacityModel.maxQuantity ?? 8}
                     step={1}
                     defaultValue={selectedAssetEvaluation?.quantity ?? 1}
+                    readOnly={isMobile}
                     onBlur={(event) => {
+                      if (isMobile) {
+                        return;
+                      }
                       const parsed = Number(event.target.value);
                       if (!Number.isFinite(parsed)) {
                         return;
@@ -421,11 +710,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 </label>
               )}
               <div className="custom-rotation-actions">
-                <button onClick={() =>
+                <button disabled={isMobile} onClick={() =>
                   rotateCustomAsset(selectedAsset.id, -design.planner.rotationSnapDeg)}>
                   ↺ {design.planner.rotationSnapDeg}°
                 </button>
-                <button onClick={() =>
+                <button disabled={isMobile} onClick={() =>
                   rotateCustomAsset(selectedAsset.id, design.planner.rotationSnapDeg)}>
                   ↻ {design.planner.rotationSnapDeg}°
                 </button>
@@ -557,7 +846,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                           </span>
                           {canStart && (
                             <button
-                              disabled={!selectedAsset.enabled || (full && !isSource)}
+                              disabled={
+                                isMobile ||
+                                !selectedAsset.enabled ||
+                                (full && !isSource)
+                              }
                               aria-pressed={isSource}
                               onClick={() => isSource
                                 ? cancelCustomConnection()
@@ -578,16 +871,23 @@ export function CustomSiteWorkspace(): React.JSX.Element {
               <div className="custom-asset-actions">
                 <button onClick={() => flyTo(selectedAsset.id)}>FOCUS</button>
                 <button
-                  disabled={selectedDefinition.multiplicity === "single"}
+                  disabled={
+                    isMobile ||
+                    selectedDefinition.multiplicity === "single"
+                  }
                   onClick={() => duplicateCustomAsset(selectedAsset.id)}
                 >
                   DUPLICATE
                 </button>
-                <button onClick={() =>
+                <button disabled={isMobile} onClick={() =>
                   updateCustomAsset(selectedAsset.id, { enabled: !selectedAsset.enabled })}>
                   {selectedAsset.enabled ? "DISABLE" : "ENABLE"}
                 </button>
-                <button className="danger" onClick={() => deleteCustomAsset(selectedAsset.id)}>
+                <button
+                  className="danger"
+                  disabled={isMobile}
+                  onClick={() => deleteCustomAsset(selectedAsset.id)}
+                >
                   DELETE
                 </button>
               </div>
@@ -700,13 +1000,119 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <p>{selectedConnectionEvaluation?.assumption}</p>
                 <small>{selectedConnectionEvaluation?.evidence}</small>
               </section>
+              <section className="custom-route-editor" aria-label="Route handles">
+                <div className="custom-port-heading">
+                  <div>
+                    <p className="custom-eyebrow">ROUTE HANDLES</p>
+                    <h2>{editableRoutePoints.length} editable bends</h2>
+                  </div>
+                  <button
+                    disabled={isMobile}
+                    onClick={() => {
+                      const points = siteConnectionRoutePoints(
+                        design,
+                        selectedConnection
+                      );
+                      let segmentIndex = 0;
+                      let longest = -1;
+                      for (let index = 0; index < points.length - 1; index += 1) {
+                        const a = points[index]!;
+                        const b = points[index + 1]!;
+                        const length = Math.hypot(
+                          b.xM - a.xM,
+                          b.zM - a.zM
+                        );
+                        if (length > longest) {
+                          longest = length;
+                          segmentIndex = index;
+                        }
+                      }
+                      const a = points[segmentIndex]!;
+                      const b = points[segmentIndex + 1]!;
+                      const route = [...editableRoutePoints];
+                      route.splice(segmentIndex, 0, {
+                        xM: (a.xM + b.xM) / 2,
+                        zM: (a.zM + b.zM) / 2
+                      });
+                      updateCustomConnectionRoute(
+                        selectedConnection.id,
+                        route
+                      );
+                    }}
+                  >
+                    ADD BEND
+                  </button>
+                </div>
+                {editableRoutePoints.length === 0 ? (
+                  <p className="custom-field-hint">
+                    Direct endpoint route. Add a bend for explicit clearance
+                    routing.
+                  </p>
+                ) : (
+                  <ol>
+                    {editableRoutePoints.map((point, index) => (
+                      <li key={`${index}-${point.xM}-${point.zM}`}>
+                        <span>B{index + 1}</span>
+                        {(["xM", "zM"] as const).map((coordinate) => (
+                          <label key={coordinate}>
+                            {coordinate === "xM" ? "X" : "Z"}
+                            <input
+                              type="number"
+                              defaultValue={point[coordinate]}
+                              readOnly={isMobile}
+                              onBlur={(event) => {
+                                if (isMobile) {
+                                  return;
+                                }
+                                const value = Number(event.target.value);
+                                if (!Number.isFinite(value)) {
+                                  return;
+                                }
+                                const route = editableRoutePoints.map(
+                                  (candidate, routeIndex) =>
+                                    routeIndex === index
+                                      ? {
+                                          ...candidate,
+                                          [coordinate]: value
+                                        }
+                                      : candidate
+                                );
+                                updateCustomConnectionRoute(
+                                  selectedConnection.id,
+                                  route
+                                );
+                              }}
+                            />
+                          </label>
+                        ))}
+                        <button
+                          disabled={isMobile}
+                          aria-label={`Remove bend ${index + 1}`}
+                          onClick={() => updateCustomConnectionRoute(
+                            selectedConnection.id,
+                            editableRoutePoints.filter(
+                              (_, routeIndex) => routeIndex !== index
+                            )
+                          )}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
               <div className="custom-asset-actions">
                 <button onClick={() => flyTo(selectedConnection.id)}>FOCUS</button>
-                <button onClick={() => rerouteCustomConnection(selectedConnection.id)}>
+                <button
+                  disabled={isMobile}
+                  onClick={() => rerouteCustomConnection(selectedConnection.id)}
+                >
                   REROUTE
                 </button>
                 <button
                   className="danger"
+                  disabled={isMobile}
                   onClick={() => deleteCustomConnection(selectedConnection.id)}
                 >
                   DELETE
@@ -730,7 +1136,12 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <input
                   value={design.name}
                   maxLength={120}
-                  onChange={(event) => setCustomDesignName(event.target.value)}
+                  readOnly={isMobile}
+                  onChange={(event) => {
+                    if (!isMobile) {
+                      setCustomDesignName(event.target.value);
+                    }
+                  }}
                 />
               </label>
 
@@ -740,7 +1151,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <button
                     className={design.environment === "equatorial" ? "active" : ""}
                     aria-pressed={design.environment === "equatorial"}
-                    disabled={design.assets.length > 0}
+                    disabled={isMobile || design.assets.length > 0}
                     onClick={() => setCustomEnvironment("equatorial")}
                   >
                     EQUATORIAL
@@ -748,7 +1159,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <button
                     className={design.environment === "polar" ? "active polar" : ""}
                     aria-pressed={design.environment === "polar"}
-                    disabled={design.assets.length > 0}
+                    disabled={isMobile || design.assets.length > 0}
                     onClick={() => setCustomEnvironment("polar")}
                   >
                     POLAR
@@ -766,6 +1177,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                     <span>GRID</span>
                     <select
                       value={design.planner.gridSnapM}
+                      disabled={isMobile}
                       onChange={(event) => setCustomPlannerSnaps({
                         gridSnapM: Number(event.target.value) as PlannerDocumentState["gridSnapM"]
                       })}
@@ -779,6 +1191,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                     <span>ROTATION</span>
                     <select
                       value={design.planner.rotationSnapDeg}
+                      disabled={isMobile}
                       onChange={(event) => setCustomPlannerSnaps({
                         rotationSnapDeg: Number(event.target.value) as PlannerDocumentState["rotationSnapDeg"]
                       })}
@@ -797,6 +1210,24 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <div><dt>Assets</dt><dd>{design.assets.length}</dd></div>
                 <div><dt>Connections</dt><dd>{design.connections.length}</dd></div>
                 <div>
+                  <dt>Site extent</dt>
+                  <dd>
+                    {layout.widthM.toFixed(1)} × {layout.depthM.toFixed(1)} m
+                  </dd>
+                </div>
+                <div>
+                  <dt>Equipment area</dt>
+                  <dd>{layout.occupiedAreaM2.toFixed(0)} m²</dd>
+                </div>
+                <div>
+                  <dt>Area with clearance</dt>
+                  <dd>{layout.clearanceAreaM2.toFixed(0)} m² summed</dd>
+                </div>
+                <div>
+                  <dt>Persisted routes</dt>
+                  <dd>{layout.totalRouteLengthM.toFixed(1)} m total</dd>
+                </div>
+                <div>
                   <dt>Power source</dt>
                   <dd>{powerStrategyLabel}</dd>
                 </div>
@@ -805,6 +1236,46 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   <dd>{evaluation.topologyValid ? "OPEN" : "CLOSED"}</dd>
                 </div>
               </dl>
+
+              {design.assets.length > 0 && (
+                <section className="custom-asset-roster" aria-label="Site asset roster">
+                  <div className="custom-port-heading">
+                    <div>
+                      <p className="custom-eyebrow">LAYOUT ROSTER</p>
+                      <h2>Select equipment</h2>
+                    </div>
+                    {!isMobile && (
+                      <button onClick={selectAllAssets}>SELECT ALL</button>
+                    )}
+                  </div>
+                  <ol>
+                    {design.assets.map((asset) => (
+                      <li key={asset.id}>
+                        <button
+                          aria-pressed={editor.selectedAssetIds.includes(
+                            asset.id
+                          )}
+                          onClick={(event) => selectCustomAsset(
+                            asset.id,
+                            !isMobile && (
+                              event.shiftKey ||
+                              event.ctrlKey ||
+                              event.metaKey
+                            )
+                          )}
+                        >
+                          <strong>{asset.name}</strong>
+                          <span>
+                            X {asset.transform.xM.toFixed(1)} · Z{" "}
+                            {asset.transform.zM.toFixed(1)} ·{" "}
+                            {asset.transform.headingDeg.toFixed(0)}°
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
 
               <section className="custom-capacity-groups" aria-label="Installed capacity groups">
                 <div className="custom-validation-heading">
@@ -873,7 +1344,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
           )}
         </div>
 
-        {selectedAsset === null && selectedConnection === null && (
+        {selectedAssets.length === 0 && selectedConnection === null && (
           <div className="custom-project-footer">
             {importPreview !== null && (
               <section
@@ -931,9 +1402,11 @@ export function CustomSiteWorkspace(): React.JSX.Element {
               )}>
                 EXPORT DESIGN
               </button>
-              <button onClick={() => importFileRef.current?.click()}>
-                IMPORT DESIGN
-              </button>
+              {!isMobile && (
+                <button onClick={() => importFileRef.current?.click()}>
+                  IMPORT DESIGN
+                </button>
+              )}
               <input
                 ref={importFileRef}
                 hidden
@@ -950,17 +1423,33 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                   });
                 }}
               />
+              {!isMobile && (
+                <button onClick={() => {
+                  if (
+                    design.assets.length === 0 ||
+                    window.confirm(
+                      "Replace this project with the authored reference layout?"
+                    )
+                  ) {
+                    seedCustomDesign(design.environment);
+                  }
+                }}>
+                  SEED {design.environment.toUpperCase()} REFERENCE
+                </button>
+              )}
             </div>
-            <button
-              className="custom-reset"
-              onClick={() => {
-                if (design.assets.length === 0 || window.confirm("Reset this custom site to a blank design?")) {
-                  resetCustomDesign();
-                }
-              }}
-            >
-              RESET BLANK DESIGN
-            </button>
+            {!isMobile && (
+              <button
+                className="custom-reset"
+                onClick={() => {
+                  if (design.assets.length === 0 || window.confirm("Reset this custom site to a blank design?")) {
+                    resetCustomDesign();
+                  }
+                }}
+              >
+                RESET BLANK DESIGN
+              </button>
+            )}
           </div>
         )}
       </aside>

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import {
   SEEDED_SITE_DESIGN_FIXTURES,
-  serializeSiteDesign
+  serializeSiteDesign,
+  siteConnectionRoutePoints
 } from "@selene-isru/engine";
 import {
   act,
@@ -11,7 +12,14 @@ import {
   screen,
   waitFor
 } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
+} from "vitest";
 import { CustomSiteWorkspace } from "../src/components/site-design/CustomSiteWorkspace";
 import { useStore } from "../src/state/store";
 
@@ -24,6 +32,7 @@ describe("custom site workspace", () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
     useStore.getState().enterAuthoredSite("equatorial");
   });
 
@@ -115,6 +124,19 @@ describe("custom site workspace", () => {
     expect(screen.getAllByText("MATERIAL ROUTE").length).toBeGreaterThan(0);
     expect(screen.getByText(/m measured length/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "REROUTE" })).toBeTruthy();
+    expect(screen.getByLabelText("Route handles").textContent)
+      .toContain("editable bends");
+    const beforeDesign = useStore.getState().customSite.design;
+    const bendCount = siteConnectionRoutePoints(
+      beforeDesign,
+      beforeDesign.connections[0]!
+    ).slice(1, -1).length;
+    fireEvent.click(screen.getByRole("button", { name: "ADD BEND" }));
+    const afterDesign = useStore.getState().customSite.design;
+    expect(siteConnectionRoutePoints(
+      afterDesign,
+      afterDesign.connections[0]!
+    ).slice(1, -1)).toHaveLength(bendCount + 1);
 
     fireEvent.click(screen.getByRole("button", { name: "DELETE" }));
     expect(useStore.getState().customSite.design.connections).toEqual([]);
@@ -171,5 +193,71 @@ describe("custom site workspace", () => {
     await waitFor(() => {
       expect(useStore.getState().customSite.design.environment).toBe("polar");
     });
+  });
+
+  it("starts from an editable authored reference layout", () => {
+    render(<CustomSiteWorkspace />);
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "START FROM EQUATORIAL REFERENCE"
+    }));
+
+    expect(useStore.getState().customSite.design.name).toBe(
+      "Equatorial reference copy"
+    );
+    expect(useStore.getState().customSite.design.assets.length)
+      .toBeGreaterThan(5);
+    expect(screen.getByLabelText("Site planner tools").textContent)
+      .toContain("EXTENT");
+  });
+
+  it("multi-selects equipment and exposes group layout tools", () => {
+    act(() => {
+      useStore.getState().importCustomDesign(
+        SEEDED_SITE_DESIGN_FIXTURES.equatorial
+      );
+      const [first, second] =
+        useStore.getState().customSite.design.assets;
+      useStore.getState().selectCustomAsset(first!.id);
+      useStore.getState().selectCustomAsset(second!.id, true);
+    });
+    render(<CustomSiteWorkspace />);
+    const beforeX = useStore.getState().customSite.design.assets[0]!
+      .transform.xM;
+
+    expect(screen.getByText("2 ASSETS SELECTED")).toBeTruthy();
+    expect(screen.getByText("GROUP FOOTPRINT")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "X+ →" }));
+
+    expect(useStore.getState().customSite.design.assets[0]?.transform.xM)
+      .toBe(beforeX + 5);
+  });
+
+  it("renders mobile as review-only with precision controls locked", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: true,
+      media: "(max-width: 1099px)",
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    }));
+    act(() => {
+      useStore.getState().importCustomDesign(
+        SEEDED_SITE_DESIGN_FIXTURES.polar
+      );
+      useStore.getState().selectCustomAsset(
+        useStore.getState().customSite.design.assets[0]!.id
+      );
+    });
+
+    render(<CustomSiteWorkspace />);
+
+    expect(screen.getByRole("note").textContent).toContain("MOBILE REVIEW");
+    expect(screen.getByLabelText("X (M)").hasAttribute("readonly")).toBe(true);
+    expect(screen.getByRole("button", { name: "DUPLICATE" }))
+      .toHaveProperty("disabled", true);
   });
 });
