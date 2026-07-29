@@ -260,4 +260,35 @@ describe("custom site workspace", () => {
     expect(screen.getByRole("button", { name: "DUPLICATE" }))
       .toHaveProperty("disabled", true);
   });
+
+  it("keeps mobile review selection keyboard accessible", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: true,
+      media: "(max-width: 1099px)",
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    }));
+    act(() => {
+      useStore.getState().importCustomDesign(
+        SEEDED_SITE_DESIGN_FIXTURES.polar
+      );
+      useStore.getState().selectCustomAsset(null);
+    });
+    render(<CustomSiteWorkspace />);
+    const first = useStore.getState().customSite.design.assets[0]!;
+
+    fireEvent.click(screen.getByRole("button", {
+      name: new RegExp(`Select ${first.name}`)
+    }));
+
+    expect(useStore.getState().customSite.editor.selectedAssetId).toBe(
+      first.id
+    );
+    expect(screen.getByLabelText("Custom site inspector").textContent)
+      .toContain(first.name);
+  });
 });

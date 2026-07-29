@@ -137,6 +137,7 @@ select {
   background: var(--bg-panel);
 }
 
+.stage-scene,
 .stage-canvas {
   position: absolute;
   inset: 0;
@@ -200,5 +201,10 @@ select {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .process-flow-line {
+    animation: none !important;
   }
 }

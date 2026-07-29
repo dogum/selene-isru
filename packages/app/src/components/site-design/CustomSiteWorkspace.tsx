@@ -24,6 +24,7 @@ import {
   siteAlignmentGuides,
   siteLayoutSummary
 } from "../../site-design/editor";
+import { customSiteComplexity } from "../../site-design/performance";
 import { useStore } from "../../state/store";
 
 const CATEGORY_ORDER = [
@@ -169,6 +170,10 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const cautionCount = severityCount(findings, "caution");
   const infoCount = severityCount(findings, "info");
   const layout = useMemo(() => siteLayoutSummary(design), [design]);
+  const complexity = useMemo(
+    () => customSiteComplexity(design, isMobile),
+    [design, isMobile]
+  );
   const alignmentGuides = useMemo(
     () => siteAlignmentGuides(design, editor.selectedAssetIds),
     [design, editor.selectedAssetIds]
@@ -1058,6 +1063,9 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                             {coordinate === "xM" ? "X" : "Z"}
                             <input
                               type="number"
+                              aria-label={`Route bend ${index + 1} ${
+                                coordinate === "xM" ? "X" : "Z"
+                              } coordinate in meters`}
                               defaultValue={point[coordinate]}
                               readOnly={isMobile}
                               onBlur={(event) => {
@@ -1210,6 +1218,14 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 <div><dt>Assets</dt><dd>{design.assets.length}</dd></div>
                 <div><dt>Connections</dt><dd>{design.connections.length}</dd></div>
                 <div>
+                  <dt>Scene detail</dt>
+                  <dd>
+                    {complexity.simplifiedAssetCount === 0
+                      ? `${complexity.detailedAssetCount} detailed`
+                      : `${complexity.detailedAssetCount} detailed · ${complexity.simplifiedAssetCount} placeholders`}
+                  </dd>
+                </div>
+                <div>
                   <dt>Site extent</dt>
                   <dd>
                     {layout.widthM.toFixed(1)} × {layout.depthM.toFixed(1)} m
@@ -1237,6 +1253,29 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                 </div>
               </dl>
 
+              {complexity.level !== "normal" && (
+                <section
+                  className={`custom-performance-note ${complexity.level}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <p className="custom-eyebrow">
+                    {complexity.level === "caution"
+                      ? "LARGE DESIGN GUARDRAIL"
+                      : "ADAPTIVE SCENE DETAIL"}
+                  </p>
+                  <strong>
+                    {complexity.simplifiedAssetCount} assets use lightweight
+                    selectable placeholders.
+                  </strong>
+                  <p>
+                    Geometry is simplified after the {complexity.detailBudget}
+                    -asset detail budget. Engineering state, saved transforms,
+                    ports, and evaluation remain active.
+                  </p>
+                </section>
+              )}
+
               {design.assets.length > 0 && (
                 <section className="custom-asset-roster" aria-label="Site asset roster">
                   <div className="custom-port-heading">
@@ -1255,6 +1294,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
                           aria-pressed={editor.selectedAssetIds.includes(
                             asset.id
                           )}
+                          aria-label={`Select ${asset.name}, X ${asset.transform.xM.toFixed(1)} meters, Z ${asset.transform.zM.toFixed(1)} meters, heading ${asset.transform.headingDeg.toFixed(0)} degrees, ${asset.enabled ? "enabled" : "disabled"}`}
                           onClick={(event) => selectCustomAsset(
                             asset.id,
                             !isMobile && (
@@ -1514,6 +1554,12 @@ export function CustomSiteWorkspace(): React.JSX.Element {
             : `TOPOLOGY GATE CLOSED · ${errorCount} ERROR${errorCount === 1 ? "" : "S"} · ZERO ACHIEVABLE OUTPUT`}
         </span>
         <span>
+          {complexity.simplifiedAssetCount > 0 && (
+            <>
+              {complexity.simplifiedAssetCount} LIGHTWEIGHT PLACEHOLDER
+              {complexity.simplifiedAssetCount === 1 ? "" : "S"} ·{" "}
+            </>
+          )}
           {formatQtyText(evaluation.spatial.cableMassKg, "kg")} CABLE ·{" "}
           {formatQtyText(evaluation.spatial.supplementalLoadW, "W")} ROUTE LOAD ·{" "}
           SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS

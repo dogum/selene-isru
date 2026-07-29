@@ -153,6 +153,9 @@ export interface ViewerCallbacks {
     xM: number,
     zM: number
   ) => void;
+  onRendererStatus?: (
+    status: "ready" | "lost" | "restoring" | "failed"
+  ) => void;
 }
 
 /**
@@ -239,6 +242,17 @@ export class Viewer {
 
   private lastResult: SimResult | null = null;
   private lastParams: SimParams | null = null;
+  private lastTimeState: {
+    point: TimeseriesPoint;
+    params: SimParams;
+    result: SimResult;
+    cycleHours: number;
+  } | null = null;
+  private contextRecoveryCamera: {
+    position: THREE.Vector3;
+    target: THREE.Vector3;
+    plannerZoom: number;
+  } | null = null;
   private warnedIds = new Set<string>();
   private resizeObserver: ResizeObserver;
   private mediaQuery: MediaQueryList;
@@ -335,6 +349,12 @@ export class Viewer {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     setProceduralTextureAnisotropy(this.renderer.capabilities.getMaxAnisotropy());
+    this.renderer.domElement.tabIndex = 0;
+    this.renderer.domElement.setAttribute("role", "img");
+    this.renderer.domElement.setAttribute(
+      "aria-label",
+      "Interactive lunar site scene. Use the equipment roster and numeric fields for keyboard review and editing."
+    );
     this.container.insertBefore(this.renderer.domElement, this.veil);
 
     this.renderer.domElement.addEventListener("webglcontextlost", this.onContextLost, false);
@@ -714,6 +734,7 @@ export class Viewer {
   }
 
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
+    this.lastTimeState = { point, params, result, cycleHours };
     this.applyCycleLighting(point, result.site, cycleHours);
     if (this.diorama !== null) {
       this.diorama.applyTime(point, params, result, cycleHours, this.reducedMotion);
@@ -743,7 +764,14 @@ export class Viewer {
       ? ""
       : `LOADING ${site.toUpperCase()} ASSETS · 0/${this.expectedAssetCount}`;
     if (this.workspaceMode === "custom") {
-      const custom = new CustomSiteDiorama(site, this.quality, () => this.wake());
+      const custom = new CustomSiteDiorama(site, this.quality, () => {
+        if (this.diorama !== custom || this.disposed) {
+          return;
+        }
+        this.rebuildCustomLabels();
+        this.refreshSelectionOutline();
+        this.wake();
+      });
       if (this.customDesign !== null) {
         custom.syncDesign(
           this.customDesign,
@@ -785,6 +813,9 @@ export class Viewer {
     }
     this.scene.add(this.diorama.group);
     this.rebuildLearningOverlay();
+    if (this.workspaceMode === "custom") {
+      this.rebuildCustomLabels();
+    }
 
     // lighting per site: equatorial high sun, polar raking 2° light (§3.1)
     if (site === "equatorial") {
@@ -1205,13 +1236,45 @@ export class Viewer {
         )
     );
     for (const asset of this.customDesign.assets) {
+      const renderStatus = this.diorama instanceof CustomSiteDiorama
+        ? this.diorama.assetRenderStatus(asset.id)
+        : null;
+      const renderStatusLabel = renderStatus === "fallback"
+        ? " · MODEL FALLBACK"
+        : renderStatus === "simplified" ? " · LIGHTWEIGHT" : "";
+      const assetEvaluation = this.customEvaluation?.assetEvaluations.find(
+        (item) => item.assetId === asset.id
+      );
+      const assetStateLabel = !asset.enabled
+        ? "DISABLED"
+        : (assetEvaluation?.utilization ?? 0) > 1
+          ? "OVER CAPACITY"
+          : assetEvaluation?.operational === true ? "OPERATIONAL" : "STANDBY";
       const label = document.createElement("button");
       label.type = "button";
       label.className = "custom-scene-label";
       label.textContent = this.customViewMode === "planner"
-        ? `${asset.name.toUpperCase()} · X ${asset.transform.xM.toFixed(1)} · Z ${asset.transform.zM.toFixed(1)}`
-        : asset.name.toUpperCase();
+        ? `${asset.name.toUpperCase()} · X ${asset.transform.xM.toFixed(1)} · Z ${asset.transform.zM.toFixed(1)} · ${assetStateLabel}${renderStatusLabel}`
+        : `${asset.name.toUpperCase()} · ${assetStateLabel}${renderStatusLabel}`;
+      label.setAttribute(
+        "aria-label",
+        `${asset.name}, ${assetStateLabel.toLowerCase()}, X ${asset.transform.xM.toFixed(1)} meters, Z ${asset.transform.zM.toFixed(1)} meters${renderStatusLabel.toLowerCase()}`
+      );
+      label.title =
+        `Select ${asset.name} · ${assetStateLabel}${renderStatusLabel}`;
       label.classList.toggle("disabled", !asset.enabled);
+      label.classList.toggle(
+        "loaded",
+        (assetEvaluation?.utilization ?? 0) > 1
+      );
+      label.classList.toggle(
+        "standby",
+        asset.enabled && assetEvaluation?.operational !== true
+      );
+      label.classList.toggle(
+        "fallback",
+        renderStatus === "fallback" || renderStatus === "simplified"
+      );
       label.classList.toggle(
         "active",
         this.selectedAssetKeys.includes(asset.id)
@@ -1232,27 +1295,45 @@ export class Viewer {
       const stream = fromPort?.streams.find((candidate) =>
         toPort?.streams.includes(candidate)
       );
+      const invalid = invalidConnectionIds.has(connection.id);
+      const overloaded = (connectionEvaluation?.utilization ?? 0) > 1;
+      const connectionStatus = invalid
+        ? "INVALID"
+        : overloaded
+          ? "OVER CAPACITY"
+          : connectionEvaluation?.operational === true ? "FLOW" : "STANDBY";
+      const fromAsset = this.customDesign.assets.find((asset) =>
+        asset.id === connection.from.assetId
+      );
+      const toAsset = this.customDesign.assets.find((asset) =>
+        asset.id === connection.to.assetId
+      );
       const label = document.createElement("button");
       label.type = "button";
       label.className = `custom-connection-label custom-connection-${connection.kind}`;
       label.textContent =
         `${(stream ?? connection.kind).toUpperCase()} · ` +
         `${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} M · ` +
-        `${connectionEvaluation?.operational === true ? "FLOW" : "STANDBY"}` +
+        connectionStatus +
         `${connectionEvaluation?.utilization === null ||
           connectionEvaluation?.utilization === undefined
           ? ""
           : ` · ${(connectionEvaluation.utilization * 100).toFixed(0)}%`}`;
+      label.setAttribute(
+        "aria-label",
+        `${connection.kind} route from ${fromAsset?.name ?? connection.from.assetId} to ${toAsset?.name ?? connection.to.assetId}, ${siteConnectionLengthM(this.customDesign, connection).toFixed(1)} meters, ${connectionStatus.toLowerCase()}`
+      );
+      label.title = `Select route · ${connectionStatus}`;
       label.classList.toggle("active", connection.id === this.customSelectedConnectionId);
-      label.classList.toggle("invalid", invalidConnectionIds.has(connection.id));
+      label.classList.toggle("invalid", invalid);
       label.classList.toggle(
         "standby",
-        !invalidConnectionIds.has(connection.id) &&
+        !invalid &&
         connectionEvaluation?.operational !== true
       );
       label.classList.toggle(
         "loaded",
-        (connectionEvaluation?.utilization ?? 0) > 1
+        overloaded
       );
       label.addEventListener("click", () => this.selectPickedConnection(connection.id));
       this.customLabelOverlay.appendChild(label);
@@ -1892,32 +1973,72 @@ export class Viewer {
 
   private onContextLost = (e: Event): void => {
     e.preventDefault();
+    this.contextRecoveryCamera = {
+      position: this.camera.position.clone(),
+      target: this.controls.target.clone(),
+      plannerZoom: this.plannerCamera.zoom
+    };
     this.stop();
+    this.callbacks.onRendererStatus?.("lost");
   };
 
   private onContextRestored = (): void => {
-    // rebuild the whole GL state with the current sim state (§8.9)
-    const result = this.lastResult;
-    const params = this.lastParams;
-    this.controls.dispose();
-    if (this.diorama !== null) {
-      this.diorama.dispose();
-      this.diorama = null;
+    this.callbacks.onRendererStatus?.("restoring");
+    try {
+      const result = this.lastResult;
+      const params = this.lastParams;
+      const timeState = this.lastTimeState;
+      const camera = this.contextRecoveryCamera;
+      this.controls.dispose();
+      if (this.diorama !== null) {
+        this.diorama.dispose();
+        this.diorama = null;
+      }
+      this.disposeEnvironment();
+      disposeObject(this.scene);
+      this.post.dispose();
+      this.renderer.domElement.remove();
+      this.renderer.dispose();
+      disposeProceduralTextures();
+      this.tweens.clear();
+      this.activeSite = null;
+      this.initGL();
+      this.resize();
+      const site = this.workspaceMode === "custom"
+        ? this.customEnvironment
+        : result?.site ?? this.customEnvironment;
+      this.buildSite(site);
+      if (result !== null && params !== null) {
+        this.applyToDiorama(result, params, true);
+        this.refreshProcessOverlayData();
+      }
+      if (timeState !== null) {
+        this.applyTime(
+          timeState.point,
+          timeState.params,
+          timeState.result,
+          timeState.cycleHours
+        );
+      }
+      if (camera !== null) {
+        this.tweens.cancel("camera");
+        this.camera.position.copy(camera.position);
+        this.controls.target.copy(camera.target);
+        if (this.camera === this.plannerCamera) {
+          this.plannerCamera.zoom = camera.plannerZoom;
+          this.plannerCamera.updateProjectionMatrix();
+        }
+        this.controls.update();
+      }
+      this.rebuildCustomLabels();
+      this.setLearningState(this.learningMode, this.showProcessFlow);
+      this.contextRecoveryCamera = null;
+      this.callbacks.onRendererStatus?.("ready");
+      this.wake();
+    } catch (error: unknown) {
+      console.error("[selene] WebGL context restoration failed", error);
+      this.callbacks.onRendererStatus?.("failed");
     }
-    this.disposeEnvironment();
-    disposeObject(this.scene);
-    this.post.dispose();
-    this.renderer.domElement.remove();
-    this.renderer.dispose();
-    disposeProceduralTextures();
-    this.tweens.clear();
-    this.initGL();
-    this.resize();
-    if (result !== null && params !== null) {
-      this.lastResult = null;
-      this.apply(result, params);
-    }
-    this.wake();
   };
 
   private resize(): void {

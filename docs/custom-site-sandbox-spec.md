@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-07-28 |
 | Working branch | `feature/custom-site-sandbox` |
-| Status | Milestones 0–7 implemented; Milestone 8 next |
+| Status | Milestones 0–8 implemented; Milestone 9 release evidence next |
 | Baseline | Merged `main` after PR #1 |
 
 ## Outcome
@@ -1086,6 +1086,32 @@ Acceptance:
 
 **Goal:** harden the editor before broad release.
 
+**Implementation status (2026-07-29):** Delivered on the working branch.
+Custom sites now have graphics-tier model-detail budgets (72 detailed assets
+at the default desktop tier and 28 on mobile), with persistent selectable
+wireframe equipment beyond the budget. The same placeholder remains when a GLB
+is missing or fails to load, while footprints, ports, transforms, topology,
+and engineering evaluation continue to use the saved document. A deterministic
+160-asset/159-route fixture exercises the guarded large-document path and
+schema caps. The inspector and status bar disclose simplification rather than
+hiding it.
+
+WebGL context loss now freezes rendering, announces recovery, rebuilds the
+renderer, terrain, custom diorama, labels, evaluation/time bindings, selection,
+view mode, and camera, then resumes without replacing the Zustand document or
+its local draft. A failed restoration offers an explicit reload state. An
+application-level error boundary separately preserves and can export the
+autosaved recovery design.
+
+The canvas, projected assets, connections, roster, and route coordinates now
+carry task-specific accessible names. Operational, standby, invalid,
+over-capacity, disabled, fallback, and lightweight states are written in text
+and differentiated with solid, dotted, dashed, or double-line treatments
+instead of color alone. Planner review and numeric transforms remain
+keyboard-operable; mobile review selection has component coverage; reduced
+motion removes repeating process animation in addition to disabling camera
+tweens and idle orbit.
+
 Deliver:
 
 - Performance guardrails and graceful catalog/asset-load failures.
@@ -1209,7 +1235,8 @@ not promises about every device.
 | Committed validation/evaluation | under 200 ms for reference design |
 | Active transform rendering | visually continuous at the current graphics tier |
 | Reference design size | at least 40 asset instances and 60 connections |
-| Stress fixture | at least 100 instances without data loss or UI lockup |
+| Stress fixture | 160 instances and 159 routes without data loss or UI lockup |
+| Default detailed-model budget | 72 desktop / 28 mobile; later instances remain selectable placeholders |
 | Undo history | at least 100 coalesced commands |
 | Autosave | non-blocking and debounced |
 

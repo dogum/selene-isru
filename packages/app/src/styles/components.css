@@ -1642,6 +1642,52 @@ input.param-input {
   pointer-events: none;
 }
 
+.stage-renderer-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  display: grid;
+  width: min(390px, calc(100% - 32px));
+  gap: 8px;
+  padding: 16px;
+  transform: translate(-50%, -50%);
+  border: 1px dashed var(--caution);
+  background: rgba(8, 11, 16, 0.96);
+  color: var(--text-mid);
+  box-shadow: var(--shadow-slideover);
+  font: 500 9px/1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.stage-renderer-status strong {
+  color: var(--caution);
+  font: 600 12px/1.2 var(--font-display);
+}
+
+.stage-renderer-status.failed {
+  border-color: var(--alarm);
+}
+
+.stage-renderer-status.failed strong {
+  color: var(--alarm);
+}
+
+.stage-renderer-status button {
+  justify-self: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  color: var(--text-hi);
+  font: 600 8px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.stage-renderer-status button:hover {
+  border-color: var(--cryo);
+  color: var(--cryo);
+}
+
 .reactor-inspector {
   position: absolute;
   top: 72px;
@@ -2153,6 +2199,19 @@ input.param-input {
   opacity: 0.48;
 }
 
+.custom-scene-label.standby {
+  border-style: dotted;
+}
+
+.custom-scene-label.loaded {
+  border-style: double;
+  border-color: var(--caution);
+}
+
+.custom-scene-label.fallback {
+  border-style: dashed;
+}
+
 .custom-connection-label {
   position: absolute;
   top: 0;
@@ -2203,6 +2262,7 @@ input.param-input {
 }
 
 .custom-connection-label.loaded:not(.invalid):not(.standby) {
+  border-style: double;
   border-color: var(--caution);
   color: var(--caution);
 }
@@ -3323,6 +3383,66 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 /* ============ custom site planning foundation ============ */
 
+.app-recovery {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 14px;
+  width: min(620px, calc(100% - 40px));
+  margin: 0 auto;
+  color: var(--text-mid);
+}
+
+.app-recovery h1,
+.app-recovery p {
+  margin: 0;
+}
+
+.app-recovery h1 {
+  color: var(--text-hi);
+  font: 600 clamp(24px, 5vw, 48px)/1.05 var(--font-display);
+}
+
+.app-recovery > p:not(.custom-eyebrow) {
+  max-width: 58ch;
+  font: 400 13px/1.65 var(--font-body);
+}
+
+.app-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.app-recovery button {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  color: var(--text-hi);
+  font: 600 9px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.app-recovery button:hover:not(:disabled) {
+  border-color: var(--cryo);
+  color: var(--cryo);
+}
+
+.app-recovery button:disabled {
+  opacity: 0.4;
+}
+
+.app-recovery details {
+  color: var(--text-low);
+  font: 500 9px/1.5 var(--font-mono);
+}
+
+.app-recovery code {
+  display: block;
+  margin-top: 8px;
+  color: var(--alarm);
+}
+
 .custom-site-workspace {
   position: absolute;
   inset: 0;
@@ -3758,6 +3878,31 @@ body.selene-photo-mode .custom-scene-label-overlay {
   margin: 8px 0 0;
   color: var(--text-mid);
   font: 400 10px/1.45 var(--font-body);
+}
+
+.custom-performance-note {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+  padding: 11px;
+  border-left: 3px solid var(--caution);
+  background: rgba(255, 179, 71, 0.06);
+}
+
+.custom-performance-note strong {
+  color: var(--text-hi);
+  font: 600 10px/1.35 var(--font-display);
+}
+
+.custom-performance-note p:not(.custom-eyebrow) {
+  margin: 0;
+  color: var(--text-low);
+  font: 400 8px/1.5 var(--font-mono);
+}
+
+.custom-performance-note.caution {
+  border-left-color: var(--alarm);
+  background: rgba(255, 77, 77, 0.055);
 }
 
 .custom-group-summary {

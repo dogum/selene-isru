@@ -40,6 +40,12 @@ const URLS: Record<string, string> = {
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const templates = new Map<string, Promise<THREE.Group | null>>();
 
+export type CustomAssetRenderStatus =
+  | "loading"
+  | "loaded"
+  | "fallback"
+  | "simplified";
+
 function templateFor(kind: string): Promise<THREE.Group | null> {
   const existing = templates.get(kind);
   if (existing !== undefined) {
@@ -83,17 +89,82 @@ function templateFor(kind: string): Promise<THREE.Group | null> {
   return pending;
 }
 
-/** A light instance wrapper over one cached GLB template per catalog kind. */
+function placeholderModel(): {
+  group: THREE.Group;
+  geometries: THREE.BufferGeometry[];
+  materials: THREE.Material[];
+} {
+  const group = new THREE.Group();
+  const geometries: THREE.BufferGeometry[] = [];
+  const materials: THREE.Material[] = [];
+  const baseGeometry = new THREE.BoxGeometry(4.2, 1.8, 3.2);
+  const baseMaterial = new THREE.MeshBasicMaterial({
+    color: 0x74d8ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.72
+  });
+  const base = new THREE.Mesh(baseGeometry, baseMaterial);
+  base.position.y = 0.95;
+  const mastGeometry = new THREE.CylinderGeometry(0.12, 0.12, 2.2, 8);
+  const mastMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.62
+  });
+  const mast = new THREE.Mesh(mastGeometry, mastMaterial);
+  mast.position.y = 2.8;
+  const beaconGeometry = new THREE.OctahedronGeometry(0.42, 0);
+  const beaconMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffb347,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.9
+  });
+  const beacon = new THREE.Mesh(beaconGeometry, beaconMaterial);
+  beacon.position.y = 4.1;
+  group.add(base, mast, beacon);
+  geometries.push(baseGeometry, mastGeometry, beaconGeometry);
+  materials.push(baseMaterial, mastMaterial, beaconMaterial);
+  return { group, geometries, materials };
+}
+
+/** A cached GLB instance with a selectable low-poly fallback at every stage. */
 export class CustomAssetModel {
   readonly group = new THREE.Group();
 
   private materials: THREE.Material[] = [];
+  private placeholderGeometries: THREE.BufferGeometry[] = [];
+  private placeholderMaterials: THREE.Material[] = [];
+  private placeholder: THREE.Group | null = null;
+  private status: CustomAssetRenderStatus;
   private disposed = false;
   private enabled = true;
 
-  constructor(kind: string, onReady: () => void) {
+  constructor(
+    kind: string,
+    onReady: () => void,
+    loadDetailed = true
+  ) {
+    const placeholder = placeholderModel();
+    this.placeholder = placeholder.group;
+    this.placeholderGeometries = placeholder.geometries;
+    this.placeholderMaterials = placeholder.materials;
+    this.status = loadDetailed ? "loading" : "simplified";
+    this.group.userData.assetRenderStatus = this.status;
+    this.group.add(placeholder.group);
+    if (!loadDetailed) {
+      this.applyEnabled();
+      onReady();
+      return;
+    }
     void templateFor(kind).then((template) => {
-      if (this.disposed || template === null) {
+      if (this.disposed) {
+        return;
+      }
+      if (template === null) {
+        this.setStatus("fallback");
+        this.applyEnabled();
         onReady();
         return;
       }
@@ -111,10 +182,16 @@ export class CustomAssetModel {
           this.materials.push(mesh.material);
         }
       });
+      this.removePlaceholder();
       this.group.add(scene);
+      this.setStatus("loaded");
       this.applyEnabled();
       onReady();
     });
+  }
+
+  get renderStatus(): CustomAssetRenderStatus {
+    return this.status;
   }
 
   setEnabled(enabled: boolean): void {
@@ -127,16 +204,38 @@ export class CustomAssetModel {
     for (const material of this.materials) {
       material.dispose();
     }
+    this.removePlaceholder();
     this.materials = [];
     this.group.clear();
   }
 
   private applyEnabled(): void {
-    for (const material of this.materials) {
+    for (const material of [...this.materials, ...this.placeholderMaterials]) {
       material.transparent = !this.enabled;
       material.opacity = this.enabled ? 1 : 0.28;
       material.depthWrite = this.enabled;
       material.needsUpdate = true;
     }
+  }
+
+  private setStatus(status: CustomAssetRenderStatus): void {
+    this.status = status;
+    this.group.userData.assetRenderStatus = status;
+  }
+
+  private removePlaceholder(): void {
+    if (this.placeholder === null) {
+      return;
+    }
+    this.group.remove(this.placeholder);
+    for (const geometry of this.placeholderGeometries) {
+      geometry.dispose();
+    }
+    for (const material of this.placeholderMaterials) {
+      material.dispose();
+    }
+    this.placeholderGeometries = [];
+    this.placeholderMaterials = [];
+    this.placeholder = null;
   }
 }

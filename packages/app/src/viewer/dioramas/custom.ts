@@ -13,7 +13,10 @@ import {
   type SitePortRef
 } from "@selene-isru/engine";
 import * as THREE from "three";
-import { CustomAssetModel } from "../assets/CustomAssetModel";
+import {
+  CustomAssetModel,
+  type CustomAssetRenderStatus
+} from "../assets/CustomAssetModel";
 import {
   siteAlignmentGuides,
   siteLayoutSummary
@@ -122,15 +125,12 @@ function footprintMesh(
   kind: string,
   color: number,
   opacity: number
-): THREE.Mesh | null {
+): THREE.Mesh {
   const definition = siteAssetDefinition(kind);
-  if (definition === null) {
-    return null;
-  }
   const geometry = new THREE.BoxGeometry(
-    definition.footprint.widthM,
+    definition?.footprint.widthM ?? 8,
     0.12,
-    definition.footprint.depthM
+    definition?.footprint.depthM ?? 8
   );
   const material = new THREE.MeshBasicMaterial({
     color,
@@ -144,17 +144,14 @@ function footprintMesh(
   return mesh;
 }
 
-function clearanceMesh(kind: string): THREE.Mesh | null {
+function clearanceMesh(kind: string): THREE.Mesh {
   const definition = siteAssetDefinition(kind);
-  if (definition === null) {
-    return null;
-  }
-  const clearance = definition.footprint.clearanceM ?? 0;
+  const clearance = definition?.footprint.clearanceM ?? 2;
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(
-      definition.footprint.widthM + clearance * 2,
+      (definition?.footprint.widthM ?? 8) + clearance * 2,
       0.08,
-      definition.footprint.depthM + clearance * 2
+      (definition?.footprint.depthM ?? 8) + clearance * 2
     ),
     new THREE.MeshBasicMaterial({
       color: 0x74d8ff,
@@ -207,6 +204,7 @@ export class CustomSiteDiorama implements Diorama {
   private readonly connections = new Map<string, RuntimeConnection>();
   private readonly planningAids = new THREE.Group();
   private readonly onReady: () => void;
+  private readonly detailAssetCap: number;
   private plannerMode = true;
   private currentDesign: SiteDesignDocument | null = null;
   private connectionSource: SitePortRef | null = null;
@@ -222,6 +220,7 @@ export class CustomSiteDiorama implements Diorama {
     onReady: () => void = () => undefined
   ) {
     this.onReady = onReady;
+    this.detailAssetCap = quality.customModelCap;
     const terrainOpts: TerrainOpts = {
       noiseAmp: environment === "polar" ? 0.72 : 0.5,
       noiseScale: environment === "polar" ? 0.012 : 0.01,
@@ -284,11 +283,12 @@ export class CustomSiteDiorama implements Diorama {
         root.userData.assetKey = asset.id;
         const footprint = footprintMesh(asset.kind, 0x74d8ff, 0.12);
         const clearance = clearanceMesh(asset.kind);
-        if (footprint === null || clearance === null) {
-          continue;
-        }
         footprint.userData.assetId = asset.id;
-        const model = new CustomAssetModel(asset.kind, this.onReady);
+        const model = new CustomAssetModel(
+          asset.kind,
+          this.onReady,
+          this.instances.size < this.detailAssetCap
+        );
         model.group.userData.assetId = asset.id;
         const ports = new THREE.Group();
         ports.name = `${asset.name} ports`;
@@ -330,13 +330,17 @@ export class CustomSiteDiorama implements Diorama {
         item.assetId === asset.id
       );
       const footprintMaterial = runtime.footprint.material as THREE.MeshBasicMaterial;
+      const overloaded = (assetEvaluation?.utilization ?? 0) > 1;
       footprintMaterial.color.setHex(
         !asset.enabled
           ? 0x7a808b
-          : (assetEvaluation?.utilization ?? 0) > 1
+          : overloaded
             ? 0xffb347
             : assetEvaluation?.operational ? 0x4ade80 : 0x74d8ff
       );
+      footprintMaterial.wireframe =
+        !asset.enabled || overloaded || placementErrors.has(asset.id);
+      footprintMaterial.needsUpdate = true;
       footprintMaterial.opacity = selectedAssetId === asset.id ? 0.34 : 0.1;
       const clearanceMaterial =
         runtime.clearance.material as THREE.MeshBasicMaterial;
@@ -382,6 +386,10 @@ export class CustomSiteDiorama implements Diorama {
       this.updatePlanningAids(this.currentDesign, this.selectedAssetIds);
     }
     this.onReady();
+  }
+
+  assetRenderStatus(assetId: string): CustomAssetRenderStatus | null {
+    return this.instances.get(assetId)?.model.renderStatus ?? null;
   }
 
   setConnectionState(
@@ -582,9 +590,6 @@ export class CustomSiteDiorama implements Diorama {
     if (this.placementPreview === null || this.placementPreviewKind !== kind) {
       this.clearPlacementPreview();
       const footprint = footprintMesh(kind, 0x4ade80, 0.34);
-      if (footprint === null) {
-        return;
-      }
       const definition = siteAssetDefinition(kind);
       const height = Math.max(
         1,
@@ -760,20 +765,19 @@ export class CustomSiteDiorama implements Diorama {
               point.zM
             )
     );
-    const material = invalid || !operational
+    const overloaded = utilization !== null && utilization > 1;
+    const material = invalid || !operational || overloaded
       ? new THREE.LineDashedMaterial({
           color: invalid ? 0xff4d4d : 0xffb347,
-          dashSize: 1.2,
-          gapSize: 0.8,
+          dashSize: overloaded ? 0.5 : 1.2,
+          gapSize: overloaded ? 0.34 : 0.8,
           transparent: true,
           opacity: selected ? 1 : 0.84,
           depthTest: false,
           depthWrite: false
         })
       : new THREE.LineBasicMaterial({
-          color: utilization !== null && utilization > 1
-            ? 0xffb347
-            : CONNECTION_COLORS[connection.kind],
+          color: CONNECTION_COLORS[connection.kind],
           transparent: true,
           opacity: selected ? 1 : 0.72,
           depthTest: false,
@@ -783,7 +787,7 @@ export class CustomSiteDiorama implements Diorama {
       new THREE.BufferGeometry().setFromPoints(points),
       material
     );
-    if (invalid || !operational) {
+    if (invalid || !operational || overloaded) {
       line.computeLineDistances();
     }
     line.userData.connectionId = connection.id;

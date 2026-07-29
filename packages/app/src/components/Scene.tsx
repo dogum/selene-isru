@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIsMobile } from "../lib/hooks";
 import { useStore } from "../state/store";
 import { Viewer } from "../viewer/Viewer";
@@ -33,43 +33,54 @@ declare global {
 export function Scene(): React.JSX.Element {
   const ref = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
+  const [rendererStatus, setRendererStatus] = useState<
+    "ready" | "lost" | "restoring" | "failed"
+  >("ready");
 
   useEffect(() => {
     const el = ref.current;
     if (el === null) {
       return;
     }
-    const viewer = new Viewer(el, isMobile, {
-      onSelectAsset: (assetKey, additive = false) => {
-        const state = useStore.getState();
-        if (state.workspaceMode === "custom") {
-          state.selectCustomAsset(assetKey, additive);
-        } else {
-          state.setUi({ selectedAsset: assetKey });
-        }
-      },
-      onPlaceCustomAsset: (kind, xM, zM) =>
-        useStore.getState().placeCustomAsset(kind, xM, zM),
-      onMoveCustomAsset: (assetId, xM, zM) =>
-        useStore.getState().moveCustomAsset(assetId, xM, zM),
-      onMoveCustomRoutePoint: (
-        connectionId,
-        routePointIndex,
-        xM,
-        zM
-      ) => useStore.getState().moveCustomConnectionRoutePoint(
-        connectionId,
-        routePointIndex,
-        xM,
-        zM
-      ),
-      onBeginCustomConnection: (source) =>
-        useStore.getState().beginCustomConnection(source),
-      onCompleteCustomConnection: (target) =>
-        useStore.getState().completeCustomConnection(target),
-      onSelectCustomConnection: (connectionId) =>
-        useStore.getState().selectCustomConnection(connectionId)
-    });
+    let viewer: Viewer;
+    try {
+      viewer = new Viewer(el, isMobile, {
+        onSelectAsset: (assetKey, additive = false) => {
+          const state = useStore.getState();
+          if (state.workspaceMode === "custom") {
+            state.selectCustomAsset(assetKey, additive);
+          } else {
+            state.setUi({ selectedAsset: assetKey });
+          }
+        },
+        onPlaceCustomAsset: (kind, xM, zM) =>
+          useStore.getState().placeCustomAsset(kind, xM, zM),
+        onMoveCustomAsset: (assetId, xM, zM) =>
+          useStore.getState().moveCustomAsset(assetId, xM, zM),
+        onMoveCustomRoutePoint: (
+          connectionId,
+          routePointIndex,
+          xM,
+          zM
+        ) => useStore.getState().moveCustomConnectionRoutePoint(
+          connectionId,
+          routePointIndex,
+          xM,
+          zM
+        ),
+        onBeginCustomConnection: (source) =>
+          useStore.getState().beginCustomConnection(source),
+        onCompleteCustomConnection: (target) =>
+          useStore.getState().completeCustomConnection(target),
+        onSelectCustomConnection: (connectionId) =>
+          useStore.getState().selectCustomConnection(connectionId),
+        onRendererStatus: setRendererStatus
+      });
+    } catch (error: unknown) {
+      console.error("[selene] failed to initialize WebGL viewer", error);
+      setRendererStatus("failed");
+      return;
+    }
     const initial = useStore.getState();
     viewer.setWorkspaceState(
       initial.workspaceMode,
@@ -202,5 +213,34 @@ export function Scene(): React.JSX.Element {
     };
   }, [isMobile]);
 
-  return <div ref={ref} className="stage-canvas" aria-label="3D site diorama" />;
+  return (
+    <div className="stage-scene">
+      <div ref={ref} className="stage-canvas" aria-label="3D site diorama" />
+      {rendererStatus !== "ready" && (
+        <div
+          className={`stage-renderer-status ${rendererStatus}`}
+          role={rendererStatus === "failed" ? "alert" : "status"}
+          aria-live="assertive"
+        >
+          <strong>
+            {rendererStatus === "lost"
+              ? "3D CONTEXT INTERRUPTED"
+              : rendererStatus === "restoring"
+                ? "RESTORING 3D SITE"
+                : "3D VIEW UNAVAILABLE"}
+          </strong>
+          <span>
+            {rendererStatus === "failed"
+              ? "Your locally saved design is intact. Reload to retry the scene."
+              : "The planning document is preserved while the scene rebuilds."}
+          </span>
+          {rendererStatus === "failed" && (
+            <button onClick={() => window.location.reload()}>
+              RELOAD VIEW
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
