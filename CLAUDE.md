@@ -88,20 +88,22 @@ pnpm --filter @selene-isru/engine build
 CI orders it correctly (engine test → engine build → app test → app build);
 root `pnpm test` does not, so build the engine first.
 
-All capture scripts need a Chrome/Chromium binary, and they split two ways:
+All capture scripts need a Chrome/Chromium binary and resolve it the same way:
+`CHROME_PATH`, then `PUPPETEER_EXECUTABLE_PATH`, then the usual macOS and Linux
+install locations. They differ in what they point at:
 
-- **Honour `CHROME_PATH`, target a production preview** (pass
-  `http://localhost:4173/selene-isru/`): `capture-cinematic-demo.mjs`,
+- **Production preview** (pass `http://localhost:4173/selene-isru/`): `capture-cinematic-demo.mjs`,
   `capture-custom-site-cinematic.mjs`, `capture-custom-site-evidence.mjs` —
   i.e. `demo:cinematic`, `demo:custom-cinematic`, `evidence:custom`,
   `smoke:custom`.
-- **Ignore `CHROME_PATH`, target the dev server** (`http://localhost:5173` by
-  default): `capture-screens.mjs` and `capture-analysis-demo.mjs` — i.e.
-  `screenshots` and `demo:analysis`. Both hard-code
-  `/Applications/Google Chrome.app/…` in a `CHROME` constant, so they fail
-  before capturing anything on Linux, Windows, or a macOS install elsewhere.
-  Edit that constant, or give them the same `process.env.CHROME_PATH` fallback
-  the other three use.
+- **Dev server** (`http://localhost:5173` by default): `capture-screens.mjs`
+  and `capture-analysis-demo.mjs` — i.e. `screenshots` and `demo:analysis`.
+
+All five wait for `networkidle0` before capturing. That is deliberate — it
+keeps a capture from catching a half-built scene — but it never settles under
+some headless Chrome builds even when no requests are outstanding, so a capture
+can time out in a container while the app itself loads fine. Check with a
+`domcontentloaded` navigation before assuming the app is broken.
 
 **Video capture also needs `ffmpeg` and `ffprobe`**, which the Toolchain section
 above does not install:
@@ -402,19 +404,13 @@ pytest → regenerate golden vectors → `git diff --exit-code` on the vector fi
 The `deploy` job publishes `packages/app/dist` to GitHub Pages, but only on a
 push to `main`, with `PAGES_BASE=/selene-isru/`.
 
-`pnpm run ci` is the closest local equivalent, but it is **not** the same gate.
-Two differences bite:
-
-- It runs `generate:golden` without the following `git diff --exit-code`, so a
-  model change whose regenerated vectors were never committed passes locally
-  and fails on GitHub. After `pnpm run ci`, check `git status` — if
-  `golden_vectors.json` or `dynamics_vectors.json` moved, commit them.
-- It runs `pnpm test` (engine test → app test) before `pnpm build`, so on a
-  fresh clone the app tests fail on the unbuilt engine described above. Build
-  the engine first, or run `pnpm build` before `pnpm run ci`.
-
-Both are worth fixing in the root `ci` script; that is a code change, out of
-scope for this file.
+`pnpm run ci` mirrors that job step for step, in the same order, so a clean
+local run means CI should pass. It includes `check:golden` — the
+`git diff --exit-code` on the regenerated vector files — which is what catches
+a model change whose vectors were never committed. Keep the two in sync: if you
+add a step to `ci.yml`, add it to the `ci` script as well, and preserve the
+ordering, since building the engine before the app tests is what lets the
+script run on a clean checkout at all.
 
 ## Working agreements
 
