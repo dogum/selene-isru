@@ -70,6 +70,57 @@ export function habitatShellSteps(shieldDesignM: number): number {
 }
 
 /** beamed power: visible >0; world radius ∝ log power */
+/** MRE reactor visible activity from cell current: 0 A → 0.08, 600 kA → 1.0 */
+export const REACTOR_FULL_CURRENT_A = 600_000;
+export function reactorActivity(currentA: number): number {
+  return clamp(currentA / REACTOR_FULL_CURRENT_A, 0.08, 1);
+}
+
+/** melt thermal load from target melt temperature, normalized over 1400–2300 K */
+export const MELT_LOAD_FLOOR_K = 1_400;
+export const MELT_LOAD_SPAN_K = 900;
+export function meltThermalLoad(TmeltK: number): number {
+  return clamp01((TmeltK - MELT_LOAD_FLOOR_K) / MELT_LOAD_SPAN_K);
+}
+
+/** habitat shield sections drawn, from the shell step count: 1–6 */
+export const SHIELD_STEPS_PER_SECTION = 7;
+export function shieldSectionCount(shieldDesignM: number): number {
+  return clamp(Math.ceil(habitatShellSteps(shieldDesignM) / SHIELD_STEPS_PER_SECTION), 1, 6);
+}
+
+/** power-line glow, boosted above the shared line opacity and capped */
+export function gridGlowFromPower(powerW: number): number {
+  return Math.min(2.8, 0.6 + powerLineOpacity(powerW) * 2.5);
+}
+
+/** instantaneous load relative to the sized grid, capped at 1.4× */
+export function loadScale(loadW: number, gridPowerW: number): number {
+  return gridPowerW > 0 ? Math.min(1.4, loadW / gridPowerW) : 1;
+}
+
+/** polar receiver glow: dark floor when unlit, else scaled by delivered fraction */
+export const RECEIVER_GLOW_DARK = 0.16;
+export function receiverGlow(deliveredFraction: number, scale: number): number {
+  return RECEIVER_GLOW_DARK + deliveredFraction * 0.94 * scale;
+}
+
+/** illumination floor at which the solar field reads as lit */
+export const DAYLIGHT_ILLUMINATION_FLOOR = 0.05;
+export function isDaylight(illumination: number): boolean {
+  return illumination > DAYLIGHT_ILLUMINATION_FLOOR;
+}
+
+/** cryo tank fill against the sized reserve [0,1] */
+export function reserveFillFraction(
+  tankFillKg: number,
+  reserveDays: number,
+  targetKgPerDay: number
+): number {
+  const reserveKg = Math.max(1, reserveDays * targetKgPerDay);
+  return clamp01(tankFillKg / reserveKg);
+}
+
 export function beamRadius(beamedFloorPowerW: number | null): number {
   if (beamedFloorPowerW === null || beamedFloorPowerW <= 0) {
     return 0;

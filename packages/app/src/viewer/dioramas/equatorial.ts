@@ -4,10 +4,11 @@ import {
   brickCount,
   excavatorLoopPeriodS,
   gridGlowIntensity,
-  habitatShellSteps,
   padTileFraction,
   powerLineOpacity,
   radiatorWingScale,
+  reserveFillFraction,
+  shieldSectionCount,
   solarPanelCount,
   boiloffWispRate,
   tankCount,
@@ -622,10 +623,7 @@ export class EquatorialDiorama implements Diorama {
       Math.min(12, Math.ceil(panelInstances / Math.max(1, this.panelCap / 12)))
     );
 
-    this.currentShieldSections = Math.max(
-      1,
-      Math.min(6, Math.ceil(habitatShellSteps(result.construction.shieldDesignM) / 7))
-    );
+    this.currentShieldSections = shieldSectionCount(result.construction.shieldDesignM);
     this.applyEquipmentVisualState(arch === previousArchitecture || nuclear === null || solar === null);
 
     const lineOpacity = powerLineOpacity(result.energy.gridPowerW);
@@ -638,8 +636,11 @@ export class EquatorialDiorama implements Diorama {
   }
 
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
-    const reserveKg = Math.max(1, params.reserveDays * result.production.targetKgPerDay);
-    const fill = Math.min(1, Math.max(0, point.tankFillKg / reserveKg));
+    const fill = reserveFillFraction(
+      point.tankFillKg,
+      params.reserveDays,
+      result.production.targetKgPerDay
+    );
     this.currentTankFill = fill;
     this.currentWispRate = boiloffWispRate(point.boiloffKgPerDay);
     this.cryoVapor.setState(this.currentTankCount, this.currentWispRate);

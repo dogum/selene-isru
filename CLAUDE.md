@@ -172,45 +172,34 @@ from parity vectors — parity agreeing does not mean the physics is right.
 
 `packages/app` consumes only the engine's public API: `simulate`,
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `DEFAULTS`,
-`PARAM_META`, `PHYSICAL_CONSTANTS`, and the exported pure helpers (e.g.
-`pCritKw`, `beamEfficiency`, `payloadPerMissionKg`, `oxideModelYield`). If a UI
+`PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
+helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
+`beamEfficiency`, `payloadPerMissionKg`, `oxideModelYield`). If a UI
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
-Scene tuning is the one place with *intentionally* derived numbers.
-`packages/app/src/viewer/bindings.ts` is where they belong (log/sqrt
-normalizations, clamps, instance caps) and where new ones should go — but
-centralization is an aspiration the code has not fully reached, so treat the
-scene layer as a **second update site** when a model change shifts output
-ranges. Known holdouts:
+Scene tuning is the one place with *intentionally* derived numbers, and it is
+centralized in `packages/app/src/viewer/bindings.ts` (log/sqrt normalizations,
+clamps, instance caps, glow and fill mappings). Diorama and asset classes must
+call those helpers rather than encode an engine quantity's range themselves —
+otherwise a model change that shifts a magnitude leaves the visuals wrong even
+after every binding helper is updated, with no test to catch it.
 
-- `viewer/assets/MreReactorAsset.ts:79-80` — `currentA / 600_000` and
-  `(Tmelt - 1_400) / 900`, both clamped against hard-coded ranges.
-- `viewer/dioramas/polar.ts:430,435,449,452-455` — extra scaling layered on top
-  of the helpers (`Math.min(2.8, 0.6 + powerLineOpacity(…) * 2.5)`), a
-  `habitatShellSteps(…) / 7` section count, a `loadW / gridPowerW` cap, and
-  literal thresholds like `illumination > 0.05`.
+Every mapping that depends on an engine output range now lives in `bindings.ts`
+and is unit-tested in `packages/app/test/bindings.test.ts`. What legitimately
+stays inline is arithmetic with no range assumption — a product of two
+fractions (`illumination * receiverVisibility`), a phase wrap, decorative
+constants like sprite scales and particle counts. **The test: if changing the
+model could make the number wrong, it belongs in `bindings.ts`.**
 
-These re-tune themselves against engine output but encode their own ranges, so
-a model change that moves a quantity's magnitude can leave the visuals wrong
-even after every binding helper is updated. Prefer moving such a mapping into
-`bindings.ts` (where it can be unit-tested) over adding another one in place.
-
-**One known exception, and it is a latent bug rather than a pattern to copy:**
-`components/panels/PowerTrade.tsx` calls the engine for the crossover
-(`pCritDynamicKw`) but re-derives the two aging slopes itself —
-
-```ts
-const betaT  = beta / Math.pow(1 - params.dSolar, tYears);
-const alphaT = alpha * (1 + params.dNuclear * tYears);
-```
-
-— which duplicates exactly what `modules/power.ts` computes inside
-`pCritDynamicKw`. Change the degradation model in the engine and Python mirror
-and the plotted curves silently drift out of agreement with the crossover
-plotted beside them, with no test to catch it. So **`PowerTrade.tsx` is a
-required update site for any change to solar/nuclear aging**, until the slopes
-are exported from the engine and the component consumes them (the better fix).
+Aging slopes are the worked example of the rule. `PowerTrade.tsx` once computed
+`betaT`/`alphaT` itself while asking the engine only for the crossover, so the
+plotted curves could drift away from the crossover plotted beside them. The
+engine now exports `solarSlopeAtYear` and `nuclearSlopeAtYear`,
+`pCritDynamicKw` is built from them, the component consumes them, and
+`packages/engine/test/power-slopes.test.ts` asserts the crossover stays
+reconstructible from the slopes. Prefer that shape — export the shared term,
+consume it, test the agreement — over duplicating an expression into the UI.
 
 ### 4. Engine constraints
 
@@ -300,16 +289,17 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 
 ### 6. Frontend conventions
 
-- **State**: a single zustand store (`src/state/store.ts`). `setParam` builds
-  `nextParams`, calls `simulate()`/`simulateTimeseries()`, and stores both —
-  but it stores the **raw** `nextParams`, not the engine's normalized copy.
-  Clamping happens *inside* `simulate()`, so `state.params` can hold a value the
-  displayed result does not use: `setParam("targetKgPerDay", 999999)` simulates
-  at the 20,000 bound with a `param-clamped` warning while `state.params` — and
-  the URL serialized from it — keep 999999. Sliders constrain their own range,
-  so this bites programmatic callers, imported scenarios, and hand-edited URLs.
-  Read bounds from `PARAM_META` and the run's `warnings` rather than trusting
-  `state.params` to be in range.
+- **State**: a single zustand store (`src/state/store.ts`). Its invariant is
+  that **`state.params` is always what was simulated** — never a value the
+  engine would clamp. Every path that admits parameters (`setParam`,
+  `applyPatch`, URL load, scenario import) runs them through
+  `normalizeStoreParams`, a thin wrapper over the engine's exported
+  `normalizeParams`. So `setParam("targetKgPerDay", 999999)` stores the 20,000
+  bound, not 999999, and the URL serialized from it agrees with the displayed
+  result. Add any new entry point to that wrapper too; `store.test.ts` asserts
+  the invariant. Note the wrapper's name — a bare `normalized` collides with a
+  local in the scenario-import reducer and silently lands in the temporal dead
+  zone.
 - **URL sharing**: only non-default params serialize into a compact query string
   (`?site=polar&chiIce=0.03`) and must round-trip to an identical `SimResult`
   (asserted in `packages/app/test/url.test.ts`).
@@ -362,7 +352,8 @@ in `assets/ASSET_LICENSES.md`.
 | v0.3 depth features | `model-depth.test.ts`, `test_model_depth.py` |
 | Custom Site engine layer | `site-design*.test.ts` |
 | Scene contract | `packages/app/test/bindings.test.ts` |
-| Store, URL round-trip, export | `store.test.ts`, `url.test.ts`, `study-export.test.ts` |
+| Aging slopes ↔ crossover | `packages/engine/test/power-slopes.test.ts` |
+| Store clamping invariant, URL round-trip, export | `store.test.ts`, `url.test.ts`, `study-export.test.ts` |
 | Custom Site UI/editor/perf | `custom-site-*.test.*` |
 
 ## CI and deploy

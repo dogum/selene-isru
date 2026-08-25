@@ -2,6 +2,7 @@ import {
   createSeededSiteDesign,
   DEFAULTS,
   evaluateSiteDesign,
+  normalizeParams,
   parseSiteDesign,
   siteAssetDefinition,
   siteConnectionRoutePoints,
@@ -244,10 +245,21 @@ interface Store {
   pulseAsset: (asset: string, severity: string) => void;
 }
 
+/**
+ * Every path that puts parameters into the store goes through here, so
+ * `state.params` can never hold a value the engine would clamp. Without it the
+ * store, the URL serialized from it, and the displayed `SimResult` can
+ * disagree — e.g. a hand-edited `?targetKgPerDay=999999` simulates at the
+ * 20,000 bound while the store keeps 999999.
+ */
+function normalizeStoreParams(params: Partial<SimParams>): SimParams {
+  return normalizeParams(params).params;
+}
+
 function initialParams(): SimParams {
   const fromUrl =
     typeof window !== "undefined" ? parseParams(window.location.search) : {};
-  return { ...DEFAULTS, ...fromUrl };
+  return normalizeStoreParams(fromUrl);
 }
 
 function pushHistory(history: number[], value: number): number[] {
@@ -1178,7 +1190,7 @@ export const useStore = create<Store>((set, get) => {
         get().setCustomEnvironment(value as SiteEnvironment);
         return;
       }
-      const nextParams = { ...get().params, [key]: value };
+      const nextParams = normalizeStoreParams({ ...get().params, [key]: value });
       if (get().workspaceMode === "custom") {
         const nextCustomDesign = {
           ...get().customSite.design,
@@ -1216,7 +1228,7 @@ export const useStore = create<Store>((set, get) => {
     },
 
     applyPatch: (patch) => {
-      const nextParams = { ...DEFAULTS, ...patch };
+      const nextParams = normalizeStoreParams(patch);
       const nextResult = simulate(nextParams);
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
@@ -1453,7 +1465,7 @@ export const useStore = create<Store>((set, get) => {
         }
         byId.set(scenario.id, {
           ...scenario,
-          params: { ...DEFAULTS, ...scenario.params },
+          params: normalizeStoreParams(scenario.params),
           name: scenario.name.slice(0, 80)
         });
       }

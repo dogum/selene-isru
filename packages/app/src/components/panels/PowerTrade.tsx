@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { pCritDynamicKw } from "@selene-isru/engine";
+import { nuclearSlopeAtYear, pCritDynamicKw, solarSlopeAtYear } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
@@ -28,9 +28,10 @@ export function PowerTrade(): React.JSX.Element {
   const alpha = params.alphaSpecific;
   const mShield = params.MshieldKg;
 
-  // degradation-adjusted slopes at scrubber time t
-  const betaT = beta / Math.pow(1 - params.dSolar, tYears);
-  const alphaT = alpha * (1 + params.dNuclear * tYears);
+  // degradation-adjusted slopes at scrubber time t, from the same engine
+  // equations pCritDynamicKw uses — so the curves and the crossover agree
+  const betaT = solarSlopeAtYear(beta, params.dSolar, tYears);
+  const alphaT = nuclearSlopeAtYear(alpha, params.dNuclear, tYears);
   const pCritT = pCritDynamicKw(mShield, beta, alpha, params.dSolar, params.dNuclear, tYears);
 
   const chart = useMemo(() => {

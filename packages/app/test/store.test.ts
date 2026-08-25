@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import {
   DEFAULTS,
+  PARAM_META,
   SEEDED_SITE_DESIGN_FIXTURES,
   serializeSiteDesign,
   siteConnectionLengthM
@@ -627,5 +628,52 @@ describe("store wiring (§5)", () => {
       id: "site-design:capacity.shortfall.equatorial-storage",
       severity: "caution"
     }));
+  });
+});
+
+describe("stored params never disagree with the simulated result", () => {
+  beforeEach(() => {
+    // earlier suites in this file leave the store in the custom workspace,
+    // where setParam feeds the design rather than the authored simulation
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({});
+  });
+
+  it("clamps an above-range setParam into state, not just into simulate()", () => {
+    const meta = PARAM_META.targetKgPerDay;
+    const max = "max" in meta ? (meta.max as number) : 20_000;
+
+    useStore.getState().setParam("targetKgPerDay", max * 50);
+    const state = useStore.getState();
+
+    expect(state.params.targetKgPerDay).toBe(max);
+    // the invariant that matters: what is stored is what was simulated
+    expect(state.result.production.targetKgPerDay).toBe(state.params.targetKgPerDay);
+  });
+
+  it("clamps a below-range setParam", () => {
+    const meta = PARAM_META.targetKgPerDay;
+    const min = "min" in meta ? (meta.min as number) : 10;
+
+    useStore.getState().setParam("targetKgPerDay", -1);
+    const state = useStore.getState();
+
+    expect(state.params.targetKgPerDay).toBe(min);
+    expect(state.result.production.targetKgPerDay).toBe(state.params.targetKgPerDay);
+  });
+
+  it("clamps params arriving through applyPatch", () => {
+    useStore.getState().applyPatch({ targetKgPerDay: 10_000_000 });
+    const state = useStore.getState();
+
+    const meta = PARAM_META.targetKgPerDay;
+    const max = "max" in meta ? (meta.max as number) : 20_000;
+    expect(state.params.targetKgPerDay).toBe(max);
+    expect(state.result.production.targetKgPerDay).toBe(state.params.targetKgPerDay);
+  });
+
+  it("leaves an in-range value untouched", () => {
+    useStore.getState().setParam("targetKgPerDay", 765);
+    expect(useStore.getState().params.targetKgPerDay).toBe(765);
   });
 });

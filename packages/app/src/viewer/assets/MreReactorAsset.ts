@@ -3,6 +3,7 @@ import type { SimParams, SimResult } from "@selene-isru/engine";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import reactorUrl from "../../assets/models/mre-reactor.glb?url";
+import { meltThermalLoad, reactorActivity } from "../bindings";
 import { disposeObject } from "../dioramas/shared";
 import { enableBloom } from "../layers";
 
@@ -76,8 +77,8 @@ export class MreReactorAsset {
   }
 
   apply(result: SimResult, params: SimParams, glow: number): void {
-    this.activity = THREE.MathUtils.clamp(result.electrolysis.currentA / 600_000, 0.08, 1);
-    this.thermalLoad = THREE.MathUtils.clamp((params.Tmelt - 1_400) / 900, 0, 1);
+    this.activity = reactorActivity(result.electrolysis.currentA);
+    this.thermalLoad = meltThermalLoad(params.Tmelt);
     this.glow = glow;
     if (this.loaded) {
       this.updateState(0);

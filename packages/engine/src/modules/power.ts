@@ -32,6 +32,22 @@ export function pCritKw(MshieldKg: number, beta: number, alpha: number): number 
   return MshieldKg / (beta - alpha);
 }
 
+/**
+ * Solar specific mass after `tYears` of array degradation [kg/kW].
+ * Exported so UI charts plot the same slope the crossover is derived from.
+ */
+export function solarSlopeAtYear(beta: number, dSolar: number, tYears: number): number {
+  return beta / (1 - dSolar) ** tYears;
+}
+
+/**
+ * Nuclear specific mass after `tYears` of reactor derating [kg/kW].
+ * Exported so UI charts plot the same slope the crossover is derived from.
+ */
+export function nuclearSlopeAtYear(alpha: number, dNuclear: number, tYears: number): number {
+  return alpha * (1 + dNuclear * tYears);
+}
+
 export function pCritDynamicKw(
   MshieldKg: number,
   beta: number,
@@ -40,7 +56,7 @@ export function pCritDynamicKw(
   dNuclear: number,
   tYears: number
 ): number | null {
-  const denominator = beta / (1 - dSolar) ** tYears - alpha * (1 + dNuclear * tYears);
+  const denominator = solarSlopeAtYear(beta, dSolar, tYears) - nuclearSlopeAtYear(alpha, dNuclear, tYears);
   if (denominator <= 0) {
     return null;
   }
