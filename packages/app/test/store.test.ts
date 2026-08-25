@@ -677,3 +677,30 @@ describe("stored params never disagree with the simulated result", () => {
     expect(useStore.getState().params.targetKgPerDay).toBe(765);
   });
 });
+
+describe("clamping stays visible to the user", () => {
+  beforeEach(() => {
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({});
+  });
+
+  it("reports param-clamped when setParam clamps an out-of-range value", () => {
+    useStore.getState().setParam("targetKgPerDay", 999_999);
+    const warnings = useStore.getState().result.warnings;
+    expect(warnings.some((w) => w.id === "param-clamped")).toBe(true);
+  });
+
+  it("reports param-clamped when applyPatch clamps", () => {
+    useStore.getState().applyPatch({ targetKgPerDay: 999_999 });
+    expect(
+      useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
+    ).toBe(true);
+  });
+
+  it("does not invent a clamp warning for in-range input", () => {
+    useStore.getState().setParam("targetKgPerDay", 765);
+    expect(
+      useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
+    ).toBe(false);
+  });
+});

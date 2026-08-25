@@ -297,7 +297,12 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   `normalizeParams`. So `setParam("targetKgPerDay", 999999)` stores the 20,000
   bound, not 999999, and the URL serialized from it agrees with the displayed
   result. Add any new entry point to that wrapper too; `store.test.ts` asserts
-  the invariant. Note the wrapper's name — a bare `normalized` collides with a
+  the invariant. **Normalizing early has a catch**: `simulate()` then sees
+  in-range values and no longer raises `param-clamped` itself, which would make
+  the clamp invisible in `WarningsDock`. `simulateStoreParams` exists to carry
+  the normalization warnings onto the result — use it rather than calling
+  `simulate()` on already-normalized params, or the user stops being told their
+  input was changed. Note the wrapper's name — a bare `normalized` collides with a
   local in the scenario-import reducer and silently lands in the temporal dead
   zone.
 - **URL sharing**: only non-default params serialize into a compact query string

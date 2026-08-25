@@ -256,10 +256,30 @@ function normalizeStoreParams(params: Partial<SimParams>): SimParams {
   return normalizeParams(params).params;
 }
 
-function initialParams(): SimParams {
-  const fromUrl =
-    typeof window !== "undefined" ? parseParams(window.location.search) : {};
-  return normalizeStoreParams(fromUrl);
+/**
+ * Normalizing before `simulate()` means the engine sees in-range values and no
+ * longer raises `param-clamped` itself, so the clamp would become invisible in
+ * `WarningsDock`. Carry the normalization warnings onto the result instead —
+ * the user still needs to be told their input was changed.
+ */
+function simulateStoreParams(input: Partial<SimParams>): {
+  params: SimParams;
+  result: SimResult;
+} {
+  const { params, warnings } = normalizeParams(input);
+  const result = simulate(params);
+  return {
+    params,
+    result:
+      warnings.length > 0
+        ? { ...result, warnings: [...warnings, ...result.warnings] }
+        : result
+  };
+}
+
+/** raw params from the URL, before normalization */
+function initialParamInput(): Partial<SimParams> {
+  return typeof window !== "undefined" ? parseParams(window.location.search) : {};
 }
 
 function pushHistory(history: number[], value: number): number[] {
@@ -445,8 +465,9 @@ function persistScenarioLibrary(scenarios: StudyScenario[]): void {
 }
 
 export const useStore = create<Store>((set, get) => {
-  const params = initialParams();
-  const result = simulate(params);
+  const initial = simulateStoreParams(initialParamInput());
+  const params = initial.params;
+  const result = initial.result;
   const compareParams = initialCompareParams(params);
   const compareResult = simulate(compareParams);
   const timeseries = simulateTimeseries(params, { cycles: 1, samplesPerCycle: 96 });
@@ -1190,7 +1211,8 @@ export const useStore = create<Store>((set, get) => {
         get().setCustomEnvironment(value as SiteEnvironment);
         return;
       }
-      const nextParams = normalizeStoreParams({ ...get().params, [key]: value });
+      const nextInput = { ...get().params, [key]: value };
+      const nextParams = normalizeStoreParams(nextInput);
       if (get().workspaceMode === "custom") {
         const nextCustomDesign = {
           ...get().customSite.design,
@@ -1205,7 +1227,7 @@ export const useStore = create<Store>((set, get) => {
         );
         return;
       }
-      const nextResult = simulate(nextParams);
+      const nextResult = simulateStoreParams(nextInput).result;
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
       set({
@@ -1228,8 +1250,7 @@ export const useStore = create<Store>((set, get) => {
     },
 
     applyPatch: (patch) => {
-      const nextParams = normalizeStoreParams(patch);
-      const nextResult = simulate(nextParams);
+      const { params: nextParams, result: nextResult } = simulateStoreParams(patch);
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
       set({
