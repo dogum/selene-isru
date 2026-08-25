@@ -24,6 +24,7 @@ import type {
   SiteViewMode,
   TimeseriesPoint,
   TimeseriesResult,
+  Warning,
   WorkspaceMode
 } from "@selene-isru/engine";
 import { create } from "zustand";
@@ -246,21 +247,16 @@ interface Store {
 }
 
 /**
- * Every path that puts parameters into the store goes through here, so
- * `state.params` can never hold a value the engine would clamp. Without it the
- * store, the URL serialized from it, and the displayed `SimResult` can
- * disagree — e.g. a hand-edited `?targetKgPerDay=999999` simulates at the
- * 20,000 bound while the store keeps 999999.
- */
-function normalizeStoreParams(params: Partial<SimParams>): SimParams {
-  return normalizeParams(params).params;
-}
-
-/**
- * Normalizing before `simulate()` means the engine sees in-range values and no
- * longer raises `param-clamped` itself, so the clamp would become invisible in
- * `WarningsDock`. Carry the normalization warnings onto the result instead —
- * the user still needs to be told their input was changed.
+ * Normalize and simulate together, so two things hold at once:
+ *
+ * 1. `state.params` never holds a value the engine would clamp — otherwise the
+ *    store, the URL serialized from it, and the displayed `SimResult`
+ *    disagree (a hand-edited `?targetKgPerDay=999999` simulating at 20,000).
+ * 2. The clamp stays visible. Normalizing first means `simulate()` sees
+ *    in-range values and no longer raises `param-clamped` itself, so the
+ *    warnings are carried onto the result here instead.
+ *
+ * Fixing (1) without (2) trades a silent inconsistency for a silent edit.
  */
 function simulateStoreParams(input: Partial<SimParams>): {
   params: SimParams;
@@ -491,7 +487,13 @@ export const useStore = create<Store>((set, get) => {
     selectedConnectionId: string | null = null,
     selectedAssetIds: string[] =
       selectedAssetId === null ? [] : [selectedAssetId],
-    recordHistory = true
+    recordHistory = true,
+    /**
+     * Clamp warnings from normalizing the caller's input. The design handed to
+     * `evaluateCustomRuntime` is already in range, so the engine cannot raise
+     * `param-clamped` itself — without these the adjustment is invisible.
+     */
+    inputWarnings: Warning[] = []
   ): void => {
     const current = get().customSite;
     const runtime = evaluateCustomRuntime(design);
@@ -521,7 +523,10 @@ export const useStore = create<Store>((set, get) => {
     set({
       customSite: nextCustomSite,
       params: runtime.evaluation.effectiveParams,
-      result: runtime.result,
+      result:
+        inputWarnings.length > 0
+          ? { ...runtime.result, warnings: [...inputWarnings, ...runtime.result.warnings] }
+          : runtime.result,
       timeseries: runtime.timeseries,
       time: nextTime,
       timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
@@ -1212,7 +1217,7 @@ export const useStore = create<Store>((set, get) => {
         return;
       }
       const nextInput = { ...get().params, [key]: value };
-      const nextParams = normalizeStoreParams(nextInput);
+      const { params: nextParams, warnings: inputWarnings } = normalizeParams(nextInput);
       if (get().workspaceMode === "custom") {
         const nextCustomDesign = {
           ...get().customSite.design,
@@ -1223,7 +1228,9 @@ export const useStore = create<Store>((set, get) => {
           nextCustomDesign,
           get().customSite.editor.selectedAssetId,
           get().customSite.editor.selectedConnectionId,
-          get().customSite.editor.selectedAssetIds
+          get().customSite.editor.selectedAssetIds,
+          true,
+          inputWarnings
         );
         return;
       }
@@ -1486,7 +1493,10 @@ export const useStore = create<Store>((set, get) => {
         }
         byId.set(scenario.id, {
           ...scenario,
-          params: normalizeStoreParams(scenario.params),
+          // deliberately NOT normalized: the library stores what was imported,
+          // and loading it goes through applyPatch, which clamps and reports
+          // `param-clamped`. Normalizing here would silently drop that report.
+          params: { ...DEFAULTS, ...scenario.params },
           name: scenario.name.slice(0, 80)
         });
       }

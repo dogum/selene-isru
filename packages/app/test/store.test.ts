@@ -703,4 +703,23 @@ describe("clamping stays visible to the user", () => {
       useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
     ).toBe(false);
   });
+
+  it("reports param-clamped in the Custom Site workspace too", () => {
+    buildOperatingEquatorialSite();
+    useStore.getState().setParam("targetKgPerDay", 999_999);
+    const state = useStore.getState();
+
+    expect(state.workspaceMode).toBe("custom");
+    expect(state.result.warnings.some((w) => w.id === "param-clamped")).toBe(true);
+  });
+
+  it("keeps an imported scenario's clamp reportable when it is loaded", () => {
+    // the library stores what was imported; the clamp must surface on load
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({ targetKgPerDay: 999_999 });
+
+    expect(
+      useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
+    ).toBe(true);
+  });
 });

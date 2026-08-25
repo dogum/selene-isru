@@ -291,18 +291,23 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 
 - **State**: a single zustand store (`src/state/store.ts`). Its invariant is
   that **`state.params` is always what was simulated** — never a value the
-  engine would clamp. Every path that admits parameters (`setParam`,
-  `applyPatch`, URL load, scenario import) runs them through
-  `normalizeStoreParams`, a thin wrapper over the engine's exported
-  `normalizeParams`. So `setParam("targetKgPerDay", 999999)` stores the 20,000
-  bound, not 999999, and the URL serialized from it agrees with the displayed
-  result. Add any new entry point to that wrapper too; `store.test.ts` asserts
-  the invariant. **Normalizing early has a catch**: `simulate()` then sees
-  in-range values and no longer raises `param-clamped` itself, which would make
-  the clamp invisible in `WarningsDock`. `simulateStoreParams` exists to carry
-  the normalization warnings onto the result — use it rather than calling
-  `simulate()` on already-normalized params, or the user stops being told their
-  input was changed. Note the wrapper's name — a bare `normalized` collides with a
+  engine would clamp — *and* that the user is told when a clamp happened.
+  Those two pull against each other, which is the thing to understand here:
+  normalizing early is exactly what stops `simulate()` raising `param-clamped`
+  itself, so any path that normalizes first must carry the warnings forward or
+  the edit becomes silent.
+
+  `simulateStoreParams` does both for the authored path (`setParam`,
+  `applyPatch`, URL load). The custom workspace takes the same warnings through
+  `commitCustomDesign`'s `inputWarnings` argument, since
+  `evaluateCustomRuntime` also receives an already-normalized design. Scenario
+  **import deliberately does not normalize** — the library stores what was
+  imported, and the clamp surfaces through `applyPatch` on load; normalizing
+  there would drop the only chance to report it.
+
+  So: a new entry point needs a decision, not a default. Either normalize and
+  carry the warnings, or store raw and let a later normalizing path report.
+  `store.test.ts` asserts both halves for every path. Note the wrapper's name — a bare `normalized` collides with a
   local in the scenario-import reducer and silently lands in the temporal dead
   zone.
 - **URL sharing**: only non-default params serialize into a compact query string
