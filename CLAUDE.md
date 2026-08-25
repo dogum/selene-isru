@@ -67,7 +67,8 @@ uv sync --project python --locked --group dev
 pnpm dev                # app dev server on http://localhost:5173
 pnpm build              # engine build then app production build
 pnpm test               # engine vitest then app vitest
-pnpm run ci             # the full gate: golden + constants + pytest + ruff + tests + build
+pnpm run ci             # local gate: golden + constants + pytest + ruff + tests + build
+                        # (NOT identical to CI — see "CI and deploy")
 pnpm generate:golden    # regenerate golden vectors from the Python mirror
 pnpm check:constants    # assert src/constants.ts matches constants/constants.json
 
@@ -87,9 +88,20 @@ pnpm --filter @selene-isru/engine build
 CI orders it correctly (engine test → engine build → app test → app build);
 root `pnpm test` does not, so build the engine first.
 
-Capture scripts need a Chrome/Chromium binary; set `CHROME_PATH` if it is not
-in a standard location. They drive a production preview
-(`http://localhost:4173/selene-isru/`), not the dev server:
+All capture scripts need a Chrome/Chromium binary, and they split two ways:
+
+- **Honour `CHROME_PATH`, target a production preview** (pass
+  `http://localhost:4173/selene-isru/`): `capture-cinematic-demo.mjs`,
+  `capture-custom-site-cinematic.mjs`, `capture-custom-site-evidence.mjs` —
+  i.e. `demo:cinematic`, `demo:custom-cinematic`, `evidence:custom`,
+  `smoke:custom`.
+- **Ignore `CHROME_PATH`, target the dev server** (`http://localhost:5173` by
+  default): `capture-screens.mjs` and `capture-analysis-demo.mjs` — i.e.
+  `screenshots` and `demo:analysis`. Both hard-code
+  `/Applications/Google Chrome.app/…` in a `CHROME` constant, so they fail
+  before capturing anything on Linux, Windows, or a macOS install elsewhere.
+  Edit that constant, or give them the same `process.env.CHROME_PATH` fallback
+  the other three use.
 
 ```bash
 pnpm screenshots               # docs/screenshots against a dev server
@@ -243,8 +255,9 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 - **Mobile** is deliberately review-only for Custom Site — select and inspect,
   no precision editing UI that the touch target cannot honor.
 - **localStorage keys are versioned** and must be migrated, not silently broken:
-  `selene-isru.study-scenarios.v2`, `selene-isru.custom-site-draft.v1`
-  (+ `.backup`), `selene.graphics`.
+  `selene-isru.study-scenarios.v2`, `selene-isru.custom-site-draft.v1`,
+  `selene-isru.custom-site-draft-backup.v1` (a separate key, *not* a `.backup`
+  suffix — see `CUSTOM_SITE_DRAFT_BACKUP_KEY`), `selene.graphics`.
 - `window.__SELENE_DEMO__` (set up in `Scene.tsx`) is the capture bridge the
   `scripts/capture-*.mjs` demos drive. Changing it means re-recording the
   cinematics.
@@ -291,7 +304,19 @@ pytest → regenerate golden vectors → `git diff --exit-code` on the vector fi
 The `deploy` job publishes `packages/app/dist` to GitHub Pages, but only on a
 push to `main`, with `PAGES_BASE=/selene-isru/`.
 
-Reproduce the gate locally with `pnpm run ci` before opening a PR.
+`pnpm run ci` is the closest local equivalent, but it is **not** the same gate.
+Two differences bite:
+
+- It runs `generate:golden` without the following `git diff --exit-code`, so a
+  model change whose regenerated vectors were never committed passes locally
+  and fails on GitHub. After `pnpm run ci`, check `git status` — if
+  `golden_vectors.json` or `dynamics_vectors.json` moved, commit them.
+- It runs `pnpm test` (engine test → app test) before `pnpm build`, so on a
+  fresh clone the app tests fail on the unbuilt engine described above. Build
+  the engine first, or run `pnpm build` before `pnpm run ci`.
+
+Both are worth fixing in the root `ci` script; that is a code change, out of
+scope for this file.
 
 ## Working agreements
 
