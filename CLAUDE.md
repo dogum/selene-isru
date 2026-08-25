@@ -121,7 +121,9 @@ pnpm smoke:custom -- <url>     # Custom Site browser workflow, writes nothing
 pnpm evidence:custom -- <url>  # same workflow + regenerates screenshots/perf/demo
 pnpm demo:cinematic -- <url> <out.mp4>
 pnpm demo:custom-cinematic -- <url> <60s.mp4> <30s.mp4>
-pnpm asset:mre | asset:equatorial | asset:polar   # require Blender on PATH
+pnpm asset:mre                 # regenerate hero assets (each requires Blender on PATH)
+pnpm asset:equatorial
+pnpm asset:polar
 ```
 
 ## The rules that matter
@@ -203,15 +205,25 @@ are exported from the engine and the component consumes them (the better fix).
 - `scripts/check-size.mjs` enforces a **144 KiB** comment/whitespace-stripped JS
   budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
   a tripwire against accidental bulk, not a load-time target.
-- **Units are SI inside the physics, engineering units at the boundary** — do
-  not treat "all SI" as an invariant. Computation is in J, W, K, m, kg, s, but
-  public params and results deliberately use `kg/day` (`targetKgPerDay`), days
-  (`reserveDays`), years (`missionYears`), hours (`tDay`, `cycleHours`), and
-  `kWh/kg` (Sankey lines). The engine converts explicitly at the seams —
-  `SECONDS_PER_DAY = 86_400`, `J_PER_KWH = 3_600_000` — and a new equation that
-  assumes SI throughout will silently drop those factors. The authority for any
-  parameter's unit is its `unit` field in `constants/constants.json`; for
-  results it is the JSDoc unit annotation. Keep annotating both.
+- **Units are mixed and explicitly annotated — there is no SI invariant, not
+  even internally.** Most process equations are SI (J, W, K, m, kg, s), but
+  hours, days, years, and watt-hours appear *inside* the physics, not only at
+  the API boundary:
+  - `modules/power.ts` sizes storage as `EstorageWh = (Pgrid * nightHours) / …`
+    — watts × hours, in Wh.
+  - `pCritDynamicKw` uses `missionYears` directly as a degradation exponent.
+  - `simulateTimeseries` in `index.ts` integrates over `dtHours`, accumulating
+    `deliveredWh += loadW * dtHours` and converting daily rates with `/ 24`.
+
+  Explicit conversions (`SECONDS_PER_DAY = 86_400`, `J_PER_KWH = 3_600_000`)
+  appear where an SI quantity meets one of these, but they are local to the
+  expression that needs them. **Read the annotation on every quantity you touch
+  and never assume a unit from context** — adding a "missing" seconds
+  conversion to an hours-based formula corrupts it just as surely as omitting a
+  needed one. The authority is the `unit` field in `constants/constants.json`
+  for parameters and the JSDoc unit comment for result fields; keep annotating
+  both, and put the unit in the field name (`secElec_JPerKg`, `gridPowerW`,
+  `cycleHours`) as the existing code does.
 - Out-of-range inputs are clamped in `normalize.ts` with a `param-clamped`
   warning rather than throwing. `simulate()` should not throw on user input.
 - `simulate()` must stay fast and synchronous — no async, no caching layers.
