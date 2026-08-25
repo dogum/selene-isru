@@ -177,10 +177,24 @@ from parity vectors — parity agreeing does not mean the physics is right.
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
-Scene tuning is the one place with *intentionally* derived numbers, and it is
-centralized in `packages/app/src/viewer/bindings.ts` (log/sqrt normalizations,
-clamps, instance caps). Diorama code must call those helpers; no magic numbers
-in scene classes.
+Scene tuning is the one place with *intentionally* derived numbers.
+`packages/app/src/viewer/bindings.ts` is where they belong (log/sqrt
+normalizations, clamps, instance caps) and where new ones should go — but
+centralization is an aspiration the code has not fully reached, so treat the
+scene layer as a **second update site** when a model change shifts output
+ranges. Known holdouts:
+
+- `viewer/assets/MreReactorAsset.ts:79-80` — `currentA / 600_000` and
+  `(Tmelt - 1_400) / 900`, both clamped against hard-coded ranges.
+- `viewer/dioramas/polar.ts:430,435,449,452-455` — extra scaling layered on top
+  of the helpers (`Math.min(2.8, 0.6 + powerLineOpacity(…) * 2.5)`), a
+  `habitatShellSteps(…) / 7` section count, a `loadW / gridPowerW` cap, and
+  literal thresholds like `illumination > 0.05`.
+
+These re-tune themselves against engine output but encode their own ranges, so
+a model change that moves a quantity's magnitude can leave the visuals wrong
+even after every binding helper is updated. Prefer moving such a mapping into
+`bindings.ts` (where it can be unit-tested) over adding another one in place.
 
 **One known exception, and it is a latent bug rather than a pattern to copy:**
 `components/panels/PowerTrade.tsx` calls the engine for the crossover
