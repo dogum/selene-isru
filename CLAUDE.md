@@ -103,6 +103,18 @@ All capture scripts need a Chrome/Chromium binary, and they split two ways:
   Edit that constant, or give them the same `process.env.CHROME_PATH` fallback
   the other three use.
 
+**Video capture also needs `ffmpeg` and `ffprobe`**, which the Toolchain section
+above does not install:
+
+- `capture-custom-site-cinematic.mjs` honours `FFMPEG_PATH` / `FFPROBE_PATH`.
+- `capture-cinematic-demo.mjs` and `capture-custom-site-evidence.mjs` invoke
+  bare `ffmpeg`/`ffprobe`, so both must be on `PATH`.
+
+`evidence:custom` reaches its video step **last** — a missing binary fails after
+the screenshots and `docs/performance/custom-site-release.json` are already
+written, leaving a half-regenerated evidence set. `smoke:custom` (`--verify-only`)
+skips screenshots, perf JSON, and video entirely, so it needs no `ffmpeg`.
+
 ```bash
 pnpm screenshots               # docs/screenshots against a dev server
 pnpm smoke:custom -- <url>     # Custom Site browser workflow, writes nothing
@@ -154,7 +166,7 @@ Conservation invariants, external analytical anchors
 (`test/fixtures/external-benchmarks.json`), and model-depth tests are separate
 from parity vectors — parity agreeing does not mean the physics is right.
 
-### 3. The app never re-derives physics
+### 3. The app must not re-derive physics
 
 `packages/app` consumes only the engine's public API: `simulate`,
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `DEFAULTS`,
@@ -163,9 +175,26 @@ from parity vectors — parity agreeing does not mean the physics is right.
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
-Scene tuning is the one place with derived numbers, and it is centralized in
-`packages/app/src/viewer/bindings.ts` (log/sqrt normalizations, clamps, instance
-caps). Diorama code must call those helpers; no magic numbers in scene classes.
+Scene tuning is the one place with *intentionally* derived numbers, and it is
+centralized in `packages/app/src/viewer/bindings.ts` (log/sqrt normalizations,
+clamps, instance caps). Diorama code must call those helpers; no magic numbers
+in scene classes.
+
+**One known exception, and it is a latent bug rather than a pattern to copy:**
+`components/panels/PowerTrade.tsx` calls the engine for the crossover
+(`pCritDynamicKw`) but re-derives the two aging slopes itself —
+
+```ts
+const betaT  = beta / Math.pow(1 - params.dSolar, tYears);
+const alphaT = alpha * (1 + params.dNuclear * tYears);
+```
+
+— which duplicates exactly what `modules/power.ts` computes inside
+`pCritDynamicKw`. Change the degradation model in the engine and Python mirror
+and the plotted curves silently drift out of agreement with the crossover
+plotted beside them, with no test to catch it. So **`PowerTrade.tsx` is a
+required update site for any change to solar/nuclear aging**, until the slopes
+are exported from the engine and the component consumes them (the better fix).
 
 ### 4. Engine constraints
 
