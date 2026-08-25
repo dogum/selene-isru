@@ -185,12 +185,19 @@ call those helpers rather than encode an engine quantity's range themselves —
 otherwise a model change that shifts a magnitude leaves the visuals wrong even
 after every binding helper is updated, with no test to catch it.
 
-Every mapping that depends on an engine output range now lives in `bindings.ts`
-and is unit-tested in `packages/app/test/bindings.test.ts`. What legitimately
-stays inline is arithmetic with no range assumption — a product of two
-fractions (`illumination * receiverVisibility`), a phase wrap, decorative
-constants like sprite scales and particle counts. **The test: if changing the
-model could make the number wrong, it belongs in `bindings.ts`.**
+The mappings that depend on engine output ranges live in `bindings.ts` and are
+unit-tested in `packages/app/test/bindings.test.ts`. What legitimately stays
+inline is arithmetic with no range assumption — a product of two fractions
+(`illumination * receiverVisibility`), a phase wrap, animation-local values,
+and caps driven by the graphics tier rather than by model output (`quality.
+effectCap`, `quality.rockCap`). **The test: if changing the model could make
+the number wrong, it belongs in `bindings.ts`.**
+
+When auditing for stragglers, grep on more than numeric literals. Two survived
+an earlier sweep of this file precisely because they hid behind indirection —
+`Math.min(FLAG_CAP, result.logistics.nMissions)` used a named constant, and the
+panel-rack count derived from a local rather than touching `result.` on the
+same line. Search for the *engine field names* as well as the arithmetic.
 
 Aging slopes are the worked example of the rule. `PowerTrade.tsx` once computed
 `betaT`/`alphaT` itself while asking the engine only for the crossover, so the

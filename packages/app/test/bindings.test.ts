@@ -8,7 +8,10 @@ import {
   gridGlowIntensity,
   habitatShellSteps,
   isDaylight,
+  isLanderPresent,
   loadScale,
+  missionFlagCount,
+  panelRackCount,
   meltThermalLoad,
   padTileFraction,
   reactorActivity,
@@ -17,6 +20,8 @@ import {
   shieldSectionCount,
   DAYLIGHT_ILLUMINATION_FLOOR,
   MELT_LOAD_FLOOR_K,
+  MISSION_FLAG_CAP,
+  PANEL_RACK_MAX,
   MELT_LOAD_SPAN_K,
   REACTOR_FULL_CURRENT_A,
   RECEIVER_GLOW_DARK,
@@ -132,6 +137,28 @@ describe("scene mappings that depend on engine output ranges", () => {
     expect(isDaylight(DAYLIGHT_ILLUMINATION_FLOOR)).toBe(false);
     expect(isDaylight(DAYLIGHT_ILLUMINATION_FLOOR + 1e-6)).toBe(true);
     expect(isDaylight(0)).toBe(false);
+  });
+
+  it("mission flags are capped and the lander appears on the first mission", () => {
+    expect(missionFlagCount(0)).toBe(0);
+    expect(missionFlagCount(5)).toBe(5);
+    expect(missionFlagCount(MISSION_FLAG_CAP + 40)).toBe(MISSION_FLAG_CAP);
+    expect(missionFlagCount(-3)).toBe(0);
+    expect(isLanderPresent(0)).toBe(false);
+    expect(isLanderPresent(0.5)).toBe(false);
+    expect(isLanderPresent(1)).toBe(true);
+  });
+
+  it("panel racks stay within 1-12 for any instance count", () => {
+    expect(panelRackCount(0, 400)).toBe(1);
+    expect(panelRackCount(400, 400)).toBe(PANEL_RACK_MAX);
+    expect(panelRackCount(1e6, 400)).toBe(PANEL_RACK_MAX);
+    expect(panelRackCount(10, 0)).toBeGreaterThanOrEqual(1);
+    for (const n of [0, 1, 33, 200, 399, 400]) {
+      const racks = panelRackCount(n, 400);
+      expect(racks).toBeGreaterThanOrEqual(1);
+      expect(racks).toBeLessThanOrEqual(PANEL_RACK_MAX);
+    }
   });
 
   it("reserve fill fraction stays in [0,1] and handles a zero reserve", () => {

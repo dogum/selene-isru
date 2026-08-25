@@ -70,6 +70,27 @@ export function habitatShellSteps(shieldDesignM: number): number {
 }
 
 /** beamed power: visible >0; world radius ∝ log power */
+/** flags planted, one per mission, up to the drawable cap */
+export const MISSION_FLAG_CAP = 12;
+export function missionFlagCount(nMissions: number, cap = MISSION_FLAG_CAP): number {
+  return Math.min(cap, Math.max(0, nMissions));
+}
+
+/** the lander sits on the pad once at least one mission has flown */
+export function isLanderPresent(nMissions: number): boolean {
+  return nMissions >= 1;
+}
+
+/** solar racks drawn for a panel-instance count, 1–12 */
+export const PANEL_RACK_MAX = 12;
+export function panelRackCount(panelInstances: number, panelCap: number): number {
+  return clamp(
+    Math.ceil(panelInstances / Math.max(1, panelCap / PANEL_RACK_MAX)),
+    1,
+    PANEL_RACK_MAX
+  );
+}
+
 /** MRE reactor visible activity from cell current: 0 A → 0.08, 600 kA → 1.0 */
 export const REACTOR_FULL_CURRENT_A = 600_000;
 export function reactorActivity(currentA: number): number {

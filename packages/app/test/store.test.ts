@@ -714,12 +714,33 @@ describe("clamping stays visible to the user", () => {
   });
 
   it("keeps an imported scenario's clamp reportable when it is loaded", () => {
-    // the library stores what was imported; the clamp must surface on load
+    // must exercise the real import path: normalizing inside importScenarios
+    // would discard the warning and this test has to fail if that returns
     useStore.getState().enterAuthoredSite("equatorial");
-    useStore.getState().applyPatch({ targetKgPerDay: 999_999 });
+    useStore.getState().importScenarios([
+      {
+        id: "clamped-import-case",
+        name: "Clamped import case",
+        kind: "authored",
+        params: { ...DEFAULTS, targetKgPerDay: 999_999 },
+        createdAt: 1,
+        updatedAt: 2,
+        pinned: false
+      }
+    ]);
 
+    const stored = useStore
+      .getState()
+      .scenarioLibrary.find((sc) => sc.id === "clamped-import-case");
+    expect(stored).toBeTruthy();
+    // the library keeps what was imported, out of range and all
+    expect(stored?.params.targetKgPerDay).toBe(999_999);
+
+    useStore.getState().loadScenario("clamped-import-case");
     expect(
       useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
     ).toBe(true);
+    // and loading still lands on in-range state
+    expect(useStore.getState().params.targetKgPerDay).toBe(20_000);
   });
 });
