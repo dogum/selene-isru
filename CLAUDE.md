@@ -174,9 +174,15 @@ caps). Diorama code must call those helpers; no magic numbers in scene classes.
 - `scripts/check-size.mjs` enforces a **144 KiB** comment/whitespace-stripped JS
   budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
   a tripwire against accidental bulk, not a load-time target.
-- All internal units are SI. Field names carry units (`secElec_JPerKg`,
-  `gridPowerW`, `regolithKgPerDay`); Sankey energy lines are exposed as
-  `kWhPerKg`. Keep annotating units in JSDoc on result fields.
+- **Units are SI inside the physics, engineering units at the boundary** — do
+  not treat "all SI" as an invariant. Computation is in J, W, K, m, kg, s, but
+  public params and results deliberately use `kg/day` (`targetKgPerDay`), days
+  (`reserveDays`), years (`missionYears`), hours (`tDay`, `cycleHours`), and
+  `kWh/kg` (Sankey lines). The engine converts explicitly at the seams —
+  `SECONDS_PER_DAY = 86_400`, `J_PER_KWH = 3_600_000` — and a new equation that
+  assumes SI throughout will silently drop those factors. The authority for any
+  parameter's unit is its `unit` field in `constants/constants.json`; for
+  results it is the JSDoc unit annotation. Keep annotating both.
 - Out-of-range inputs are clamped in `normalize.ts` with a `param-clamped`
   warning rather than throwing. `simulate()` should not throw on user input.
 - `simulate()` must stay fast and synchronous — no async, no caching layers.
@@ -239,8 +245,16 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 
 ### 6. Frontend conventions
 
-- **State**: a single zustand store (`src/state/store.ts`). `setParam` clamps
-  through the engine, recomputes `SimResult`, and syncs the URL.
+- **State**: a single zustand store (`src/state/store.ts`). `setParam` builds
+  `nextParams`, calls `simulate()`/`simulateTimeseries()`, and stores both —
+  but it stores the **raw** `nextParams`, not the engine's normalized copy.
+  Clamping happens *inside* `simulate()`, so `state.params` can hold a value the
+  displayed result does not use: `setParam("targetKgPerDay", 999999)` simulates
+  at the 20,000 bound with a `param-clamped` warning while `state.params` — and
+  the URL serialized from it — keep 999999. Sliders constrain their own range,
+  so this bites programmatic callers, imported scenarios, and hand-edited URLs.
+  Read bounds from `PARAM_META` and the run's `warnings` rather than trusting
+  `state.params` to be in range.
 - **URL sharing**: only non-default params serialize into a compact query string
   (`?site=polar&chiIce=0.03`) and must round-trip to an identical `SimResult`
   (asserted in `packages/app/test/url.test.ts`).
