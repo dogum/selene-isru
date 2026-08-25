@@ -313,10 +313,20 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   (`--bg-space`, `--cryo`, `--caution`, …). Use tokens, not literal hex.
 - **Mobile** is deliberately review-only for Custom Site — select and inspect,
   no precision editing UI that the touch target cannot honor.
-- **localStorage keys are versioned** and must be migrated, not silently broken:
-  `selene-isru.study-scenarios.v2`, `selene-isru.custom-site-draft.v1`,
-  `selene-isru.custom-site-draft-backup.v1` (a separate key, *not* a `.backup`
-  suffix — see `CUSTOM_SITE_DRAFT_BACKUP_KEY`), `selene.graphics`.
+- **localStorage keys use two different compatibility strategies** — don't
+  assume the versioned one:
+  - *Versioned, migrate on a schema change*: `selene-isru.study-scenarios.v2`,
+    `selene-isru.custom-site-draft.v1`, and
+    `selene-isru.custom-site-draft-backup.v1` (a separate key, *not* a
+    `.backup` suffix — see `CUSTOM_SITE_DRAFT_BACKUP_KEY`). Bump the suffix and
+    migrate; never silently reinterpret data under an existing version.
+  - *Unversioned, tolerant read*: `selene.graphics` carries no version and
+    stays compatible by parsing whatever it finds through
+    `normalizeGraphicsPrefs`, filling missing fields from
+    `DEFAULT_GRAPHICS_PREFS`. Adding or widening a preference needs no
+    migration; **changing the meaning of an existing field does**, and since
+    the key can't express that, it means reading the legacy key explicitly and
+    writing a new one — not overwriting in place.
 - `window.__SELENE_DEMO__` (set up in `Scene.tsx`) is the capture bridge the
   `scripts/capture-*.mjs` demos drive. Changing it means re-recording the
   cinematics.
@@ -327,10 +337,21 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 
 Inputs expose plain engineering names *and* engine variable names, model
 maturity, source links, illustrative spreads, range rationale, applicability,
-and validity limits. New parameters need those fields populated in
-`constants/constants.json` and surfaced through `src/controls/evidence.ts` /
-`manifest.ts`. Numeric claims in Brief, Conserve, and Trade Study should be
-traceable to the actual engine run, not to hard-coded copy.
+and validity limits. Those come from **two** places, and a new parameter needs
+both:
+
+- `constants/constants.json` holds only value, unit, kind, bounds, group,
+  description, and source.
+- `src/controls/evidence.ts` derives everything else — maturity, source URL and
+  section (regex-matched against the `source` string), uncertainty, range
+  rationale, applicability (from `group`), and validity — then merges a
+  per-parameter entry from `KEY_OVERRIDES` over that base.
+
+So adding a parameter to the JSON alone does not fail loudly: it silently
+inherits **generic fallback evidence**. If the parameter needs specific
+validity limits, applicability, or a source link the regexes won't match, add a
+`KEY_OVERRIDES` entry. Numeric claims in Brief, Conserve, and Trade Study
+should be traceable to the actual engine run, not to hard-coded copy.
 
 ### 8. Assets
 
