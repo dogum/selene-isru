@@ -11,8 +11,16 @@ def p_crit_kw(m_shield_kg: float, beta: float, alpha: float) -> float | None:
     return None if beta <= alpha else m_shield_kg / (beta - alpha)
 
 
+def solar_slope_at_year(beta: float, d_solar: float, t_years: float) -> float:
+    return beta / (1 - d_solar) ** t_years
+
+
+def nuclear_slope_at_year(alpha: float, d_nuclear: float, t_years: float) -> float:
+    return alpha * (1 + d_nuclear * t_years)
+
+
 def p_crit_dynamic_kw(m_shield_kg: float, beta: float, alpha: float, d_solar: float, d_nuclear: float, t_years: float) -> float | None:
-    denominator = beta / (1 - d_solar) ** t_years - alpha * (1 + d_nuclear * t_years)
+    denominator = solar_slope_at_year(beta, d_solar, t_years) - nuclear_slope_at_year(alpha, d_nuclear, t_years)
     return None if denominator <= 0 else m_shield_kg / denominator
 
 

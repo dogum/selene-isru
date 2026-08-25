@@ -2,6 +2,7 @@ import {
   createSeededSiteDesign,
   DEFAULTS,
   evaluateSiteDesign,
+  normalizeParams,
   parseSiteDesign,
   siteAssetDefinition,
   siteConnectionRoutePoints,
@@ -23,6 +24,7 @@ import type {
   SiteViewMode,
   TimeseriesPoint,
   TimeseriesResult,
+  Warning,
   WorkspaceMode
 } from "@selene-isru/engine";
 import { create } from "zustand";
@@ -244,10 +246,36 @@ interface Store {
   pulseAsset: (asset: string, severity: string) => void;
 }
 
-function initialParams(): SimParams {
-  const fromUrl =
-    typeof window !== "undefined" ? parseParams(window.location.search) : {};
-  return { ...DEFAULTS, ...fromUrl };
+/**
+ * Normalize and simulate together, so two things hold at once:
+ *
+ * 1. `state.params` never holds a value the engine would clamp — otherwise the
+ *    store, the URL serialized from it, and the displayed `SimResult`
+ *    disagree (a hand-edited `?targetKgPerDay=999999` simulating at 20,000).
+ * 2. The clamp stays visible. Normalizing first means `simulate()` sees
+ *    in-range values and no longer raises `param-clamped` itself, so the
+ *    warnings are carried onto the result here instead.
+ *
+ * Fixing (1) without (2) trades a silent inconsistency for a silent edit.
+ */
+function simulateStoreParams(input: Partial<SimParams>): {
+  params: SimParams;
+  result: SimResult;
+} {
+  const { params, warnings } = normalizeParams(input);
+  const result = simulate(params);
+  return {
+    params,
+    result:
+      warnings.length > 0
+        ? { ...result, warnings: [...warnings, ...result.warnings] }
+        : result
+  };
+}
+
+/** raw params from the URL, before normalization */
+function initialParamInput(): Partial<SimParams> {
+  return typeof window !== "undefined" ? parseParams(window.location.search) : {};
 }
 
 function pushHistory(history: number[], value: number): number[] {
@@ -433,8 +461,9 @@ function persistScenarioLibrary(scenarios: StudyScenario[]): void {
 }
 
 export const useStore = create<Store>((set, get) => {
-  const params = initialParams();
-  const result = simulate(params);
+  const initial = simulateStoreParams(initialParamInput());
+  const params = initial.params;
+  const result = initial.result;
   const compareParams = initialCompareParams(params);
   const compareResult = simulate(compareParams);
   const timeseries = simulateTimeseries(params, { cycles: 1, samplesPerCycle: 96 });
@@ -458,7 +487,13 @@ export const useStore = create<Store>((set, get) => {
     selectedConnectionId: string | null = null,
     selectedAssetIds: string[] =
       selectedAssetId === null ? [] : [selectedAssetId],
-    recordHistory = true
+    recordHistory = true,
+    /**
+     * Clamp warnings from normalizing the caller's input. The design handed to
+     * `evaluateCustomRuntime` is already in range, so the engine cannot raise
+     * `param-clamped` itself — without these the adjustment is invisible.
+     */
+    inputWarnings: Warning[] = []
   ): void => {
     const current = get().customSite;
     const runtime = evaluateCustomRuntime(design);
@@ -488,7 +523,10 @@ export const useStore = create<Store>((set, get) => {
     set({
       customSite: nextCustomSite,
       params: runtime.evaluation.effectiveParams,
-      result: runtime.result,
+      result:
+        inputWarnings.length > 0
+          ? { ...runtime.result, warnings: [...inputWarnings, ...runtime.result.warnings] }
+          : runtime.result,
       timeseries: runtime.timeseries,
       time: nextTime,
       timePoint: sampleTimeseries(runtime.timeseries, nextTime.tHours),
@@ -1178,7 +1216,8 @@ export const useStore = create<Store>((set, get) => {
         get().setCustomEnvironment(value as SiteEnvironment);
         return;
       }
-      const nextParams = { ...get().params, [key]: value };
+      const nextInput = { ...get().params, [key]: value };
+      const { params: nextParams, warnings: inputWarnings } = normalizeParams(nextInput);
       if (get().workspaceMode === "custom") {
         const nextCustomDesign = {
           ...get().customSite.design,
@@ -1189,11 +1228,13 @@ export const useStore = create<Store>((set, get) => {
           nextCustomDesign,
           get().customSite.editor.selectedAssetId,
           get().customSite.editor.selectedConnectionId,
-          get().customSite.editor.selectedAssetIds
+          get().customSite.editor.selectedAssetIds,
+          true,
+          inputWarnings
         );
         return;
       }
-      const nextResult = simulate(nextParams);
+      const nextResult = simulateStoreParams(nextInput).result;
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
       set({
@@ -1216,8 +1257,7 @@ export const useStore = create<Store>((set, get) => {
     },
 
     applyPatch: (patch) => {
-      const nextParams = { ...DEFAULTS, ...patch };
-      const nextResult = simulate(nextParams);
+      const { params: nextParams, result: nextResult } = simulateStoreParams(patch);
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
       set({
@@ -1453,6 +1493,9 @@ export const useStore = create<Store>((set, get) => {
         }
         byId.set(scenario.id, {
           ...scenario,
+          // deliberately NOT normalized: the library stores what was imported,
+          // and loading it goes through applyPatch, which clamps and reports
+          // `param-clamped`. Normalizing here would silently drop that report.
           params: { ...DEFAULTS, ...scenario.params },
           name: scenario.name.slice(0, 80)
         });

@@ -1,13 +1,36 @@
 // Records a short, reproducible browser tour of the engineering-analysis sprint.
+// Set CHROME_PATH when Chrome is not installed in a standard location.
 // Usage: pnpm demo:analysis -- [baseUrl] [outputPath]
-import { mkdir } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import puppeteer from "puppeteer-core";
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
 const BASE = args[0] ?? "http://localhost:5173";
 const OUTPUT = resolve(args[1] ?? "docs/media/analysis-sprint-demo.webm");
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+async function firstExecutable(candidates) {
+  for (const candidate of candidates.filter(Boolean)) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Try the next platform location.
+    }
+  }
+  throw new Error(
+    "Chrome was not found. Set CHROME_PATH to a Chrome or chrome-headless-shell executable."
+  );
+}
+
+const CHROME = await firstExecutable([
+  process.env.CHROME_PATH,
+  process.env.PUPPETEER_EXECUTABLE_PATH,
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium",
+  "/tmp/chromium"
+]);
 const pause = (ms) => new Promise((resolvePause) => setTimeout(resolvePause, ms));
 
 await mkdir(dirname(OUTPUT), { recursive: true });
@@ -16,6 +39,7 @@ const browser = await puppeteer.launch({
   executablePath: CHROME,
   headless: "shell",
   args: [
+    "--no-sandbox",
     "--hide-scrollbars",
     "--disable-background-networking",
     "--disable-component-update",

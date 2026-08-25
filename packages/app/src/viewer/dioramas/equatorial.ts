@@ -3,11 +3,16 @@ import type { SimParams, SimResult, TimeseriesPoint } from "@selene-isru/engine"
 import {
   brickCount,
   excavatorLoopPeriodS,
+  isLanderPresent,
+  missionFlagCount,
+  panelRackCount,
   gridGlowIntensity,
-  habitatShellSteps,
   padTileFraction,
   powerLineOpacity,
   radiatorWingScale,
+  reserveFillFraction,
+  shieldSectionCount,
+  MISSION_FLAG_CAP,
   solarPanelCount,
   boiloffWispRate,
   tankCount,
@@ -50,7 +55,6 @@ const TANKS_POS = new THREE.Vector3(2, 0, -18);
 const STATION_POS = new THREE.Vector3(-30, 0, -22);
 const HABITAT_POS = new THREE.Vector3(18, 0, 16);
 const PAD_TILES = 16;
-const FLAG_CAP = 12;
 const SLAG_DROP_CAP = 18;
 
 /** Ballistic lunar dust puff on rover movement (§3.2.2). */
@@ -482,8 +486,8 @@ export class EquatorialDiorama implements Diorama {
     });
     const bannerMat = flatMat(SCENE_COLORS.melt, { emissive: SCENE_COLORS.melt, emissiveIntensity: 0.3 });
     bannerMat.side = THREE.DoubleSide;
-    for (let i = 0; i < FLAG_CAP; i++) {
-      const a = (i / FLAG_CAP) * Math.PI * 2;
+    for (let i = 0; i < MISSION_FLAG_CAP; i++) {
+      const a = (i / MISSION_FLAG_CAP) * Math.PI * 2;
       const flag = new THREE.Mesh(flagGeo, flagMat);
       flag.position.set(PAD_POS.x + Math.cos(a) * 9.4, padGroundY + 0.8, PAD_POS.z + Math.sin(a) * 9.4);
       const banner = new THREE.Mesh(bannerGeo, bannerMat);
@@ -589,9 +593,10 @@ export class EquatorialDiorama implements Diorama {
       }
     );
 
-    this.landerVisible = result.logistics.nMissions >= 1;
+    this.landerVisible = isLanderPresent(result.logistics.nMissions);
+    const visibleFlags = missionFlagCount(result.logistics.nMissions);
     this.flags.forEach((flag, i) => {
-      flag.visible = i < Math.min(FLAG_CAP, result.logistics.nMissions);
+      flag.visible = i < visibleFlags;
     });
 
     this.currentTankCount = tankCount(params, result);
@@ -617,15 +622,9 @@ export class EquatorialDiorama implements Diorama {
     }
     this.currentRadiatorScale = radiatorWingScale(result.power.radiatorM2);
     const panelInstances = solarPanelCount(result.power.solarArrayM2, this.panelCap);
-    this.currentPanelRacks = Math.max(
-      1,
-      Math.min(12, Math.ceil(panelInstances / Math.max(1, this.panelCap / 12)))
-    );
+    this.currentPanelRacks = panelRackCount(panelInstances, this.panelCap);
 
-    this.currentShieldSections = Math.max(
-      1,
-      Math.min(6, Math.ceil(habitatShellSteps(result.construction.shieldDesignM) / 7))
-    );
+    this.currentShieldSections = shieldSectionCount(result.construction.shieldDesignM);
     this.applyEquipmentVisualState(arch === previousArchitecture || nuclear === null || solar === null);
 
     const lineOpacity = powerLineOpacity(result.energy.gridPowerW);
@@ -638,8 +637,11 @@ export class EquatorialDiorama implements Diorama {
   }
 
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
-    const reserveKg = Math.max(1, params.reserveDays * result.production.targetKgPerDay);
-    const fill = Math.min(1, Math.max(0, point.tankFillKg / reserveKg));
+    const fill = reserveFillFraction(
+      point.tankFillKg,
+      params.reserveDays,
+      result.production.targetKgPerDay
+    );
     this.currentTankFill = fill;
     this.currentWispRate = boiloffWispRate(point.boiloffKgPerDay);
     this.cryoVapor.setState(this.currentTankCount, this.currentWispRate);

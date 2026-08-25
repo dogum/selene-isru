@@ -17,6 +17,7 @@
     "build": "pnpm --filter @selene-isru/engine build && pnpm --filter @selene-isru/app build",
     "dev": "pnpm --filter @selene-isru/app dev",
     "check:constants": "pnpm --filter @selene-isru/engine check:constants",
+    "check:golden": "git diff --exit-code -- packages/engine/test/golden_vectors.json packages/engine/test/dynamics_vectors.json",
     "generate:golden": "uv run --project python python python/tools/generate_golden.py",
     "screenshots": "node scripts/capture-screens.mjs",
     "evidence:custom": "node scripts/capture-custom-site-evidence.mjs",
@@ -27,7 +28,7 @@
     "test": "pnpm --filter @selene-isru/engine test && pnpm --filter @selene-isru/app test",
     "test:python": "uv run --project python pytest python/tests",
     "lint:python": "uv run --project python ruff check python",
-    "ci": "pnpm generate:golden && pnpm check:constants && pnpm test:python && pnpm lint:python && pnpm test && pnpm build"
+    "ci": "pnpm test:python && pnpm generate:golden && pnpm check:golden && pnpm check:constants && pnpm --filter @selene-isru/engine test && pnpm --filter @selene-isru/engine build && pnpm --filter @selene-isru/app test && pnpm --filter @selene-isru/app build && pnpm lint:python"
   },
   "devDependencies": {
     "puppeteer-core": "^25.1.0",

@@ -4,12 +4,18 @@ import {
   beamRadius,
   boiloffWispRate,
   excavatorLoopPeriodS,
-  habitatShellSteps,
+  gridGlowFromPower,
+  isDaylight,
+  loadScale,
   powerLineOpacity,
   radiatorWingScale,
+  receiverGlow,
+  reserveFillFraction,
+  shieldSectionCount,
   tankCount,
   tankFillFraction,
   tentGlowIntensity,
+  RECEIVER_GLOW_DARK,
   SCENE_COLORS,
   type QualityProfile
 } from "../bindings";
@@ -427,12 +433,12 @@ export class PolarDiorama implements Diorama {
     this.setBeamState(radius > 0, radius, ms, tweens);
     this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg);
     this.receiverGlow = radius > 0 ? 1 : 0.18;
-    this.gridGlow = Math.min(2.8, 0.6 + powerLineOpacity(result.energy.gridPowerW) * 2.5);
+    this.gridGlow = gridGlowFromPower(result.energy.gridPowerW);
     this.tankCountState = tankCount(params, result);
     this.tankFillState = tankFillFraction(result);
     this.cryoVapor.setState(this.tankCountState, boiloffWispRate(result.cryo.boiloffKgPerDay));
     this.radiatorScale = radiatorWingScale(result.power.radiatorM2);
-    this.shieldSections = Math.max(1, Math.min(6, Math.ceil(habitatShellSteps(result.construction.shieldDesignM) / 7)));
+    this.shieldSections = shieldSectionCount(result.construction.shieldDesignM);
     this.sabatierEnabled = params.enableSabatier;
     this.applyEquipmentVisualState();
 
@@ -446,17 +452,23 @@ export class PolarDiorama implements Diorama {
   }
 
   applyTime(point: TimeseriesPoint, params: SimParams, result: SimResult, cycleHours: number): void {
-    const reserveKg = Math.max(1, params.reserveDays * result.production.targetKgPerDay);
-    this.tankFillState = Math.min(1, Math.max(0, point.tankFillKg / reserveKg));
+    this.tankFillState = reserveFillFraction(
+      point.tankFillKg,
+      params.reserveDays,
+      result.production.targetKgPerDay
+    );
     this.cryoVapor.setState(this.tankCountState, boiloffWispRate(point.boiloffKgPerDay));
-    const loadScale = result.energy.gridPowerW > 0 ? Math.min(1.4, point.loadW / result.energy.gridPowerW) : 1;
-    this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg) * loadScale;
+    const scale = loadScale(point.loadW, result.energy.gridPowerW);
+    this.tentGlow = tentGlowIntensity(result.thermal.secSub_JPerKg) * scale;
     const deliveredFraction = point.illumination * point.receiverVisibility;
-    this.receiverGlow = result.power.beamedFloorPowerW !== null ? 0.16 + deliveredFraction * 0.94 * loadScale : 0.16;
-    this.gridGlow = Math.min(2.8, 0.6 + powerLineOpacity(point.loadW) * 2.5);
-    this.solarDaylight = point.illumination > 0.05;
+    this.receiverGlow =
+      result.power.beamedFloorPowerW !== null
+        ? receiverGlow(deliveredFraction, scale)
+        : RECEIVER_GLOW_DARK;
+    this.gridGlow = gridGlowFromPower(point.loadW);
+    this.solarDaylight = isDaylight(point.illumination);
     this.solarPhase = ((point.tHours / Math.max(1, cycleHours)) % 1 + 1) % 1;
-    this.setBeamImmediate(deliveredFraction > 0.05 && (result.power.beamedFloorPowerW ?? 0) > 0);
+    this.setBeamImmediate(isDaylight(deliveredFraction) && (result.power.beamedFloorPowerW ?? 0) > 0);
     this.applyEquipmentVisualState();
     for (const line of this.lines) {
       (line.material as THREE.MeshBasicMaterial).opacity = powerLineOpacity(point.loadW);

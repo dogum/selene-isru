@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import {
   DEFAULTS,
+  PARAM_META,
   SEEDED_SITE_DESIGN_FIXTURES,
   serializeSiteDesign,
   siteConnectionLengthM
@@ -627,5 +628,119 @@ describe("store wiring (§5)", () => {
       id: "site-design:capacity.shortfall.equatorial-storage",
       severity: "caution"
     }));
+  });
+});
+
+describe("stored params never disagree with the simulated result", () => {
+  beforeEach(() => {
+    // earlier suites in this file leave the store in the custom workspace,
+    // where setParam feeds the design rather than the authored simulation
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({});
+  });
+
+  it("clamps an above-range setParam into state, not just into simulate()", () => {
+    const meta = PARAM_META.targetKgPerDay;
+    const max = "max" in meta ? (meta.max as number) : 20_000;
+
+    useStore.getState().setParam("targetKgPerDay", max * 50);
+    const state = useStore.getState();
+
+    expect(state.params.targetKgPerDay).toBe(max);
+    // the invariant that matters: what is stored is what was simulated
+    expect(state.result.production.targetKgPerDay).toBe(state.params.targetKgPerDay);
+  });
+
+  it("clamps a below-range setParam", () => {
+    const meta = PARAM_META.targetKgPerDay;
+    const min = "min" in meta ? (meta.min as number) : 10;
+
+    useStore.getState().setParam("targetKgPerDay", -1);
+    const state = useStore.getState();
+
+    expect(state.params.targetKgPerDay).toBe(min);
+    expect(state.result.production.targetKgPerDay).toBe(state.params.targetKgPerDay);
+  });
+
+  it("clamps params arriving through applyPatch", () => {
+    useStore.getState().applyPatch({ targetKgPerDay: 10_000_000 });
+    const state = useStore.getState();
+
+    const meta = PARAM_META.targetKgPerDay;
+    const max = "max" in meta ? (meta.max as number) : 20_000;
+    expect(state.params.targetKgPerDay).toBe(max);
+    expect(state.result.production.targetKgPerDay).toBe(state.params.targetKgPerDay);
+  });
+
+  it("leaves an in-range value untouched", () => {
+    useStore.getState().setParam("targetKgPerDay", 765);
+    expect(useStore.getState().params.targetKgPerDay).toBe(765);
+  });
+});
+
+describe("clamping stays visible to the user", () => {
+  beforeEach(() => {
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({});
+  });
+
+  it("reports param-clamped when setParam clamps an out-of-range value", () => {
+    useStore.getState().setParam("targetKgPerDay", 999_999);
+    const warnings = useStore.getState().result.warnings;
+    expect(warnings.some((w) => w.id === "param-clamped")).toBe(true);
+  });
+
+  it("reports param-clamped when applyPatch clamps", () => {
+    useStore.getState().applyPatch({ targetKgPerDay: 999_999 });
+    expect(
+      useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
+    ).toBe(true);
+  });
+
+  it("does not invent a clamp warning for in-range input", () => {
+    useStore.getState().setParam("targetKgPerDay", 765);
+    expect(
+      useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
+    ).toBe(false);
+  });
+
+  it("reports param-clamped in the Custom Site workspace too", () => {
+    buildOperatingEquatorialSite();
+    useStore.getState().setParam("targetKgPerDay", 999_999);
+    const state = useStore.getState();
+
+    expect(state.workspaceMode).toBe("custom");
+    expect(state.result.warnings.some((w) => w.id === "param-clamped")).toBe(true);
+  });
+
+  it("keeps an imported scenario's clamp reportable when it is loaded", () => {
+    // must exercise the real import path: normalizing inside importScenarios
+    // would discard the warning and this test has to fail if that returns
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().importScenarios([
+      {
+        id: "clamped-import-case",
+        name: "Clamped import case",
+        kind: "authored",
+        params: { ...DEFAULTS, targetKgPerDay: 999_999 },
+        createdAt: 1,
+        updatedAt: 2,
+        pinned: false
+      }
+    ]);
+
+    const stored = useStore
+      .getState()
+      .scenarioLibrary.find((sc) => sc.id === "clamped-import-case");
+    expect(stored).toBeTruthy();
+    // the library keeps what was imported, out of range and all
+    expect(stored?.params.targetKgPerDay).toBe(999_999);
+
+    useStore.getState().loadScenario("clamped-import-case");
+    expect(
+      useStore.getState().result.warnings.some((w) => w.id === "param-clamped")
+    ).toBe(true);
+    // and loading still lands on in-range state
+    expect(useStore.getState().params.targetKgPerDay).toBe(20_000);
   });
 });

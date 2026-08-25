@@ -1,20 +1,43 @@
 // Captures README/PR screenshots from a running dev server (pnpm --filter
 // @selene-isru/app dev) using the locally installed Chrome.
+// Set CHROME_PATH when Chrome is not installed in a standard location.
 // Usage: node scripts/capture-screens.mjs [baseUrl]
-import { mkdir } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
 
 const BASE = process.argv[2] ?? "http://localhost:5173";
 const OUT = fileURLToPath(new URL("../docs/screenshots/", import.meta.url));
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+async function firstExecutable(candidates) {
+  for (const candidate of candidates.filter(Boolean)) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Try the next platform location.
+    }
+  }
+  throw new Error(
+    "Chrome was not found. Set CHROME_PATH to a Chrome or chrome-headless-shell executable."
+  );
+}
+
+const CHROME = await firstExecutable([
+  process.env.CHROME_PATH,
+  process.env.PUPPETEER_EXECUTABLE_PATH,
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium",
+  "/tmp/chromium"
+]);
 
 await mkdir(OUT, { recursive: true });
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
   headless: "shell",
-  args: ["--hide-scrollbars", "--force-device-scale-factor=2"]
+  args: ["--no-sandbox", "--hide-scrollbars", "--force-device-scale-factor=2"]
 });
 
 async function shot(name, { width, height, url = BASE, prepare }) {

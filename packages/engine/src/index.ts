@@ -37,6 +37,8 @@ const J_PER_KWH = 3_600_000;
 const SECONDS_PER_DAY = 86_400;
 
 export { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS };
+export { normalizeParams } from "./normalize";
+export type { NormalizedParams } from "./normalize";
 export { shieldFullBalanceM } from "./modules/construction";
 export {
   cpRegolithJPerKgK,
@@ -49,7 +51,15 @@ export {
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
 export { payloadPerMissionKg } from "./modules/logistics";
-export { beamedPowerW, beamEfficiency, pCritDynamicKw, pCritKw, siteCycleHours } from "./modules/power";
+export {
+  beamedPowerW,
+  beamEfficiency,
+  nuclearSlopeAtYear,
+  pCritDynamicKw,
+  pCritKw,
+  siteCycleHours,
+  solarSlopeAtYear
+} from "./modules/power";
 export { sabatierKp } from "./modules/sabatier";
 export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 export { secSubJPerKg } from "./modules/thermal";
