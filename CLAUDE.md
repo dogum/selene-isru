@@ -31,7 +31,7 @@ packages/engine              TypeScript physics engine (zero runtime deps, pure 
   src/site-design/             Custom Site: schema, catalog, connections, placement,
                                validate, evaluate (TS-only screening layer)
   scripts/gen-constants.ts     codegen + `--check` mode used by CI
-  scripts/check-size.mjs       144 KiB budget on built JS output
+  scripts/check-size.mjs       144 KiB ratchet on built JS output (see below)
   test/                        parity, conservation, regression, benchmarks, site-design
 packages/app                 React 18 + Three.js frontend (Vite)
   src/state/store.ts           zustand store: setParam → simulate() → render + URL sync
@@ -160,14 +160,45 @@ caps). Diorama code must call those helpers; no magic numbers in scene classes.
 - Zero runtime dependencies, pure ESM, strict TS (`exactOptionalPropertyTypes`,
   `noUncheckedIndexedAccess`).
 - `scripts/check-size.mjs` enforces a **144 KiB** comment/whitespace-stripped JS
-  budget. The current build is ~144.5 KB of ~147.5 KB — there is very little
-  headroom, so watch size when adding engine code.
+  budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
+  a tripwire against accidental bulk, not a load-time target.
 - All internal units are SI. Field names carry units (`secElec_JPerKg`,
   `gridPowerW`, `regolithKgPerDay`); Sankey energy lines are exposed as
   `kWhPerKg`. Keep annotating units in JSDoc on result fields.
 - Out-of-range inputs are clamped in `normalize.ts` with a `param-clamped`
   warning rather than throwing. `simulate()` should not throw on user input.
 - `simulate()` must stay fast and synchronous — no async, no caching layers.
+
+#### The size budget is a ratchet, not a ceiling
+
+`limitBytes` in `check-size.mjs` is not derived from a load-time target or any
+measurement. It has been raised four times — 50 → 96 → 112 → 128 → 144 KiB —
+each time to a round number just above what the engine then weighed, with a
+comment naming the feature that caused the growth. Nothing breaks at 145 KiB;
+`three.js` alone is roughly 9× the whole engine, so the engine has never been
+what determines page load time.
+
+The check exists to make growth **visible**. You cannot quietly add bulk,
+because the build fails and getting past it requires editing `limitBytes` and
+writing a line explaining why — that line is the artifact the check is really
+for.
+
+The current build sits at ~144.5 KB of ~147.5 KB, which is the normal state of
+a ratchet: it always reads nearly full. Don't treat that as a crisis, and don't
+contort engine code to avoid a raise. Judge the *reason* instead:
+
+- **Raise it** for a new process model, more parameter provenance, or another
+  disclosed evaluation layer — that is the project working as intended. Update
+  the comment to name what grew, in the style of the existing entries.
+- **Don't raise it** for a runtime dependency added to a package advertised as
+  zero-dependency, a large data table that belongs in `constants/` or a fixture,
+  or app-only logic that should live in `packages/app`. This is the case the
+  check was built to catch, and it keeps catching it at any ceiling.
+
+Roughly a fifth of the current budget is `constants.js` — generated metadata
+shipping every parameter's unit, description, bounds, and citation to the
+browser. That is the explainability requirement (§7) paid for in bytes, and it
+is deliberate.
 
 ### 5. Custom Site (`site-design`) is a separate, disclosed layer
 
