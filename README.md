@@ -240,9 +240,19 @@ import { simulate, DEFAULTS, PARAM_META } from "@selene-isru/engine";
 const result = simulate({ targetKgPerDay: 1000, site: "equatorial" });
 ```
 
-All internal model units are SI. Energy Sankey lines are exposed as
-`kWhPerKg`, and all out-of-range numeric inputs are clamped to
-`constants/constants.json` bounds with a `param-clamped` warning.
+Units are mixed and annotated per quantity rather than uniformly SI. Most
+process equations work in J, W, K, m, kg and s, but hours, days, years and
+watt-hours appear inside the physics as well as at the API boundary — storage
+is sized in Wh from `Pgrid * nightHours`, `missionYears` is used directly as a
+degradation exponent, and the timeseries integrates over `dtHours`. Conversions
+(`SECONDS_PER_DAY`, `J_PER_KWH`) are applied locally where an SI quantity meets
+one of these. The authority for a parameter is the `unit` field in
+`constants/constants.json`; for a result field it is the JSDoc unit annotation,
+and field names carry the unit (`secElec_JPerKg`, `gridPowerW`, `cycleHours`).
+Energy Sankey lines are exposed as `kWhPerKg`.
+
+All out-of-range numeric inputs are clamped to `constants/constants.json`
+bounds with a `param-clamped` warning.
 
 Scenarios share via URL — non-default params serialize to a compact query
 string (`?site=polar&chiIce=0.03`) that round-trips to an identical
