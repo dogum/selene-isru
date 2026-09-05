@@ -1,0 +1,25 @@
+{
+  "phase": "before",
+  "browser": "Chrome/152.0.7977.77",
+  "evidence": [
+    {
+      "site": "equatorial",
+      "targetKgPerDay": 1000,
+      "gridPowerW": 1032274.207179096,
+      "secTotalKWhPerKg": 24.774580972298306,
+      "massThroughputDays": 58.96822621537288,
+      "leverageL": 185.69322333025104,
+      "missions": 1
+    },
+    {
+      "site": "polar",
+      "targetKgPerDay": 1000,
+      "gridPowerW": 117243.733980478,
+      "secTotalKWhPerKg": 2.8138496155314723,
+      "massThroughputDays": 19.51731201941434,
+      "leverageL": 561.0403722145637,
+      "missions": 1
+    }
+  ],
+  "errors": []
+}

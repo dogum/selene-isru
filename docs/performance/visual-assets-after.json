@@ -1,0 +1,3128 @@
+{
+  "casting-yard.glb": {
+    "bytes": 130188,
+    "triangles": 6568,
+    "primitives": 13,
+    "boundsM": {
+      "min": [
+        -4.699999809265137,
+        0,
+        -3.4000000953674316
+      ],
+      "max": [
+        4.699999809265137,
+        4.460000514984131,
+        3.4000000953674316
+      ]
+    },
+    "controls": {
+      "CastingYard": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Casting_PourPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.75,
+        1.2,
+        0.45,
+        1
+      ]
+    },
+    "controlParents": {
+      "CastingYard": null,
+      "Casting_PourPivot": "CastingYard"
+    },
+    "authoredControlPositions": {
+      "CastingYard": [
+        0,
+        0,
+        0
+      ],
+      "Casting_PourPivot": [
+        -1.75,
+        1.2,
+        0.45
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "cryogenic-farm.glb": {
+    "bytes": 521776,
+    "triangles": 35980,
+    "primitives": 65,
+    "boundsM": {
+      "min": [
+        -6.400000095367432,
+        0,
+        -3.9000000953674316
+      ],
+      "max": [
+        6.400000095367432,
+        4.025000020861626,
+        3.9000000953674316
+      ]
+    },
+    "controls": {
+      "CryogenicFarm": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Cryo_Tank_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.6,
+        0,
+        2.25,
+        1
+      ],
+      "Cryo_Valve_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.6,
+        3.98,
+        2.25,
+        1
+      ],
+      "Cryo_Tank_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.55,
+        0,
+        2.25,
+        1
+      ],
+      "Cryo_Valve_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.55,
+        3.98,
+        2.25,
+        1
+      ],
+      "Cryo_Tank_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.55,
+        0,
+        2.25,
+        1
+      ],
+      "Cryo_Valve_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.55,
+        3.98,
+        2.25,
+        1
+      ],
+      "Cryo_Tank_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.6,
+        0,
+        2.25,
+        1
+      ],
+      "Cryo_Valve_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.6,
+        3.98,
+        2.25,
+        1
+      ],
+      "Cryo_Tank_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.6,
+        0,
+        -2.25,
+        1
+      ],
+      "Cryo_Valve_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.6,
+        3.98,
+        -2.25,
+        1
+      ],
+      "Cryo_Tank_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.55,
+        0,
+        -2.25,
+        1
+      ],
+      "Cryo_Valve_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.55,
+        3.98,
+        -2.25,
+        1
+      ],
+      "Cryo_Tank_07": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.55,
+        0,
+        -2.25,
+        1
+      ],
+      "Cryo_Valve_07": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.55,
+        3.98,
+        -2.25,
+        1
+      ],
+      "Cryo_Tank_08": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.6,
+        0,
+        -2.25,
+        1
+      ],
+      "Cryo_Valve_08": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.6,
+        3.98,
+        -2.25,
+        1
+      ]
+    },
+    "controlParents": {
+      "CryogenicFarm": null,
+      "Cryo_Tank_01": "CryogenicFarm",
+      "Cryo_Valve_01": "Cryo_Tank_01",
+      "Cryo_Tank_02": "CryogenicFarm",
+      "Cryo_Valve_02": "Cryo_Tank_02",
+      "Cryo_Tank_03": "CryogenicFarm",
+      "Cryo_Valve_03": "Cryo_Tank_03",
+      "Cryo_Tank_04": "CryogenicFarm",
+      "Cryo_Valve_04": "Cryo_Tank_04",
+      "Cryo_Tank_05": "CryogenicFarm",
+      "Cryo_Valve_05": "Cryo_Tank_05",
+      "Cryo_Tank_06": "CryogenicFarm",
+      "Cryo_Valve_06": "Cryo_Tank_06",
+      "Cryo_Tank_07": "CryogenicFarm",
+      "Cryo_Valve_07": "Cryo_Tank_07",
+      "Cryo_Tank_08": "CryogenicFarm",
+      "Cryo_Valve_08": "Cryo_Tank_08"
+    },
+    "authoredControlPositions": {
+      "CryogenicFarm": [
+        0,
+        0,
+        0
+      ],
+      "Cryo_Tank_01": [
+        -4.6,
+        0,
+        2.25
+      ],
+      "Cryo_Valve_01": [
+        -4.6,
+        3.98,
+        2.25
+      ],
+      "Cryo_Tank_02": [
+        -1.55,
+        0,
+        2.25
+      ],
+      "Cryo_Valve_02": [
+        -1.55,
+        3.98,
+        2.25
+      ],
+      "Cryo_Tank_03": [
+        1.55,
+        0,
+        2.25
+      ],
+      "Cryo_Valve_03": [
+        1.55,
+        3.98,
+        2.25
+      ],
+      "Cryo_Tank_04": [
+        4.6,
+        0,
+        2.25
+      ],
+      "Cryo_Valve_04": [
+        4.6,
+        3.98,
+        2.25
+      ],
+      "Cryo_Tank_05": [
+        -4.6,
+        0,
+        -2.25
+      ],
+      "Cryo_Valve_05": [
+        -4.6,
+        3.98,
+        -2.25
+      ],
+      "Cryo_Tank_06": [
+        -1.55,
+        0,
+        -2.25
+      ],
+      "Cryo_Valve_06": [
+        -1.55,
+        3.98,
+        -2.25
+      ],
+      "Cryo_Tank_07": [
+        1.55,
+        0,
+        -2.25
+      ],
+      "Cryo_Valve_07": [
+        1.55,
+        3.98,
+        -2.25
+      ],
+      "Cryo_Tank_08": [
+        4.6,
+        0,
+        -2.25
+      ],
+      "Cryo_Valve_08": [
+        4.6,
+        3.98,
+        -2.25
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "excavator.glb": {
+    "bytes": 240868,
+    "triangles": 13132,
+    "primitives": 12,
+    "boundsM": {
+      "min": [
+        -1.9368000030517578,
+        -0.03341935575008392,
+        -1.3849999904632568
+      ],
+      "max": [
+        4.589999854564667,
+        3.68999981880188,
+        1.3849999904632568
+      ]
+    },
+    "controls": {
+      "Excavator": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Excavator_BoomPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.7,
+        1.62,
+        0,
+        1
+      ],
+      "Excavator_BucketPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2.7,
+        2.05,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "Excavator": null,
+      "Excavator_BoomPivot": "Excavator",
+      "Excavator_BucketPivot": "Excavator_BoomPivot"
+    },
+    "authoredControlPositions": {
+      "Excavator": [
+        0,
+        0,
+        0
+      ],
+      "Excavator_BoomPivot": [
+        0.7,
+        1.62,
+        0
+      ],
+      "Excavator_BucketPivot": [
+        2.7,
+        2.05,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "habitat.glb": {
+    "bytes": 176388,
+    "triangles": 10072,
+    "primitives": 18,
+    "boundsM": {
+      "min": [
+        -6.270081751599806,
+        0,
+        -4.199999809265137
+      ],
+      "max": [
+        5.599999904632568,
+        5.359999656677246,
+        5.299999713897705
+      ]
+    },
+    "controls": {
+      "Habitat": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Habitat_Shield_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -2.75,
+        0,
+        0,
+        1
+      ],
+      "Habitat_Shield_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.65,
+        0,
+        0,
+        1
+      ],
+      "Habitat_Shield_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.55,
+        0,
+        0,
+        1
+      ],
+      "Habitat_Shield_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.55,
+        0,
+        0,
+        1
+      ],
+      "Habitat_Shield_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.65,
+        0,
+        0,
+        1
+      ],
+      "Habitat_Shield_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2.75,
+        0,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "Habitat": null,
+      "Habitat_Shield_01": "Habitat",
+      "Habitat_Shield_02": "Habitat",
+      "Habitat_Shield_03": "Habitat",
+      "Habitat_Shield_04": "Habitat",
+      "Habitat_Shield_05": "Habitat",
+      "Habitat_Shield_06": "Habitat"
+    },
+    "authoredControlPositions": {
+      "Habitat": [
+        0,
+        0,
+        0
+      ],
+      "Habitat_Shield_01": [
+        -2.75,
+        0,
+        0
+      ],
+      "Habitat_Shield_02": [
+        -1.65,
+        0,
+        0
+      ],
+      "Habitat_Shield_03": [
+        -0.55,
+        0,
+        0
+      ],
+      "Habitat_Shield_04": [
+        0.55,
+        0,
+        0
+      ],
+      "Habitat_Shield_05": [
+        1.65,
+        0,
+        0
+      ],
+      "Habitat_Shield_06": [
+        2.75,
+        0,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "hauler.glb": {
+    "bytes": 206784,
+    "triangles": 11284,
+    "primitives": 10,
+    "boundsM": {
+      "min": [
+        -2.200000047683716,
+        -0.022549498826265335,
+        -1.4249999523162842
+      ],
+      "max": [
+        2.200000047683716,
+        3.729999929666519,
+        1.4249999523162842
+      ]
+    },
+    "controls": {
+      "Hauler": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Hauler_BedPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.65,
+        1.25,
+        0,
+        1
+      ],
+      "Hauler_LoadAnchor": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.72,
+        1.65,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "Hauler": null,
+      "Hauler_BedPivot": "Hauler",
+      "Hauler_LoadAnchor": "Hauler_BedPivot"
+    },
+    "authoredControlPositions": {
+      "Hauler": [
+        0,
+        0,
+        0
+      ],
+      "Hauler_BedPivot": [
+        -0.65,
+        1.25,
+        0
+      ],
+      "Hauler_LoadAnchor": [
+        -0.72,
+        1.65,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "landing-system.glb": {
+    "bytes": 194020,
+    "triangles": 12528,
+    "primitives": 12,
+    "boundsM": {
+      "min": [
+        -5.400000095367432,
+        0,
+        -5.400000095367432
+      ],
+      "max": [
+        5.400000095367432,
+        6.059999942779541,
+        5.400000095367432
+      ]
+    },
+    "controls": {
+      "LandingSystem": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Landing_Lander": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Landing_RampPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.46,
+        2.7,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "LandingSystem": null,
+      "Landing_Lander": "LandingSystem",
+      "Landing_RampPivot": "Landing_Lander"
+    },
+    "authoredControlPositions": {
+      "LandingSystem": [
+        0,
+        0,
+        0
+      ],
+      "Landing_Lander": [
+        0,
+        0,
+        0
+      ],
+      "Landing_RampPivot": [
+        1.46,
+        2.7,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "mre-reactor.glb": {
+    "bytes": 593472,
+    "triangles": 41352,
+    "primitives": 17,
+    "boundsM": {
+      "min": [
+        -4.634660720825195,
+        0,
+        -4.634660720825195
+      ],
+      "max": [
+        4.634660720825195,
+        6.230000019073486,
+        4.634660720825195
+      ]
+    },
+    "controls": {
+      "MRE_Reactor": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "MRE_FeedGate": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        5.62,
+        0.82,
+        1
+      ],
+      "MRE_GaugeNeedle": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.36,
+        3.72,
+        2.18,
+        1
+      ],
+      "MRE_TapValve": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2.52,
+        1.36,
+        1.52,
+        1
+      ]
+    },
+    "controlParents": {
+      "MRE_Reactor": null,
+      "MRE_FeedGate": "MRE_Reactor",
+      "MRE_GaugeNeedle": "MRE_Reactor",
+      "MRE_TapValve": "MRE_Reactor"
+    },
+    "authoredControlPositions": {
+      "MRE_Reactor": [
+        0,
+        0,
+        0
+      ],
+      "MRE_FeedGate": [
+        0,
+        5.62,
+        0.82
+      ],
+      "MRE_GaugeNeedle": [
+        1.36,
+        3.72,
+        2.18
+      ],
+      "MRE_TapValve": [
+        2.52,
+        1.36,
+        1.52
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "polar-cryogenic-farm.glb": {
+    "bytes": 459016,
+    "triangles": 29080,
+    "primitives": 62,
+    "boundsM": {
+      "min": [
+        -6.800000190734863,
+        0,
+        -4.199999809265137
+      ],
+      "max": [
+        6.800000190734863,
+        4.164999887347221,
+        4.199999809265137
+      ]
+    },
+    "controls": {
+      "PolarCryogenicFarm": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "PolarCryo_Tank_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.8,
+        0,
+        2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.8,
+        4.12,
+        2.1,
+        1
+      ],
+      "PolarCryo_Tank_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.6,
+        0,
+        2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.6,
+        4.12,
+        2.1,
+        1
+      ],
+      "PolarCryo_Tank_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.6,
+        0,
+        2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.6,
+        4.12,
+        2.1,
+        1
+      ],
+      "PolarCryo_Tank_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.8,
+        0,
+        2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.8,
+        4.12,
+        2.1,
+        1
+      ],
+      "PolarCryo_Tank_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.8,
+        0,
+        -2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -4.8,
+        4.12,
+        -2.1,
+        1
+      ],
+      "PolarCryo_Tank_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.6,
+        0,
+        -2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.6,
+        4.12,
+        -2.1,
+        1
+      ],
+      "PolarCryo_Tank_07": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.6,
+        0,
+        -2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_07": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.6,
+        4.12,
+        -2.1,
+        1
+      ],
+      "PolarCryo_Tank_08": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.8,
+        0,
+        -2.1,
+        1
+      ],
+      "PolarCryo_ValvePivot_08": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        4.8,
+        4.12,
+        -2.1,
+        1
+      ]
+    },
+    "controlParents": {
+      "PolarCryogenicFarm": null,
+      "PolarCryo_Tank_01": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_01": "PolarCryo_Tank_01",
+      "PolarCryo_Tank_02": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_02": "PolarCryo_Tank_02",
+      "PolarCryo_Tank_03": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_03": "PolarCryo_Tank_03",
+      "PolarCryo_Tank_04": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_04": "PolarCryo_Tank_04",
+      "PolarCryo_Tank_05": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_05": "PolarCryo_Tank_05",
+      "PolarCryo_Tank_06": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_06": "PolarCryo_Tank_06",
+      "PolarCryo_Tank_07": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_07": "PolarCryo_Tank_07",
+      "PolarCryo_Tank_08": "PolarCryogenicFarm",
+      "PolarCryo_ValvePivot_08": "PolarCryo_Tank_08"
+    },
+    "authoredControlPositions": {
+      "PolarCryogenicFarm": [
+        0,
+        0,
+        0
+      ],
+      "PolarCryo_Tank_01": [
+        -4.8,
+        0,
+        2.1
+      ],
+      "PolarCryo_ValvePivot_01": [
+        -4.8,
+        4.12,
+        2.1
+      ],
+      "PolarCryo_Tank_02": [
+        -1.6,
+        0,
+        2.1
+      ],
+      "PolarCryo_ValvePivot_02": [
+        -1.6,
+        4.12,
+        2.1
+      ],
+      "PolarCryo_Tank_03": [
+        1.6,
+        0,
+        2.1
+      ],
+      "PolarCryo_ValvePivot_03": [
+        1.6,
+        4.12,
+        2.1
+      ],
+      "PolarCryo_Tank_04": [
+        4.8,
+        0,
+        2.1
+      ],
+      "PolarCryo_ValvePivot_04": [
+        4.8,
+        4.12,
+        2.1
+      ],
+      "PolarCryo_Tank_05": [
+        -4.8,
+        0,
+        -2.1
+      ],
+      "PolarCryo_ValvePivot_05": [
+        -4.8,
+        4.12,
+        -2.1
+      ],
+      "PolarCryo_Tank_06": [
+        -1.6,
+        0,
+        -2.1
+      ],
+      "PolarCryo_ValvePivot_06": [
+        -1.6,
+        4.12,
+        -2.1
+      ],
+      "PolarCryo_Tank_07": [
+        1.6,
+        0,
+        -2.1
+      ],
+      "PolarCryo_ValvePivot_07": [
+        1.6,
+        4.12,
+        -2.1
+      ],
+      "PolarCryo_Tank_08": [
+        4.8,
+        0,
+        -2.1
+      ],
+      "PolarCryo_ValvePivot_08": [
+        4.8,
+        4.12,
+        -2.1
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "polar-excavator.glb": {
+    "bytes": 144268,
+    "triangles": 7524,
+    "primitives": 10,
+    "boundsM": {
+      "min": [
+        -1.9500000476837158,
+        0.01491314172744751,
+        -1.590000033378601
+      ],
+      "max": [
+        4.379999876022339,
+        3.7799999713897705,
+        1.590000033378601
+      ]
+    },
+    "controls": {
+      "PolarExcavator": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "PolarExcavator_BoomPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.65,
+        1.8,
+        0,
+        1
+      ],
+      "PolarExcavator_AugerPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3.65,
+        0.72,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "PolarExcavator": null,
+      "PolarExcavator_BoomPivot": "PolarExcavator",
+      "PolarExcavator_AugerPivot": "PolarExcavator_BoomPivot"
+    },
+    "authoredControlPositions": {
+      "PolarExcavator": [
+        0,
+        0,
+        0
+      ],
+      "PolarExcavator_BoomPivot": [
+        0.65,
+        1.8,
+        0
+      ],
+      "PolarExcavator_AugerPivot": [
+        3.65,
+        0.72,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "polar-habitat.glb": {
+    "bytes": 148928,
+    "triangles": 8208,
+    "primitives": 18,
+    "boundsM": {
+      "min": [
+        -6.326045473285188,
+        0,
+        -4.400000095367432
+      ],
+      "max": [
+        6.099999904632568,
+        5.409999832510948,
+        4.600000381469727
+      ]
+    },
+    "controls": {
+      "PolarHabitat": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "PolarHabitat_Shield_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -2.8,
+        0,
+        0,
+        1
+      ],
+      "PolarHabitat_Shield_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.68,
+        0,
+        0,
+        1
+      ],
+      "PolarHabitat_Shield_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.56,
+        0,
+        0,
+        1
+      ],
+      "PolarHabitat_Shield_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.56,
+        0,
+        0,
+        1
+      ],
+      "PolarHabitat_Shield_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.68,
+        0,
+        0,
+        1
+      ],
+      "PolarHabitat_Shield_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2.8,
+        0,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "PolarHabitat": null,
+      "PolarHabitat_Shield_01": "PolarHabitat",
+      "PolarHabitat_Shield_02": "PolarHabitat",
+      "PolarHabitat_Shield_03": "PolarHabitat",
+      "PolarHabitat_Shield_04": "PolarHabitat",
+      "PolarHabitat_Shield_05": "PolarHabitat",
+      "PolarHabitat_Shield_06": "PolarHabitat"
+    },
+    "authoredControlPositions": {
+      "PolarHabitat": [
+        0,
+        0,
+        0
+      ],
+      "PolarHabitat_Shield_01": [
+        -2.8,
+        0,
+        0
+      ],
+      "PolarHabitat_Shield_02": [
+        -1.68,
+        0,
+        0
+      ],
+      "PolarHabitat_Shield_03": [
+        -0.56,
+        0,
+        0
+      ],
+      "PolarHabitat_Shield_04": [
+        0.56,
+        0,
+        0
+      ],
+      "PolarHabitat_Shield_05": [
+        1.68,
+        0,
+        0
+      ],
+      "PolarHabitat_Shield_06": [
+        2.8,
+        0,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "polar-nuclear-station.glb": {
+    "bytes": 177804,
+    "triangles": 9920,
+    "primitives": 17,
+    "boundsM": {
+      "min": [
+        -6.25,
+        0,
+        -4
+      ],
+      "max": [
+        6.25,
+        5.455000400543213,
+        4
+      ]
+    },
+    "controls": {
+      "PolarNuclearStation": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "PolarNuclear_RadiatorRoot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        2.8,
+        0,
+        1
+      ]
+    },
+    "controlParents": {
+      "PolarNuclearStation": null,
+      "PolarNuclear_RadiatorRoot": "PolarNuclearStation"
+    },
+    "authoredControlPositions": {
+      "PolarNuclearStation": [
+        0,
+        0,
+        0
+      ],
+      "PolarNuclear_RadiatorRoot": [
+        0,
+        2.8,
+        0
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "polar-power-towers.glb": {
+    "bytes": 398532,
+    "triangles": 23404,
+    "primitives": 36,
+    "boundsM": {
+      "min": [
+        -20.56669875819666,
+        0,
+        -6.926967802632772
+      ],
+      "max": [
+        21.888598488323233,
+        14.400000005960464,
+        3.7129976601667063
+      ]
+    },
+    "controls": {
+      "PolarPowerTowers": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "PolarPower_Tower_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -18,
+        0,
+        -3.2,
+        1
+      ],
+      "PolarPower_Tracker_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -18,
+        13.2,
+        -3.2,
+        1
+      ],
+      "PolarPower_Tower_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "PolarPower_Tracker_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        13.2,
+        0,
+        1
+      ],
+      "PolarPower_Tower_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        18,
+        0,
+        -3.2,
+        1
+      ],
+      "PolarPower_Tracker_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        18,
+        13.2,
+        -3.2,
+        1
+      ]
+    },
+    "controlParents": {
+      "PolarPowerTowers": null,
+      "PolarPower_Tower_01": "PolarPowerTowers",
+      "PolarPower_Tracker_01": "PolarPower_Tower_01",
+      "PolarPower_Tower_02": "PolarPowerTowers",
+      "PolarPower_Tracker_02": "PolarPower_Tower_02",
+      "PolarPower_Tower_03": "PolarPowerTowers",
+      "PolarPower_Tracker_03": "PolarPower_Tower_03"
+    },
+    "authoredControlPositions": {
+      "PolarPowerTowers": [
+        0,
+        0,
+        0
+      ],
+      "PolarPower_Tower_01": [
+        -18,
+        0,
+        -3.2
+      ],
+      "PolarPower_Tracker_01": [
+        -18,
+        13.2,
+        -3.2
+      ],
+      "PolarPower_Tower_02": [
+        0,
+        0,
+        0
+      ],
+      "PolarPower_Tracker_02": [
+        0,
+        13.2,
+        0
+      ],
+      "PolarPower_Tower_03": [
+        18,
+        0,
+        -3.2
+      ],
+      "PolarPower_Tracker_03": [
+        18,
+        13.2,
+        -3.2
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "power-hub.glb": {
+    "bytes": 375980,
+    "triangles": 16856,
+    "primitives": 83,
+    "boundsM": {
+      "min": [
+        -8.5,
+        0,
+        -5.75
+      ],
+      "max": [
+        8.5,
+        5.4000000059604645,
+        5.75
+      ]
+    },
+    "controls": {
+      "PowerHub": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Power_NuclearRoot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Power_RadiatorRoot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        3.1,
+        0.9,
+        1
+      ],
+      "Power_SolarRoot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Power_SolarRack_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -5.8,
+        0,
+        3.8,
+        1
+      ],
+      "Power_SolarTracker_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -5.8,
+        1.3,
+        3.8,
+        1
+      ],
+      "Power_SolarRack_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -3.45,
+        0,
+        3.8,
+        1
+      ],
+      "Power_SolarTracker_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -3.45,
+        1.3,
+        3.8,
+        1
+      ],
+      "Power_SolarRack_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.15,
+        0,
+        3.8,
+        1
+      ],
+      "Power_SolarTracker_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.15,
+        1.3,
+        3.8,
+        1
+      ],
+      "Power_SolarRack_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.15,
+        0,
+        3.8,
+        1
+      ],
+      "Power_SolarTracker_04": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.15,
+        1.3,
+        3.8,
+        1
+      ],
+      "Power_SolarRack_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3.45,
+        0,
+        3.8,
+        1
+      ],
+      "Power_SolarTracker_05": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3.45,
+        1.3,
+        3.8,
+        1
+      ],
+      "Power_SolarRack_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        5.8,
+        0,
+        3.8,
+        1
+      ],
+      "Power_SolarTracker_06": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        5.8,
+        1.3,
+        3.8,
+        1
+      ],
+      "Power_SolarRack_07": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -5.8,
+        0,
+        0.4,
+        1
+      ],
+      "Power_SolarTracker_07": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -5.8,
+        1.3,
+        0.4,
+        1
+      ],
+      "Power_SolarRack_08": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -3.45,
+        0,
+        0.4,
+        1
+      ],
+      "Power_SolarTracker_08": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -3.45,
+        1.3,
+        0.4,
+        1
+      ],
+      "Power_SolarRack_09": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.15,
+        0,
+        0.4,
+        1
+      ],
+      "Power_SolarTracker_09": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1.15,
+        1.3,
+        0.4,
+        1
+      ],
+      "Power_SolarRack_10": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.15,
+        0,
+        0.4,
+        1
+      ],
+      "Power_SolarTracker_10": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.15,
+        1.3,
+        0.4,
+        1
+      ],
+      "Power_SolarRack_11": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3.45,
+        0,
+        0.4,
+        1
+      ],
+      "Power_SolarTracker_11": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3.45,
+        1.3,
+        0.4,
+        1
+      ],
+      "Power_SolarRack_12": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        5.8,
+        0,
+        0.4,
+        1
+      ],
+      "Power_SolarTracker_12": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        5.8,
+        1.3,
+        0.4,
+        1
+      ]
+    },
+    "controlParents": {
+      "PowerHub": null,
+      "Power_NuclearRoot": "PowerHub",
+      "Power_RadiatorRoot": "Power_NuclearRoot",
+      "Power_SolarRoot": "PowerHub",
+      "Power_SolarRack_01": "Power_SolarRoot",
+      "Power_SolarTracker_01": "Power_SolarRack_01",
+      "Power_SolarRack_02": "Power_SolarRoot",
+      "Power_SolarTracker_02": "Power_SolarRack_02",
+      "Power_SolarRack_03": "Power_SolarRoot",
+      "Power_SolarTracker_03": "Power_SolarRack_03",
+      "Power_SolarRack_04": "Power_SolarRoot",
+      "Power_SolarTracker_04": "Power_SolarRack_04",
+      "Power_SolarRack_05": "Power_SolarRoot",
+      "Power_SolarTracker_05": "Power_SolarRack_05",
+      "Power_SolarRack_06": "Power_SolarRoot",
+      "Power_SolarTracker_06": "Power_SolarRack_06",
+      "Power_SolarRack_07": "Power_SolarRoot",
+      "Power_SolarTracker_07": "Power_SolarRack_07",
+      "Power_SolarRack_08": "Power_SolarRoot",
+      "Power_SolarTracker_08": "Power_SolarRack_08",
+      "Power_SolarRack_09": "Power_SolarRoot",
+      "Power_SolarTracker_09": "Power_SolarRack_09",
+      "Power_SolarRack_10": "Power_SolarRoot",
+      "Power_SolarTracker_10": "Power_SolarRack_10",
+      "Power_SolarRack_11": "Power_SolarRoot",
+      "Power_SolarTracker_11": "Power_SolarRack_11",
+      "Power_SolarRack_12": "Power_SolarRoot",
+      "Power_SolarTracker_12": "Power_SolarRack_12"
+    },
+    "authoredControlPositions": {
+      "PowerHub": [
+        0,
+        0,
+        0
+      ],
+      "Power_NuclearRoot": [
+        0,
+        0,
+        0
+      ],
+      "Power_RadiatorRoot": [
+        0,
+        3.1,
+        0.9
+      ],
+      "Power_SolarRoot": [
+        0,
+        0,
+        0
+      ],
+      "Power_SolarRack_01": [
+        -5.8,
+        0,
+        3.8
+      ],
+      "Power_SolarTracker_01": [
+        -5.8,
+        1.3,
+        3.8
+      ],
+      "Power_SolarRack_02": [
+        -3.45,
+        0,
+        3.8
+      ],
+      "Power_SolarTracker_02": [
+        -3.45,
+        1.3,
+        3.8
+      ],
+      "Power_SolarRack_03": [
+        -1.15,
+        0,
+        3.8
+      ],
+      "Power_SolarTracker_03": [
+        -1.15,
+        1.3,
+        3.8
+      ],
+      "Power_SolarRack_04": [
+        1.15,
+        0,
+        3.8
+      ],
+      "Power_SolarTracker_04": [
+        1.15,
+        1.3,
+        3.8
+      ],
+      "Power_SolarRack_05": [
+        3.45,
+        0,
+        3.8
+      ],
+      "Power_SolarTracker_05": [
+        3.45,
+        1.3,
+        3.8
+      ],
+      "Power_SolarRack_06": [
+        5.8,
+        0,
+        3.8
+      ],
+      "Power_SolarTracker_06": [
+        5.8,
+        1.3,
+        3.8
+      ],
+      "Power_SolarRack_07": [
+        -5.8,
+        0,
+        0.4
+      ],
+      "Power_SolarTracker_07": [
+        -5.8,
+        1.3,
+        0.4
+      ],
+      "Power_SolarRack_08": [
+        -3.45,
+        0,
+        0.4
+      ],
+      "Power_SolarTracker_08": [
+        -3.45,
+        1.3,
+        0.4
+      ],
+      "Power_SolarRack_09": [
+        -1.15,
+        0,
+        0.4
+      ],
+      "Power_SolarTracker_09": [
+        -1.15,
+        1.3,
+        0.4
+      ],
+      "Power_SolarRack_10": [
+        1.15,
+        0,
+        0.4
+      ],
+      "Power_SolarTracker_10": [
+        1.15,
+        1.3,
+        0.4
+      ],
+      "Power_SolarRack_11": [
+        3.45,
+        0,
+        0.4
+      ],
+      "Power_SolarTracker_11": [
+        3.45,
+        1.3,
+        0.4
+      ],
+      "Power_SolarRack_12": [
+        5.8,
+        0,
+        0.4
+      ],
+      "Power_SolarTracker_12": [
+        5.8,
+        1.3,
+        0.4
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "receiver-plant.glb": {
+    "bytes": 189388,
+    "triangles": 10548,
+    "primitives": 25,
+    "boundsM": {
+      "min": [
+        -6.599999904632568,
+        0,
+        -5.099999904632568
+      ],
+      "max": [
+        6.9267371526194585,
+        4.050000125269119,
+        5.099999904632568
+      ]
+    },
+    "controls": {
+      "ReceiverPlant": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Receiver_DishPivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -2.4,
+        0.5,
+        1.2,
+        1
+      ],
+      "Receiver_SabatierRoot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Receiver_SabatierValvePivot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        5.45,
+        3.7,
+        -1.9,
+        1
+      ]
+    },
+    "controlParents": {
+      "ReceiverPlant": null,
+      "Receiver_DishPivot": "ReceiverPlant",
+      "Receiver_SabatierRoot": "ReceiverPlant",
+      "Receiver_SabatierValvePivot": "Receiver_SabatierRoot"
+    },
+    "authoredControlPositions": {
+      "ReceiverPlant": [
+        0,
+        0,
+        0
+      ],
+      "Receiver_DishPivot": [
+        -2.4,
+        0.5,
+        1.2
+      ],
+      "Receiver_SabatierRoot": [
+        0,
+        0,
+        0
+      ],
+      "Receiver_SabatierValvePivot": [
+        5.45,
+        3.7,
+        -1.9
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  },
+  "sublimation-camp.glb": {
+    "bytes": 278080,
+    "triangles": 13540,
+    "primitives": 34,
+    "boundsM": {
+      "min": [
+        -6.400000095367432,
+        0,
+        -4.199999809265137
+      ],
+      "max": [
+        6.400000095367432,
+        3.0250000059604645,
+        4.199999809265137
+      ]
+    },
+    "controls": {
+      "SublimationCamp": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "Sublimation_Tent_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -3.5,
+        0,
+        1.5,
+        1
+      ],
+      "Sublimation_Tent_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -1.35,
+        1
+      ],
+      "Sublimation_Tent_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3.5,
+        0,
+        1.2,
+        1
+      ],
+      "Sublimation_ValvePivot_01": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.35,
+        2.22,
+        -2.55,
+        1
+      ],
+      "Sublimation_ValvePivot_02": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.27,
+        2.22,
+        -2.55,
+        1
+      ],
+      "Sublimation_ValvePivot_03": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2.19,
+        2.22,
+        -2.55,
+        1
+      ]
+    },
+    "controlParents": {
+      "SublimationCamp": null,
+      "Sublimation_Tent_01": "SublimationCamp",
+      "Sublimation_Tent_02": "SublimationCamp",
+      "Sublimation_Tent_03": "SublimationCamp",
+      "Sublimation_ValvePivot_01": "SublimationCamp",
+      "Sublimation_ValvePivot_02": "SublimationCamp",
+      "Sublimation_ValvePivot_03": "SublimationCamp"
+    },
+    "authoredControlPositions": {
+      "SublimationCamp": [
+        0,
+        0,
+        0
+      ],
+      "Sublimation_Tent_01": [
+        -3.5,
+        0,
+        1.5
+      ],
+      "Sublimation_Tent_02": [
+        0,
+        0,
+        -1.35
+      ],
+      "Sublimation_Tent_03": [
+        3.5,
+        0,
+        1.2
+      ],
+      "Sublimation_ValvePivot_01": [
+        0.35,
+        2.22,
+        -2.55
+      ],
+      "Sublimation_ValvePivot_02": [
+        1.27,
+        2.22,
+        -2.55
+      ],
+      "Sublimation_ValvePivot_03": [
+        2.19,
+        2.22,
+        -2.55
+      ]
+    },
+    "extensions": [
+      "EXT_meshopt_compression"
+    ]
+  }
+}

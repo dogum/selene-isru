@@ -17,4 +17,4 @@ Outputs:
 
 Blender 5.2 LTS is the reference exporter. Scene units are meters, transforms are applied during export, custom properties are retained, and the named `MRE_FeedGate`, `MRE_TapValve`, `MRE_GaugeNeedle`, `MRE_ThermalBand`, and `MRE_StatusBeacon` nodes are runtime control points.
 
-The current generated asset contains 119 mesh objects, 22,114 vertices, and 43,780 triangles. Blender's bundled meshopt exporter reduces the web asset from 1,410,072 bytes to 742,784 bytes.
+The runtime asset contains 41,352 triangles in 17 render primitives and occupies 593,472 bytes. The editable source retains separate manufactured parts; export-only batching in `../refine_equipment.py` preserves named control anchors. Run `pnpm asset:audit` to validate the exported bounds, hierarchy, authored pivot positions, and budgets. See [the visual milestone report](../../../docs/visual-milestone.md).

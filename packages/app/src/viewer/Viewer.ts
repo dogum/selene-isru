@@ -216,6 +216,7 @@ export class Viewer {
   private pulses: Pulse[] = [];
   private clock = new THREE.Clock();
   private elapsed = 0;
+  private captureTime: number | null = null;
   private running = false;
   private needsRender = true;
   private reducedMotion: boolean;
@@ -369,7 +370,7 @@ export class Viewer {
     this.stars = makeStarfield(this.quality.starCount);
     this.scene.add(this.stars);
 
-    this.sun = new THREE.DirectionalLight(0xfff2dd, 3);
+    this.sun = new THREE.DirectionalLight(0xfffaf2, 3);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(this.quality.shadowMapSize, this.quality.shadowMapSize);
     this.sun.shadow.camera.left = -70;
@@ -378,7 +379,8 @@ export class Viewer {
     this.sun.shadow.camera.bottom = -70;
     this.sun.shadow.camera.near = 10;
     this.sun.shadow.camera.far = 400;
-    this.sun.shadow.bias = -0.0006;
+    this.sun.shadow.bias = -0.00008;
+    this.sun.shadow.normalBias = 0.025;
     this.scene.add(this.sun);
     this.scene.add(this.sun.target);
 
@@ -659,7 +661,43 @@ export class Viewer {
     }
     const poses = CAMERA_POSES[this.lastResult.site];
     const pose = poses[key] ?? poses.overview;
-    this.flyToPose(pose, this.reducedMotion ? 0 : 1000);
+    const position = new THREE.Vector3(...pose.position);
+    const target = new THREE.Vector3(...pose.target);
+    const offset = position.clone().sub(target);
+    const inspector = document.querySelector(".asset-inspector");
+    const coveredWidth = !this.mobile && inspector !== null ? inspector.getBoundingClientRect().width : 0;
+    const asset = this.diorama?.assets[key];
+    if (key !== "overview" && asset !== undefined) {
+      // Fit the currently visible assembly, including moving vehicles, rather
+      // than aiming at a stale bookmark or an invisible power alternative.
+      const bounds = new THREE.Box3();
+      asset.updateWorldMatrix(true, true);
+      asset.traverseVisible(object => {
+        const mesh = object as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        if (mesh.geometry.boundingBox === null) mesh.geometry.computeBoundingBox();
+        bounds.union(mesh.geometry.boundingBox!.clone().applyMatrix4(mesh.matrixWorld));
+      });
+      if (!bounds.isEmpty()) {
+        const radius = bounds.getBoundingSphere(new THREE.Sphere()).radius;
+        const aspect = Math.max(0.25, (this.container.clientWidth-coveredWidth)/Math.max(1, this.container.clientHeight));
+        const halfFov = THREE.MathUtils.degToRad(this.perspectiveCamera.fov/2);
+        const fitAngle = Math.min(halfFov, Math.atan(Math.tan(halfFov)*aspect));
+        offset.setLength(Math.max(offset.length(), radius/Math.sin(fitAngle)*1.08));
+        bounds.getCenter(target);
+        position.copy(target).add(offset);
+      }
+    }
+    if (!this.mobile && key !== "overview" && inspector !== null) {
+      // Center the equipment in the unobscured canvas area. Translate camera
+      // and target together to retain the bookmark's direction and scale.
+      const shift = coveredWidth / Math.max(1, this.container.clientHeight) * offset.length() * Math.tan(THREE.MathUtils.degToRad(this.perspectiveCamera.fov / 2));
+      const right = new THREE.Vector3(0, 1, 0).cross(offset).normalize().multiplyScalar(shift);
+      position.add(right);
+      target.add(right);
+    }
+    const framedPose: CameraPose = { position: position.toArray(), target: target.toArray() };
+    this.flyToPose(framedPose, this.reducedMotion ? 0 : 1000);
     this.lastInputAt = performance.now();
   }
 
@@ -676,6 +714,32 @@ export class Viewer {
     this.lastInputAt = performance.now();
     this.needsRender = true;
     this.wake();
+  }
+
+  /** Opt-in capture clock: advance the real scene, never the engineering model.
+   * Null restores normal interactive rendering. No wall-clock frame skipping.
+   */
+  setCaptureTime(seconds: number | null): void {
+    if (seconds !== null && (!Number.isFinite(seconds) || seconds < 0)) {
+      throw new Error("Capture time must be a finite nonnegative number");
+    }
+    if (seconds === null) {
+      this.captureTime = null;
+      this.wake();
+      return;
+    }
+    const dt = this.captureTime === null ? 0 : Math.min(0.1, Math.max(0, seconds - this.captureTime));
+    this.stop();
+    this.captureTime = seconds;
+    this.elapsed = seconds;
+    this.tweens.update(performance.now());
+    this.diorama?.tick(dt, seconds, this.reducedMotion);
+    this.updatePulses();
+    this.controls.update();
+    this.updateLearningOverlay();
+    this.updateCustomLabels();
+    this.post.render(dt);
+    this.needsRender = false;
   }
 
   /** True once every authored asset for the active site has loaded. */
@@ -882,7 +946,7 @@ export class Viewer {
     // friendly-illumination floor: keep the whole scene legible even at night
     // or under low sun, without erasing the day/night direction & shadows
     if (this.graphicsPrefs.brightLighting) {
-      const hemiFloor = site === "equatorial" ? 1.02 : 0.56;
+      const hemiFloor = site === "equatorial" ? 0.65 : 0.5;
       this.hemi.intensity = Math.max(this.hemi.intensity, lightPoint.daylight ? hemiFloor : hemiFloor * 0.82);
     }
     this.lastLight = { point, site, cycleHours };
@@ -891,8 +955,8 @@ export class Viewer {
   /** exposure + ambient fill for the current lighting mode; re-applies floors. */
   private applyLightingMode(): void {
     const bright = this.graphicsPrefs.brightLighting;
-    this.renderer.toneMappingExposure = bright ? 1.62 : 1.1;
-    this.fill.intensity = bright ? 0.82 : 0.02;
+    this.renderer.toneMappingExposure = bright ? 1.25 : 1.05;
+    this.fill.intensity = bright ? 0.48 : 0.02;
     if (this.lastLight !== null) {
       this.applyCycleLighting(this.lastLight.point, this.lastLight.site, this.lastLight.cycleHours);
     }
@@ -1419,6 +1483,7 @@ export class Viewer {
 
   private wake(): void {
     this.needsRender = true;
+    if (this.captureTime !== null) return;
     if (!this.running && !this.disposed) {
       this.running = true;
       this.clock.start();

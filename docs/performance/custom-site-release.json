@@ -1,24 +1,24 @@
 {
   "schema": "selene-custom-site-release-evidence",
   "version": 1,
-  "measuredAt": "2026-07-29T10:55:36.843Z",
+  "measuredAt": "2026-09-05T03:05:07.427Z",
   "environment": {
-    "browser": "HeadlessChrome/151.0.7922.47",
+    "browser": "Chrome/152.0.7977.77",
     "viewport": "1600x900",
     "renderer": "headless Chrome with SwiftShader WebGL",
     "note": "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Placement and import timings are sampled before screencast recording starts."
   },
   "timingsMs": {
-    "navigation": 7089.8,
-    "enterBlankCustomSite": 3512.1,
-    "firstPlacementCommit": 348.8,
-    "importValidateEvaluateAndRender": 513.4,
+    "navigation": 12785.1,
+    "enterBlankCustomSite": 6076.4,
+    "firstPlacementCommit": 1378.6,
+    "importValidateEvaluateAndRender": 79.7,
     "contextLossRestore": null,
-    "mobileReviewLoad": 7253.4,
+    "mobileReviewLoad": 10015.2,
     "animationFrameSample": {
       "frames": 90,
       "medianMs": 16.7,
-      "p95Ms": 16.8,
+      "p95Ms": 16.7,
       "maxMs": 16.8
     }
   },
@@ -26,11 +26,11 @@
     "assets": 8,
     "connections": 8,
     "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 9.71 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
-    "jsHeapUsedMb": 19.07,
+    "jsHeapUsedMb": 14.01,
     "domNodes": 916
   },
   "productionBundleBytes": {
-    "javascript": 1363316,
+    "javascript": 1366926,
     "css": 81032
   },
   "checks": [

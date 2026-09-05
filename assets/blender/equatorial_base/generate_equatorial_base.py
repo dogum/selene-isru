@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 import json
 import tempfile
+import sys
 from pathlib import Path
 
 import bpy
@@ -22,6 +23,8 @@ from mathutils import Vector
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[2]
 MODEL_DIR = REPO_ROOT / "packages" / "app" / "src" / "assets" / "models"
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+from refine_equipment import finish_equipment, optimize_static_meshes
 
 
 def reset_scene() -> None:
@@ -121,6 +124,7 @@ def bevel(obj: bpy.types.Object, width: float, segments: int = 2) -> None:
 
 
 def parent_world(obj: bpy.types.Object, parent: bpy.types.Object) -> None:
+    bpy.context.view_layer.update()
     world = obj.matrix_world.copy()
     obj.parent = parent
     obj.matrix_world = world
@@ -134,6 +138,7 @@ def empty(
     obj = bpy.data.objects.new(name, None)
     bpy.context.collection.objects.link(obj)
     obj.location = location
+    obj["selene_bind_world_m"] = list(location)
     obj.empty_display_type = "PLAIN_AXES"
     obj.empty_display_size = 0.35
     if parent is not None:
@@ -311,9 +316,9 @@ def wheel(
     cylinder(f"{name}_Hub", radius * 0.38, width + 0.04, location, mats["orange"], vertices=16, edge=0.025, rotation=(math.pi / 2, 0, 0), parent=parent)
     for index in range(10):
         angle = index * math.tau / 10
-        x = location[0] + math.cos(angle) * radius * 0.78
-        z = location[2] + math.sin(angle) * radius * 0.78
-        box(f"{name}_Tread_{index + 1:02d}", (0.18, width + 0.09, 0.1), (x, location[1], z), mats["body"], edge=0.015, rotation=(0, angle, 0), parent=parent)
+        x = location[0] + math.cos(angle) * radius * 0.96
+        z = location[2] + math.sin(angle) * radius * 0.96
+        box(f"{name}_Tread_{index + 1:02d}", (0.18, width + 0.09, 0.06), (x, location[1], z), mats["body"], edge=0.008, rotation=(0, math.pi / 2 - angle, 0), parent=parent)
 
 
 def mark_root(root: bpy.types.Object, asset_id: str) -> None:
@@ -345,7 +350,11 @@ def build_excavator() -> bpy.types.Object:
     bucket = empty("Excavator_BucketPivot", (2.7, 0, 2.05), boom)
     strut("Excavator_Dipper", (2.7, -0.38, 2.05), (3.55, -0.38, 0.72), 0.14, p["frame"], bucket)
     strut("Excavator_DipperTwin", (2.7, 0.38, 2.05), (3.55, 0.38, 0.72), 0.14, p["frame"], bucket)
-    box("Excavator_Bucket", (0.85, 1.55, 0.62), (3.82, 0, 0.54), p["regolith"], edge=0.1, rotation=(0, -0.18, 0), parent=bucket)
+    box("Excavator_Bucket", (0.85, 1.55, 0.12), (3.82, 0, 0.29), p["body"], edge=0.025, rotation=(0, -0.18, 0), parent=bucket)
+    box("Excavator_BucketBack", (0.12, 1.55, 0.58), (3.43, 0, 0.54), p["frame"], edge=0.025, parent=bucket)
+    for side in (-1, 1):
+        box(f"Excavator_BucketCheek_{side}", (0.85, 0.08, 0.52), (3.82, side*0.735, 0.52), p["body"], edge=0.02, parent=bucket)
+        strut(f"Excavator_Suspension_{side}", (-1.35, side*0.85, 0.88), (1.35, side*1.15, 0.55), 0.075, p["body"], root)
     for index, y in enumerate((-0.62, -0.2, 0.2, 0.62), start=1):
         cone(f"Excavator_BucketTooth_{index:02d}", 0.12, 0.035, 0.48, (4.35, y, 0.34), p["body"], rotation=(0, math.pi / 2, 0), parent=bucket)
     for side in (-1, 1):
@@ -368,6 +377,9 @@ def build_hauler() -> bpy.types.Object:
     for side in (-1, 1):
         box("Hauler_BedSide_L" if side < 0 else "Hauler_BedSide_R", (2.75, 0.16, 0.82), (-0.72, side * 0.92, 1.78), p["body"], edge=0.07, rotation=(0, -0.08, 0), parent=bed)
     box("Hauler_BedBulkhead", (0.18, 1.92, 0.86), (-2.04, 0, 1.82), p["orange"], edge=0.06, parent=bed)
+    for side in (-1, 1):
+        for x in (-1.6, -0.7, 0.2):
+            box(f"Hauler_BedStiffener_{side}_{x}", (0.07, 0.055, 0.64), (x, side*1.03, 1.78), p["frame"], edge=0.01, parent=bed)
     empty("Hauler_LoadAnchor", (-0.72, 0, 1.65), bed)
     strut("Hauler_TipRam", (-0.25, 0, 1.15), (-1.4, 0, 1.65), 0.11, p["copper"], root)
     cylinder("Hauler_Antenna", 0.045, 1.1, (1.2, 0.55, 3.02), p["frame"], vertices=10, parent=root)
@@ -389,7 +401,7 @@ def build_casting_yard() -> bpy.types.Object:
     strut("Casting_GantryBridge", (-0.8, -2.35, 4.28), (-0.8, 2.35, 4.28), 0.18, p["body"], root)
     cylinder("Casting_Hoist", 0.32, 0.48, (-0.8, 0, 3.93), p["dark"], vertices=20, rotation=(math.pi / 2, 0, 0), parent=root)
     strut("Casting_HoistCable", (-0.8, 0, 3.75), (-0.8, 0, 2.25), 0.035, p["copper"], root, vertices=8)
-    cone("Casting_ReceiverHopper", 1.15, 0.55, 1.2, (-2.65, -0.45, 1.2), p["body"], parent=root)
+    cone("Casting_ReceiverHopper", 0.55, 1.15, 1.2, (-2.65, -0.45, 1.2), p["body"], parent=root)
     cylinder("Casting_ReceiverCollar", 1.17, 0.2, (-2.65, -0.45, 1.82), p["orange"], vertices=28, parent=root)
     pour = empty("Casting_PourPivot", (-1.75, -0.45, 1.2), root)
     strut("Casting_PourArm", (-1.75, -0.45, 1.2), (0.35, -0.45, 1.15), 0.18, p["orange"], pour)
@@ -426,6 +438,10 @@ def build_cryo_farm() -> bpy.types.Object:
         valve = empty(f"Cryo_Valve_{index:02d}", (x, y, 3.98), tank)
         torus(f"Cryo_ValveWheel_{index:02d}", 0.28, 0.045, (x, y, 3.98), p["orange"], parent=valve)
         box(f"Cryo_FillColumn_{index:02d}", (0.18, 0.08, 1.35), (x + 1.04, y - 0.08, 2.0), p["status"], edge=0.025, parent=tank)
+        # Each visible vessel has its own branch to the central header.
+        sy = -1 if y < 0 else 1
+        strut(f"Cryo_Branch_{index:02d}", (x, y, 0.88), (x, sy*0.55, 0.88), 0.085, p["body"], tank, vertices=12)
+        cylinder(f"Cryo_BranchFlange_{index:02d}", 0.16, 0.07, (x, sy*1.1, 0.88), p["frame"], vertices=16, edge=0.01, rotation=(math.pi/2, 0, 0), parent=tank)
     strut("Cryo_HeaderPipeA", (-5.6, -0.55, 0.88), (5.6, -0.55, 0.88), 0.14, p["copper"], root, vertices=16)
     strut("Cryo_HeaderPipeB", (-5.6, 0.55, 0.88), (5.6, 0.55, 0.88), 0.14, p["body"], root, vertices=16)
     box("Cryo_ControlSkid", (2.0, 1.3, 1.45), (0, 0, 1.25), p["frame"], edge=0.12, parent=root)
@@ -505,7 +521,7 @@ def build_landing_system() -> bpy.types.Object:
         angle = index * math.tau / 4
         x = math.cos(angle) * 1.15
         y = math.sin(angle) * 1.15
-        cone(f"Landing_Engine_{index + 1:02d}", 0.35, 0.2, 0.65, (x, y, 0.72), p["copper"], rotation=(math.pi, 0, 0), parent=lander)
+        cone(f"Landing_Engine_{index + 1:02d}", 0.35, 0.2, 0.65, (x, y, 0.72), p["copper"], parent=lander)
     box("Landing_Airlock", (0.25, 1.1, 1.25), (1.36, 0, 3.2), p["dark"], edge=0.08, parent=lander)
     ramp = empty("Landing_RampPivot", (1.46, 0, 2.7), lander)
     box("Landing_Ramp", (2.1, 1.0, 0.14), (2.35, 0, 2.25), p["orange"], edge=0.05, rotation=(0, 0.58, 0), parent=ramp)
@@ -562,6 +578,7 @@ ASSETS = {
 
 
 def export_glb(path: Path, *, optimized: bool) -> None:
+    optimize_static_meshes()
     path.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(
         filepath=str(path),
@@ -587,7 +604,7 @@ def main() -> None:
     for slug, builder in ASSETS.items():
         reset_scene()
         builder()
-        bpy.context.scene["selene_generator_version"] = 1
+        finish_equipment()
         bpy.context.scene["selene_license"] = "CC0-1.0"
         bpy.context.scene.unit_settings.system = "METRIC"
         bpy.context.scene.unit_settings.scale_length = 1.0

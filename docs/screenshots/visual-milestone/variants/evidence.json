@@ -1,0 +1,90 @@
+{
+  "browser": "Chrome/152.0.7977.77",
+  "evidence": [
+    {
+      "name": "equatorial-solar",
+      "site": "equatorial",
+      "tier": "high",
+      "query": "targetKgPerDay=10&MshieldKg=8000&SEstorage=1500&Rarray=5",
+      "asset": "Power hub",
+      "snapshot": {
+        "site": "equatorial",
+        "targetKgPerDay": 10,
+        "gridPowerW": 10569.005220718514,
+        "secTotalKWhPerKg": 25.365612529724434,
+        "massThroughputDays": 369.5291168127939,
+        "leverageL": 29.632306364500494,
+        "missions": 1
+      },
+      "hud": "FPS 60 | 16.7 MS | HIGH | CALLS 341 | TRIS 756K",
+      "inspector": "SELECTED ASSET · PW-01HYBRID POWER HUBCLOSENOMINALFOCUS CAMERAArchitectureSOLARGrid power10.6 KWSolar array88.5 M²Radiator area5.41 M²PURPOSESelect and size the lower-mass solar or nuclear surface-power architecture.SIMULATED BEHAVIORThe selected solar or nuclear branch shares a switchgear deck; trackers follow the lunar cycle and radiator span follows rejected heat.LIVE INPUTS → OUTPUTSINPUTSGrid demandSolar incidenceStorage performance→OUTPUTSMOLTEN REGOLITH ELECTROLYSISGRID POWER · 10.6 KWGrid demandSolar incidenceStorage performanceNuclear specific massACTIVE CONSTRAINTNearest model bound: Storage specific energy is 0% of its supported span from the maximum (1500 Wh/kg).ASSUMPTIONS + MODEL MATURITY SIMPLIFIED CORRELATIONArchitecture selection compares analytical system-mass slopes at the operating point.Reliability, redundancy, packaging, and maintenance logistics are not monetized.LIVE SYSTEM INPUTSOpen i beside an input for its source and supported model range.Cell efficiencyi0.3Solar incidencei0.262radStorage specific energyi1500Wh/kgNuclear specific massi30kg/kW"
+    },
+    {
+      "name": "polar-solar-sabatier",
+      "site": "polar",
+      "tier": "ultra",
+      "query": "targetKgPerDay=10&MshieldKg=8000&enableSabatier=true",
+      "asset": "Receiver + Sabatier",
+      "snapshot": {
+        "site": "polar",
+        "targetKgPerDay": 10,
+        "gridPowerW": 5718.767583806196,
+        "secTotalKWhPerKg": 13.725042201134869,
+        "massThroughputDays": 264.2898903345428,
+        "leverageL": 41.431777757897954,
+        "missions": 1
+      },
+      "hud": "FPS 60 | 16.6 MS | ULTRA | CALLS 637 | TRIS 981K",
+      "inspector": "SELECTED ASSET · BR-01BEAM RECEIVER + SABATIER PLANTCLOSENOMINALFOCUS CAMERABeamed floor power9.61 KWDelivery margin3.89 KWCH₄ output2.11 KG/DAYUnreacted H₂0.0556 KG/DAYCO₂ import5.81 KG/DAYWater recycle4.75 KG/DAYPURPOSEReceive beamed power, collect water, and optionally produce methane and oxygen.SIMULATED BEHAVIORThe beam and receiver are active only when the mass-selected architecture is solar; nuclear cases no longer imply a hypothetical beamed-power supply.LIVE INPUTS → OUTPUTSINPUTSSUBLIMATION FIELD CAMPRECOVERED H₂O · 10 KG/DAYRIM POWER TOWERSBEAM POWER · 5.72 KW→OUTPUTSPOLAR CRYOGENIC FARMO₂ 8.89 KG/DAY · CH₄ 2.11 KG/DAYRecovered waterBeamed or nuclear powerElectrolyzer voltageSabatier conversionACTIVE CONSTRAINTNearest model bound: Sabatier conversion is 10% of its supported span from the maximum (0.999).ASSUMPTIONS + MODEL MATURITY LITERATURE-DERIVEDThe optional Sabatier loop uses a fixed single-pass conversion; equilibrium is diagnostic only.CO₂ import and recycled water are reported explicitly, but their supply/cleanup hardware, catalyst aging, and gas cleanup remain outside the mass manifest.LIVE SYSTEM INPUTSOpen i beside an input for its source and supported model range.Electrolyzer voltagei1.8VFaradaic efficiencyi0.95Sabatier conversioni0.95Reactor temperaturei623K"
+    },
+    {
+      "name": "equatorial-mobile-low",
+      "site": "equatorial",
+      "tier": "low",
+      "mobile": true,
+      "snapshot": {
+        "site": "equatorial",
+        "targetKgPerDay": 1000,
+        "gridPowerW": 1032274.207179096,
+        "secTotalKWhPerKg": 24.774580972298306,
+        "massThroughputDays": 58.96822621537288,
+        "leverageL": 185.69322333025104,
+        "missions": 1
+      },
+      "hud": "FPS 60 | 16.7 MS | LOW | CALLS 275 | TRIS 273K"
+    },
+    {
+      "name": "polar-mobile-medium",
+      "site": "polar",
+      "tier": "medium",
+      "mobile": true,
+      "snapshot": {
+        "site": "polar",
+        "targetKgPerDay": 1000,
+        "gridPowerW": 117243.733980478,
+        "secTotalKWhPerKg": 2.8138496155314723,
+        "massThroughputDays": 19.51731201941434,
+        "leverageL": 561.0403722145637,
+        "missions": 1
+      },
+      "hud": "FPS 60 | 16.7 MS | MEDIUM | CALLS 305 | TRIS 229K"
+    },
+    {
+      "name": "polar-dark-photo",
+      "site": "polar",
+      "tier": "high",
+      "dark": true,
+      "snapshot": {
+        "site": "polar",
+        "targetKgPerDay": 1000,
+        "gridPowerW": 117243.733980478,
+        "secTotalKWhPerKg": 2.8138496155314723,
+        "massThroughputDays": 19.51731201941434,
+        "leverageL": 561.0403722145637,
+        "missions": 1
+      },
+      "hud": "FPS 51 | 19.6 MS | HIGH | CALLS 693 | TRIS 831K"
+    }
+  ],
+  "errors": []
+}

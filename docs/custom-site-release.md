@@ -6,7 +6,7 @@ qualification or a claim of operational fidelity.
 
 ## Review the workflow
 
-[Watch the 24.8-second 1080p demonstration](media/custom-site-sandbox-demo.mp4).
+[Watch the 45-second 1080p demonstration](media/custom-site-sandbox-demo.mp4).
 The recording uses the production build with no browser chrome and follows the
 same import, evaluation, Planner, and Explore paths exercised by the smoke test.
 
@@ -18,8 +18,8 @@ paces:
 
 The detailed master stages the real seeded design from blank terrain through
 process placement, connections, topology validation, route inspection, and a
-Planner-to-Explore fly-around. The fast cut is derived from the same master at
-two-times speed. Both are silent 1080p H.264 MP4s intended for narration,
+Planner-to-Explore fly-around. The fast cut uses shorter editorial windows from
+the same fresh shots at native speed. Both are silent 1080p H.264 MP4s intended for narration,
 music, or platform-native audio in post. The complete media catalog and
 reproduction commands are recorded in the [video showcase](video-showcase.md).
 
@@ -49,6 +49,7 @@ Build and serve the production app, then provide a local Chrome executable:
 pnpm build
 pnpm --filter @selene-isru/app preview --host 127.0.0.1 --port 4173
 CHROME_PATH=/path/to/chrome pnpm evidence:custom -- http://127.0.0.1:4173/selene-isru/
+pnpm demo:workflow -- http://127.0.0.1:4173/selene-isru/ /tmp/selene-video-candidates
 ```
 
 Use `pnpm smoke:custom -- http://127.0.0.1:4173/selene-isru/` to run the same
@@ -69,23 +70,29 @@ headless SwiftShader does not restore it reliably; that limitation is preserved
 in the machine-readable evidence rather than reported as a passing browser
 check.
 
+The video is now a separate, edited production capture; `evidence:custom`
+refreshes screenshots and performance without overwriting the reviewed video.
+See the [video showcase](video-showcase.md) for the candidate/review gate and
+the current six-asset versus eight-asset staged topology behavior.
+
 ## Measured release sample
 
 The checked-in
 [machine-readable result](performance/custom-site-release.json) was captured
-on 2026-07-29 in Headless Chrome 151 at 1600×900 using SwiftShader. These
+on 2026-09-05 UTC in Chrome 152 at 1600×900 using SwiftShader, during the
+preceding visual milestone (not the frame-stepped video run). These
 figures establish a repeatable regression baseline; they do not predict
 performance on a user's GPU.
 
 | Measure | Result |
 |---|---:|
-| First canvas placement commit | 348.8 ms |
-| Import, validate, evaluate, and render | 513.4 ms |
-| Settled animation-frame median / p95 / max, 90 frames | 16.7 / 16.8 / 16.8 ms |
+| First canvas placement commit | 1,378.6 ms |
+| Import, validate, evaluate, and render | 79.7 ms |
+| Settled animation-frame median / p95 / max, 90 frames | 16.7 / 16.7 / 16.8 ms |
 | Settled reference design | 8 assets / 8 connections |
-| JavaScript heap / DOM nodes | 19.07 MB / 916 |
-| Production JavaScript / CSS | 1,363,316 / 81,032 bytes |
-| Mobile review load under SwiftShader | 7,253.4 ms |
+| JavaScript heap / DOM nodes | 14.01 MB / 916 |
+| Production JavaScript / CSS at that milestone | 1,366,926 / 81,032 bytes |
+| Mobile review load under SwiftShader | 10,015.2 ms |
 
 Placement and import timings are sampled before screencast recording begins.
 Navigation, first WebGL startup, and mobile review are dominated by software

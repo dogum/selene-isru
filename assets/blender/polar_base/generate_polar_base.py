@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import math
 import tempfile
+import sys
 from pathlib import Path
 
 import bpy
@@ -22,6 +23,8 @@ from mathutils import Vector
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[2]
 MODEL_DIR = REPO_ROOT / "packages" / "app" / "src" / "assets" / "models"
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+from refine_equipment import finish_equipment, optimize_static_meshes, rod
 
 
 def reset_scene() -> None:
@@ -100,6 +103,7 @@ def bevel(obj, width, segments=2):
 
 
 def parent_world(obj, parent):
+    bpy.context.view_layer.update()
     world = obj.matrix_world.copy()
     obj.parent = parent
     obj.matrix_world = world
@@ -109,6 +113,7 @@ def empty(name, location=(0, 0, 0), parent=None):
     obj = bpy.data.objects.new(name, None)
     bpy.context.collection.objects.link(obj)
     obj.location = location
+    obj["selene_bind_world_m"] = list(location)
     obj.empty_display_type = "PLAIN_AXES"
     obj.empty_display_size = 0.36
     if parent is not None:
@@ -249,10 +254,15 @@ def build_sublimation_camp():
         sphere(f"Sublimation_TentShell_{index:02d}", (1.72, 1.72, 1.3), (x, y, 1.3), p["white"], parent=tent)
         for rib in range(8):
             angle = rib * math.tau / 8
-            strut(f"Sublimation_Rib_{index:02d}_{rib + 1:02d}", (x + math.cos(angle) * 1.7, y + math.sin(angle) * 1.7, 0.62), (x, y, 2.62), 0.045, p["frame"], tent, vertices=8)
+            for segment in range(6):
+                a, b = segment*1.95/6, (segment+1)*1.95/6
+                start = (math.cos(angle)*1.74*math.sin(a), math.sin(angle)*1.74*math.sin(a), 1.3+1.32*math.cos(a))
+                end = (math.cos(angle)*1.74*math.sin(b), math.sin(angle)*1.74*math.sin(b), 1.3+1.32*math.cos(b))
+                rod(f"Sublimation_Rib_{index:02d}_{rib + 1:02d}_{segment}", start, end, 0.025, p["frame"], tent, vertices=6)
         cylinder(f"Sublimation_Airlock_{index:02d}", 0.52, 1.25, (x, y - 1.92, 0.98), p["body"], vertices=20, rotation=(math.pi / 2, 0, 0), parent=tent)
         torus(f"Sublimation_DoorSeal_{index:02d}", 0.4, 0.055, (x, y - 2.56, 0.98), p["orange"], rotation=(math.pi / 2, 0, 0), parent=tent)
         cylinder(f"Sublimation_Vent_{index:02d}", 0.14, 0.55, (x + 0.8, y, 2.75), p["status"], vertices=14, parent=tent)
+        strut(f"Sublimation_CollectionBranch_{index:02d}", (x, y, 0.75), (x, 2.45, 0.75), 0.09, p["body"], tent)
     box("Sublimation_ManifoldSkid", (3.2, 1.75, 1.15), (1.3, 3.0, 1.02), p["frame"], edge=0.1, parent=root)
     for index in range(3):
         cylinder(f"Sublimation_Condenser_{index + 1:02d}", 0.38, 1.2, (0.35 + index * 0.92, 3.0, 1.95), p["cyan"], vertices=20, parent=root)
@@ -315,6 +325,9 @@ def build_cryo_farm():
         valve = empty(f"PolarCryo_ValvePivot_{index:02d}", (x, y, 4.12), tank)
         torus(f"PolarCryo_Valve_{index:02d}", 0.25, 0.045, (x, y, 4.12), p["orange"], parent=valve)
         box(f"PolarCryo_FillColumn_{index:02d}", (0.15, 0.08, 1.4), (x + 0.96, y - 0.08, 2.05), p["status"], edge=0.025, parent=tank)
+        sy = -1 if y < 0 else 1
+        strut(f"PolarCryo_Branch_{index:02d}", (x, y, 0.9), (x, sy*0.55, 0.9), 0.08, p["body"], tank)
+        cylinder(f"PolarCryo_Flange_{index:02d}", 0.15, 0.07, (x, sy*1.05, 0.9), p["frame"], vertices=16, edge=0.01, rotation=(math.pi/2, 0, 0), parent=tank)
     strut("PolarCryo_HeaderA", (-5.7, -0.55, 0.9), (5.7, -0.55, 0.9), 0.14, p["copper"], root, vertices=16)
     strut("PolarCryo_HeaderB", (-5.7, 0.55, 0.9), (5.7, 0.55, 0.9), 0.14, p["cyan"], root, vertices=16)
     box("PolarCryo_ControlSkid", (2.2, 1.4, 1.5), (0, 0, 1.28), p["frame"], edge=0.12, parent=root)
@@ -411,6 +424,7 @@ ASSETS = {
 
 
 def export_glb(path: Path, *, optimized: bool) -> None:
+    optimize_static_meshes()
     path.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(
         filepath=str(path), export_format="GLB", export_yup=True, export_apply=True,
@@ -429,7 +443,7 @@ def main() -> None:
     for slug, builder in ASSETS.items():
         reset_scene()
         builder()
-        bpy.context.scene["selene_generator_version"] = 1
+        finish_equipment()
         bpy.context.scene["selene_license"] = "CC0-1.0"
         bpy.context.scene.unit_settings.system = "METRIC"
         bpy.context.scene.unit_settings.scale_length = 1.0

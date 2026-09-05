@@ -74,18 +74,19 @@ and known limits are recorded in the
 
 ## Cinematic demonstrations
 
-The repository includes four production-app videos: a branded simulator tour,
-the release-evidence workflow, a one-minute Custom Site story, and a fast
-30-second companion. All are silent 1080p H.264 MP4s so narration, music, or
+The repository includes five production-app videos: a branded simulator tour,
+the release-evidence workflow, a one-minute Custom Site story, its native-speed
+30-second companion, and a deeper engineering analysis. All are silent 1080p H.264 MP4s so narration, music, or
 platform-native audio can be added in post.
 
 | Product cinematic | Detailed Custom Site cinematic |
 |---|---|
-| [![Equatorial lunar industry overview](docs/screenshots/equatorial-assets/base-overview-after-desktop.png)](docs/media/selene-isru-cinematic-demo.mp4) | [![Connected Custom Site in Planner](docs/screenshots/custom-site/reference-planner-desktop.png)](docs/media/custom-site-cinematic-60s.mp4) |
-| [Watch the 31.6-second product tour](docs/media/selene-isru-cinematic-demo.mp4) | [Watch the 60-second detailed story](docs/media/custom-site-cinematic-60s.mp4) |
+| [![Equatorial lunar industry overview](docs/screenshots/video-release/product-poster.png)](docs/media/selene-isru-cinematic-demo.mp4) | [![Connected Custom Site in Explore](docs/screenshots/video-release/custom-poster.png)](docs/media/custom-site-cinematic-60s.mp4) |
+| [Watch the 32-second product tour](docs/media/selene-isru-cinematic-demo.mp4) | [Watch the 60-second detailed story](docs/media/custom-site-cinematic-60s.mp4) |
 
-Also available: the [30-second fast Custom Site cut](docs/media/custom-site-cinematic-30s.mp4)
-and the [24.8-second release workflow](docs/media/custom-site-sandbox-demo.mp4).
+Also available: the [30-second short Custom Site cut](docs/media/custom-site-cinematic-30s.mp4),
+the [45-second release workflow](docs/media/custom-site-sandbox-demo.mp4),
+and the [86-second engineering analysis](docs/media/analysis-sprint-demo.mp4).
 See the [video showcase](docs/video-showcase.md) for storyboards, intended uses,
 and reproducible capture commands.
 
@@ -210,16 +211,16 @@ pnpm build                   # engine build + app production build
 pnpm asset:mre               # regenerate the MRE .blend and optimized GLB
 pnpm asset:equatorial        # regenerate the remaining equatorial equipment library
 pnpm asset:polar             # regenerate the polar equipment library
-pnpm demo:analysis -- http://localhost:5173
-                             # record the short engineering-analysis browser tour
-pnpm demo:cinematic -- http://localhost:4173/selene-isru/ docs/media/selene-isru-cinematic-demo.mp4
+pnpm demo:analysis -- http://localhost:4173/selene-isru/ /tmp/selene-video-candidates
+                             # record the 86-second engineering-analysis tour
+pnpm demo:cinematic -- http://localhost:4173/selene-isru/ /tmp/selene-video-candidates
                              # record the scripted 32 s / 1080p cinematic product tour
 pnpm demo:custom-cinematic -- http://localhost:4173/selene-isru/ \
-  docs/media/custom-site-cinematic-60s.mp4 docs/media/custom-site-cinematic-30s.mp4
+  /tmp/selene-video-candidates
                              # record the detailed Custom Site story and fast cut
 pnpm evidence:custom -- http://localhost:4173/selene-isru/
-                             # smoke-test Custom Site and regenerate screenshots,
-                             # the short demo, and performance evidence
+                             # smoke-test Custom Site and regenerate screenshots
+                             # and performance evidence (videos are separate)
 pnpm smoke:custom -- http://localhost:4173/selene-isru/
                              # run the same browser workflow without writing evidence
 

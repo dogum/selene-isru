@@ -269,7 +269,10 @@ export class EquatorialDiorama implements Diorama {
         radiusZ: TRENCH_RZ,
         y: 0.09,
         segments: 32 + detail * 12,
-        opacity: 0.36
+        trackSpacing: 2.3,
+        treadWidth: 0.38,
+        opacity: 0.36,
+        sampleHeight: this.sampleTerrain
       })
     );
     const haulScuff = makeScuffedRegolith(34, 4.6, 44, 0.42);
@@ -288,7 +291,9 @@ export class EquatorialDiorama implements Diorama {
         center: new THREE.Vector3(-24, 0.12, 2),
         radiusX: 46,
         radiusZ: 24,
-        seed: 24
+        seed: 24,
+        sampleHeight: this.sampleTerrain,
+        exclude: (x, z) => grades.some(grade => Math.hypot(x-grade.position.x, z-grade.position.z) < grade.radius-1)
       })
     );
 
