@@ -93,13 +93,13 @@ All capture scripts need a Chrome/Chromium binary and resolve it the same way:
 install locations. They differ in what they point at:
 
 - **Production preview** (pass `http://localhost:4173/selene-isru/`): `capture-cinematic-demo.mjs`,
-  `capture-custom-site-cinematic.mjs`, `capture-custom-site-evidence.mjs` —
-  i.e. `demo:cinematic`, `demo:custom-cinematic`, `evidence:custom`,
-  `smoke:custom`.
+  `capture-custom-site-cinematic.mjs`, `capture-analysis-demo.mjs`,
+  `capture-video-set.mjs`, `capture-custom-site-evidence.mjs` — all video and
+  Custom Site evidence/smoke commands.
 - **Dev server** (`http://localhost:5173` by default): `capture-screens.mjs`
-  and `capture-analysis-demo.mjs` — i.e. `screenshots` and `demo:analysis`.
+  — i.e. `screenshots`.
 
-All five wait for `networkidle0` before capturing. That is deliberate — it
+Capture scripts wait for `networkidle0` before capturing. That is deliberate — it
 keeps a capture from catching a half-built scene — but it never settles under
 some headless Chrome builds even when no requests are outstanding, so a capture
 can time out in a container while the app itself loads fine. Check with a
@@ -108,21 +108,24 @@ can time out in a container while the app itself loads fine. Check with a
 **Video capture also needs `ffmpeg` and `ffprobe`**, which the Toolchain section
 above does not install:
 
-- `capture-custom-site-cinematic.mjs` honours `FFMPEG_PATH` / `FFPROBE_PATH`.
-- `capture-cinematic-demo.mjs` and `capture-custom-site-evidence.mjs` invoke
-  bare `ffmpeg`/`ffprobe`, so both must be on `PATH`.
+- All videos use `video-capture.mjs`, which checks the tools before capture
+  and honours `FFMPEG_PATH` / `FFPROBE_PATH` (otherwise uses `PATH`).
 
-`evidence:custom` reaches its video step **last** — a missing binary fails after
-the screenshots and `docs/performance/custom-site-release.json` are already
-written, leaving a half-regenerated evidence set. `smoke:custom` (`--verify-only`)
-skips screenshots, perf JSON, and video entirely, so it needs no `ffmpeg`.
+`evidence:custom` writes screenshots and performance evidence only. Video is a
+separate candidate-first workflow; it must never replace released media before
+technical, complete-timeline and playback review. `smoke:custom` writes no
+evidence. Neither command needs `ffmpeg`.
 
 ```bash
 pnpm screenshots               # docs/screenshots against a dev server
 pnpm smoke:custom -- <url>     # Custom Site browser workflow, writes nothing
-pnpm evidence:custom -- <url>  # same workflow + regenerates screenshots/perf/demo
-pnpm demo:cinematic -- <url> <out.mp4>
-pnpm demo:custom-cinematic -- <url> <60s.mp4> <30s.mp4>
+pnpm evidence:custom -- <url>  # same workflow + regenerates screenshots/perf
+pnpm demo:cinematic -- <url> <candidate-directory>
+pnpm demo:custom-cinematic -- <url> <candidate-directory>
+pnpm demo:workflow -- <url> <candidate-directory>
+pnpm demo:analysis -- <url> <candidate-directory>
+pnpm demo:videos -- <url> <candidate-directory>
+pnpm verify:videos -- <candidate-directory> <review-directory>
 pnpm asset:mre                 # regenerate hero assets (each requires Blender on PATH)
 pnpm asset:equatorial
 pnpm asset:polar

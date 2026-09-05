@@ -71,15 +71,19 @@ loading through an unobtrusive live status.
 
 ## Reproducible review artifact
 
-With the dev server running, record the browser-driven tour with:
+With the production preview running, record a new candidate with:
 
 ```bash
-pnpm demo:analysis -- http://localhost:5173
+pnpm demo:analysis -- http://localhost:4173/selene-isru/ /tmp/selene-video-candidates
 ```
 
-The checked-in output is [analysis-sprint-demo.webm](media/analysis-sprint-demo.webm).
-It covers selected MRE flows, Pareto, uncertainty, the engineering report, and
-the bounded Mission Brief recommendation in about 18 seconds.
+The current output is [analysis-sprint-demo.mp4](media/analysis-sprint-demo.mp4),
+freshly recorded at native 1080p/30 fps after the visual milestone. Its 86-second
+edit covers selected MRE flows, energy, scenarios, Pareto, the current
+SENSITIVITY tab, the engineering report, and a bounded Mission Brief search.
+See the [video showcase](video-showcase.md) for review requirements and model
+disclosures. The following sprint-era performance figures are historical, not
+measurements of this regenerated video set.
 
 ## Build and performance check
 

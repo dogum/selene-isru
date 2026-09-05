@@ -14,6 +14,7 @@ type CustomDemoStage = 0 | 1 | 2 | 3;
 interface SeleneDemoBridge {
   ready: () => boolean;
   setCameraPose: (position: DemoVector3, target: DemoVector3) => void;
+  setCaptureTime: (seconds: number | null) => void;
   setTargetKgPerDay: (value: number) => void;
   setCustomStage: (stage: CustomDemoStage) => void;
   setCustomViewMode: (viewMode: SiteViewMode) => void;
@@ -202,6 +203,7 @@ export function Scene(): React.JSX.Element {
       ? {
           ready: () => viewer.isReady(),
           setCameraPose: (position, target) => viewer.setCameraPose(position, target),
+          setCaptureTime: (seconds) => viewer.setCaptureTime(seconds),
           setTargetKgPerDay: (value) => useStore.getState().setParam("targetKgPerDay", value),
           setCustomStage: (stage) => {
             const state = useStore.getState();

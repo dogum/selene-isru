@@ -1,0 +1,1107 @@
+{
+  "schema": "selene-video-capture-scenarios",
+  "version": 1,
+  "baseCommit": "42e96c6bbc0a8d029b5fde26dddd27eb7a2bb381",
+  "sourceState": "Production build of the base commit plus the opt-in visual-clock changes committed with this evidence. Engineering code and GLBs unchanged.",
+  "notes": [
+    "Snapshots are taken at the end of each source shot; the live-target shot begins at 1000 and changes to 10000 kg/day at frame 60.",
+    "Short-cut edit durations differ from source-shot durations; source shots are shared with the extended cut.",
+    "run is the live simulator case; custom is the separate Custom Site screening graph."
+  ],
+  "videos": [
+    {
+      "name": "selene-isru-cinematic-demo.mp4",
+      "durationSeconds": 32,
+      "browser": "Chrome/152.0.7977.77",
+      "errors": [],
+      "edit": [
+        {
+          "id": "equatorial",
+          "seconds": 5
+        },
+        {
+          "id": "mre-detail",
+          "seconds": 5
+        },
+        {
+          "id": "live-target",
+          "seconds": 6
+        },
+        {
+          "id": "scaled-case",
+          "seconds": 4
+        },
+        {
+          "id": "polar",
+          "seconds": 6
+        },
+        {
+          "id": "polar-close",
+          "seconds": 6
+        }
+      ],
+      "shotMasters": [
+        {
+          "id": "equatorial",
+          "seconds": 5,
+          "title": "SELENE-ISRU · From regolith to oxygen",
+          "subtitle": "Equatorial concept · 1,000 kg/day product target · coupled process, power and logistics",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "mre-detail",
+          "seconds": 5,
+          "title": "A coupled industrial process",
+          "subtitle": "Molten-regolith electrolysis · feed, thermal state and product paths follow the model",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "live-target",
+          "seconds": 6,
+          "title": "Change the target. Recompute the trade.",
+          "subtitle": "Scripted input change: 1,000 → 10,000 kg/day · displayed values are engine outputs",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 10000,
+            "gridPowerW": 10300291.300456462,
+            "secTotalKWhPerKg": 24.72069912109551,
+            "massThroughputDays": 57.550873901369386,
+            "leverageL": 190.2664418053164,
+            "missions": 7
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "scaled-case",
+          "seconds": 4,
+          "title": "10,000 kg/day target · a different infrastructure case",
+          "subtitle": "Continuously sized conceptual equipment is not a vendor capacity guarantee",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 10000,
+            "gridPowerW": 10300291.300456462,
+            "secTotalKWhPerKg": 24.72069912109551,
+            "massThroughputDays": 57.550873901369386,
+            "leverageL": 190.2664418053164,
+            "missions": 7
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "polar",
+          "seconds": 6,
+          "title": "At the pole · a different resource and energy problem",
+          "subtitle": "Separate polar case · 1,000 kg/day water target · sunlit rim and shadowed floor",
+          "run": {
+            "site": "polar",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 117243.733980478,
+            "secTotalKWhPerKg": 2.8138496155314723,
+            "massThroughputDays": 19.51731201941434,
+            "leverageL": 561.0403722145637,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "polar-close",
+          "seconds": 6,
+          "title": "Explore the lunar trade space",
+          "subtitle": "Sublimation and water recovery · open source at dogum.github.io/selene-isru",
+          "run": {
+            "site": "polar",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 117243.733980478,
+            "secTotalKWhPerKg": 2.8138496155314723,
+            "massThroughputDays": 19.51731201941434,
+            "leverageL": 561.0403722145637,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        }
+      ]
+    },
+    {
+      "name": "custom-site-cinematic-60s.mp4",
+      "durationSeconds": 60,
+      "browser": "Chrome/152.0.7977.77",
+      "errors": [],
+      "edit": [
+        {
+          "id": "blank",
+          "seconds": 6
+        },
+        {
+          "id": "process",
+          "seconds": 7
+        },
+        {
+          "id": "routes",
+          "seconds": 7
+        },
+        {
+          "id": "complete",
+          "seconds": 8
+        },
+        {
+          "id": "route-inspector",
+          "seconds": 10
+        },
+        {
+          "id": "explore",
+          "seconds": 14
+        },
+        {
+          "id": "share",
+          "seconds": 8
+        }
+      ],
+      "shotMasters": [
+        {
+          "id": "blank",
+          "seconds": 6,
+          "title": "Start with an honest zero.",
+          "subtitle": "Staged reference design · blank topology means no achievable output",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "process",
+          "seconds": 7,
+          "title": "Place the process core.",
+          "subtitle": "Excavation → hauling → MRE · staged assembly, not drag-and-drop footage",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 3,
+            "connections": 2,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "routes",
+          "seconds": 7,
+          "title": "Connect the required process graph.",
+          "subtitle": "Six assets, five routes · this powered core now reaches the modeled target",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 6,
+            "connections": 5,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "complete",
+          "seconds": 8,
+          "title": "Add landing and habitat infrastructure.",
+          "subtitle": "Eight assets, eight routes · 1,000 kg/day achievable in the screening model",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "route-inspector",
+          "seconds": 10,
+          "title": "Inspect the route, not just the line.",
+          "subtitle": "Length, cable mass and loss · assumptions and exclusions stay visible",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "explore",
+          "seconds": 14,
+          "title": "The same design. A different view.",
+          "subtitle": "Explore preserves the saved graph and operating state",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "share",
+          "seconds": 8,
+          "title": "Design. Inspect. Compare. Share.",
+          "subtitle": "SELENE-ISRU · dogum.github.io/selene-isru",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        }
+      ]
+    },
+    {
+      "name": "custom-site-cinematic-30s.mp4",
+      "durationSeconds": 30,
+      "browser": "Chrome/152.0.7977.77",
+      "errors": [],
+      "edit": [
+        {
+          "id": "blank",
+          "seconds": 2
+        },
+        {
+          "id": "process",
+          "seconds": 3
+        },
+        {
+          "id": "routes",
+          "seconds": 3
+        },
+        {
+          "id": "complete",
+          "seconds": 5
+        },
+        {
+          "id": "route-inspector",
+          "seconds": 4
+        },
+        {
+          "id": "explore",
+          "seconds": 8
+        },
+        {
+          "id": "share",
+          "seconds": 5
+        }
+      ],
+      "shotMasters": [
+        {
+          "id": "blank",
+          "seconds": 6,
+          "title": "Start with an honest zero.",
+          "subtitle": "Staged reference design · blank topology means no achievable output",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "process",
+          "seconds": 7,
+          "title": "Place the process core.",
+          "subtitle": "Excavation → hauling → MRE · staged assembly, not drag-and-drop footage",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 3,
+            "connections": 2,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "routes",
+          "seconds": 7,
+          "title": "Connect the required process graph.",
+          "subtitle": "Six assets, five routes · this powered core now reaches the modeled target",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 6,
+            "connections": 5,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "complete",
+          "seconds": 8,
+          "title": "Add landing and habitat infrastructure.",
+          "subtitle": "Eight assets, eight routes · 1,000 kg/day achievable in the screening model",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "route-inspector",
+          "seconds": 10,
+          "title": "Inspect the route, not just the line.",
+          "subtitle": "Length, cable mass and loss · assumptions and exclusions stay visible",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "explore",
+          "seconds": 14,
+          "title": "The same design. A different view.",
+          "subtitle": "Explore preserves the saved graph and operating state",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        },
+        {
+          "id": "share",
+          "seconds": 8,
+          "title": "Design. Inspect. Compare. Share.",
+          "subtitle": "SELENE-ISRU · dogum.github.io/selene-isru",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041496.481095218,
+            "secTotalKWhPerKg": 24.995915546285232,
+            "massThroughputDays": 59.25631291130159,
+            "leverageL": 184.7904377106726,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 11.418478445046869,
+            "routeLoadW": 9222.273916122023
+          },
+          "loading": null
+        }
+      ]
+    },
+    {
+      "name": "custom-site-sandbox-demo.mp4",
+      "durationSeconds": 45,
+      "browser": "Chrome/152.0.7977.77",
+      "errors": [],
+      "edit": [
+        {
+          "id": "workflow-blank",
+          "seconds": 4
+        },
+        {
+          "id": "workflow-placement",
+          "seconds": 5
+        },
+        {
+          "id": "workflow-preview",
+          "seconds": 6
+        },
+        {
+          "id": "workflow-accepted",
+          "seconds": 7
+        },
+        {
+          "id": "workflow-route",
+          "seconds": 6
+        },
+        {
+          "id": "workflow-explore",
+          "seconds": 7
+        },
+        {
+          "id": "workflow-saved",
+          "seconds": 10
+        }
+      ],
+      "shotMasters": [
+        {
+          "id": "workflow-blank",
+          "seconds": 4,
+          "title": "Custom Site · real desktop workflow",
+          "subtitle": "Edited capture · no waiting or loading footage · begin with a blank design",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "workflow-placement",
+          "seconds": 5,
+          "title": "Place an excavation rover on the canvas.",
+          "subtitle": "The catalog footprint becomes a selectable design asset",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 1,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "workflow-preview",
+          "seconds": 6,
+          "title": "Review a versioned project before accepting it.",
+          "subtitle": "Import preview · Equatorial First Camp · replacement requires explicit acceptance",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 1,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "workflow-accepted",
+          "seconds": 7,
+          "title": "Accept the project. Inspect its evaluated state.",
+          "subtitle": "Eight assets and eight connections · planned and achievable outputs remain distinct",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041988.6290900223,
+            "secTotalKWhPerKg": 25.007727098160537,
+            "massThroughputDays": 59.27168675904865,
+            "leverageL": 184.74250689901834,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 12.027886347983172,
+            "routeLoadW": 9714.421910926354
+          },
+          "loading": null
+        },
+        {
+          "id": "workflow-route",
+          "seconds": 6,
+          "title": "Read the power-route screening assumptions.",
+          "subtitle": "Spatial route consequences are disclosed, not treated as detailed cable design",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041988.6290900223,
+            "secTotalKWhPerKg": 25.007727098160537,
+            "massThroughputDays": 59.27168675904865,
+            "leverageL": 184.74250689901834,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 12.027886347983172,
+            "routeLoadW": 9714.421910926354
+          },
+          "loading": null
+        },
+        {
+          "id": "workflow-explore",
+          "seconds": 7,
+          "title": "Switch to Explore without changing the design.",
+          "subtitle": "The saved assets, routes and evaluation remain the source of truth",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041988.6290900223,
+            "secTotalKWhPerKg": 25.007727098160537,
+            "massThroughputDays": 59.27168675904865,
+            "leverageL": 184.74250689901834,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 12.027886347983172,
+            "routeLoadW": 9714.421910926354
+          },
+          "loading": null
+        },
+        {
+          "id": "workflow-saved",
+          "seconds": 10,
+          "title": "Save to the study library. Export the design.",
+          "subtitle": "Actual JSON download checked: eight assets, eight routes · ready for reproducible review",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1041988.6290900223,
+            "secTotalKWhPerKg": 25.007727098160537,
+            "massThroughputDays": 59.27168675904865,
+            "leverageL": 184.74250689901834,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 8,
+            "connections": 8,
+            "topologyValid": true,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 1000,
+            "cableMassKg": 12.027886347983172,
+            "routeLoadW": 9714.421910926354
+          },
+          "loading": null
+        }
+      ]
+    },
+    {
+      "name": "analysis-sprint-demo.mp4",
+      "durationSeconds": 86,
+      "browser": "Chrome/152.0.7977.77",
+      "errors": [],
+      "edit": [
+        {
+          "id": "analysis-subsystem",
+          "seconds": 8
+        },
+        {
+          "id": "analysis-energy",
+          "seconds": 8
+        },
+        {
+          "id": "analysis-scenarios",
+          "seconds": 8
+        },
+        {
+          "id": "analysis-pareto",
+          "seconds": 12
+        },
+        {
+          "id": "analysis-sensitivity",
+          "seconds": 12
+        },
+        {
+          "id": "analysis-report",
+          "seconds": 10
+        },
+        {
+          "id": "analysis-brief-inputs",
+          "seconds": 8
+        },
+        {
+          "id": "analysis-recommendation",
+          "seconds": 12
+        },
+        {
+          "id": "analysis-limits",
+          "seconds": 8
+        }
+      ],
+      "shotMasters": [
+        {
+          "id": "analysis-subsystem",
+          "seconds": 8,
+          "title": "Engineering analysis · begin with a subsystem",
+          "subtitle": "Default equatorial case · live inputs, outputs and model maturity",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-energy",
+          "seconds": 8,
+          "title": "Inspect the energy breakdown.",
+          "subtitle": "Follow the computed process demand before comparing architectures",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-scenarios",
+          "seconds": 8,
+          "title": "Keep scenarios explicit and reproducible.",
+          "subtitle": "The scenario library records assumptions and supports named comparisons",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-pareto",
+          "seconds": 12,
+          "title": "Explore a bounded Pareto grid.",
+          "subtitle": "Non-dominated points depend on the chosen axes, limits and model",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-sensitivity",
+          "seconds": 12,
+          "title": "Test sensitivity to illustrative input spreads.",
+          "subtitle": "256 deterministic samples · not a calibrated probability of mission success",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-report",
+          "seconds": 10,
+          "title": "Review the engineering snapshot.",
+          "subtitle": "Inputs, computed outputs, warnings and a reproducibility link",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-brief-inputs",
+          "seconds": 8,
+          "title": "State the design-search constraints first.",
+          "subtitle": "A finite model search · not a continuous global optimizer",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-recommendation",
+          "seconds": 12,
+          "title": "Read the bounded recommendation and its caveats.",
+          "subtitle": "Search does not change the live case until an explicit Apply action",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        },
+        {
+          "id": "analysis-limits",
+          "seconds": 8,
+          "title": "Model limits belong in the conclusion.",
+          "subtitle": "Conceptual systems comparison · not flight, safety, hardware or mission-readiness validation",
+          "run": {
+            "site": "equatorial",
+            "targetKgPerDay": 1000,
+            "gridPowerW": 1032274.207179096,
+            "secTotalKWhPerKg": 24.774580972298306,
+            "massThroughputDays": 58.96822621537288,
+            "leverageL": 185.69322333025104,
+            "missions": 1
+          },
+          "custom": {
+            "assets": 0,
+            "connections": 0,
+            "topologyValid": false,
+            "plannedTargetKgPerDay": 1000,
+            "achievableOutputKgPerDay": 0,
+            "cableMassKg": 0,
+            "routeLoadW": 0
+          },
+          "loading": null
+        }
+      ]
+    }
+  ]
+}

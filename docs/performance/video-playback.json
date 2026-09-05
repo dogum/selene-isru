@@ -1,0 +1,60 @@
+{
+  "browser": "Chrome/152.0.7977.77",
+  "results": [
+    {
+      "name": "analysis-sprint-demo.mp4",
+      "duration": 86,
+      "width": 1920,
+      "height": 1080,
+      "ended": true,
+      "currentTime": 86,
+      "playbackRate": 1,
+      "totalVideoFrames": 2580,
+      "droppedVideoFrames": 4
+    },
+    {
+      "name": "custom-site-cinematic-30s.mp4",
+      "duration": 30,
+      "width": 1920,
+      "height": 1080,
+      "ended": true,
+      "currentTime": 30,
+      "playbackRate": 1,
+      "totalVideoFrames": 900,
+      "droppedVideoFrames": 0
+    },
+    {
+      "name": "custom-site-cinematic-60s.mp4",
+      "duration": 60,
+      "width": 1920,
+      "height": 1080,
+      "ended": true,
+      "currentTime": 60,
+      "playbackRate": 1,
+      "totalVideoFrames": 1800,
+      "droppedVideoFrames": 0
+    },
+    {
+      "name": "custom-site-sandbox-demo.mp4",
+      "duration": 45,
+      "width": 1920,
+      "height": 1080,
+      "ended": true,
+      "currentTime": 45,
+      "playbackRate": 1,
+      "totalVideoFrames": 1350,
+      "droppedVideoFrames": 0
+    },
+    {
+      "name": "selene-isru-cinematic-demo.mp4",
+      "duration": 32,
+      "width": 1920,
+      "height": 1080,
+      "ended": true,
+      "currentTime": 32,
+      "playbackRate": 1,
+      "totalVideoFrames": 960,
+      "droppedVideoFrames": 0
+    }
+  ]
+}

@@ -216,6 +216,7 @@ export class Viewer {
   private pulses: Pulse[] = [];
   private clock = new THREE.Clock();
   private elapsed = 0;
+  private captureTime: number | null = null;
   private running = false;
   private needsRender = true;
   private reducedMotion: boolean;
@@ -713,6 +714,32 @@ export class Viewer {
     this.lastInputAt = performance.now();
     this.needsRender = true;
     this.wake();
+  }
+
+  /** Opt-in capture clock: advance the real scene, never the engineering model.
+   * Null restores normal interactive rendering. No wall-clock frame skipping.
+   */
+  setCaptureTime(seconds: number | null): void {
+    if (seconds !== null && (!Number.isFinite(seconds) || seconds < 0)) {
+      throw new Error("Capture time must be a finite nonnegative number");
+    }
+    if (seconds === null) {
+      this.captureTime = null;
+      this.wake();
+      return;
+    }
+    const dt = this.captureTime === null ? 0 : Math.min(0.1, Math.max(0, seconds - this.captureTime));
+    this.stop();
+    this.captureTime = seconds;
+    this.elapsed = seconds;
+    this.tweens.update(performance.now());
+    this.diorama?.tick(dt, seconds, this.reducedMotion);
+    this.updatePulses();
+    this.controls.update();
+    this.updateLearningOverlay();
+    this.updateCustomLabels();
+    this.post.render(dt);
+    this.needsRender = false;
   }
 
   /** True once every authored asset for the active site has loaded. */
@@ -1456,6 +1483,7 @@ export class Viewer {
 
   private wake(): void {
     this.needsRender = true;
+    if (this.captureTime !== null) return;
     if (!this.running && !this.disposed) {
       this.running = true;
       this.clock.start();

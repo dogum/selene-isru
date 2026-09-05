@@ -1,5 +1,6 @@
 // Runs the Custom Site browser smoke flow and, unless --verify-only is used,
-// captures release screenshots, a short MP4, and bounded performance evidence.
+// captures release screenshots and bounded performance evidence.
+// Videos use demo:workflow's separately reviewed candidate pipeline.
 //
 // Usage:
 //   CHROME_PATH=/path/to/chrome node scripts/capture-custom-site-evidence.mjs \
@@ -12,21 +13,15 @@ import {
   stat,
   writeFile
 } from "node:fs/promises";
-import { dirname, extname, resolve } from "node:path";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { dirname, resolve } from "node:path";
 import puppeteer from "puppeteer-core";
 
-const execFileAsync = promisify(execFile);
 const rawArgs = process.argv.slice(2).filter((argument) => argument !== "--");
 const verifyOnly = rawArgs.includes("--verify-only");
 const positional = rawArgs.filter((argument) => !argument.startsWith("--"));
 const base = positional[0] ?? "http://localhost:4173/selene-isru/";
 const screenshotDir = resolve("docs/screenshots/custom-site");
 const evidencePath = resolve("docs/performance/custom-site-release.json");
-const videoPath = resolve("docs/media/custom-site-sandbox-demo.mp4");
-const rawVideoPath =
-  videoPath.slice(0, -extname(videoPath).length) + ".capture.webm";
 const downloadDir = resolve(`/tmp/selene-custom-site-download-${process.pid}`);
 const pause = (ms) =>
   new Promise((resolvePause) => setTimeout(resolvePause, ms));
@@ -120,7 +115,6 @@ const executablePath = await firstExecutable([
 if (!verifyOnly) {
   await mkdir(screenshotDir, { recursive: true });
   await mkdir(dirname(evidencePath), { recursive: true });
-  await mkdir(dirname(videoPath), { recursive: true });
 }
 await mkdir(downloadDir, { recursive: true });
 
@@ -186,12 +180,10 @@ if (!verifyOnly) {
   });
 }
 
-let recorder = null;
-
 let placementMs;
 let importMs;
 const contextRecoveryMs = null;
-try {
+{
   await pause(900);
   const placementStart = performance.now();
   const armed = await page.$$eval(".custom-catalog-card", (cards) => {
@@ -233,13 +225,6 @@ try {
     () => document.querySelectorAll(".custom-scene-label").length >= 8
   );
   importMs = performance.now() - importStart;
-  if (!verifyOnly) {
-    recorder = await page.screencast({
-      path: rawVideoPath,
-      format: "webm",
-      scale: 1
-    });
-  }
   await pause(2200);
 
   if (!verifyOnly) {
@@ -275,10 +260,6 @@ try {
     throw new Error("The browser export did not produce a JSON file");
   }
 
-} finally {
-  if (recorder !== null) {
-    await recorder.stop();
-  }
 }
 
 console.log("custom-site flow complete; sampling settled frame timing");
@@ -334,7 +315,7 @@ const evidence = {
     viewport: "1600x900",
     renderer: "headless Chrome with SwiftShader WebGL",
     note:
-      "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Placement and import timings are sampled before screencast recording starts."
+      "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Video capture is a separate reviewed workflow."
   },
   timingsMs: {
     navigation: Number(navigationMs.toFixed(1)),
@@ -375,42 +356,7 @@ const evidence = {
 
 if (!verifyOnly) {
   await writeFile(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
-  const { stdout: packetOutput } = await execFileAsync("ffprobe", [
-    "-v",
-    "error",
-    "-select_streams",
-    "v:0",
-    "-show_entries",
-    "packet=pts_time",
-    "-of",
-    "csv=p=0",
-    rawVideoPath
-  ]);
-  const packetTimes = packetOutput
-    .trim()
-    .split(/\r?\n/)
-    .map(Number)
-    .filter(Number.isFinite);
-  const duration = (packetTimes.at(-1) ?? 0) + 1 / 25;
-  const fadeOutStart = Math.max(0, duration - 0.65);
-  await execFileAsync("ffmpeg", [
-    "-y",
-    "-i",
-    rawVideoPath,
-    "-vf",
-    `scale=1920:1080:flags=lanczos,fade=t=in:st=0:d=0.35,fade=t=out:st=${fadeOutStart.toFixed(3)}:d=0.6,format=yuv420p`,
-    "-an",
-    "-c:v",
-    "libx264",
-    "-preset",
-    "slow",
-    "-crf",
-    "20",
-    "-movflags",
-    "+faststart",
-    videoPath
-  ]);
-  await rm(rawVideoPath, { force: true });
+  console.log("Release screenshots and performance written. Use pnpm demo:workflow to stage a reviewed video replacement.");
 }
 
 console.log(JSON.stringify(evidence, null, 2));
