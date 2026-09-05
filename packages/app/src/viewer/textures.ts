@@ -59,10 +59,12 @@ export function makeProceduralEnvironment(
   const ctx = canvas.getContext("2d");
   if (ctx !== null) {
     const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    sky.addColorStop(0, "#020407");
-    sky.addColorStop(0.42, "#060a12");
-    sky.addColorStop(0.72, site === "equatorial" ? "#101827" : "#05070c");
-    sky.addColorStop(1, "#010205");
+    // Black upper hemisphere, neutral ground return below the horizon. This
+    // is a restrained reflection proxy, not an atmospheric blue sky dome.
+    sky.addColorStop(0, "#010101");
+    sky.addColorStop(0.49, "#020202");
+    sky.addColorStop(0.52, site === "equatorial" ? "#66625d" : "#383a3b");
+    sky.addColorStop(1, site === "equatorial" ? "#343230" : "#191a1b");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -105,13 +107,12 @@ function makeRegolithTextures(): MaterialTextureSet {
   const height = makeHeightField(192, 1969, 9.5, 5);
   return makeSet(
     height,
-    (h, n, x, y) => {
+    (h, n) => {
       const base = new THREE.Color(SCENE_COLORS.regolith).lerp(new THREE.Color(0x5f5b55), 0.28);
       const dark = new THREE.Color(SCENE_COLORS.regolithDark);
       const c = dark.lerp(base, 0.56 + h * 0.36 + n * 0.08);
-      if (((x * 37 + y * 17) & 31) === 0) {
-        c.offsetHSL(0, 0, 0.08);
-      }
+      // Grain is stochastic: a modular pixel pattern made diagonal dotted
+      // lines across every terrain tile under grazing light.
       return c;
     },
     (h, n) => 0.84 + h * 0.13 + n * 0.03,
@@ -168,7 +169,7 @@ function makeSet(
   const map = imageTexture(size, THREE.SRGBColorSpace, repeat, (data, x, y, i) => {
     const h = height[i];
     const n = noise[i] - 0.5;
-    const color = albedo(h, n, x, y);
+    const color = albedo(h, n, x, y).convertLinearToSRGB();
     data[i * 4] = Math.round(color.r * 255);
     data[i * 4 + 1] = Math.round(color.g * 255);
     data[i * 4 + 2] = Math.round(color.b * 255);
@@ -179,7 +180,8 @@ function makeSet(
     const r = height[y * size + ((x + 1) % size)];
     const d = height[((y - 1 + size) % size) * size + x];
     const u = height[((y + 1) % size) * size + x];
-    const normal = new THREE.Vector3((l - r) * normalStrength, 2, (d - u) * normalStrength).normalize();
+    // Tangent space: R/U and G/V are slopes, B/Z points out of the surface.
+    const normal = new THREE.Vector3((l - r) * normalStrength, (d - u) * normalStrength, 2).normalize();
     data[i * 4] = Math.round((normal.x * 0.5 + 0.5) * 255);
     data[i * 4 + 1] = Math.round((normal.y * 0.5 + 0.5) * 255);
     data[i * 4 + 2] = Math.round((normal.z * 0.5 + 0.5) * 255);

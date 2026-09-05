@@ -1,58 +1,58 @@
 {
   "excavator": {
-    "blendBytes": 155664,
-    "rawGlbBytes": 671756,
-    "optimizedGlbBytes": 376792,
-    "meshObjects": 92,
-    "vertices": 6384,
-    "triangles": 12400
+    "blendBytes": 173837,
+    "rawGlbBytes": 446744,
+    "optimizedGlbBytes": 240868,
+    "meshObjects": 97,
+    "vertices": 6760,
+    "triangles": 13132
   },
   "hauler": {
-    "blendBytes": 153730,
-    "rawGlbBytes": 616868,
-    "optimizedGlbBytes": 337964,
-    "meshObjects": 82,
-    "vertices": 5482,
-    "triangles": 10636
+    "blendBytes": 166300,
+    "rawGlbBytes": 391480,
+    "optimizedGlbBytes": 206784,
+    "meshObjects": 88,
+    "vertices": 5818,
+    "triangles": 11284
   },
   "casting-yard": {
-    "blendBytes": 141808,
-    "rawGlbBytes": 190892,
-    "optimizedGlbBytes": 129828,
-    "meshObjects": 33,
-    "vertices": 2936,
-    "triangles": 5740
+    "blendBytes": 157485,
+    "rawGlbBytes": 221448,
+    "optimizedGlbBytes": 130188,
+    "meshObjects": 35,
+    "vertices": 3360,
+    "triangles": 6568
   },
   "cryogenic-farm": {
-    "blendBytes": 212494,
-    "rawGlbBytes": 966600,
-    "optimizedGlbBytes": 533936,
-    "meshObjects": 106,
-    "vertices": 20384,
-    "triangles": 40440
+    "blendBytes": 233838,
+    "rawGlbBytes": 1078008,
+    "optimizedGlbBytes": 521776,
+    "meshObjects": 132,
+    "vertices": 18472,
+    "triangles": 35980
   },
   "power-hub": {
-    "blendBytes": 184944,
-    "rawGlbBytes": 597396,
-    "optimizedGlbBytes": 355396,
-    "meshObjects": 87,
-    "vertices": 7366,
-    "triangles": 14388
+    "blendBytes": 208300,
+    "rawGlbBytes": 671156,
+    "optimizedGlbBytes": 375980,
+    "meshObjects": 113,
+    "vertices": 9053,
+    "triangles": 16856
   },
   "landing-system": {
-    "blendBytes": 186753,
-    "rawGlbBytes": 312056,
-    "optimizedGlbBytes": 193012,
-    "meshObjects": 39,
-    "vertices": 5844,
-    "triangles": 11536
+    "blendBytes": 208628,
+    "rawGlbBytes": 378344,
+    "optimizedGlbBytes": 194020,
+    "meshObjects": 40,
+    "vertices": 6355,
+    "triangles": 12528
   },
   "habitat": {
-    "blendBytes": 179798,
-    "rawGlbBytes": 406844,
-    "optimizedGlbBytes": 216180,
-    "meshObjects": 45,
-    "vertices": 5442,
-    "triangles": 10728
+    "blendBytes": 196559,
+    "rawGlbBytes": 360252,
+    "optimizedGlbBytes": 176388,
+    "meshObjects": 47,
+    "vertices": 5184,
+    "triangles": 10072
   }
 }

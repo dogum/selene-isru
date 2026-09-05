@@ -34,8 +34,11 @@ export class PostPipeline {
   private camera: THREE.Camera;
   private bloomRenderPass: RenderPass;
   private renderPass: RenderPass;
+  private renderer: THREE.WebGLRenderer;
 
   constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, opts: PostOptions) {
+    this.renderer = renderer;
+    renderer.info.autoReset = false;
     this.camera = camera;
     this.bloomComposer = new EffectComposer(renderer);
     this.bloomComposer.renderToScreen = false;
@@ -59,9 +62,9 @@ export class PostPipeline {
       this.gtao.enabled = opts.ao;
       this.gtao.blendIntensity = 0.68;
       this.gtao.updateGtaoMaterial({
-        radius: 3.2,
+        radius: 0.9,
         distanceExponent: 1.6,
-        thickness: 1.2,
+        thickness: 0.35,
         distanceFallOff: 0.78,
         scale: 0.9,
         samples: 10,
@@ -137,6 +140,8 @@ export class PostPipeline {
   }
 
   render(dt: number): void {
+    // Count the complete frame, including shadows and all post passes.
+    this.renderer.info.reset();
     const mask = this.camera.layers.mask;
     if (this.bloomMix.enabled) {
       this.camera.layers.set(BLOOM_LAYER);

@@ -302,7 +302,7 @@ export interface CameraPose {
 
 export const CAMERA_POSES: Record<SiteMode, Record<string, CameraPose>> = {
   equatorial: {
-    overview: { position: [42, 30, 58], target: [0, 2, 0] },
+    overview: { position: [49, 38, 74], target: [-5, 1, -3] },
     excavator: { position: [-60, 13, 20], target: [-45, 0, 0] },
     hauler: { position: [-44, 9, 18], target: [-32, 1, 2] },
     reactor: { position: [-37, 14, 26], target: [-20, 2.7, 0] },
@@ -313,7 +313,7 @@ export const CAMERA_POSES: Record<SiteMode, Record<string, CameraPose>> = {
     habitat: { position: [27, 10, 29], target: [18, 2, 16] }
   },
   polar: {
-    overview: { position: [34, 18, 45], target: [0, -6, -9] },
+    overview: { position: [48, 36, 68], target: [0, 0, -18] },
     towers: { position: [22, 26, -24], target: [0, 16, -56] },
     beam: { position: [28, 8, -16], target: [0, -6, -14] },
     receiver: { position: [14, 0, 12], target: [0, -8, -6] },

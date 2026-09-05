@@ -248,15 +248,15 @@ export class PolarDiorama implements Diorama {
     const terrain = makeTerrain(terrainOpts);
     const terrainMaterial = terrain.material as THREE.MeshStandardMaterial;
     terrainMaterial.emissive.setHex(0x20272d);
-    terrainMaterial.emissiveIntensity = 0.72;
+    terrainMaterial.emissiveIntensity = 0.08;
     this.group.add(terrain);
     // A cold, non-directional bounce keeps the permanently shadowed floor
     // legible without pretending it is sunlit.
-    this.group.add(new THREE.HemisphereLight(0x8fa9be, 0x313940, 0.62));
+    this.group.add(new THREE.HemisphereLight(0x9da5ab, 0x383532, 0.22));
     const floorScuff = makeScuffedRegolith(48, 34, 91, 0.3);
     floorScuff.position.set(3, groundAt(RECEIVER_POS) + 0.08, -2);
     this.group.add(floorScuff);
-    this.group.add(makeCraterStrata([37, 41, 45, 49, 53].slice(0, 3 + detail), (radius) => craterCarve(radius, 0, 0)));
+    this.group.add(makeCraterStrata([37, 41, 45, 49, 53].slice(0, 3 + detail), this.sampleTerrain));
     this.group.add(
       makeRockScatter({
         count: Math.round(quality.rockCap * 0.34),
@@ -264,7 +264,9 @@ export class PolarDiorama implements Diorama {
         radiusX: 32,
         radiusZ: 22,
         seed: 91,
-        color: 0x3a424b
+        color: 0x686866,
+        sampleHeight: this.sampleTerrain,
+        exclude: (x, z) => grades.some(grade => Math.hypot(x-grade.position.x, z-grade.position.z) < grade.radius-1)
       })
     );
 
@@ -503,12 +505,12 @@ export class PolarDiorama implements Diorama {
         dish.rotation.y = Math.sin(t * 0.22) * 0.035;
       }
       if (valve !== null && this.sabatierEnabled) {
-        valve.rotation.y = Math.sin(t * 0.45) * 0.28;
+        valve.rotation.z = Math.sin(t * 0.45) * 0.28;
       }
       for (let i = 1; i <= 3; i++) {
         const tentValve = this.tents.node(`Sublimation_ValvePivot_${String(i).padStart(2, "0")}`);
         if (tentValve !== null) {
-          tentValve.rotation.y = Math.sin(t * 0.38 + i) * 0.18;
+          tentValve.rotation.z = Math.sin(t * 0.38 + i) * 0.18;
         }
       }
       for (let i = 1; i <= 3; i++) {

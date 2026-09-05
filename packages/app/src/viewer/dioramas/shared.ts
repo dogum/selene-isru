@@ -196,6 +196,7 @@ export function makeEarthSphere(): THREE.Group {
         if (cloud > 0.42) {
           color.lerp(new THREE.Color(0xf4f7ff), Math.min(0.5, (cloud - 0.42) * 1.3));
         }
+        color.convertLinearToSRGB();
         image.data[i] = Math.round(color.r * 255);
         image.data[i + 1] = Math.round(color.g * 255);
         image.data[i + 2] = Math.round(color.b * 255);
@@ -353,6 +354,8 @@ export interface RockScatterOptions {
   y?: number;
   seed?: number;
   color?: number;
+  sampleHeight?: TerrainHeightSampler;
+  exclude?: (x: number, z: number) => boolean;
 }
 
 export function makeRockScatter(opts: RockScatterOptions): THREE.InstancedMesh {
@@ -382,6 +385,9 @@ export function makeRockScatter(opts: RockScatterOptions): THREE.InstancedMesh {
     q.setFromEuler(new THREE.Euler(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI));
     const s = 0.35 + rand() * 0.9;
     scale.set(s * (0.7 + rand() * 0.8), s * (0.45 + rand() * 0.45), s * (0.7 + rand() * 0.7));
+    if (opts.sampleHeight !== undefined) pos.y = opts.sampleHeight(pos.x, pos.z) + 0.03;
+    // Keep foundations and operational benches clear; retain the instance cap.
+    if (opts.exclude?.(pos.x, pos.z)) scale.setScalar(0);
     m.compose(pos, q, scale);
     rocks.setMatrixAt(i, m);
   }
@@ -635,6 +641,7 @@ export interface TrackLoopOptions {
   trackSpacing?: number;
   treadWidth?: number;
   opacity?: number;
+  sampleHeight?: TerrainHeightSampler;
 }
 
 export function makeTrackLoop(opts: TrackLoopOptions): THREE.InstancedMesh {
@@ -671,6 +678,14 @@ export function makeTrackLoop(opts: TrackLoopOptions): THREE.InstancedMesh {
         opts.y,
         opts.center.z + Math.sin(a) * opts.radiusZ + normal.z * trackSpacing * side * 0.5
       );
+      if (opts.sampleHeight !== undefined) {
+        p.y = opts.sampleHeight(p.x, p.z) + 0.035;
+        const e = 0.15;
+        const nx = opts.sampleHeight(p.x-e, p.z)-opts.sampleHeight(p.x+e, p.z);
+        const nz = opts.sampleHeight(p.x, p.z-e)-opts.sampleHeight(p.x, p.z+e);
+        const tilt = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(nx, 2*e, nz).normalize());
+        q.setFromEuler(new THREE.Euler(0, yaw, 0)).premultiply(tilt);
+      }
       m.compose(p, q, s);
       tracks.setMatrixAt(idx, m);
       idx += 1;
@@ -681,20 +696,27 @@ export function makeTrackLoop(opts: TrackLoopOptions): THREE.InstancedMesh {
   return tracks;
 }
 
-export function makeCraterStrata(radii: number[], yForRadius: (radius: number) => number): THREE.Group {
+export function makeCraterStrata(radii: number[], sampleHeight: TerrainHeightSampler): THREE.Group {
   const group = new THREE.Group();
   const mat = new THREE.MeshBasicMaterial({
     color: 0x0e1118,
     transparent: true,
-    opacity: 0.28,
+    opacity: 0.12,
     depthWrite: false,
     side: THREE.DoubleSide
   });
   radii.forEach((radius, i) => {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.035 + i * 0.004, 5, 160), mat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = yForRadius(radius) + 0.08;
-    ring.scale.z = 0.96 + i * 0.01;
+    // Interrupted, terrain-conforming outcrops, not perfect floating hoops.
+    const geometry = new THREE.RingGeometry(radius-0.1, radius+0.1, 96, 1, i*1.7, Math.PI*1.15);
+    geometry.rotateX(-Math.PI/2);
+    const position = geometry.attributes.position as THREE.BufferAttribute;
+    for (let v=0; v<position.count; v++) {
+      const x = position.getX(v), z = position.getZ(v);
+      const variation = 1 + Math.sin(Math.atan2(z,x)*7+i)*0.012;
+      position.setXYZ(v, x*variation, sampleHeight(x*variation, z*variation)+0.025, z*variation);
+    }
+    geometry.computeVertexNormals();
+    const ring = new THREE.Mesh(geometry, mat);
     ring.renderOrder = -1;
     group.add(ring);
   });
@@ -719,9 +741,23 @@ export function makeTerrainHeightSampler(opts: TerrainOpts = {}): TerrainHeightS
   const simplex = new Simplex2(1969);
   const amp = opts.noiseAmp ?? 1.2;
   const scale = opts.noiseScale ?? 0.018;
+  const random = seeded(19690720);
+  const impacts = Array.from({ length: 24 }, () => ({
+    x: (random()-0.5)*215,
+    z: (random()-0.5)*215,
+    radius: 3.5+random()*6.5
+  }));
   return (x: number, z: number): number => {
     let h = simplex.fbm(x * scale, z * scale, 4) * amp;
     h += simplex.fbm(x * scale * 6, z * scale * 6, 2) * amp * 0.18;
+    for (const crater of impacts) {
+      const r = Math.hypot(x-crater.x, z-crater.z)/crater.radius;
+      if (r < 1.6) {
+        const bowl = r < 1 ? -0.48*(1-r*r)**2 : 0;
+        const rim = 0.14*Math.exp(-(((r-1)/0.18)**2));
+        h += (bowl+rim)*amp*crater.radius/5;
+      }
+    }
     return opts.carve?.(x, z, h) ?? h;
   };
 }
@@ -741,14 +777,16 @@ export function makeTerrain(opts: TerrainOpts = {}): THREE.Mesh {
   geo.computeVertexNormals();
 
   // Vertex colors act as a neutral slope tint; the generated albedo map carries the regolith color.
-  const base = new THREE.Color(0xe0ddd6);
-  const dark = new THREE.Color(0xb2aba1);
+  const base = new THREE.Color(0xe0dedb);
+  const dark = new THREE.Color(0xb2afaa);
+  const geology = new Simplex2(1972);
   const colors = new Float32Array(pos.count * 3);
   const normals = geo.attributes.normal as THREE.BufferAttribute;
   const c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const slope = 1 - Math.abs(normals.getY(i));
     c.copy(base).lerp(dark, Math.min(0.62, slope * 1.7));
+    c.multiplyScalar(0.9 + geology.fbm(pos.getX(i)*0.09, pos.getZ(i)*0.09, 3)*0.14);
     colors[i * 3] = c.r;
     colors[i * 3 + 1] = c.g;
     colors[i * 3 + 2] = c.b;
@@ -765,6 +803,7 @@ export function makeTerrain(opts: TerrainOpts = {}): THREE.Mesh {
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
+  mesh.castShadow = true;
   return mesh;
 }
 

@@ -1,58 +1,58 @@
 {
   "polar-excavator": {
-    "blendBytes": 142943,
-    "rawGlbBytes": 420032,
-    "optimizedGlbBytes": 233284,
+    "blendBytes": 149668,
+    "rawGlbBytes": 260764,
+    "optimizedGlbBytes": 144268,
     "meshObjects": 57,
     "vertices": 3876,
     "triangles": 7524
   },
   "sublimation-camp": {
-    "blendBytes": 169458,
-    "rawGlbBytes": 413692,
-    "optimizedGlbBytes": 253708,
-    "meshObjects": 56,
-    "vertices": 7606,
-    "triangles": 15012
+    "blendBytes": 202520,
+    "rawGlbBytes": 519224,
+    "optimizedGlbBytes": 278080,
+    "meshObjects": 43,
+    "vertices": 7142,
+    "triangles": 13540
   },
   "receiver-plant": {
-    "blendBytes": 171148,
-    "rawGlbBytes": 290740,
-    "optimizedGlbBytes": 174084,
-    "meshObjects": 37,
-    "vertices": 5002,
-    "triangles": 9876
+    "blendBytes": 186254,
+    "rawGlbBytes": 370768,
+    "optimizedGlbBytes": 189388,
+    "meshObjects": 43,
+    "vertices": 5426,
+    "triangles": 10548
   },
   "polar-cryogenic-farm": {
-    "blendBytes": 194571,
-    "rawGlbBytes": 796560,
-    "optimizedGlbBytes": 469496,
-    "meshObjects": 98,
-    "vertices": 16080,
-    "triangles": 31832
+    "blendBytes": 219956,
+    "rawGlbBytes": 871740,
+    "optimizedGlbBytes": 459016,
+    "meshObjects": 122,
+    "vertices": 14976,
+    "triangles": 29080
   },
   "polar-power-towers": {
-    "blendBytes": 171634,
-    "rawGlbBytes": 680828,
-    "optimizedGlbBytes": 444308,
-    "meshObjects": 111,
-    "vertices": 11384,
-    "triangles": 22324
+    "blendBytes": 215976,
+    "rawGlbBytes": 726312,
+    "optimizedGlbBytes": 398532,
+    "meshObjects": 120,
+    "vertices": 12104,
+    "triangles": 23404
   },
   "polar-nuclear-station": {
-    "blendBytes": 162364,
-    "rawGlbBytes": 317676,
-    "optimizedGlbBytes": 198660,
-    "meshObjects": 47,
-    "vertices": 4850,
-    "triangles": 9516
+    "blendBytes": 166574,
+    "rawGlbBytes": 351240,
+    "optimizedGlbBytes": 177804,
+    "meshObjects": 51,
+    "vertices": 5193,
+    "triangles": 9920
   },
   "polar-habitat": {
-    "blendBytes": 165231,
-    "rawGlbBytes": 272400,
-    "optimizedGlbBytes": 151256,
-    "meshObjects": 31,
-    "vertices": 4300,
-    "triangles": 8500
+    "blendBytes": 182509,
+    "rawGlbBytes": 304164,
+    "optimizedGlbBytes": 148928,
+    "meshObjects": 33,
+    "vertices": 4226,
+    "triangles": 8208
   }
 }

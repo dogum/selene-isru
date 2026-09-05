@@ -107,10 +107,10 @@ export class MreReactorAsset {
       this.feedGate.rotation.y = gateOpen * 0.46;
     }
     if (this.tapValve !== null) {
-      this.tapValve.rotation.y = valveOpen * Math.PI * 1.5 + (t > 0 ? Math.sin(t * 0.7) * 0.04 : 0);
+      this.tapValve.rotation.z = valveOpen * Math.PI * 1.5 + (t > 0 ? Math.sin(t * 0.7) * 0.04 : 0);
     }
     if (this.gaugeNeedle !== null) {
-      this.gaugeNeedle.rotation.y = gauge;
+      this.gaugeNeedle.rotation.z = gauge;
     }
     for (const material of this.thermalMaterials) {
       material.emissiveIntensity = (1.1 + this.thermalLoad * 2.6 + this.glow * 0.35) * pulse;

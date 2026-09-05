@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import math
 import tempfile
+import sys
 from pathlib import Path
 
 import bpy
@@ -21,6 +22,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[2]
 BLEND_PATH = SCRIPT_DIR / "mre_reactor.blend"
 GLB_PATH = REPO_ROOT / "packages" / "app" / "src" / "assets" / "models" / "mre-reactor.glb"
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+from refine_equipment import finish_equipment, optimize_static_meshes
 
 
 def reset_scene() -> None:
@@ -85,6 +88,7 @@ def apply_bevel(obj: bpy.types.Object, width: float, segments: int = 3) -> None:
 
 
 def parent_keep_world(obj: bpy.types.Object, parent: bpy.types.Object) -> None:
+    bpy.context.view_layer.update()
     world = obj.matrix_world.copy()
     obj.parent = parent
     obj.matrix_world = world
@@ -94,6 +98,7 @@ def add_empty(name: str, location: tuple[float, float, float], parent: bpy.types
     obj = bpy.data.objects.new(name, None)
     bpy.context.collection.objects.link(obj)
     obj.location = location
+    obj["selene_bind_world_m"] = list(location)
     obj.empty_display_type = "PLAIN_AXES"
     obj.empty_display_size = 0.35
     if parent is not None:
@@ -161,8 +166,8 @@ def add_torus(
     bpy.ops.mesh.primitive_torus_add(
         major_radius=major_radius,
         minor_radius=minor_radius,
-        major_segments=48,
-        minor_segments=8,
+        major_segments=32,
+        minor_segments=6,
         location=location,
         rotation=rotation,
     )
@@ -297,7 +302,7 @@ def build_reactor() -> bpy.types.Object:
             (math.cos(angle) * 2.26, math.sin(angle) * 2.26, 1.03),
             ceramic,
             bevel=0.035,
-            rotation=(0.0, 0.0, angle),
+            rotation=(0.0, 0.0, angle + math.pi / 2),
             parent=root,
         )
 
@@ -318,7 +323,7 @@ def build_reactor() -> bpy.types.Object:
             (x, y, 3.0),
             insulation,
             bevel=0.035,
-            rotation=(0.0, 0.0, angle),
+            rotation=(0.0, 0.0, angle + math.pi / 2),
             parent=root,
         )
         add_cylinder(
@@ -433,6 +438,7 @@ def build_reactor() -> bpy.types.Object:
 
 
 def export_glb(path: Path, *, optimized: bool) -> None:
+    optimize_static_meshes()
     path.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(
         filepath=str(path),
@@ -454,7 +460,7 @@ def export_glb(path: Path, *, optimized: bool) -> None:
 def main() -> None:
     reset_scene()
     build_reactor()
-    bpy.context.scene["selene_generator_version"] = 1
+    finish_equipment()
     bpy.context.scene["selene_license"] = "CC0-1.0"
     bpy.context.scene.unit_settings.system = "METRIC"
     bpy.context.scene.unit_settings.scale_length = 1.0

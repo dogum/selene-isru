@@ -19,3 +19,5 @@ pnpm asset:equatorial
 The script saves an editable `.blend` beside each asset and exports a meshopt-compressed GLB to `packages/app/src/assets/models/`. Named pivots, tank groups, solar trackers, radiator wings, shield sections, status materials, and service mechanisms are part of the generated scene graph so Three.js can connect them to live simulator state.
 
 All geometry and materials are original, generated entirely from Blender primitives, and released under CC0-1.0. No external textures, meshes, fonts, or paid tools are required.
+
+The shared `../refine_equipment.py` pass adds manufacturing details, consistent materials, split normals, and export-only static batching after saving the editable source. Blender 5.2 LTS is the reference exporter. Run `pnpm asset:audit` after regeneration to check runtime budgets, meter-scale bounds, hierarchy, and authored joint positions. See [the visual milestone report](../../../docs/visual-milestone.md) for measured results and limitations.
