@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { TOURS, tourReadout } from "../tours";
+import { TOURS, captionText, tourReadout } from "../tours";
 import { useStore } from "../state/store";
 
 const TOUR_BY_ID = new Map(TOURS.map((tour) => [tour.id, tour]));
@@ -7,6 +7,7 @@ const TOUR_BY_ID = new Map(TOURS.map((tour) => [tour.id, tour]));
 export function TourOverlay(): React.JSX.Element | null {
   const tourState = useStore((s) => s.tour);
   const result = useStore((s) => s.result);
+  const params = useStore((s) => s.params);
   const stopTour = useStore((s) => s.stopTour);
   const advanceTour = useStore((s) => s.advanceTour);
 
@@ -92,7 +93,7 @@ export function TourOverlay(): React.JSX.Element | null {
           {tourState.beatIndex + 1}/{tour.beats.length}
         </span>
       </div>
-      <div className="tour-caption">{beat.caption}</div>
+      <div className="tour-caption">{captionText(beat.caption, result, params)}</div>
       <div className="tour-readout mono">{tourReadout(beat.readout, result)}</div>
       <div className="tour-progress" aria-hidden="true">
         {tour.beats.map((b, i) => (
