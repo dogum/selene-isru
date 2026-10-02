@@ -128,6 +128,26 @@ when they are useful:
   or CSV illumination, receiver-visibility, and temperature profile. Numeric
   evidence drawers can run a local causal trace through the actual engine.
 
+## Getting data out
+
+Every export carries the model boundary and the build that produced it (app
+and engine versions plus commit), so a file read out of context can be traced.
+
+- **Case JSON** (Report tab, or any library card): every input with its unit,
+  the full engine result, the day/night timeseries, the inputs that differ from
+  defaults, and a reproducibility link; custom sites add their design and
+  evaluation. It imports back into the library, and on import the case is
+  re-run and any headline value the current model computes differently is
+  reported.
+- **Study CSV** (library and Report): one row per case with headline outputs,
+  every energy-flow stage, and every input as `param.<key> [unit]`.
+- **Panel CSVs**: energy flows, mass manifest, the 96-sample timeseries, every
+  Pareto grid point, the sensitivity ranking and uncertainty bands (with
+  sample count and seed), and every candidate the Brief evaluated.
+
+Numbers are written at full precision. Result columns are named by engine field,
+which carries its unit (`energy.secTotal_kWhPerKg`, `logistics.totalInfraMassKg`).
+
 ## Implementation parity and evidence
 
 Every core process equation used by the authored simulation lives twice:

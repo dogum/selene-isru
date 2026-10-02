@@ -368,6 +368,14 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   intro itself, override `navigator.webdriver` before navigation.
 - App tsconfig is strict with `noUnusedLocals`/`noUnusedParameters`; the app
   build runs `tsc --noEmit` before `vite build`.
+- **Exports** live in `src/analysis/` (`caseExport.ts`, `studyExport.ts`,
+  `panelExports.ts`, `csv.ts`). Every export carries `BUILD_INFO` and
+  `MODEL_BOUNDARY` from `src/lib/build.ts`; the build stamp is injected by
+  `vite.config.ts` as `__SELENE_BUILD__` (in `pnpm dev` it is captured when the
+  server starts, so restart it to refresh the commit). CSV numbers stay
+  unformatted; name output columns by engine field path and inputs as
+  `param.<key> [unit]`. The case file (`selene-isru-case` v1) is importable:
+  changing its shape needs a version bump and a branch in `previewCaseFile`.
 
 ### 7. Explainability is a product requirement
 
@@ -430,6 +438,7 @@ in `assets/ASSET_LICENSES.md`.
 | Analysis grids inside engine bounds, sensitivity clamping, delta tone | `analysis-tools.test.ts` |
 | Rail search/filter/reset, KPI summary, intro | `control-rail.test.tsx`, `case-summary.test.ts`, `intro-card.test.tsx` |
 | Dialog/menu keyboard contract, CSS variables | `keyboard-a11y.test.tsx`, `css-tokens.test.ts` |
+| Case file round trip and drift, wide CSV, report inputs, panel CSVs | `case-export.test.ts`, `panel-exports.test.ts` |
 
 ## CI and deploy
 
