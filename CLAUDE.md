@@ -333,6 +333,15 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   them.
 - **Styling**: CSS custom properties in `src/styles/tokens.css`
   (`--bg-space`, `--cryo`, `--caution`, …). Use tokens, not literal hex.
+  Type sizes come from the `--fs-*` scale with `--fs-10` as the floor, and
+  `--text-low` is the dimmest text colour (5.0:1 on `--bg-panel`, WCAG AA);
+  don't reintroduce 7–9px text or a dimmer grey. `css-tokens.test.ts` fails
+  on any `var(--x)` without a fallback whose property is never defined.
+- **Overlays use `src/lib/a11y.ts`**: `useDialog` (Escape closes the topmost
+  surface only, focus moves in and returns to the opener, `modal` traps Tab)
+  and `useMenu` (outside click/Escape close, arrow keys, focus return). A new
+  dialog, popover, panel, or dropdown should use these rather than its own
+  keydown listener, or Escape will close two surfaces at once.
 - **Mobile** is deliberately review-only for Custom Site — select and inspect,
   no precision editing UI that the touch target cannot honor.
 - **localStorage keys use two different compatibility strategies** — don't
@@ -340,8 +349,10 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   - *Versioned, migrate on a schema change*: `selene-isru.study-scenarios.v2`,
     `selene-isru.custom-site-draft.v1`, and
     `selene-isru.custom-site-draft-backup.v1` (a separate key, *not* a
-    `.backup` suffix — see `CUSTOM_SITE_DRAFT_BACKUP_KEY`). Bump the suffix and
-    migrate; never silently reinterpret data under an existing version.
+    `.backup` suffix — see `CUSTOM_SITE_DRAFT_BACKUP_KEY`), and the
+    first-visit flag `selene-isru.intro-dismissed.v1` (bump it to show a
+    substantially changed intro again). Bump the suffix and migrate; never
+    silently reinterpret data under an existing version.
   - *Unversioned, tolerant read*: `selene.graphics` carries no version and
     stays compatible by parsing whatever it finds through
     `normalizeGraphicsPrefs`, filling missing fields from
@@ -352,6 +363,9 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 - `window.__SELENE_DEMO__` (set up in `Scene.tsx`) is the capture bridge the
   `scripts/capture-*.mjs` demos drive. Changing it means re-recording the
   cinematics.
+- The first-visit `IntroCard` never renders when `navigator.webdriver` is set,
+  which keeps every puppeteer capture's first frame unchanged. To capture the
+  intro itself, override `navigator.webdriver` before navigation.
 - App tsconfig is strict with `noUnusedLocals`/`noUnusedParameters`; the app
   build runs `tsc --noEmit` before `vite build`.
 
@@ -374,6 +388,20 @@ inherits **generic fallback evidence**. If the parameter needs specific
 validity limits, applicability, or a source link the regexes won't match, add a
 `KEY_OVERRIDES` entry. Numeric claims in Brief, Conserve, and Trade Study
 should be traceable to the actual engine run, not to hard-coded copy.
+
+**Whether an input currently matters is measured, not declared.**
+`src/analysis/activity.ts` runs the engine at the input's min and max with
+everything else held and compares every result field: the rail then tags the
+row CHECKS (only subsystem diagnostics move) or NO EFFECT, and the evidence
+drawer's "Effect here" line names what moves. Don't add static
+"diagnostic" lists — the one this replaced had drifted. Inputs that
+structurally cannot apply (the other site's power inputs, `xO2` while the
+oxide model is on, custom-cryogen properties) are hidden by
+`railParamsForGroup` / `SITE_ONLY_PARAMS` instead, and
+`input-activity.test.ts` checks that every hidden input really is inert where
+it is hidden. A visible input tagged NO EFFECT at the reference cases is a
+signal worth investigating: either it is conditional by design, or the model
+is not using it.
 
 ### 8. Assets
 
@@ -398,6 +426,10 @@ in `assets/ASSET_LICENSES.md`.
 | Aging slopes ↔ crossover | `packages/engine/test/power-slopes.test.ts` |
 | Store clamping invariant, URL round-trip, export | `store.test.ts`, `url.test.ts`, `study-export.test.ts` |
 | Custom Site UI/editor/perf | `custom-site-*.test.*` |
+| Input activity tags, hidden-input guard | `input-activity.test.ts` |
+| Analysis grids inside engine bounds, sensitivity clamping, delta tone | `analysis-tools.test.ts` |
+| Rail search/filter/reset, KPI summary, intro | `control-rail.test.tsx`, `case-summary.test.ts`, `intro-card.test.tsx` |
+| Dialog/menu keyboard contract, CSS variables | `keyboard-a11y.test.tsx`, `css-tokens.test.ts` |
 
 ## CI and deploy
 

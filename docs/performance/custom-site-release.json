@@ -1,37 +1,37 @@
 {
   "schema": "selene-custom-site-release-evidence",
   "version": 1,
-  "measuredAt": "2026-09-05T03:05:07.427Z",
+  "measuredAt": "2026-10-02T20:29:33.217Z",
   "environment": {
-    "browser": "Chrome/152.0.7977.77",
+    "browser": "Chrome/141.0.7390.37",
     "viewport": "1600x900",
     "renderer": "headless Chrome with SwiftShader WebGL",
-    "note": "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Placement and import timings are sampled before screencast recording starts."
+    "note": "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Video capture is a separate reviewed workflow."
   },
   "timingsMs": {
-    "navigation": 12785.1,
-    "enterBlankCustomSite": 6076.4,
-    "firstPlacementCommit": 1378.6,
-    "importValidateEvaluateAndRender": 79.7,
+    "navigation": 3898.2,
+    "enterBlankCustomSite": 5877.8,
+    "firstPlacementCommit": 2617.6,
+    "importValidateEvaluateAndRender": 412.7,
     "contextLossRestore": null,
-    "mobileReviewLoad": 10015.2,
+    "mobileReviewLoad": 4632.9,
     "animationFrameSample": {
       "frames": 90,
       "medianMs": 16.7,
-      "p95Ms": 16.7,
-      "maxMs": 16.8
+      "p95Ms": 16.8,
+      "maxMs": 33.3
     }
   },
   "settledDesktop": {
     "assets": 8,
     "connections": 8,
     "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 9.71 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
-    "jsHeapUsedMb": 14.01,
+    "jsHeapUsedMb": 14.31,
     "domNodes": 916
   },
   "productionBundleBytes": {
-    "javascript": 1366926,
-    "css": 81032
+    "javascript": 1382407,
+    "css": 85869
   },
   "checks": [
     "blank custom site opened",
