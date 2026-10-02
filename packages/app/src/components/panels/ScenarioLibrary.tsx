@@ -13,7 +13,8 @@ import { paramsToUrl } from "../../lib/url";
 import {
   MAX_PINNED_SCENARIOS,
   MAX_STUDY_SCENARIOS,
-  useStore
+  useStore,
+  type ScenarioImportSummary
 } from "../../state/store";
 
 const COMPARISON_METRICS = [
@@ -40,6 +41,25 @@ function simulateFor(id: string): ReturnType<typeof studyScenarioResult> {
   return result;
 }
 
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+/** Report only what the import changed; never echo the preview count. */
+function importSummaryText(summary: ScenarioImportSummary): string {
+  const parts = [`${plural(summary.added, "case")} added`];
+  if (summary.replaced > 0) {
+    parts.push(`${summary.replaced} replaced an existing case with the same id`);
+  }
+  if (summary.skipped > 0) {
+    parts.push(`${summary.skipped} skipped: the library holds ${MAX_STUDY_SCENARIOS}`);
+  }
+  if (summary.unpinned > 0) {
+    parts.push(`${summary.unpinned} left unpinned: pin limit ${MAX_PINNED_SCENARIOS}`);
+  }
+  return parts.join(" · ");
+}
+
 export function ScenarioLibrary(): React.JSX.Element {
   const scenarios = useStore((s) => s.scenarioLibrary);
   const currentName = useStore((s) => s.ui.currentScenarioName);
@@ -57,6 +77,10 @@ export function ScenarioLibrary(): React.JSX.Element {
     useState<StudyImportPreview | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const pinned = scenarios.filter((scenario) => scenario.pinned).slice(0, MAX_PINNED_SCENARIOS);
+  const libraryFull = scenarios.length >= MAX_STUDY_SCENARIOS;
+  const pinsFull = scenarios.filter((scenario) => scenario.pinned).length >= MAX_PINNED_SCENARIOS;
+  const fullReason = `The library holds ${MAX_STUDY_SCENARIOS} cases. Delete one to save, copy, or import more.`;
+  const pinReason = `Up to ${MAX_PINNED_SCENARIOS} cases can be pinned. Unpin one first.`;
 
   resultCache.clear();
 
@@ -69,6 +93,7 @@ export function ScenarioLibrary(): React.JSX.Element {
       <p className="panel-caption">
         Cases stay in this browser. Pin up to four for the comparison matrix; export them for review or transfer.
       </p>
+      {libraryFull && <p className="scenario-import-status" role="status">LIBRARY FULL · {fullReason}</p>}
 
       <div className="scenario-save-row">
         <input
@@ -79,7 +104,8 @@ export function ScenarioLibrary(): React.JSX.Element {
         <button
           type="button"
           className="topbar-btn"
-          disabled={scenarios.length >= MAX_STUDY_SCENARIOS}
+          disabled={libraryFull}
+          title={libraryFull ? fullReason : undefined}
           onClick={() => saveCurrentScenario(saveName)}
         >
           SAVE LIVE CASE
@@ -158,6 +184,20 @@ export function ScenarioLibrary(): React.JSX.Element {
               ).length} notes
             </span>
           </div>
+          {(() => {
+            const existing = new Set(scenarios.map((scenario) => scenario.id));
+            const incomingNew = importPreview.scenarios.filter((scenario) => !existing.has(scenario.id)).length;
+            const replacing = importPreview.scenarios.length - incomingNew;
+            const free = Math.max(0, MAX_STUDY_SCENARIOS - scenarios.length);
+            const notes: string[] = [];
+            if (incomingNew > free) {
+              notes.push(`Only ${free} of ${incomingNew} new cases fit; the library holds ${MAX_STUDY_SCENARIOS}.`);
+            }
+            if (replacing > 0) {
+              notes.push(`${plural(replacing, "case")} will replace an existing case with the same id.`);
+            }
+            return notes.length > 0 ? <p className="scenario-import-capacity">{notes.join(" ")}</p> : null;
+          })()}
           {importPreview.findings.length > 0 && (
             <ol>
               {importPreview.findings.slice(0, 8).map((finding, index) => (
@@ -178,12 +218,7 @@ export function ScenarioLibrary(): React.JSX.Element {
               type="button"
               disabled={importPreview.scenarios.length === 0}
               onClick={() => {
-                importScenarios(importPreview.scenarios);
-                setImportStatus(
-                  `${importPreview.scenarios.length} case${
-                    importPreview.scenarios.length === 1 ? "" : "s"
-                  } imported`
-                );
+                setImportStatus(importSummaryText(importScenarios(importPreview.scenarios)));
                 setImportPreview(null);
               }}
             >
@@ -226,10 +261,22 @@ export function ScenarioLibrary(): React.JSX.Element {
               </div>
               <div className="scenario-card-actions">
                 <button type="button" onClick={() => loadScenario(scenario.id)}>LOAD</button>
-                <button type="button" onClick={() => toggleScenarioPin(scenario.id)}>
+                <button
+                  type="button"
+                  disabled={!scenario.pinned && pinsFull}
+                  title={!scenario.pinned && pinsFull ? pinReason : undefined}
+                  onClick={() => toggleScenarioPin(scenario.id)}
+                >
                   {scenario.pinned ? "UNPIN" : "PIN"}
                 </button>
-                <button type="button" onClick={() => duplicateScenario(scenario.id)}>COPY</button>
+                <button
+                  type="button"
+                  disabled={libraryFull}
+                  title={libraryFull ? fullReason : undefined}
+                  onClick={() => duplicateScenario(scenario.id)}
+                >
+                  COPY
+                </button>
                 {scenario.kind === "custom" && scenario.design !== undefined ? (
                   <button
                     type="button"

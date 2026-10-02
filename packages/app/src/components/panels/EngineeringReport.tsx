@@ -2,6 +2,7 @@ import { simulate } from "@selene-isru/engine";
 import { useMemo } from "react";
 import {
   downloadText,
+  reportScenarios,
   reportSnapshot,
   scenariosCsv,
   studyExport,
@@ -31,6 +32,7 @@ export function EngineeringReport(): React.JSX.Element {
   const flows = energyRows(result);
   const generatedAt = new Date().toLocaleString();
   const alarmCount = result.warnings.filter((warning) => warning.severity === "alarm").length;
+  const reportFileStem = `selene-report-${currentName.replaceAll(/[^a-z0-9]+/gi, "-").replaceAll(/^-|-$/g, "").toLowerCase() || "case"}`;
 
   return (
     <section className="engineering-report" aria-label="Engineering study report">
@@ -42,9 +44,10 @@ export function EngineeringReport(): React.JSX.Element {
         <button
           type="button"
           className="topbar-btn"
+          title="This report's case and its pinned comparison cases, as importable study JSON"
           onClick={() => downloadText(
-            "selene-engineering-study.json",
-            JSON.stringify(studyExport(scenarios), null, 2),
+            `${reportFileStem}.json`,
+            JSON.stringify(studyExport(reportScenarios(currentName, params, scenarios)), null, 2),
             "application/json"
           )}
         >
@@ -53,7 +56,12 @@ export function EngineeringReport(): React.JSX.Element {
         <button
           type="button"
           className="topbar-btn"
-          onClick={() => downloadText("selene-engineering-study.csv", scenariosCsv(scenarios), "text/csv")}
+          title="This report's case and its pinned comparison cases, one row each"
+          onClick={() => downloadText(
+            `${reportFileStem}.csv`,
+            scenariosCsv(reportScenarios(currentName, params, scenarios)),
+            "text/csv"
+          )}
         >
           CSV
         </button>

@@ -3,42 +3,10 @@ import type { SimParams } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { useMemo, useState } from "react";
 import { useSize } from "../../lib/hooks";
+import { FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
 import { useStore } from "../../state/store";
 
-type SweepKey =
-  | "targetKgPerDay"
-  | "Vcell"
-  | "etaCurrent"
-  | "reserveDays"
-  | "missionYears"
-  | "chiIce"
-  | "Nmli"
-  | "etaCell"
-  | "alphaSpecific"
-  | "shieldDesignM";
 type Objective = "mass-throughput-missions" | "sec-power" | "mass-sec" | "mass-missions";
-
-interface SweepParam {
-  key: SweepKey;
-  label: string;
-  min: number;
-  max: number;
-  log?: boolean;
-  site?: SimParams["site"];
-}
-
-const PARAMS: SweepParam[] = [
-  { key: "targetKgPerDay", label: "Output", min: 10, max: 20_000, log: true },
-  { key: "missionYears", label: "Mission years", min: 1, max: 20 },
-  { key: "reserveDays", label: "Reserve days", min: 1, max: 60 },
-  { key: "etaCell", label: "PV efficiency", min: 0.15, max: 0.4 },
-  { key: "alphaSpecific", label: "Nuclear kg/kW", min: 5, max: 80, log: true },
-  { key: "Nmli", label: "MLI layers", min: 10, max: 80 },
-  { key: "Vcell", label: "MRE cell voltage", min: 3.5, max: 5, site: "equatorial" },
-  { key: "etaCurrent", label: "Current efficiency", min: 0.5, max: 0.95, site: "equatorial" },
-  { key: "shieldDesignM", label: "Shield depth", min: 0.1, max: 5, site: "equatorial" },
-  { key: "chiIce", label: "Polar ice fraction", min: 0.005, max: 0.12, log: true, site: "polar" }
-];
 
 const OBJECTIVES: Array<{ id: Objective; label: string; x: string; y: string }> = [
   { id: "mass-throughput-missions", label: "Plant-mass equivalent / missions", x: "PLANT-MASS EQUIV. · DAYS", y: "MISSIONS" },
@@ -54,15 +22,6 @@ interface FrontierPoint {
   frontier: boolean;
   feasible: boolean;
   warningCount: number;
-}
-
-function valuesFor(param: SweepParam, n: number): number[] {
-  const lo = Math.max(1e-9, param.min);
-  const hi = Math.max(lo * 1.01, param.max);
-  return Array.from({ length: n }, (_, index) => {
-    const u = n === 1 ? 0.5 : index / (n - 1);
-    return param.log ? lo * Math.pow(hi / lo, u) : lo + (hi - lo) * u;
-  });
 }
 
 function objectiveValues(result: ReturnType<typeof simulate>, objective: Objective): [number, number] {
@@ -99,7 +58,7 @@ export function FrontierExplorer(): React.JSX.Element {
   const params = useStore((s) => s.params);
   const applyPatch = useStore((s) => s.applyPatch);
   const [ref, size] = useSize<HTMLDivElement>();
-  const available = PARAMS.filter((param) => param.site === undefined || param.site === params.site);
+  const available = FRONTIER_PARAMS.filter((param) => param.site === undefined || param.site === params.site);
   const [aKey, setAKey] = useState<SweepKey>("targetKgPerDay");
   const [bKey, setBKey] = useState<SweepKey | "none">(params.site === "polar" ? "chiIce" : "etaCurrent");
   const [objective, setObjective] = useState<Objective>("mass-sec");
@@ -115,8 +74,8 @@ export function FrontierExplorer(): React.JSX.Element {
   const objectiveMeta = OBJECTIVES.find((item) => item.id === objective) ?? OBJECTIVES[0]!;
 
   const data = useMemo(() => {
-    const aValues = valuesFor(aParam, bParam === null ? 49 : 25);
-    const bValues = bParam === null ? [0] : valuesFor(bParam, 25);
+    const aValues = sweepValues(aParam, bParam === null ? 49 : 25);
+    const bValues = bParam === null ? [0] : sweepValues(bParam, 25);
     const raw: FrontierPoint[] = [];
     for (const a of aValues) {
       for (const b of bValues) {

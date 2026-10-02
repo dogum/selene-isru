@@ -278,6 +278,30 @@ export function scenariosCsv(scenarios: StudyScenario[]): string {
   ].join("\n");
 }
 
+/**
+ * The cases an engineering report describes: the live case it is written
+ * about, followed by the pinned cases in its comparison table. The report's
+ * JSON/CSV exports use this, not the whole library, so the file matches the
+ * page it was downloaded from.
+ */
+export function reportScenarios(
+  name: string,
+  params: SimParams,
+  library: StudyScenario[],
+  now: number = Date.now()
+): StudyScenario[] {
+  const live: StudyScenario = {
+    id: `report-${now.toString(36)}`,
+    name: name.trim() || "Untitled lunar ISRU case",
+    kind: "authored",
+    params: { ...params },
+    createdAt: now,
+    updatedAt: now,
+    pinned: false
+  };
+  return [live, ...library.filter((scenario) => scenario.pinned)];
+}
+
 export function reportSnapshot(params: SimParams): {
   result: ReturnType<typeof simulate>;
   uncertainty: ReturnType<typeof sampleUncertainty>;

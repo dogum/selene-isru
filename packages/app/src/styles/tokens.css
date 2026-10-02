@@ -4,6 +4,8 @@
   --bg-panel: #11151d;
   --bg-inset: #0d1117;
   --line: #232a36;
+  /* emphasized rule for popovers and causal-trace nodes */
+  --line-hi: #3a4556;
 
   /* text */
   --text-hi: #e8ecf1;

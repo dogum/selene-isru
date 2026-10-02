@@ -683,6 +683,14 @@ input.param-input {
   z-index: 10;
 }
 
+.view-tabs-docked {
+  position: static;
+  flex-wrap: wrap;
+  border: 0;
+  background: none;
+  z-index: auto;
+}
+
 .view-tab {
   font-family: var(--font-mono);
   font-size: var(--fs-11);
@@ -2363,6 +2371,12 @@ body.selene-photo-mode .custom-scene-label-overlay {
   gap: 6px;
 }
 
+.scenario-import-capacity {
+  margin: 0;
+  color: var(--caution);
+  font-size: var(--fs-11);
+}
+
 .scenario-import-status {
   margin: -2px 0 0;
   color: var(--cryo);
@@ -2746,6 +2760,11 @@ body.selene-photo-mode .custom-scene-label-overlay {
   gap: 8px;
   color: var(--text-low);
   font: 500 8px/1.2 var(--font-mono);
+}
+
+.sensitivity-capped {
+  color: var(--caution);
+  font-size: inherit;
 }
 
 .sensitivity-ranking strong {
