@@ -154,6 +154,52 @@ export function paramsForGroup(engineGroup: string): NumericParamDef[] {
   return defs;
 }
 
+/** The rail state that decides which inputs a group shows. */
+export type RailVisibilityParams = Pick<
+  SimParams,
+  "site" | "oxideModel" | "storageStream" | "cryoControlMode" | "polarProfileMode"
+>;
+
+/**
+ * Inputs a rail group shows for the current configuration. Inputs that cannot
+ * apply are left out rather than shown inert: the lumped O2 fraction while the
+ * oxide-composition model is on, the other site's power inputs, scalar polar
+ * illumination while a time-resolved profile drives it, and the custom-cryogen
+ * properties unless that stream is selected.
+ */
+export function railParamsForGroup(group: GroupDef, params: RailVisibilityParams): NumericParamDef[] {
+  const all = paramsForGroup(group.engineGroup).filter((def) =>
+    !(params.oxideModel && def.key === "xO2") &&
+    (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === params.site)
+  );
+  if (group.id === "power" && params.site === "polar" && params.polarProfileMode === "profile") {
+    return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
+  }
+  if (group.id !== "cryo") {
+    return all;
+  }
+  const customOnly = new Set(["rhoCryo", "customLatentHeatJPerKg", "Ttank", "secLiquefaction"]);
+  return all.filter((def) => {
+    if (customOnly.has(String(def.key)) && params.storageStream !== "custom") {
+      return false;
+    }
+    return def.key !== "coolerCapacityW" || params.cryoControlMode === "capacity-limited";
+  });
+}
+
+/** Every whitespace-separated term must appear in the plain name, code name, group, or unit. */
+export function matchesParamQuery(def: NumericParamDef, groupLabel: string, query: string): boolean {
+  const terms = query.toLowerCase().split(/\s+/).filter((term) => term.length > 0);
+  if (terms.length === 0) return true;
+  const haystack = `${def.label} ${String(def.key)} ${groupLabel} ${def.unit}`.toLowerCase();
+  return terms.every((term) => haystack.includes(term));
+}
+
+/** True when a numeric input differs from its default beyond float noise. */
+export function isChangedFromDefault(value: number, defaultValue: number): boolean {
+  return Math.abs(value - defaultValue) > 1e-12 * Math.max(1, Math.abs(defaultValue));
+}
+
 export function groupsForSite(site: SiteMode): GroupDef[] {
   return GROUPS.filter((g) => g.site === undefined || g.site === site);
 }

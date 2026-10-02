@@ -1945,6 +1945,66 @@ input.param-input {
   border-color: var(--cryo);
 }
 
+.param-reset {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--melt);
+  font: 600 var(--fs-11) / 1 var(--font-mono);
+}
+
+.param-reset[hidden] {
+  display: none;
+}
+
+.param-reset:hover,
+.param-reset:focus-visible {
+  color: var(--text-hi);
+}
+
+.rail-search {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rail-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-inset);
+  color: var(--text-hi);
+  font: 500 var(--fs-11) / 1.2 var(--font-mono);
+}
+
+.rail-search input::placeholder {
+  color: var(--text-mid);
+}
+
+.rail-search button {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  color: var(--text-mid);
+  font: 600 var(--fs-10) / 1 var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.rail-search button.active {
+  border-color: var(--melt);
+  color: var(--melt);
+}
+
+.rail-filter-status {
+  margin: 0;
+  padding: 6px 12px;
+  color: var(--text-mid);
+  font-size: var(--fs-10);
+  border-bottom: 1px solid var(--line);
+}
+
 /* live input activity (analysis/activity.ts) */
 .param-activity {
   flex: 0 0 auto;

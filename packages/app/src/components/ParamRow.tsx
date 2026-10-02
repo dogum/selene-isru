@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { SimParams } from "@selene-isru/engine";
 import { inputActivity, type ActivityReport } from "../analysis/activity";
-import type { NumericParamDef } from "../controls/manifest";
+import { isChangedFromDefault, type NumericParamDef } from "../controls/manifest";
 import { formatInputValue } from "../lib/format";
 import { useStore } from "../state/store";
 
@@ -144,6 +144,16 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
             </button>
           )}
           <span className="unit">{def.unit === "1" ? "" : def.unit}</span>
+          <button
+            type="button"
+            className="param-reset"
+            hidden={!isChangedFromDefault(value, def.defaultValue)}
+            title={`Reset to default ${formatInputValue(def.defaultValue)}${rangeUnit}`}
+            aria-label={`Reset ${plainLabel} to default ${formatInputValue(def.defaultValue)}${rangeUnit}`}
+            onClick={() => resetParam(def.key)}
+          >
+            ↺
+          </button>
         </span>
       </div>
       <div className="param-track">
