@@ -1,3 +1,4 @@
+import { PHYSICAL_CONSTANTS } from "../constants";
 import type { PolarProfilePoint, PolarProfileSummary, SimParams, Warning } from "../types";
 
 interface ImportedProfile {
@@ -18,7 +19,7 @@ export interface SiteProfileResult {
 
 function scalarProfile(params: SimParams): PolarProfileSummary {
   const equatorial = params.site === "equatorial";
-  const shadow = equatorial ? 354 : params.polarLongestShadowHours;
+  const shadow = equatorial ? PHYSICAL_CONSTANTS.tNight.value : params.polarLongestShadowHours;
   const fraction = equatorial ? 0.5 : params.polarIlluminationFraction;
   const day = shadow * fraction / (1 - fraction);
   const cycle = day + shadow;

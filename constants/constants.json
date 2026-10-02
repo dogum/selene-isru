@@ -265,6 +265,111 @@
     "description": "Representative sublimation enthalpy of carbon dioxide",
     "source": "NIST Chemistry WebBook SRD 69"
   },
+  "rhoStore_LOX": {
+    "value": 1141,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Liquid oxygen density at the normal boiling point",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "Tstore_LOX": {
+    "value": 90.2,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Liquid oxygen storage temperature (normal boiling point)",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "rhoStore_waterIce": {
+    "value": 917,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Water ice density",
+    "source": "engineering reference value"
+  },
+  "Tstore_waterIce": {
+    "value": 150,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Water-ice storage temperature (design choice)",
+    "source": "spec"
+  },
+  "rhoStore_liquidWater": {
+    "value": 997,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Liquid water density near room temperature",
+    "source": "engineering reference value"
+  },
+  "Tstore_liquidWater": {
+    "value": 293,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Liquid-water storage temperature (design choice)",
+    "source": "spec"
+  },
+  "rhoStore_LH2": {
+    "value": 70.8,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Liquid hydrogen density at the normal boiling point",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "Tstore_LH2": {
+    "value": 20.3,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Liquid hydrogen storage temperature (normal boiling point)",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "rhoStore_LCH4": {
+    "value": 422,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Liquid methane density at the normal boiling point",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "Tstore_LCH4": {
+    "value": 111.7,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Liquid methane storage temperature (normal boiling point)",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "rhoStore_CO2": {
+    "value": 1560,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Solid carbon dioxide density",
+    "source": "engineering reference value"
+  },
+  "Tstore_CO2": {
+    "value": 195,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Carbon dioxide feed storage temperature (sublimation point)",
+    "source": "NIST Chemistry WebBook SRD 69"
+  },
+  "albedoLunar": {
+    "value": 0.12,
+    "unit": "1",
+    "kind": "physical",
+    "description": "Representative lunar surface albedo for reflected solar load on tanks",
+    "source": "engineering reference value"
+  },
+  "Tspace": {
+    "value": 3,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Deep-space radiative sink temperature (cosmic background, rounded)",
+    "source": "engineering reference value"
+  },
+  "TrefRegolith": {
+    "value": 300,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Non-polar regolith reference temperature for transport diagnostics",
+    "source": "spec"
+  },
   "VthermoneutralWater": {
     "value": 1.48,
     "unit": "V",
@@ -1049,6 +1154,66 @@
     "group": "cryo",
     "description": "Custom-stream conditioning SEC (used only for custom storage)",
     "source": "custom stream design assumption"
+  },
+  "secCondLox": {
+    "value": 2.2,
+    "min": 0.5,
+    "max": 6,
+    "unit": "kWh/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Liquid-oxygen conditioning energy (liquefaction and conditioning)",
+    "source": "spec (v0.3 conditioning estimate, uncited)"
+  },
+  "secCondWaterIce": {
+    "value": 0.15,
+    "min": 0.02,
+    "max": 1,
+    "unit": "kWh/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Water-ice conditioning energy",
+    "source": "spec (v0.3 conditioning estimate, uncited)"
+  },
+  "secCondLiquidWater": {
+    "value": 0.08,
+    "min": 0.01,
+    "max": 0.5,
+    "unit": "kWh/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Liquid-water conditioning energy",
+    "source": "spec (v0.3 conditioning estimate, uncited)"
+  },
+  "secCondLh2": {
+    "value": 12,
+    "min": 4,
+    "max": 30,
+    "unit": "kWh/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Liquid-hydrogen conditioning energy (liquefaction and conditioning)",
+    "source": "spec (v0.3 conditioning estimate, uncited)"
+  },
+  "secCondLch4": {
+    "value": 1.2,
+    "min": 0.3,
+    "max": 4,
+    "unit": "kWh/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Liquid-methane conditioning energy (liquefaction and conditioning)",
+    "source": "spec (v0.3 conditioning estimate, uncited)"
+  },
+  "secCondCo2": {
+    "value": 0.15,
+    "min": 0.02,
+    "max": 1,
+    "unit": "kWh/kg",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "Carbon dioxide feed conditioning energy",
+    "source": "spec (v0.3 conditioning estimate, uncited)"
   },
   "kCryoMass": {
     "value": 6,

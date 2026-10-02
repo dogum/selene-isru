@@ -31,7 +31,7 @@ packages/engine              TypeScript physics engine (zero runtime deps, pure 
   src/site-design/             Custom Site: schema, catalog, connections, placement,
                                validate, evaluate (TS-only screening layer)
   scripts/gen-constants.ts     codegen + `--check` mode used by CI
-  scripts/check-size.mjs       144 KiB ratchet on built JS output (see below)
+  scripts/check-size.mjs       160 KiB ratchet on built JS output (see below)
   test/                        parity, conservation, regression, benchmarks, site-design
 packages/app                 React 18 + Three.js frontend (Vite)
   src/state/store.ts           zustand store: setParam → simulate() → render + URL sync
@@ -217,7 +217,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 
 - Zero runtime dependencies, pure ESM, strict TS (`exactOptionalPropertyTypes`,
   `noUncheckedIndexedAccess`).
-- `scripts/check-size.mjs` enforces a **144 KiB** comment/whitespace-stripped JS
+- `scripts/check-size.mjs` enforces a **160 KiB** comment/whitespace-stripped JS
   budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
   a tripwire against accidental bulk, not a load-time target.
 - **Units are mixed and explicitly annotated — there is no SI invariant, not
@@ -246,9 +246,9 @@ consume it, test the agreement — over duplicating an expression into the UI.
 #### The size budget is a ratchet, not a ceiling
 
 `limitBytes` in `check-size.mjs` is not derived from a load-time target or any
-measurement. It has been raised four times — 50 → 96 → 112 → 128 → 144 KiB —
+measurement. It has been raised five times — 50 → 96 → 112 → 128 → 144 → 160 KiB —
 each time to a round number just above what the engine then weighed, with a
-comment naming the feature that caused the growth. Nothing breaks at 145 KiB;
+comment naming the feature that caused the growth. Nothing breaks one KiB over;
 `three.js` alone is roughly 9× the whole engine, so the engine has never been
 what determines page load time.
 
@@ -257,8 +257,8 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~144.5 KB of ~147.5 KB, which is the normal state of
-a ratchet: it always reads nearly full. Don't treat that as a crisis, and don't
+The current build sits at ~151 KB of ~163.8 KB. A ratchet normally reads nearly
+full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
 - **Raise it** for a new process model, more parameter provenance, or another

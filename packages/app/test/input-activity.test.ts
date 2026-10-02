@@ -2,7 +2,8 @@ import { DEFAULTS } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
 import { describeResultPath, inputActivity } from "../src/analysis/activity";
-import { SITE_ONLY_PARAMS } from "../src/controls/manifest";
+import { CONDITIONING_PARAM, SITE_ONLY_PARAMS } from "../src/controls/manifest";
+import { simulate } from "@selene-isru/engine";
 
 const equatorial: SimParams = { ...DEFAULTS, site: "equatorial" };
 const polar: SimParams = { ...DEFAULTS, site: "polar" };
@@ -67,6 +68,16 @@ describe("input activity", () => {
     for (const [key, site] of Object.entries(SITE_ONLY_PARAMS)) {
       const other = site === "polar" ? equatorial : polar;
       expect(inputActivity(other, key as keyof SimParams).activity, key).toBe("no-effect");
+    }
+  });
+
+  it("only hides conditioning inputs for streams the engine is not storing", () => {
+    for (const params of [equatorial, polar, { ...polar, enableSabatier: true }]) {
+      const stored = new Set(simulate(params).cryo.inventories.map((inventory) => inventory.stream));
+      for (const [stream, key] of Object.entries(CONDITIONING_PARAM)) {
+        const activity = inputActivity(params, key).activity;
+        expect(activity, `${key} at ${params.site}`).toBe(stored.has(stream as never) ? "drives-results" : "no-effect");
+      }
     }
   });
 });

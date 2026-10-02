@@ -4,10 +4,12 @@ import json
 import math
 from typing import Any
 
+from ..constants import c
+
 
 def _scalar_profile(params: dict[str, Any]) -> dict[str, Any]:
     equatorial = params["site"] == "equatorial"
-    shadow = 354 if equatorial else params["polarLongestShadowHours"]
+    shadow = c("tNight") if equatorial else params["polarLongestShadowHours"]
     fraction = 0.5 if equatorial else params["polarIlluminationFraction"]
     day = shadow * fraction / (1 - fraction)
     cycle = day + shadow

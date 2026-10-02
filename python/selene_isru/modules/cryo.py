@@ -7,13 +7,15 @@ from ..constants import c
 
 
 def _properties(stream: str, params: dict[str, Any]) -> dict[str, Any]:
+    # Fluid properties are physical constants; conditioning energy per stream
+    # is a design input (constants.json is the single source of both).
     values = {
-        "lox": (1141, 90.2, c("dHvap_LOX"), 2.2, True),
-        "water-ice": (917, 150, c("dHsub_ice"), 0.15, True),
-        "liquid-water": (997, 293, 0, 0.08, False),
-        "lh2": (70.8, 20.3, c("dHvap_LH2"), 12, True),
-        "lch4": (422, 111.7, c("dHvap_LCH4"), 1.2, True),
-        "co2-feed": (1560, 195, c("dHsub_CO2"), 0.15, True),
+        "lox": (c("rhoStore_LOX"), c("Tstore_LOX"), c("dHvap_LOX"), params["secCondLox"], True),
+        "water-ice": (c("rhoStore_waterIce"), c("Tstore_waterIce"), c("dHsub_ice"), params["secCondWaterIce"], True),
+        "liquid-water": (c("rhoStore_liquidWater"), c("Tstore_liquidWater"), 0, params["secCondLiquidWater"], False),
+        "lh2": (c("rhoStore_LH2"), c("Tstore_LH2"), c("dHvap_LH2"), params["secCondLh2"], True),
+        "lch4": (c("rhoStore_LCH4"), c("Tstore_LCH4"), c("dHvap_LCH4"), params["secCondLch4"], True),
+        "co2-feed": (c("rhoStore_CO2"), c("Tstore_CO2"), c("dHsub_CO2"), params["secCondCo2"], True),
         "custom": (params["rhoCryo"], params["Ttank"], params["customLatentHeatJPerKg"], params["secLiquefaction"], True),
     }
     density, temperature, latent, conditioning, phase_loss = values[stream]
@@ -30,10 +32,10 @@ def _pending_inventory(params: dict[str, Any], demand: dict[str, Any], profile: 
     illumination = profile["averageIllumination"] if params["site"] == "polar" else 1
     surface_temperature = profile["maximumSurfaceTemperatureK"] if params["site"] == "polar" else params["Tsurface"]
     q_solar = params["alphaTank"] * c("ISOLAR") * projected_area * illumination
-    q_albedo = params["alphaTank"] * c("ISOLAR") * 0.12 * params["Fview"] * area * illumination
+    q_albedo = params["alphaTank"] * c("ISOLAR") * c("albedoLunar") * params["Fview"] * area * illumination
     q_ir = params["epsTank"] * c("sigma") * surface_temperature**4 * params["Fview"] * area
     cold = properties["storageTemperatureK"]
-    q_space = params["epsTank"] * c("sigma") * (cold**4 - 3**4) * area * (1 - params["Fview"])
+    q_space = params["epsTank"] * c("sigma") * (cold**4 - c("Tspace") ** 4) * area * (1 - params["Fview"])
     q_environment = q_solar + q_albedo + q_ir - q_space
     equilibrium = (q_environment / (params["epsTank"] * c("sigma") * area)) ** 0.25 if q_environment > 0 else cold
     hot = max(equilibrium, cold)

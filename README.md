@@ -133,7 +133,7 @@ when they are useful:
 Every core process equation used by the authored simulation lives twice:
 
 - **TypeScript** (`packages/engine`) — the runtime engine the app calls on
-  every input event. Zero dependencies, pure ESM, with a 144 KiB CI budget
+  every input event. Zero dependencies, pure ESM, with a 160 KiB CI budget
   including the versioned custom-site schema, graph validator, installed
   capacity evaluator, and disclosed cable/haul screening models.
 - **Python** (`python/selene_isru`) — an independent mirror used for

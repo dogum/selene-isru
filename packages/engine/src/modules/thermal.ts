@@ -31,7 +31,7 @@ export function secSubDeliveredJPerKg(params: SimParams): number {
 }
 
 export function simulateThermal(params: SimParams): ThermalOutput {
-  const T = params.site === "polar" ? params.Tsub : 300;
+  const T = params.site === "polar" ? params.Tsub : PHYSICAL_CONSTANTS.TrefRegolith.value;
   const conductivity_WPerMK = params.kc + params.kr * T ** 3;
   const knudsenD_M2PerS =
     (2 / 3) *

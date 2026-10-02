@@ -154,6 +154,18 @@ export function paramsForGroup(engineGroup: string): NumericParamDef[] {
   return defs;
 }
 
+/** Conditioning-energy input for each storage stream the engine can carry. */
+export const CONDITIONING_PARAM: Record<string, keyof SimParams> = {
+  lox: "secCondLox",
+  "water-ice": "secCondWaterIce",
+  "liquid-water": "secCondLiquidWater",
+  lh2: "secCondLh2",
+  lch4: "secCondLch4",
+  "co2-feed": "secCondCo2"
+};
+
+const CONDITIONING_KEYS = new Set<string>(Object.values(CONDITIONING_PARAM));
+
 /** The rail state that decides which inputs a group shows. */
 export type RailVisibilityParams = Pick<
   SimParams,
@@ -167,7 +179,12 @@ export type RailVisibilityParams = Pick<
  * illumination while a time-resolved profile drives it, and the custom-cryogen
  * properties unless that stream is selected.
  */
-export function railParamsForGroup(group: GroupDef, params: RailVisibilityParams): NumericParamDef[] {
+export function railParamsForGroup(
+  group: GroupDef,
+  params: RailVisibilityParams,
+  /** streams the engine is storing (result.cryo.inventories); conditioning inputs for others are hidden */
+  activeStreams: ReadonlySet<string> = new Set(Object.keys(CONDITIONING_PARAM))
+): NumericParamDef[] {
   const all = paramsForGroup(group.engineGroup).filter((def) =>
     !(params.oxideModel && def.key === "xO2") &&
     (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === params.site)
@@ -181,6 +198,9 @@ export function railParamsForGroup(group: GroupDef, params: RailVisibilityParams
   const customOnly = new Set(["rhoCryo", "customLatentHeatJPerKg", "Ttank", "secLiquefaction"]);
   return all.filter((def) => {
     if (customOnly.has(String(def.key)) && params.storageStream !== "custom") {
+      return false;
+    }
+    if (CONDITIONING_KEYS.has(String(def.key)) && ![...activeStreams].some((stream) => CONDITIONING_PARAM[stream] === def.key)) {
       return false;
     }
     return def.key !== "coolerCapacityW" || params.cryoControlMode === "capacity-limited";

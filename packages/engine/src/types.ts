@@ -277,6 +277,18 @@ export interface SimParams {
   eta2ndLaw: number;
   /** [kWh/kg] */
   secLiquefaction: number;
+  /** per-stream conditioning energy [kWh/kg] */
+  secCondLox: number;
+  /** [kWh/kg] */
+  secCondWaterIce: number;
+  /** [kWh/kg] */
+  secCondLiquidWater: number;
+  /** [kWh/kg] */
+  secCondLh2: number;
+  /** [kWh/kg] */
+  secCondLch4: number;
+  /** [kWh/kg] */
+  secCondCo2: number;
   /** [kg/(kg/day)] */
   kCryoMass: number;
   polarIlluminationFraction: number;

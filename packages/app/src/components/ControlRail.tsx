@@ -48,10 +48,13 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [changedOnly, setChangedOnly] = useState(false);
 
   const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode } = params;
+  // Engine-reported streams, joined so the memo only reruns when the set changes.
+  const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
     const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode };
-    return groupsForSite(site).map((group) => ({ group, defs: railParamsForGroup(group, visibility) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode]);
+    const activeStreams = new Set(streamKey.split(",").filter(Boolean));
+    return groupsForSite(site).map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   const changedCount = groups.reduce(

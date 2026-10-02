@@ -8,6 +8,8 @@ import type {
   Warning
 } from "../types";
 
+const PC = PHYSICAL_CONSTANTS;
+
 interface StreamProperties {
   densityKgPerM3: number;
   storageTemperatureK: number;
@@ -50,18 +52,20 @@ export interface CryoOutput extends StreamProperties {
 
 function propertiesFor(stream: ResolvedStorageStream, params: SimParams): StreamProperties {
   switch (stream) {
+    // Fluid properties are physical constants; conditioning energy per stream
+    // is a design input (constants.json is the single source of both).
     case "lox":
-      return { densityKgPerM3: 1141, storageTemperatureK: 90.2, latentHeatJPerKg: PHYSICAL_CONSTANTS.dHvap_LOX.value, conditioningSecKWhPerKg: 2.2, phaseLossEnabled: true };
+      return { densityKgPerM3: PC.rhoStore_LOX.value, storageTemperatureK: PC.Tstore_LOX.value, latentHeatJPerKg: PC.dHvap_LOX.value, conditioningSecKWhPerKg: params.secCondLox, phaseLossEnabled: true };
     case "water-ice":
-      return { densityKgPerM3: 917, storageTemperatureK: 150, latentHeatJPerKg: PHYSICAL_CONSTANTS.dHsub_ice.value, conditioningSecKWhPerKg: 0.15, phaseLossEnabled: true };
+      return { densityKgPerM3: PC.rhoStore_waterIce.value, storageTemperatureK: PC.Tstore_waterIce.value, latentHeatJPerKg: PC.dHsub_ice.value, conditioningSecKWhPerKg: params.secCondWaterIce, phaseLossEnabled: true };
     case "liquid-water":
-      return { densityKgPerM3: 997, storageTemperatureK: 293, latentHeatJPerKg: 0, conditioningSecKWhPerKg: 0.08, phaseLossEnabled: false };
+      return { densityKgPerM3: PC.rhoStore_liquidWater.value, storageTemperatureK: PC.Tstore_liquidWater.value, latentHeatJPerKg: 0, conditioningSecKWhPerKg: params.secCondLiquidWater, phaseLossEnabled: false };
     case "lh2":
-      return { densityKgPerM3: 70.8, storageTemperatureK: 20.3, latentHeatJPerKg: PHYSICAL_CONSTANTS.dHvap_LH2.value, conditioningSecKWhPerKg: 12, phaseLossEnabled: true };
+      return { densityKgPerM3: PC.rhoStore_LH2.value, storageTemperatureK: PC.Tstore_LH2.value, latentHeatJPerKg: PC.dHvap_LH2.value, conditioningSecKWhPerKg: params.secCondLh2, phaseLossEnabled: true };
     case "lch4":
-      return { densityKgPerM3: 422, storageTemperatureK: 111.7, latentHeatJPerKg: PHYSICAL_CONSTANTS.dHvap_LCH4.value, conditioningSecKWhPerKg: 1.2, phaseLossEnabled: true };
+      return { densityKgPerM3: PC.rhoStore_LCH4.value, storageTemperatureK: PC.Tstore_LCH4.value, latentHeatJPerKg: PC.dHvap_LCH4.value, conditioningSecKWhPerKg: params.secCondLch4, phaseLossEnabled: true };
     case "co2-feed":
-      return { densityKgPerM3: 1560, storageTemperatureK: 195, latentHeatJPerKg: PHYSICAL_CONSTANTS.dHsub_CO2.value, conditioningSecKWhPerKg: 0.15, phaseLossEnabled: true };
+      return { densityKgPerM3: PC.rhoStore_CO2.value, storageTemperatureK: PC.Tstore_CO2.value, latentHeatJPerKg: PC.dHsub_CO2.value, conditioningSecKWhPerKg: params.secCondCo2, phaseLossEnabled: true };
     case "custom":
       return { densityKgPerM3: params.rhoCryo, storageTemperatureK: params.Ttank, latentHeatJPerKg: params.customLatentHeatJPerKg, conditioningSecKWhPerKg: params.secLiquefaction, phaseLossEnabled: true };
   }
@@ -81,10 +85,10 @@ function pendingInventory(
   const illumination = params.site === "polar" ? profile.averageIllumination : 1;
   const surfaceTemperatureK = params.site === "polar" ? profile.maximumSurfaceTemperatureK : params.Tsurface;
   const qSolarW = params.alphaTank * PHYSICAL_CONSTANTS.ISOLAR.value * projectedAreaM2 * illumination;
-  const qAlbedoW = params.alphaTank * PHYSICAL_CONSTANTS.ISOLAR.value * 0.12 * params.Fview * areaM2 * illumination;
+  const qAlbedoW = params.alphaTank * PHYSICAL_CONSTANTS.ISOLAR.value * PC.albedoLunar.value * params.Fview * areaM2 * illumination;
   const qIrW = params.epsTank * PHYSICAL_CONSTANTS.sigma.value * surfaceTemperatureK ** 4 * params.Fview * areaM2;
   const coldK = properties.storageTemperatureK;
-  const qSpaceW = params.epsTank * PHYSICAL_CONSTANTS.sigma.value * (coldK ** 4 - 3 ** 4) * areaM2 * (1 - params.Fview);
+  const qSpaceW = params.epsTank * PHYSICAL_CONSTANTS.sigma.value * (coldK ** 4 - PC.Tspace.value ** 4) * areaM2 * (1 - params.Fview);
   const qEnvironmentW = qSolarW + qAlbedoW + qIrW - qSpaceW;
   const equilibriumK = qEnvironmentW > 0
     ? (qEnvironmentW / (params.epsTank * PHYSICAL_CONSTANTS.sigma.value * areaM2)) ** 0.25

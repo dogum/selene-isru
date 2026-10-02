@@ -197,6 +197,17 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Polar site · landed extraction-plant mass",
     defaultUncertainty: 0.3
   },
+  ...Object.fromEntries(
+    (["secCondLox", "secCondWaterIce", "secCondLiquidWater", "secCondLh2", "secCondLch4", "secCondCo2"] as const).map((key) => [
+      key,
+      {
+        rangeRationale: "Design sweep around the v0.3 conditioning estimate, which carries no published per-stream source.",
+        validity: "Lumped energy to bring the product to its storage state (liquefaction or chilling). Not derived from cryocooler efficiency; treat as an assumption to vary.",
+        applicability: "Shown only while the engine stores this stream · product conditioning energy",
+        defaultUncertainty: 0.3
+      }
+    ])
+  ),
   thetaDivBeam: {
     rangeRationale: "Narrow-to-diffuse beam divergence envelope for crater-floor delivery trades.",
     validity: "Geometric beam spread only; pointing jitter and atmospheric effects are absent.",

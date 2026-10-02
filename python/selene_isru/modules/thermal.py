@@ -17,7 +17,7 @@ def sec_sub_delivered_j_per_kg(params: dict[str, Any]) -> float:
 
 
 def simulate_thermal(params: dict[str, Any]) -> dict[str, float | None]:
-    temp = params["Tsub"] if params["site"] == "polar" else 300
+    temp = params["Tsub"] if params["site"] == "polar" else c("TrefRegolith")
     conductivity_w_per_mk = params["kc"] + params["kr"] * temp**3
     knudsen_d_m2_per_s = (2 / 3) * params["rPore"] * math.sqrt((8 * c("R") * temp) / (math.pi * c("M_H2O")))
 

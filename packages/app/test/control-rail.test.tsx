@@ -26,6 +26,9 @@ describe("rail visibility and search helpers", () => {
     const cryo = group("cryo");
     expect(keys(railParamsForGroup(cryo, { ...DEFAULTS, storageStream: "custom" }))).toContain("Ttank");
     expect(keys(railParamsForGroup(cryo, DEFAULTS))).not.toContain("Ttank");
+    const loxOnly = keys(railParamsForGroup(cryo, DEFAULTS, new Set(["lox"])));
+    expect(loxOnly).toContain("secCondLox");
+    expect(loxOnly).not.toContain("secCondLh2");
   });
 
   it("matches every search term against plain name, code name, group, and unit", () => {
