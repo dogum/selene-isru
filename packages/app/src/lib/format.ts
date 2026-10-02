@@ -31,7 +31,7 @@ function formatNumber(value: number, sig: number): string {
  * SI auto-prefixes power (W→kW→MW→GW) and mass (kg→t); all other units pass
  * through uppercased. `sig` is significant digits (default 3).
  */
-export function formatQty(value: number, unit: string, sig = 3): FormattedQty {
+function scaleQty(value: number, unit: string, sig: number): FormattedQty {
   let v = value;
   let u = unit;
 
@@ -54,7 +54,18 @@ export function formatQty(value: number, unit: string, sig = 3): FormattedQty {
     }
   }
 
-  return { value: formatNumber(v, sig), unit: u.toUpperCase() };
+  return { value: formatNumber(v, sig), unit: u };
+}
+
+export function formatQty(value: number, unit: string, sig = 3): FormattedQty {
+  const scaled = scaleQty(value, unit, sig);
+  return { value: scaled.value, unit: scaled.unit.toUpperCase() };
+}
+
+/** Running-text form with the same scaling but the unit's natural case: `1.03 MW`, `59 t`, `1,000 kg/day`. */
+export function formatQtyProse(value: number, unit: string, sig = 3): string {
+  const q = scaleQty(value, unit, sig);
+  return q.unit.length > 0 ? `${q.value}${THIN_SPACE}${q.unit}` : q.value;
 }
 
 /** Inline single-string form: `24.7␣KWH/KG` with a thin space. */

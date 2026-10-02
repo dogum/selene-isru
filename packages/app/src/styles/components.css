@@ -522,9 +522,30 @@ input.param-input {
 
 .kpi-cells {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   gap: 26px;
   overflow: hidden;
+}
+
+/* plain-language reading of the current case (analysis/summary.ts) */
+.case-summary {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-mid);
+  font: 400 var(--fs-12) / 1.4 var(--font-body);
+  text-align: right;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (max-width: 1199px) {
+  .case-summary {
+    display: none;
+  }
 }
 
 .kpi {
@@ -4962,4 +4983,85 @@ body.selene-photo-mode .custom-scene-label-overlay {
     border-color: #cbd3da !important;
     background: white !important;
   }
+}
+
+/* ============ first-visit intro (IntroCard.tsx) ============ */
+
+.intro-card {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 15;
+  width: min(380px, calc(100% - 32px));
+  padding: 16px 18px 14px;
+  border: 1px solid var(--line-hi);
+  border-left: 2px solid var(--melt);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-slideover);
+  color: var(--text-mid);
+  font: 400 var(--fs-12) / 1.5 var(--font-body);
+}
+
+.intro-card h2 {
+  margin: 4px 0 8px;
+  color: var(--text-hi);
+  font: 600 var(--fs-16) / 1.25 var(--font-display);
+}
+
+.intro-card p {
+  margin: 0 0 8px;
+}
+
+.intro-card ol {
+  margin: 0 0 10px;
+  padding-left: 18px;
+}
+
+.intro-card li {
+  margin-bottom: 4px;
+}
+
+.intro-card strong {
+  color: var(--text-hi);
+  font-weight: 600;
+}
+
+.intro-card-boundary {
+  color: var(--caution);
+  font-size: var(--fs-11);
+}
+
+.intro-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intro-card-primary {
+  border-color: var(--melt);
+  color: var(--melt);
+}
+
+.intro-card-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 6px;
+  color: var(--text-mid);
+}
+
+.intro-card-close:hover {
+  color: var(--text-hi);
+}
+
+@media (max-width: 1099px) {
+  .intro-card {
+    top: 120px;
+    bottom: auto;
+    left: 12px;
+  }
+}
+
+body.selene-photo-mode .intro-card {
+  display: none;
 }

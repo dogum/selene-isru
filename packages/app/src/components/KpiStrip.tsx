@@ -1,11 +1,15 @@
-import type { SimResult } from "@selene-isru/engine";
+import type { SimParams, SimResult } from "@selene-isru/engine";
+import { caseSummary, outputLabel } from "../analysis/summary";
 import type { KpiKey } from "../state/store";
 import { useStore } from "../state/store";
 import { Qty } from "./Qty";
 
 interface KpiDef {
   key: KpiKey;
-  label: string;
+  /** reader-facing name (PLAIN input names) */
+  plain: string | ((params: SimParams, result: SimResult) => string);
+  /** engineering name (CODE input names) */
+  code: string;
   unit: string;
   color: string;
   value: (r: SimResult) => number;
@@ -13,26 +17,30 @@ interface KpiDef {
 }
 
 const KPIS: KpiDef[] = [
-  { key: "sec", label: "SEC TOTAL", unit: "kWh/kg", color: "var(--melt)", value: (r) => r.energy.secTotal_kWhPerKg, sig: 4 },
-  { key: "power", label: "GRID POWER", unit: "W", color: "var(--melt)", value: (r) => r.energy.gridPowerW },
-  { key: "missions", label: "MISSIONS", unit: "", color: "var(--regolith)", value: (r) => r.logistics.nMissions },
-  { key: "mass-throughput", label: "MASS EQUIV.", unit: "days", color: "var(--regolith)", value: (r) => r.logistics.plantMassThroughputDays },
-  { key: "leverage", label: "LEVERAGE L", unit: "×", color: "var(--regolith)", value: (r) => r.logistics.leverageL },
-  { key: "output", label: "OUTPUT", unit: "kg/day", color: "var(--cryo)", value: (r) => r.production.targetKgPerDay, sig: 4 }
+  { key: "sec", plain: "ENERGY PER KG", code: "SEC TOTAL", unit: "kWh/kg", color: "var(--melt)", value: (r) => r.energy.secTotal_kWhPerKg, sig: 4 },
+  { key: "power", plain: "POWER DRAW", code: "GRID POWER", unit: "W", color: "var(--melt)", value: (r) => r.energy.gridPowerW },
+  { key: "missions", plain: "LANDINGS", code: "MISSIONS", unit: "", color: "var(--regolith)", value: (r) => r.logistics.nMissions },
+  { key: "mass-throughput", plain: "DAYS TO MAKE ITS MASS", code: "MASS EQUIV.", unit: "days", color: "var(--regolith)", value: (r) => r.logistics.plantMassThroughputDays },
+  { key: "leverage", plain: "MASS LEVERAGE", code: "LEVERAGE L", unit: "×", color: "var(--regolith)", value: (r) => r.logistics.leverageL },
+  { key: "output", plain: outputLabel, code: "OUTPUT", unit: "kg/day", color: "var(--cryo)", value: (r) => r.production.targetKgPerDay, sig: 4 }
 ];
 
 export function KpiCells({ compact = false }: { compact?: boolean }): React.JSX.Element {
   const result = useStore((s) => s.result);
+  const params = useStore((s) => s.params);
+  const nameMode = useStore((s) => s.ui.parameterNames);
   const selectedKpi = useStore((s) => s.ui.selectedKpi);
   const setUi = useStore((s) => s.setUi);
   const archColor = result.power.architecture === "solar" ? "var(--solar)" : "var(--fission)";
   return (
     <>
-      {KPIS.map((k) => (
+      {KPIS.map((k) => {
+        const label = nameMode === "code" ? k.code : typeof k.plain === "string" ? k.plain : k.plain(params, result);
+        return (
         <button
           type="button"
           className={`kpi ${compact ? "compact" : ""} ${selectedKpi === k.key ? "selected" : ""}`}
-          key={k.label}
+          key={k.key}
           aria-pressed={selectedKpi === k.key}
           title="Explain this number"
           onClick={() => setUi({ selectedKpi: selectedKpi === k.key ? null : k.key })}
@@ -42,14 +50,23 @@ export function KpiCells({ compact = false }: { compact?: boolean }): React.JSX.
           </div>
           <div
             className="kpi-label"
-            style={{ borderColor: k.label === "GRID POWER" ? archColor : k.color }}
+            style={{ borderColor: k.key === "power" ? archColor : k.color }}
           >
-            {k.label}
+            {label}
           </div>
         </button>
-      ))}
+        );
+      })}
     </>
   );
+}
+
+/** Plain-language sentence for the current case, built only from engine outputs. */
+export function CaseSummary(): React.JSX.Element {
+  const params = useStore((s) => s.params);
+  const result = useStore((s) => s.result);
+  const text = caseSummary(params, result);
+  return <p className="case-summary" title={text}>{text}</p>;
 }
 
 export function KpiStrip(): React.JSX.Element {
@@ -66,6 +83,7 @@ export function KpiStrip(): React.JSX.Element {
       <div className="kpi-cells">
         <KpiCells />
       </div>
+      <CaseSummary />
       <button
         className={`warn-pill ${anyAlarm ? "alarm" : count > 0 ? "caution" : "clear"}`}
         aria-pressed={dockOpen}
