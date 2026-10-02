@@ -928,16 +928,50 @@ input.param-input {
 .axis-label,
 .sankey-node-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-11);
   letter-spacing: 0.06em;
-  fill: var(--text-low);
-}
-
-.sankey-node-label {
   fill: var(--text-mid);
   paint-order: stroke;
   stroke: var(--bg-inset);
   stroke-width: 3px;
+}
+
+.sankey-node-value {
+  fill: var(--text-hi);
+}
+
+.sankey-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-11);
+  color: var(--text-mid);
+}
+
+.sankey-ledger caption {
+  padding-bottom: 6px;
+  text-align: left;
+  color: var(--text-mid);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sankey-ledger th,
+.sankey-ledger td {
+  padding: 5px 8px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  font-weight: 500;
+}
+
+.sankey-ledger thead th {
+  color: var(--text-mid);
+  background: var(--bg-inset);
+  letter-spacing: 0.08em;
+}
+
+.sankey-ledger td {
+  text-align: right;
+  color: var(--text-hi);
 }
 
 .sankey-head {
