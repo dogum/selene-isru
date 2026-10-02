@@ -2,13 +2,14 @@ import { simulate } from "@selene-isru/engine";
 import { useMemo } from "react";
 import { caseExport, fileStem } from "../../analysis/caseExport";
 import {
+  changedInputRows,
   downloadText,
   reportScenarios,
   reportSnapshot,
   scenariosCsv,
   studyScenarioResult
 } from "../../analysis/studyExport";
-import { BUILD_INFO } from "../../lib/build";
+import { BUILD_INFO, buildStamp, MODEL_BOUNDARY } from "../../lib/build";
 import { formatQtyText } from "../../lib/format";
 import { paramsToUrl } from "../../lib/url";
 import { useStore } from "../../state/store";
@@ -30,6 +31,7 @@ export function EngineeringReport(): React.JSX.Element {
   const scenarios = useStore((s) => s.scenarioLibrary);
   const pinned = scenarios.filter((scenario) => scenario.pinned);
   const snapshot = useMemo(() => reportSnapshot(params), [params]);
+  const changedInputs = useMemo(() => changedInputRows(params), [params]);
   const flows = energyRows(result);
   const generatedAt = new Date().toLocaleString();
   const alarmCount = result.warnings.filter((warning) => warning.severity === "alarm").length;
@@ -73,6 +75,7 @@ export function EngineeringReport(): React.JSX.Element {
           <span className="reactor-eyebrow">SELENE-ISRU · ENGINEERING STUDY</span>
           <h2>{currentName || "Untitled lunar ISRU case"}</h2>
           <p>{result.site.toUpperCase()} SITE · {result.power.architecture.toUpperCase()} POWER · GENERATED {generatedAt}</p>
+          <p className="report-build">{buildStamp().toUpperCase()}</p>
         </div>
         <div className={alarmCount > 0 ? "report-status caution" : "report-status"}>
           {alarmCount > 0 ? `${alarmCount} IMPLEMENTED CONSTRAINT VIOLATION${alarmCount === 1 ? "" : "S"}` : "NO IMPLEMENTED CONSTRAINT VIOLATIONS"}
@@ -87,6 +90,23 @@ export function EngineeringReport(): React.JSX.Element {
         <div><span>MISSIONS</span><strong>{formatQtyText(result.logistics.nMissions, "msn", 0)}</strong></div>
         <div><span>PLANT-MASS THROUGHPUT EQUIV.</span><strong>{formatQtyText(result.logistics.plantMassThroughputDays, "days")}</strong></div>
       </div>
+
+      <section className="report-section">
+        <h3>Inputs changed from defaults</h3>
+        {changedInputs.length === 0 ? (
+          <p className="report-note">Every input is at its default; the reproducibility link below rebuilds this case.</p>
+        ) : (
+          <table>
+            <thead><tr><th>Input</th><th>Code name</th><th>Value</th><th>Default</th><th>Unit</th><th>Maturity</th></tr></thead>
+            <tbody>{changedInputs.map((row) => (
+              <tr key={String(row.key)}>
+                <th>{row.label}</th><td className="mono">{String(row.key)}</td><td>{row.value}</td>
+                <td>{row.defaultValue}</td><td>{row.unit}</td><td>{row.maturity}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </section>
 
       <div className="report-grid">
         <section>
@@ -109,18 +129,22 @@ export function EngineeringReport(): React.JSX.Element {
           <dl>
             <div>
               <dt>Mass-throughput equivalent</dt>
-              <dd>{formatQtyText(snapshot.uncertainty.plantMassThroughputDays.p10, "days")} / {formatQtyText(snapshot.uncertainty.plantMassThroughputDays.p50, "days")} / {formatQtyText(snapshot.uncertainty.plantMassThroughputDays.p90, "days")}</dd>
+              <dd>{formatQtyText(snapshot.uncertainty.bands.plantMassThroughputDays.p10, "days")} / {formatQtyText(snapshot.uncertainty.bands.plantMassThroughputDays.p50, "days")} / {formatQtyText(snapshot.uncertainty.bands.plantMassThroughputDays.p90, "days")}</dd>
             </div>
             <div>
               <dt>SEC</dt>
-              <dd>{formatQtyText(snapshot.uncertainty.secTotal.p10, "kWh/kg", 4)} / {formatQtyText(snapshot.uncertainty.secTotal.p50, "kWh/kg", 4)} / {formatQtyText(snapshot.uncertainty.secTotal.p90, "kWh/kg", 4)}</dd>
+              <dd>{formatQtyText(snapshot.uncertainty.bands.secTotal.p10, "kWh/kg", 4)} / {formatQtyText(snapshot.uncertainty.bands.secTotal.p50, "kWh/kg", 4)} / {formatQtyText(snapshot.uncertainty.bands.secTotal.p90, "kWh/kg", 4)}</dd>
             </div>
             <div>
               <dt>Missions</dt>
-              <dd>{snapshot.uncertainty.nMissions.p10.toFixed(0)} / {snapshot.uncertainty.nMissions.p50.toFixed(0)} / {snapshot.uncertainty.nMissions.p90.toFixed(0)}</dd>
+              <dd>{snapshot.uncertainty.bands.nMissions.p10.toFixed(0)} / {snapshot.uncertainty.bands.nMissions.p50.toFixed(0)} / {snapshot.uncertainty.bands.nMissions.p90.toFixed(0)}</dd>
             </div>
           </dl>
-          <p className="report-note">192 deterministic samples: illustrative parameter variation, not a calibrated probabilistic forecast.</p>
+          <p className="report-note">
+            {snapshot.uncertainty.samples} deterministic samples (seed {snapshot.uncertainty.seed}), independent Gaussian 1σ on{" "}
+            {snapshot.uncertainty.spec.map((item) => `${String(item.key)} ±${Math.round(item.rel * 100)}%`).join(", ")}:
+            illustrative parameter variation, not a calibrated probabilistic forecast. The Sensitivity tab samples its own selected inputs.
+          </p>
         </section>
       </div>
 
@@ -234,8 +258,7 @@ export function EngineeringReport(): React.JSX.Element {
         <ul>
           <li>Steady-state analytical sizing; campaign scheduling, reliability, crew, and spares are outside the present boundary.</li>
           <li>Input evidence and validity limits are available from each control's information disclosure.</li>
-          <li>Python and TypeScript engines are parity-tested, but parity does not constitute physical validation.</li>
-          <li>Conceptual systems tool only; not suitable for hardware design, safety analysis, cost commitment, or mission certification.</li>
+          <li>{MODEL_BOUNDARY}</li>
         </ul>
       </section>
 

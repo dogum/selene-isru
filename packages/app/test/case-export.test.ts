@@ -2,7 +2,7 @@
 import { DEFAULTS, PARAM_META, SEEDED_SITE_DESIGN_FIXTURES, simulate } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
 import { CASE_SCHEMA, caseExport, resultDrift } from "../src/analysis/caseExport";
-import { previewStudyExport, scenariosCsv } from "../src/analysis/studyExport";
+import { changedInputRows, previewStudyExport, reportSnapshot, scenariosCsv } from "../src/analysis/studyExport";
 import { MODEL_BOUNDARY } from "../src/lib/build";
 
 const NOW = new Date("2026-10-02T12:00:00.000Z");
@@ -87,5 +87,20 @@ describe("wide study CSV", () => {
     expect(row).toContain(",1234.5678,");
     expect(row).toContain("abc1234");
     expect(String(simulate(scenario.params).energy.secTotal_kWhPerKg)).toSatisfy((value: string) => row.includes(value));
+  });
+});
+
+describe("engineering report inputs", () => {
+  it("lists every changed input with unit, default, and maturity", () => {
+    expect(changedInputRows(DEFAULTS)).toEqual([]);
+    const rows = changedInputRows({ ...DEFAULTS, site: "polar", chiIce: 0.03, enableSabatier: true });
+    expect(rows.map((row) => String(row.key)).sort()).toEqual(["chiIce", "enableSabatier", "site"]);
+    const ice = rows.find((row) => row.key === "chiIce")!;
+    expect(ice).toMatchObject({ value: "0.03", defaultValue: "0.05", unit: "kg/kg" });
+    expect(ice.maturity).toBeTruthy();
+    expect(rows.find((row) => row.key === "site")).toMatchObject({ value: "polar", maturity: "MODEL SWITCH", unit: "" });
+    const snapshot = reportSnapshot({ ...DEFAULTS, site: "polar" });
+    expect(snapshot.uncertainty.spec.map((item) => item.key)).toEqual(["targetKgPerDay", "chiIce"]);
+    expect(snapshot.uncertainty.samples).toBe(192);
   });
 });

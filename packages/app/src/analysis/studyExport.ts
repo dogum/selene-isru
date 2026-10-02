@@ -7,10 +7,11 @@ import {
   sampleUncertainty,
   simulate
 } from "@selene-isru/engine";
-import type { SimParams } from "@selene-isru/engine";
+import type { ParamMeta, SimParams, UncertaintySpec } from "@selene-isru/engine";
+import { evidenceForParam } from "../controls/evidence";
 import type { StudyScenario } from "../state/store";
 import { formatQtyText } from "../lib/format";
-import { paramsToUrl } from "../lib/url";
+import { nonDefaultParams, paramsToUrl } from "../lib/url";
 import { BUILD_INFO, type BuildInfo } from "../lib/build";
 import { CASE_SCHEMA, CASE_VERSION, fileStem, resultDrift } from "./caseExport";
 import { toCsv, type CsvColumn, type CsvValue } from "./csv";
@@ -406,21 +407,54 @@ export function reportScenarios(
   return [live, ...library.filter((scenario) => scenario.pinned)];
 }
 
+export interface ReportUncertainty {
+  spec: UncertaintySpec[];
+  samples: number;
+  seed: number;
+  bands: ReturnType<typeof sampleUncertainty>;
+}
+
 export function reportSnapshot(params: SimParams): {
   result: ReturnType<typeof simulate>;
-  uncertainty: ReturnType<typeof sampleUncertainty>;
+  uncertainty: ReportUncertainty;
 } {
   const result = simulate(params);
   const dominant: keyof SimParams = params.site === "polar" ? "chiIce" : "etaCurrent";
-  return {
-    result,
-    uncertainty: sampleUncertainty(
-      params,
-      [
-        { key: "targetKgPerDay", rel: 0.1 },
-        { key: dominant, rel: dominant === "chiIce" ? 0.25 : 0.12 }
-      ],
-      { n: 192, seed: 2026 }
-    )
-  };
+  // A fixed, stated spec so a printed report says exactly what it sampled.
+  const spec: UncertaintySpec[] = [
+    { key: "targetKgPerDay", rel: 0.1 },
+    { key: dominant, rel: dominant === "chiIce" ? 0.25 : 0.12 }
+  ];
+  const samples = 192;
+  const seed = 2026;
+  return { result, uncertainty: { spec, samples, seed, bands: sampleUncertainty(params, spec, { n: samples, seed }) } };
+}
+
+export interface ChangedInputRow {
+  key: keyof SimParams;
+  label: string;
+  value: string;
+  defaultValue: string;
+  unit: string;
+  maturity: string;
+}
+
+/** Every input that differs from its default, with unit and evidence maturity, for the report. */
+export function changedInputRows(params: SimParams): ChangedInputRow[] {
+  return (Object.entries(nonDefaultParams(params)) as Array<[keyof SimParams, SimParams[keyof SimParams]]>).map(([key, value]) => {
+    const meta: ParamMeta = PARAM_META[key];
+    const show = (raw: unknown): string =>
+      key === "polarProfileData" ? `imported profile (${String(raw).length} bytes)` : String(raw);
+    return {
+      key,
+      label: meta.description,
+      value: show(value),
+      defaultValue: show(DEFAULTS[key]),
+      unit: meta.unit === "1" || meta.unit === "mode" ? "" : meta.unit,
+      maturity:
+        typeof meta.min === "number" && typeof meta.max === "number"
+          ? evidenceForParam({ key, group: meta.group, source: meta.source, min: meta.min, max: meta.max, unit: meta.unit }).maturity
+          : "MODEL SWITCH"
+    };
+  });
 }
