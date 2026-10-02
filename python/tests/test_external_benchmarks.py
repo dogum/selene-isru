@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from selene_isru import simulate
 from selene_isru.constants import DEFAULTS
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -40,3 +41,18 @@ def test_site_profile_anchor_and_open_mli_status() -> None:
     assert DEFAULTS["polarIlluminationFraction"] == expected["illuminationFraction"]
     assert DEFAULTS["polarLongestShadowHours"] == expected["longestShadowHours"]
     assert item("mli-layer-density-units")["kind"] == "open"
+
+
+def test_polar_defaults_inside_best_site_darkness_range() -> None:
+    expected = item("connecting-ridge-best-site")["expected"]
+    assert DEFAULTS["polarLongestShadowHours"] <= expected["longestDarknessDaysMax"] * 24
+    assert DEFAULTS["polarIlluminationFraction"] < expected["illuminationFraction2m"]
+
+
+def test_polar_extraction_calibration_reproduces_nasa_baseline() -> None:
+    row = item("kleinhenz-paz-2020-polar-water")
+    result = simulate({"site": "polar", **row["inputs"]})
+    thermal = result["thermal"]
+    heater_power_kw = (thermal["secSub_JPerKg"] + thermal["heaterLoss_JPerKg"]) * row["inputs"]["targetKgPerDay"] / 86_400 / 1000
+    assert thermal["extractorMassKg"] == pytest.approx(row["expected"]["extractorMassKg"], rel=row["relativeTolerance"])
+    assert heater_power_kw == pytest.approx(row["expected"]["heaterPowerKW"], rel=row["relativeTolerance"])

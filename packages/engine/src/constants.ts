@@ -1572,6 +1572,36 @@ export const PARAM_META = {
     "description": "Distillation overhead fraction",
     "source": "energy Sankey spec"
   },
+  "etaIceCapture": {
+    "value": 0.75,
+    "min": 0.4,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "thermal",
+    "description": "Fraction of mobilized ice captured as product water",
+    "source": "Kleinhenz & Paz 2020, AIAA 2020-4042, extraction efficiency"
+  },
+  "etaSubHeater": {
+    "value": 0.4,
+    "min": 0.15,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "thermal",
+    "description": "Sublimation heater-to-feed thermal efficiency",
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, water-extractor power"
+  },
+  "kIceExtractorMass": {
+    "value": 0.18,
+    "min": 0.05,
+    "max": 1,
+    "unit": "kg/(kg-regolith/day)",
+    "kind": "parameter",
+    "group": "thermal",
+    "description": "Polar water-extractor mass per regolith throughput",
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, water-extractor mass"
+  },
   "castDeltaT": {
     "value": 30,
     "min": 5,
@@ -1713,5 +1743,8 @@ export const DEFAULTS = {
   "shieldDesignM": 2.5,
   "areaHabRoof": 200,
   "fDistill": 0.1,
+  "etaIceCapture": 0.75,
+  "etaSubHeater": 0.4,
+  "kIceExtractorMass": 0.18,
   "castDeltaT": 30
 } as const satisfies SimParams;

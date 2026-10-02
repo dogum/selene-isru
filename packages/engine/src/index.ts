@@ -62,7 +62,7 @@ export {
 } from "./modules/power";
 export { sabatierKp } from "./modules/sabatier";
 export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
-export { secSubJPerKg } from "./modules/thermal";
+export { secSubDeliveredJPerKg, secSubJPerKg } from "./modules/thermal";
 export type {
   FlowEdge,
   ManifestRow,
@@ -116,6 +116,7 @@ export function simulate(
     excavation.secExcavation_JPerKg,
     electrolysis,
     thermal.secSub_JPerKg,
+    thermal.heaterLoss_JPerKg,
     cryo.conditioningSecKWhPerKg,
     cryo.cryocoolerPowerW,
     sabatier
@@ -155,10 +156,12 @@ export function simulate(
     siteProfile.profile,
     options.powerStrategy ?? "auto"
   );
+  // Polar plants always carry the water extractor; the Sabatier loop adds its
+  // reactor on top. Equatorial plants are the MRE reactor.
   const reactorMassKg =
-    params.site === "equatorial" || params.enableSabatier
+    (params.site === "equatorial" || params.enableSabatier
       ? params.kReactorMass * params.targetKgPerDay
-      : 0;
+      : 0) + thermal.extractorMassKg;
   const logistics = simulateLogistics(
     params,
     excavation.fleetMassKg,
@@ -393,6 +396,7 @@ function energyLineItems(
   secExcavation_JPerKg: number,
   electrolysis: ActiveElectrolysis,
   secSub_JPerKg: number | null,
+  heaterLoss_JPerKg: number | null,
   conditioningSecKWhPerKg: number,
   cryocoolerPowerW: number,
   sabatier: ActiveSabatier | null
@@ -416,7 +420,11 @@ function energyLineItems(
   const lines: EnergyLine[] = [
     { from: "mine", to: "sublimation", jPerKg: secExcavation_JPerKg },
     { from: "sublimation", to: "product", jPerKg: sublimationJPerKg },
-    { from: "sublimation", to: "parasitic", jPerKg: params.fDistill * sublimationJPerKg },
+    {
+      from: "sublimation",
+      to: "parasitic",
+      jPerKg: (heaterLoss_JPerKg ?? 0) + params.fDistill * sublimationJPerKg
+    },
     { from: "cryo", to: "product", jPerKg: cryoJPerKg }
   ];
 

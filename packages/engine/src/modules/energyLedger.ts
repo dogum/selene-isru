@@ -87,7 +87,7 @@ export function energyLedger(
     const sublimationInputW = powerFor("sublimation", "product");
     balances.push(balance("sublimation-energy", "Polar heating and sublimation", sublimationInputW, 0, 0, 0, sublimationInputW));
     const distillationW = powerFor("sublimation", "parasitic");
-    balances.push(balance("polar-aux-energy", "Vapor handling and process allowance", distillationW, 0, 0, distillationW, 0));
+    balances.push(balance("polar-aux-energy", "Heater loss, vapor handling, and process allowance", distillationW, 0, 0, distillationW, 0));
 
     if (sabatier !== null) {
       const waterElectrolysisW = powerFor("electrolysis", "product");

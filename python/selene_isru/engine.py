@@ -38,6 +38,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         excavation["secExcavation_JPerKg"],
         electrolysis,
         thermal["secSub_JPerKg"],
+        thermal["heaterLoss_JPerKg"],
         cryo["conditioningSecKWhPerKg"],
         cryo["cryocoolerPowerW"],
         sabatier,
@@ -48,7 +49,9 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     grid_power_w = params["targetKgPerDay"] / SECONDS_PER_DAY * sec_total_j_per_kg
     energy_accounting = energy_ledger(params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, sabatier)
     power = simulate_power(params, grid_power_w, site_profile["profile"])
-    reactor_mass_kg = params["kReactorMass"] * params["targetKgPerDay"] if params["site"] == "equatorial" or params["enableSabatier"] else 0
+    reactor_mass_kg = (
+        params["kReactorMass"] * params["targetKgPerDay"] if params["site"] == "equatorial" or params["enableSabatier"] else 0
+    ) + thermal["extractorMassKg"]
     logistics = simulate_logistics(
         params,
         excavation["fleetMassKg"],
@@ -206,6 +209,7 @@ def _energy_line_items(
     sec_excavation_j_per_kg: float,
     electrolysis: dict[str, Any],
     sec_sub_j_per_kg_value: float | None,
+    heater_loss_j_per_kg: float | None,
     conditioning_sec_kwh_per_kg: float,
     cryocooler_power_w: float,
     sabatier: dict[str, float] | None,
@@ -228,7 +232,11 @@ def _energy_line_items(
     lines = [
         {"from": "mine", "to": "sublimation", "jPerKg": sec_excavation_j_per_kg},
         {"from": "sublimation", "to": "product", "jPerKg": sublimation_j_per_kg},
-        {"from": "sublimation", "to": "parasitic", "jPerKg": params["fDistill"] * sublimation_j_per_kg},
+        {
+            "from": "sublimation",
+            "to": "parasitic",
+            "jPerKg": (heater_loss_j_per_kg or 0) + params["fDistill"] * sublimation_j_per_kg,
+        },
         {"from": "cryo", "to": "product", "jPerKg": cryo_j_per_kg},
     ]
 

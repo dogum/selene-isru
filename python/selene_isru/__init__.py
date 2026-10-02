@@ -13,7 +13,7 @@ from .modules.electrolysis import (
 from .modules.logistics import payload_per_mission_kg
 from .modules.power import p_crit_dynamic_kw, p_crit_kw
 from .modules.sabatier import sabatier_kp
-from .modules.thermal import sec_sub_j_per_kg
+from .modules.thermal import sec_sub_delivered_j_per_kg, sec_sub_j_per_kg
 
 __all__ = [
     "DEFAULTS",
@@ -29,6 +29,7 @@ __all__ = [
     "p_crit_kw",
     "sabatier_kp",
     "sec_elec_j_per_kg",
+    "sec_sub_delivered_j_per_kg",
     "sec_sub_j_per_kg",
     "sensible_heat_regolith_j_per_kg",
     "sample_uncertainty",

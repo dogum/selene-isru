@@ -30,6 +30,11 @@ const REPO_CONSTANTS =
 
 const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
   {
+    match: /Kleinhenz/i,
+    url: "https://ntrs.nasa.gov/citations/20205007966",
+    section: "NASA · Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water (AIAA 2020-4042)"
+  },
+  {
     match: /CODATA|standard gravity|molar mass/i,
     url: "https://physics.nist.gov/cuu/Constants/",
     section: "NIST Standard Reference Database 121 · 2022 CODATA adjustment"
@@ -171,6 +176,26 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Linear mass scaling; packaging, redundancy, and minimum unit size are not resolved.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.2
+  },
+  etaIceCapture: {
+    rangeRationale: "From heavy capture loss (40%) to ideal capture; the NASA polar-water case study assumes 75%.",
+    validity: "Lumps sublimation during excavation, line losses, and cold-trap inefficiency into one mass fraction. Uncaptured ice still costs its heating and sublimation energy.",
+    applicability: "Polar site · ice extraction yield, regolith throughput, and extractor size",
+    defaultUncertainty: 0.15
+  },
+  etaSubHeater: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "Poorly coupled heaters (15%) to an ideal heater with every joule reaching the feed (100%).",
+    validity: "Default 0.4 is derived: this model's thermal minimum for the NASA baseline (67 kg/day water, 5 wt%, 75% capture) divided by the study's ~16.7 kW water-extractor power before margin. It calibrates the energy, not a specific heater design.",
+    applicability: "Polar site · sublimation heater input and parasitic heat loss",
+    defaultUncertainty: 0.25
+  },
+  kIceExtractorMass: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "Light auger-dryer scaling to heavy batch-oven scaling, per kg of regolith processed per day.",
+    validity: "Default 0.18 is derived from the NASA baseline water extractor (~330 kg incl. margins at ~1.8 t/day regolith). Scaling is linear in regolith throughput, which is conservative for large plants; the study's own trade is sub-linear.",
+    applicability: "Polar site · landed extraction-plant mass",
+    defaultUncertainty: 0.3
   },
   thetaDivBeam: {
     rangeRationale: "Narrow-to-diffuse beam divergence envelope for crater-floor delivery trades.",
