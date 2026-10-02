@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { SimParams } from "@selene-isru/engine";
+import { inputActivity, type ActivityReport } from "../analysis/activity";
 import type { NumericParamDef } from "../controls/manifest";
 import { formatInputValue } from "../lib/format";
 import { useStore } from "../state/store";
@@ -14,8 +15,32 @@ interface ParamRowProps {
   warnLimit?: number;
 }
 
+const ACTIVITY_TAG: Record<ActivityReport["activity"], string | null> = {
+  "drives-results": null,
+  "checks-only": "CHECKS",
+  "no-effect": "NO EFFECT"
+};
+
+const ACTIVITY_ROLE: Record<ActivityReport["activity"], string> = {
+  "drives-results": "DRIVES HEADLINE RESULTS",
+  "checks-only": "SUBSYSTEM CHECKS ONLY",
+  "no-effect": "NO EFFECT IN THIS CONFIGURATION"
+};
+
+/**
+ * Measured, not declared: two engine runs at the input's bounds. Deferred so
+ * the slider and the main simulation stay on the urgent path.
+ */
+function useInputActivity(key: keyof SimParams): ActivityReport {
+  const params = useStore((s) => s.params);
+  const deferred = useDeferredValue(params);
+  return useMemo(() => inputActivity(deferred, key), [deferred, key]);
+}
+
 export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps): React.JSX.Element {
   const value = useStore((s) => s.params[def.key] as number);
+  const activity = useInputActivity(def.key);
+  const activityTag = ACTIVITY_TAG[activity.activity];
   const nameMode = useStore((s) => s.ui.parameterNames);
   const setParam = useStore((s) => s.setParam);
   const resetParam = useStore((s) => s.resetParam);
@@ -71,7 +96,7 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
   }, [def.key, def.min, def.max, step, setParam]);
 
   return (
-    <div className={`param-row ${warnSeverity ?? ""} ${causalParam === def.key ? "causal-selected" : ""}`}>
+    <div className={`param-row ${warnSeverity ?? ""} ${causalParam === def.key ? "causal-selected" : ""} activity-${activity.activity}`}>
       <div className="param-row-top">
         <div className="param-label-wrap">
           <label className="param-label" htmlFor={`p-${def.key}`} title={def.description}>
@@ -86,6 +111,11 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
           >
             i
           </button>
+          {activityTag !== null && (
+            <span className={`param-activity activity-${activity.activity}`} title={activity.reason}>
+              {activityTag}
+            </span>
+          )}
         </div>
         <span className="param-value">
           {editing !== null ? (
@@ -146,8 +176,8 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
             <span>{def.evidence.maturity}</span>
             <span>±{(def.evidence.defaultUncertainty * 100).toFixed(0)}% INPUT SPREAD</span>
           </div>
-          <div className={`param-role ${def.evidence.role === "CAUSAL INPUT" ? "causal" : "diagnostic"}`}>
-            {def.evidence.role}
+          <div className={`param-role ${activity.activity === "drives-results" ? "causal" : "diagnostic"}`}>
+            {ACTIVITY_ROLE[activity.activity]}
           </div>
           <p>{def.description}</p>
           <dl>
@@ -175,8 +205,8 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
               <dd>{def.evidence.applicability}</dd>
             </div>
             <div>
-              <dt>Dependency</dt>
-              <dd>{def.evidence.affects}</dd>
+              <dt>Effect here</dt>
+              <dd>{activity.reason}</dd>
             </div>
           </dl>
           <small>{def.evidence.validity} Extrapolation is unsupported and clamped by the engine.</small>

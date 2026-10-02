@@ -383,8 +383,12 @@ body.selene-photo-mode .app {
   color: var(--text-mid);
   cursor: help;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* wrap long engineering names to two lines rather than truncating them */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .param-value {
@@ -1939,6 +1943,28 @@ input.param-input {
 .param-info[aria-expanded="true"] {
   color: var(--cryo);
   border-color: var(--cryo);
+}
+
+/* live input activity (analysis/activity.ts) */
+.param-activity {
+  flex: 0 0 auto;
+  padding: 2px 4px;
+  border: 1px solid var(--line);
+  color: var(--text-mid);
+  font: 600 var(--fs-10) / 1 var(--font-mono);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.param-activity.activity-no-effect {
+  border-color: color-mix(in srgb, var(--caution) 45%, var(--line));
+  color: var(--caution);
+}
+
+.param-row.activity-no-effect .param-label,
+.param-row.activity-no-effect .param-track {
+  opacity: 0.55;
 }
 
 .param-evidence {

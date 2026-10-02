@@ -5,7 +5,6 @@ export type EvidenceMaturity =
   | "LITERATURE-DERIVED"
   | "SIMPLIFIED CORRELATION"
   | "DESIGN ASSUMPTION";
-export type ParamRole = "CAUSAL INPUT" | "CONSTRAINT DIAGNOSTIC" | "REFERENCE ASSUMPTION";
 
 export interface ParamEvidence {
   maturity: EvidenceMaturity;
@@ -15,8 +14,6 @@ export interface ParamEvidence {
   validity: string;
   applicability: string;
   defaultUncertainty: number;
-  role: ParamRole;
-  affects: string;
 }
 
 interface EvidenceInput {
@@ -223,32 +220,12 @@ function applicabilityFor(group: string): string {
   return labels[group] ?? `Model group · ${group}`;
 }
 
-const DIAGNOSTIC_KEYS = new Set<keyof SimParams>([
-  "c", "Nc", "Nq", "Ngamma", "zDepth", "wBlade", "dBlade", "vCut", "etaDrive",
-  "kc", "kr", "rPore", "Amu", "Bmu", "T0vft", "rhoSlag", "hMelt", "thetaDrain",
-  "Tsabatier", "castDeltaT"
-]);
-
-function roleFor(key: keyof SimParams): { role: ParamRole; affects: string } {
-  if (DIAGNOSTIC_KEYS.has(key)) {
-    return {
-      role: "CONSTRAINT DIAGNOSTIC",
-      affects: "Updates a derived operating check or warning; it does not currently resize every headline KPI."
-    };
-  }
-  return {
-    role: "CAUSAL INPUT",
-    affects: "Propagates through one or more energy, mass, production, storage, power, or logistics outputs."
-  };
-}
-
 export function evidenceForParam(input: EvidenceInput): ParamEvidence {
   const link = SOURCE_LINKS.find((entry) => entry.match.test(input.source)) ?? {
     url: REPO_CONSTANTS,
     section: "SELENE model constants and cited source label"
   };
   const maturity = maturityFor(input.source);
-  const dependency = roleFor(input.key);
   const base: ParamEvidence = {
     maturity,
     sourceUrl: link.url,
@@ -259,8 +236,7 @@ export function evidenceForParam(input: EvidenceInput): ParamEvidence {
         : `Bounded literature/model sweep from ${input.min} to ${input.max} ${input.unit === "1" ? "" : input.unit}.`,
     validity: "Use inside the supported range and with the subsystem assumptions shown in the selected-asset inspector.",
     applicability: applicabilityFor(input.group),
-    defaultUncertainty: maturity === "REFERENCE DATA" ? 0.005 : maturity === "DESIGN ASSUMPTION" ? 0.15 : 0.1,
-    ...dependency
+    defaultUncertainty: maturity === "REFERENCE DATA" ? 0.005 : maturity === "DESIGN ASSUMPTION" ? 0.15 : 0.1
   };
   return { ...base, ...KEY_OVERRIDES[input.key] };
 }

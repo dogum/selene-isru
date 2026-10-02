@@ -86,6 +86,21 @@ export const GROUPS: GroupDef[] = [
   }
 ];
 
+/**
+ * Inputs that only exist at one site even though their engine group is shared
+ * (the power group serves both). Shown at the other site they cannot change
+ * anything, so the rail leaves them out there.
+ */
+export const SITE_ONLY_PARAMS: Partial<Record<keyof SimParams, SiteMode>> = {
+  polarIlluminationFraction: "polar",
+  polarLongestShadowHours: "polar",
+  thetaDivBeam: "polar",
+  zCraterDrop: "polar",
+  rReceiver: "polar",
+  etaEmitter: "polar",
+  etaPvReceiver: "polar"
+};
+
 /** Params handled outside the rail (top bar / group gates). */
 const EXCLUDED: ReadonlySet<string> = new Set(["site", "enableSabatier"]);
 

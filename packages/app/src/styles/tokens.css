@@ -33,6 +33,7 @@
   --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* scale */
+  --fs-10: 10px;
   --fs-11: 11px;
   --fs-12: 12.5px;
   --fs-14: 14px;

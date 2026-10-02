@@ -3,6 +3,7 @@ import type { Warning } from "@selene-isru/engine";
 import {
   groupsForSite,
   paramsForGroup,
+  SITE_ONLY_PARAMS,
   WARNING_PARAM,
   type GroupDef
 } from "../controls/manifest";
@@ -114,11 +115,17 @@ function RailGroup({ group, open, onToggle, warned }: RailGroupProps): React.JSX
   const storageStream = useStore((s) => s.params.storageStream);
   const cryoControlMode = useStore((s) => s.params.cryoControlMode);
   const polarProfileMode = useStore((s) => s.params.polarProfileMode);
+  const oxideModel = useStore((s) => s.params.oxideModel);
   const setParam = useStore((s) => s.setParam);
   const flyTo = useStore((s) => s.flyTo);
 
   const defs = useMemo(() => {
-    const all = paramsForGroup(group.engineGroup);
+    // The oxide-composition model derives oxygen yield from the assay, so the
+    // lumped O2 fraction only applies when that model is switched off.
+    const all = paramsForGroup(group.engineGroup).filter((def) =>
+      !(oxideModel && def.key === "xO2") &&
+      (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === site)
+    );
     if (group.id === "power" && site === "polar" && polarProfileMode === "profile") {
       return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
     }
@@ -132,7 +139,7 @@ function RailGroup({ group, open, onToggle, warned }: RailGroupProps): React.JSX
       }
       return def.key !== "coolerCapacityW" || cryoControlMode === "capacity-limited";
     });
-  }, [group.engineGroup, group.id, storageStream, cryoControlMode, site, polarProfileMode]);
+  }, [group.engineGroup, group.id, storageStream, cryoControlMode, site, polarProfileMode, oxideModel]);
   const readout = group.readout(result);
   const gatedOff = group.gatedBy !== undefined && !enableSabatier;
   const cameraKey = GROUP_CAMERA[site][group.id];

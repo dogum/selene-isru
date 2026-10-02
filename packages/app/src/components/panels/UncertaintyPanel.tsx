@@ -45,7 +45,11 @@ function metricValue(result: ReturnType<typeof simulate>, metric: SensitivityMet
 
 export function UncertaintyPanel(): React.JSX.Element {
   const params = useStore((s) => s.params);
-  const available = OPTIONS.filter((option) => option.site === undefined || option.site === params.site);
+  const available = OPTIONS.filter((option) =>
+    (option.site === undefined || option.site === params.site) &&
+    // Superseded by the oxide-composition model while it is on.
+    !(option.key === "xO2" && params.oxideModel)
+  );
   const defaultKeys: Array<keyof SimParams> = params.site === "polar"
     ? ["targetKgPerDay", "chiIce", "eMining"]
     : ["targetKgPerDay", "etaCurrent", "Vcell"];
