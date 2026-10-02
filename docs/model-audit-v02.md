@@ -99,6 +99,10 @@ validation.
 The corrected default cases now resolve as follows. These remain model outputs,
 not externally validated mission predictions.
 
+> **Historical snapshot.** The polar rows predate v0.3 multi-stream storage and
+> the v0.4 polar capture, heater, and extractor terms. For current defaults and
+> what moved, see [`model-fidelity-v04.md`](model-fidelity-v04.md).
+
 | Default case | SEC | Grid power | Selected power | Infrastructure | Plant-mass equivalent | Primary storage |
 |---|---:|---:|---|---:|---:|---|
 | Equatorial MRE | 24.775 kWh/kg | 1.032 MW | Nuclear | 58.97 t | 58.97 days | LOX, zero-boil-off |

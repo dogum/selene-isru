@@ -155,7 +155,10 @@ External analytical anchors and conservation invariants are tested separately
 from the parity vectors. The original review is recorded in
 [`docs/model-audit-v02.md`](docs/model-audit-v02.md); its five major continuation
 items and their remaining limits are documented in
-[`docs/model-depth-v03.md`](docs/model-depth-v03.md).
+[`docs/model-depth-v03.md`](docs/model-depth-v03.md). The v0.4 fidelity pass
+(polar capture loss, heater loss, and extractor mass anchored to NASA's
+polar-water case study, and storage provenance moved into `constants.json`) is in
+[`docs/model-fidelity-v04.md`](docs/model-fidelity-v04.md).
 
 ## Architecture
 

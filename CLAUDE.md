@@ -460,7 +460,8 @@ script run on a clean checkout at all.
 - Don't commit generated build output (`dist/`, `node_modules/`, `.venv/`);
   `.gitignore` already covers it. Golden vectors and GLB assets *are* tracked.
 - Prefer editing existing docs in `docs/` over adding new ones; the audit trail
-  (`model-audit-v02.md` → `model-depth-v03.md`) is intentionally historical —
+  (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md`) is
+  intentionally historical —
   annotate superseded sections rather than rewriting history.
 
 ## Further reading
@@ -469,6 +470,9 @@ script run on a clean checkout at all.
 - [`docs/model-audit-v02.md`](docs/model-audit-v02.md) — original review snapshot.
 - [`docs/model-depth-v03.md`](docs/model-depth-v03.md) — continuation items and
   remaining limits (polar profile import, energy ledgers, causal tracing).
+- [`docs/model-fidelity-v04.md`](docs/model-fidelity-v04.md) — input-activity
+  audit, NASA-anchored polar capture/heater/extractor terms, storage provenance,
+  and the candidates deliberately left for later.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

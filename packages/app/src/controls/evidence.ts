@@ -197,6 +197,19 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Polar site · landed extraction-plant mass",
     defaultUncertainty: 0.3
   },
+  // The blade-cutting model is a feasibility diagnostic by design (v0.4): at
+  // defaults its work is ~34 J/kg of regolith against the 120 kJ/kg fleet
+  // figure, and that fleet figure is RASSOR-class, whose counter-rotating
+  // drums cancel the reaction force a blade would need traction to resist.
+  ...Object.fromEntries(
+    (["c", "Nc", "Nq", "Ngamma", "zDepth", "wBlade", "dBlade", "vCut", "etaDrive"] as const).map((key) => [
+      key,
+      {
+        validity:
+          "Blade-cutting force (Terzaghi/McKyes) for the excavation-drive diagnostics. Cutting work is about 0.03% of the fleet-level mining energy at defaults, so excavation energy uses the RASSOR-class fleet figure (eMining) instead; a blade excavator's traction limit in lunar gravity is not applied because RASSOR-class drums cancel the reaction force."
+      }
+    ])
+  ),
   ...Object.fromEntries(
     (["secCondLox", "secCondWaterIce", "secCondLiquidWater", "secCondLh2", "secCondLch4", "secCondCo2"] as const).map((key) => [
       key,
