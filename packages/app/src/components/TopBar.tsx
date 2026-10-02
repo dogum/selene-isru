@@ -10,6 +10,7 @@ import {
   type GraphicsTierChoice
 } from "../lib/graphics";
 import { paramsToUrl } from "../lib/url";
+import { useMenu } from "../lib/a11y";
 import { useIsMobile } from "../lib/hooks";
 import { useStore } from "../state/store";
 
@@ -180,18 +181,7 @@ function EquipmentDropdown(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDoc = (e: PointerEvent): void => {
-      if (ref.current !== null && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
+  useMenu(ref, open, setOpen);
 
   const equipment = site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT;
 
@@ -240,18 +230,7 @@ function GraphicsDropdown(): React.JSX.Element {
     return () => window.removeEventListener(GRAPHICS_EVENT, onGraphics);
   }, []);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDoc = (e: PointerEvent): void => {
-      if (ref.current !== null && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
+  useMenu(ref, open, setOpen);
 
   const update = (patch: Partial<GraphicsPrefs>): void => {
     const next = { ...prefs, ...patch };
@@ -326,18 +305,7 @@ function TourDropdown(): React.JSX.Element {
   const ref = useRef<HTMLDivElement | null>(null);
   const startTour = useStore((s) => s.startTour);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDoc = (e: PointerEvent): void => {
-      if (ref.current !== null && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
+  useMenu(ref, open, setOpen);
 
   return (
     <div className="presets" ref={ref}>
@@ -370,18 +338,7 @@ function PresetsDropdown(): React.JSX.Element {
   const ref = useRef<HTMLDivElement | null>(null);
   const applyPatch = useStore((s) => s.applyPatch);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDoc = (e: PointerEvent): void => {
-      if (ref.current !== null && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
+  useMenu(ref, open, setOpen);
 
   return (
     <div className="presets" ref={ref}>
@@ -455,18 +412,7 @@ function MobileMenu(): React.JSX.Element {
     publishGraphicsPrefs(next);
   };
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDoc = (e: PointerEvent): void => {
-      if (ref.current !== null && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
+  useMenu(ref, open, setOpen);
 
   return (
     <div className="presets" ref={ref}>

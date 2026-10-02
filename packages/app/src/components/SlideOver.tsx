@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { useDialog } from "../lib/a11y";
 import { useStore, type ViewTab } from "../state/store";
 import { EnergySankey } from "./panels/EnergySankey";
 import { MassManifest } from "./panels/MassManifest";
@@ -48,13 +50,15 @@ export function ViewTabs(): React.JSX.Element | null {
 export function SlideOver(): React.JSX.Element | null {
   const view = useStore((s) => s.ui.view);
   const setUi = useStore((s) => s.setUi);
+  const panel = useRef<HTMLElement | null>(null);
+  useDialog(panel, { open: view !== "site", onClose: () => setUi({ view: "site" }), initialFocus: '[role="tab"][aria-selected="true"]' });
 
   if (view === "site") {
     return null;
   }
 
   return (
-    <aside className="slideover" role="dialog" aria-label={`${view} panel`}>
+    <aside ref={panel} tabIndex={-1} className="slideover" role="dialog" aria-label={`${view} panel`}>
       <div className="slideover-head">
         <ViewTabList docked />
         <button className="slideover-close" aria-label="Close panel" onClick={() => setUi({ view: "site" })}>

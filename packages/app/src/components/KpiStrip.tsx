@@ -87,6 +87,7 @@ export function KpiStrip(): React.JSX.Element {
       <button
         className={`warn-pill ${anyAlarm ? "alarm" : count > 0 ? "caution" : "clear"}`}
         aria-pressed={dockOpen}
+        aria-label={`${count} model message${count === 1 ? "" : "s"}${anyAlarm ? ", including constraint violations" : ""}`}
         onClick={() => setUi({ dockOpen: !dockOpen })}
       >
         ⚠ {count}

@@ -130,6 +130,7 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
                 if (e.key === "Enter") {
                   commit((e.target as HTMLInputElement).value);
                 } else if (e.key === "Escape") {
+                  e.stopPropagation();
                   setEditing(null);
                 }
               }}
@@ -166,6 +167,7 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
           step={step}
           value={value}
           aria-label={def.description}
+          aria-valuetext={`${formatInputValue(value)}${rangeUnit}`}
           style={{
             background: `linear-gradient(to right, var(--melt) ${frac * 100}%, var(--line) ${frac * 100}%)`
           }}

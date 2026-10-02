@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { traceParameter, type CausalNode } from "../analysis/causal";
+import { useDialog } from "../lib/a11y";
 import { useStore } from "../state/store";
 
 function value(value: number | string, unit: string): string {
@@ -27,13 +28,15 @@ export function CausalGraph(): React.JSX.Element | null {
   const params = useStore((state) => state.params);
   const setUi = useStore((state) => state.setUi);
   const trace = useMemo(() => key === null ? null : traceParameter(key, params), [key, params]);
+  const dialog = useRef<HTMLElement | null>(null);
+  useDialog(dialog, { open: trace !== null, modal: true, onClose: () => setUi({ causalParam: null }) });
   if (trace === null) return null;
   const modelNodes = trace.nodes.filter((node) => node.category !== "kpi");
   const kpis = trace.nodes.filter((node) => node.category === "kpi");
 
   return (
     <div className="model-modal-backdrop" onMouseDown={() => setUi({ causalParam: null })}>
-      <section className="causal-graph" role="dialog" aria-modal="true" aria-label={`Runtime causal trace for ${trace.label}`} onMouseDown={(event) => event.stopPropagation()}>
+      <section ref={dialog} tabIndex={-1} className="causal-graph" role="dialog" aria-modal="true" aria-label={`Runtime causal trace for ${trace.label}`} onMouseDown={(event) => event.stopPropagation()}>
         <header>
           <div>
             <span className="reactor-eyebrow">RUNTIME CAUSAL TRACE</span>

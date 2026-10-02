@@ -57,8 +57,10 @@ export function TourOverlay(): React.JSX.Element | null {
         useStore.getState().stopTour();
       }
     };
+    // Escape ends the tour; other keys (Tab to reach NEXT, modifiers) must
+    // not, or the tour cannot be driven from the keyboard at all.
     const onKey = (event: KeyboardEvent): void => {
-      if (!shouldIgnore(event.target)) {
+      if (event.key === "Escape" && !shouldIgnore(event.target)) {
         useStore.getState().stopTour();
       }
     };

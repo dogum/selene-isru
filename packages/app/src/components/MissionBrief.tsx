@@ -1,6 +1,6 @@
 import { sampleUncertainty } from "@selene-isru/engine";
 import type { UncertaintySpec } from "@selene-isru/engine";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   GOALS,
   OBJECTIVES,
@@ -13,6 +13,7 @@ import {
   type MissionConstraints,
   type OptimizationResult
 } from "../analysis/brief";
+import { useDialog } from "../lib/a11y";
 import { formatQtyText } from "../lib/format";
 import { useStore } from "../state/store";
 
@@ -29,14 +30,8 @@ export function MissionBrief(): React.JSX.Element | null {
   const activeGoal = GOALS.find((goal) => goal.id === activeId) ?? GOALS[2]!;
   const selected = optimization?.candidates[selectedIndex] ?? null;
 
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") setUi({ missionBriefOpen: false });
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, setUi]);
+  const dialog = useRef<HTMLDivElement | null>(null);
+  useDialog(dialog, { open, modal: true, onClose: () => setUi({ missionBriefOpen: false }) });
 
   // 192 engine runs; recompute only when the selected candidate changes, not
   // on every keystroke in the constraint fields.
@@ -55,7 +50,7 @@ export function MissionBrief(): React.JSX.Element | null {
 
   return (
     <div className="modal-scrim" onClick={close}>
-      <div className="modal mission-brief" role="dialog" aria-modal="true" aria-label="Mission brief optimizer" onClick={(event) => event.stopPropagation()}>
+      <div ref={dialog} tabIndex={-1} className="modal mission-brief" role="dialog" aria-modal="true" aria-label="Mission brief optimizer" onClick={(event) => event.stopPropagation()}>
         <div className="slideover-head">
           <span className="panel-header">MISSION BRIEF · BOUNDED DESIGN SEARCH</span>
           <button className="slideover-close" aria-label="Close mission brief" onClick={close}>✕</button>

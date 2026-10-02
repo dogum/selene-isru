@@ -28,7 +28,7 @@ describe("first-visit intro", () => {
 
   it("dismisses on Escape and can start the tour", () => {
     render(<IntroCard />);
-    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     cleanup();
     window.localStorage.removeItem(INTRO_DISMISSED_KEY);

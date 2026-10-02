@@ -1,16 +1,20 @@
 import { formatQtyText } from "../lib/format";
+import { useRef } from "react";
+import { useDialog } from "../lib/a11y";
 import { useStore } from "../state/store";
 
 export function ConservationInspector(): React.JSX.Element | null {
   const open = useStore((state) => state.ui.conservationOpen);
   const result = useStore((state) => state.result);
   const setUi = useStore((state) => state.setUi);
+  const dialog = useRef<HTMLElement | null>(null);
+  useDialog(dialog, { open, modal: true, onClose: () => setUi({ conservationOpen: false }) });
   if (!open) return null;
   const balanced = result.materials.maxAbsResidualKgPerDay <= 1e-6 && result.energy.maxAbsResidualW <= 1e-6;
 
   return (
     <div className="model-modal-backdrop" onMouseDown={() => setUi({ conservationOpen: false })}>
-      <section className="conservation-inspector" role="dialog" aria-modal="true" aria-label="Conservation and inventory inspector" onMouseDown={(event) => event.stopPropagation()}>
+      <section ref={dialog} tabIndex={-1} className="conservation-inspector" role="dialog" aria-modal="true" aria-label="Conservation and inventory inspector" onMouseDown={(event) => event.stopPropagation()}>
         <header>
           <div>
             <span className="reactor-eyebrow">CONSERVATION INSPECTOR</span>

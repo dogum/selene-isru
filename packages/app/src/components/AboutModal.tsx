@@ -1,8 +1,12 @@
+import { useRef } from "react";
+import { useDialog } from "../lib/a11y";
 import { useStore } from "../state/store";
 
 export function AboutModal(): React.JSX.Element | null {
   const open = useStore((s) => s.ui.aboutOpen);
   const setUi = useStore((s) => s.setUi);
+  const dialog = useRef<HTMLDivElement | null>(null);
+  useDialog(dialog, { open, modal: true, onClose: () => setUi({ aboutOpen: false }) });
 
   if (!open) {
     return null;
@@ -11,6 +15,8 @@ export function AboutModal(): React.JSX.Element | null {
   return (
     <div className="modal-scrim" onClick={() => setUi({ aboutOpen: false })}>
       <div
+        ref={dialog}
+        tabIndex={-1}
         className="modal"
         role="dialog"
         aria-modal="true"

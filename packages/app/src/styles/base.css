@@ -27,6 +27,8 @@ button {
   background: none;
   border: none;
   cursor: pointer;
+  /* page zoom is allowed; keep a double-tap on a control from zooming */
+  touch-action: manipulation;
 }
 
 input,

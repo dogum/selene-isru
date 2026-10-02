@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
+import { useDialog } from "../lib/a11y";
 import { useIsMobile } from "../lib/hooks";
 import { useStore } from "../state/store";
 
@@ -40,14 +41,8 @@ export function IntroCard(): React.JSX.Element | null {
     setVisible(false);
   };
 
-  useEffect(() => {
-    if (!visible) return undefined;
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") dismiss();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [visible]);
+  const card = useRef<HTMLElement | null>(null);
+  useDialog(card, { open: visible && !tourActive, autoFocus: false, onClose: dismiss });
 
   if (!visible || tourActive) return null;
 
@@ -57,7 +52,7 @@ export function IntroCard(): React.JSX.Element | null {
       : "This plant melts lunar regolith and splits it into oxygen and metal-rich slag.";
 
   return (
-    <section className="intro-card" role="dialog" aria-modal="false" aria-labelledby="intro-card-title">
+    <section ref={card} className="intro-card" role="dialog" aria-modal="false" aria-labelledby="intro-card-title">
       <button type="button" className="intro-card-close" aria-label="Dismiss introduction" onClick={dismiss}>
         ✕
       </button>

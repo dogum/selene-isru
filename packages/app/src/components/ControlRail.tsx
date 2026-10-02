@@ -93,7 +93,11 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
           aria-label="Search inputs by name, code name, or unit"
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Escape") setQuery("");
+            if (event.key === "Escape" && query.length > 0) {
+              // Clearing the search is this key's whole job here.
+              event.stopPropagation();
+              setQuery("");
+            }
           }}
         />
         <button

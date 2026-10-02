@@ -113,6 +113,40 @@
   border: 1px solid var(--line);
 }
 
+/* keep every top-bar control on one line; between 1100px (the mobile
+   breakpoint) and ~1400px there is not room for the subtitle and the
+   default spacing, so give those up before any label wraps */
+.site-btn,
+.topbar-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 1399px) {
+  .topbar-sub {
+    display: none;
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .topbar {
+    gap: 10px;
+  }
+
+  .topbar-actions {
+    gap: 5px;
+  }
+
+  .topbar-btn {
+    padding: 6px 7px;
+    letter-spacing: 0.04em;
+  }
+
+  .site-btn {
+    padding: 6px 9px;
+    letter-spacing: 0.04em;
+  }
+}
+
 .topbar-btn:hover {
   color: var(--text-hi);
   border-color: var(--text-low);
@@ -342,7 +376,7 @@ body.selene-photo-mode .app {
   display: block;
   margin-bottom: 5px;
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -1704,7 +1738,7 @@ input.param-input {
   border: 1px solid rgba(116, 216, 255, 0.32);
   background: rgba(9, 13, 19, 0.86);
   color: var(--cryo);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
   pointer-events: none;
 }
@@ -1723,7 +1757,7 @@ input.param-input {
   background: rgba(8, 11, 16, 0.96);
   color: var(--text-mid);
   box-shadow: var(--shadow-slideover);
-  font: 500 9px/1.5 var(--font-mono);
+  font: 500 var(--fs-10)/1.5 var(--font-mono);
   letter-spacing: 0.06em;
   text-align: center;
 }
@@ -1746,7 +1780,7 @@ input.param-input {
   padding: 8px 10px;
   border: 1px solid var(--line);
   color: var(--text-hi);
-  font: 600 8px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -1783,7 +1817,7 @@ input.param-input {
 .reactor-section-title {
   display: block;
   color: var(--cryo);
-  font: 500 9px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
   letter-spacing: 0.12em;
 }
 
@@ -1800,7 +1834,7 @@ input.param-input {
   border: 1px solid var(--line);
   padding: 6px 8px;
   color: var(--text-mid);
-  font: 500 9px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -1861,7 +1895,7 @@ input.param-input {
 
 .reactor-metric span {
   color: var(--text-low);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -1889,7 +1923,7 @@ input.param-input {
 .reactor-control-note {
   margin: 5px 0 2px;
   color: var(--text-low);
-  font-size: 9px;
+  font-size: var(--fs-10);
   line-height: 1.4;
 }
 
@@ -1957,7 +1991,7 @@ input.param-input {
   border-bottom: 1px solid var(--line);
   background: var(--bg-inset);
   color: var(--text-low);
-  font: 500 9px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -1991,7 +2025,7 @@ input.param-input {
   height: 16px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 600 9px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
 }
 
 .param-info:hover,
@@ -2098,7 +2132,7 @@ input.param-input {
   gap: 8px;
   margin-bottom: 6px;
   color: var(--cryo);
-  font: 600 8px/1.2 var(--font-mono);
+  font: 600 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.07em;
 }
 
@@ -2108,7 +2142,7 @@ input.param-input {
   padding: 3px 5px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 600 8px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.06em;
 }
 
@@ -2194,7 +2228,7 @@ input.param-input {
 .learning-toolbar button {
   padding: 7px 9px;
   color: var(--text-low);
-  font: 500 9px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -2263,7 +2297,7 @@ input.param-input {
   stroke: rgba(8, 11, 16, 0.92);
   stroke-width: 4px;
   paint-order: stroke;
-  font: 600 9px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -2281,7 +2315,7 @@ input.param-input {
   background: rgba(9, 13, 19, 0.86);
   color: var(--text-hi);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.34);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.06em;
   text-align: center;
   pointer-events: auto;
@@ -2321,7 +2355,7 @@ input.param-input {
   border: 1px solid rgba(116, 216, 255, 0.34);
   background: rgba(8, 11, 16, 0.76);
   color: var(--text-mid);
-  font: 600 8px/1.15 var(--font-mono);
+  font: 600 var(--fs-10)/1.15 var(--font-mono);
   letter-spacing: 0.06em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2369,7 +2403,7 @@ input.param-input {
   border: 1px solid rgba(184, 192, 204, 0.42);
   background: rgba(8, 11, 16, 0.82);
   color: var(--text-mid);
-  font: 600 7px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.07em;
   white-space: nowrap;
   pointer-events: auto;
@@ -2464,7 +2498,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   gap: 10px;
   margin: 22px 0 12px;
   color: var(--text-low);
-  font: 500 9px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.1em;
 }
 
@@ -2521,7 +2555,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .scenario-import-status {
   margin: -2px 0 0;
   color: var(--cryo);
-  font: 500 9px/1.4 var(--font-mono);
+  font: 500 var(--fs-10)/1.4 var(--font-mono);
 }
 
 .scenario-import-preview,
@@ -2542,13 +2576,13 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .scenario-import-preview strong,
 .custom-import-preview strong {
   color: var(--text-hi);
-  font: 600 9px/1.3 var(--font-mono);
+  font: 600 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .scenario-import-preview > div:first-child > span,
 .custom-import-preview > span {
   color: var(--text-low);
-  font: 500 8px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .scenario-import-preview ol,
@@ -2585,14 +2619,14 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .scenario-import-preview li > span,
 .custom-import-preview li > span {
   color: var(--text-low);
-  font: 600 7px/1.3 var(--font-mono);
+  font: 600 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .scenario-import-preview li > p,
 .custom-import-preview li > p {
   margin: 0;
   color: var(--text-mid);
-  font: 400 9px/1.4 var(--font-body);
+  font: 400 var(--fs-10)/1.4 var(--font-body);
 }
 
 .scenario-cards {
@@ -2626,7 +2660,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .scenario-card-head span {
   flex: 0 0 auto;
   color: var(--cryo);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .scenario-card-metrics {
@@ -2635,7 +2669,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   gap: 5px 10px;
   padding: 8px 0;
   color: var(--text-mid);
-  font-size: 9px;
+  font-size: var(--fs-10);
 }
 
 .scenario-card-actions button,
@@ -2643,7 +2677,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 5px 6px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.06em;
 }
 
@@ -2662,7 +2696,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   width: 100%;
   border-collapse: collapse;
   color: var(--text-mid);
-  font: 500 9px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .scenario-matrix th,
@@ -2709,7 +2743,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .asset-flow-grid > div > span {
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .asset-flow-grid > i {
@@ -2737,7 +2771,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .asset-flow-grid small {
   overflow: hidden;
   color: var(--text-low);
-  font: 500 7px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2745,12 +2779,12 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .asset-flow-grid strong {
   margin-top: 3px;
   color: var(--text-hi);
-  font: 500 8px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .asset-flow-grid p {
   color: var(--text-mid);
-  font-size: 9px;
+  font-size: var(--fs-10);
 }
 
 .asset-input-tags {
@@ -2764,13 +2798,13 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 3px 5px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 500 7px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .asset-constraint-section p,
 .asset-assumptions li {
   color: var(--text-low);
-  font-size: 9px;
+  font-size: var(--fs-10);
   line-height: 1.45;
 }
 
@@ -2786,7 +2820,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   justify-content: space-between;
   gap: 6px;
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   cursor: pointer;
 }
 
@@ -2801,7 +2835,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .frontier-controls label > span {
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .frontier-constraints {
@@ -2810,7 +2844,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   align-items: end;
   gap: 8px 14px;
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
 }
 
 .frontier-constraints label {
@@ -2851,7 +2885,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 }
 
 .frontier-candidate strong { margin-top: 4px; color: var(--text-hi); font: 500 10px/1.2 var(--font-mono); }
-.frontier-candidate small { margin-top: 3px; color: var(--text-low); font: 500 8px/1.3 var(--font-mono); }
+.frontier-candidate small { margin-top: 3px; color: var(--text-low); font: 500 var(--fs-10)/1.3 var(--font-mono); }
 
 .uncertainty-mode-row {
   display: flex;
@@ -2864,7 +2898,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   align-items: center;
   gap: 7px;
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .uncertainty-controls label small {
@@ -2883,7 +2917,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   display: block;
   margin-top: 3px;
   color: var(--text-low);
-  font-size: 8px;
+  font-size: var(--fs-10);
 }
 
 .sensitivity-head select { padding: 6px; }
@@ -2900,7 +2934,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   align-items: center;
   gap: 8px;
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
 }
 
 .sensitivity-capped {
@@ -2948,7 +2982,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   flex-direction: column;
   gap: 5px;
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .brief-constraint-builder input,
@@ -2965,7 +2999,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 9px;
   border: 1px solid var(--melt);
   color: var(--melt);
-  font: 600 9px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -2975,7 +3009,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   display: block;
   margin-top: 4px;
   color: var(--text-low);
-  font-size: 9px;
+  font-size: var(--fs-10);
 }
 
 .brief-candidates {
@@ -2995,9 +3029,9 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .brief-candidates span,
 .brief-candidates strong,
 .brief-candidates small { display: block; }
-.brief-candidates span { color: var(--cryo); font: 500 8px/1.2 var(--font-mono); }
-.brief-candidates strong { margin-top: 5px; color: var(--text-hi); font: 500 9px/1.2 var(--font-mono); }
-.brief-candidates small { margin-top: 4px; color: var(--text-low); font-size: 8px; line-height: 1.3; }
+.brief-candidates span { color: var(--cryo); font: 500 var(--fs-10)/1.2 var(--font-mono); }
+.brief-candidates strong { margin-top: 5px; color: var(--text-hi); font: 500 var(--fs-10)/1.2 var(--font-mono); }
+.brief-candidates small { margin-top: 4px; color: var(--text-low); font-size: var(--fs-10); line-height: 1.3; }
 
 .engineering-report {
   display: flex;
@@ -3018,7 +3052,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .report-toolbar > span {
   margin-right: auto;
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .report-head {
@@ -3031,8 +3065,8 @@ body.selene-photo-mode .custom-scene-label-overlay {
 }
 
 .report-head h2 { margin-top: 5px; color: var(--text-hi); font: 600 21px/1.2 var(--font-display); }
-.report-head p { margin-top: 5px; color: var(--text-low); font: 500 8px/1.4 var(--font-mono); }
-.report-status { padding: 6px 8px; border: 1px solid var(--ok); color: var(--ok); font: 600 8px/1 var(--font-mono); }
+.report-head p { margin-top: 5px; color: var(--text-low); font: 500 var(--fs-10)/1.4 var(--font-mono); }
+.report-status { padding: 6px 8px; border: 1px solid var(--ok); color: var(--ok); font: 600 var(--fs-10)/1 var(--font-mono); }
 .report-status.caution { border-color: var(--caution); color: var(--caution); }
 
 .report-kpis {
@@ -3046,24 +3080,24 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .report-kpis > div { padding: 10px; background: var(--bg-inset); }
 .report-kpis span,
 .report-kpis strong { display: block; }
-.report-kpis span { color: var(--text-low); font: 500 8px/1 var(--font-mono); }
+.report-kpis span { color: var(--text-low); font: 500 var(--fs-10)/1 var(--font-mono); }
 .report-kpis strong { margin-top: 5px; color: var(--text-hi); font: 500 12px/1.2 var(--font-mono); }
 
 .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .report-grid > section,
 .report-section { padding: 11px; border: 1px solid var(--line); }
-.engineering-report h3 { margin-bottom: 8px; color: var(--cryo); font: 600 9px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.engineering-report h3 { margin-bottom: 8px; color: var(--cryo); font: 600 var(--fs-10)/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .engineering-report dl { display: flex; flex-direction: column; gap: 5px; }
-.engineering-report dl > div { display: grid; grid-template-columns: 105px 1fr; gap: 8px; color: var(--text-low); font: 500 9px/1.3 var(--font-mono); }
+.engineering-report dl > div { display: grid; grid-template-columns: 105px 1fr; gap: 8px; color: var(--text-low); font: 500 var(--fs-10)/1.3 var(--font-mono); }
 .engineering-report dd { color: var(--text-mid); text-align: right; }
-.engineering-report ul { margin: 5px 0 0 16px; color: var(--text-low); font-size: 9px; line-height: 1.5; }
+.engineering-report ul { margin: 5px 0 0 16px; color: var(--text-low); font-size: var(--fs-10); line-height: 1.5; }
 .report-note,
-.report-section > p { margin-top: 7px; color: var(--text-low); font-size: 8px; line-height: 1.4; }
+.report-section > p { margin-top: 7px; color: var(--text-low); font-size: var(--fs-10); line-height: 1.4; }
 .report-footer { padding-top: 10px; border-top: 1px solid var(--line); }
 .report-footer span,
 .report-footer a { display: block; }
-.report-footer span { color: var(--text-low); font: 500 8px/1 var(--font-mono); }
-.report-footer a { overflow-wrap: anywhere; margin-top: 4px; color: var(--cryo); font: 500 8px/1.4 var(--font-mono); }
+.report-footer span { color: var(--text-low); font: 500 var(--fs-10)/1 var(--font-mono); }
+.report-footer a { overflow-wrap: anywhere; margin-top: 4px; color: var(--cryo); font: 500 var(--fs-10)/1.4 var(--font-mono); }
 
 .study-tabs button {
   padding: 9px 10px;
@@ -3104,7 +3138,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .scenario-name-grid span {
   color: var(--text-low);
-  font: 500 9px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -3189,7 +3223,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 6px 8px;
   border: 1px solid currentColor;
   color: var(--ok);
-  font: 600 9px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -3215,7 +3249,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .brief-summary-grid span,
 .brief-summary-grid small {
   color: var(--text-low);
-  font: 500 9px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
   letter-spacing: 0.05em;
 }
 
@@ -3285,7 +3319,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   .learning-asset-label {
     max-width: 132px;
     padding: 4px 5px;
-    font-size: 8px;
+    font-size: var(--fs-10);
   }
 
   .sheet-content .parameter-name-toggle {
@@ -3351,7 +3385,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   .study-tabs button {
     padding-right: 4px;
     padding-left: 4px;
-    font-size: 8px;
+    font-size: var(--fs-10);
   }
 
   .scenario-save-row,
@@ -3419,7 +3453,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .site-profile-head strong,
 .site-profile-control small {
   color: var(--text-low);
-  font: 500 8px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
   letter-spacing: 0.07em;
 }
 
@@ -3431,7 +3465,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 5px 6px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 500 7px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.05em;
 }
 
@@ -3440,7 +3474,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .causal-trace-button:hover { border-color: var(--cryo); color: var(--cryo); }
 
 .site-profile-control dl { display: flex; flex-direction: column; gap: 3px; }
-.site-profile-control dl > div { display: grid; grid-template-columns: 1fr 1.3fr; gap: 6px; font: 500 8px/1.3 var(--font-mono); }
+.site-profile-control dl > div { display: grid; grid-template-columns: 1fr 1.3fr; gap: 6px; font: 500 var(--fs-10)/1.3 var(--font-mono); }
 .site-profile-control dt { color: var(--text-low); }
 .site-profile-control dd { color: var(--text-mid); text-align: right; }
 
@@ -3499,36 +3533,36 @@ body.selene-photo-mode .custom-scene-label-overlay {
   color: var(--text-mid);
   font-size: 10px;
 }
-.causal-perturbation span { color: var(--melt); font-size: 8px; letter-spacing: 0.1em; }
+.causal-perturbation span { color: var(--melt); font-size: var(--fs-10); letter-spacing: 0.1em; }
 .causal-perturbation code { color: var(--cryo); }
 
 .causal-columns { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 12px; }
 .causal-columns > section,
 .conservation-inspector > section { padding: 11px; border: 1px solid var(--line); background: var(--bg-inset); }
 .causal-columns h3,
-.conservation-inspector h3 { margin-bottom: 8px; color: var(--cryo); font: 600 9px/1.2 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.conservation-inspector h3 { margin-bottom: 8px; color: var(--cryo); font: 600 var(--fs-10)/1.2 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .causal-node-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .causal-columns > section:last-child .causal-node-list { grid-template-columns: 1fr; }
 .causal-node { min-width: 0; padding: 8px; border-left: 2px solid var(--line-hi); background: var(--bg-panel); }
 .causal-node.equation { border-color: var(--cryo); }
 .causal-node.constraint { border-color: var(--alarm); }
 .causal-node.kpi { border-color: var(--melt); }
-.causal-node span { display: block; color: var(--text-low); font: 500 7px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.causal-node span { display: block; color: var(--text-low); font: 500 var(--fs-10)/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .causal-node strong { display: block; margin-top: 4px; color: var(--text-hi); font-size: 10px; }
-.causal-node small { display: block; margin-top: 6px; overflow-wrap: anywhere; color: var(--text-mid); font-size: 8px; }
-.causal-graph > footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--text-low); font: 500 8px/1.4 var(--font-mono); }
+.causal-node small { display: block; margin-top: 6px; overflow-wrap: anywhere; color: var(--text-mid); font-size: var(--fs-10); }
+.causal-graph > footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--text-low); font: 500 var(--fs-10)/1.4 var(--font-mono); }
 .causal-graph > footer small { max-width: 520px; text-align: right; }
 
-.conservation-status { padding: 6px 8px; border: 1px solid var(--ok); color: var(--ok); font: 500 8px/1 var(--font-mono); letter-spacing: 0.08em; }
+.conservation-status { padding: 6px 8px; border: 1px solid var(--ok); color: var(--ok); font: 500 var(--fs-10)/1 var(--font-mono); letter-spacing: 0.08em; }
 .conservation-status.alarm { border-color: var(--alarm); color: var(--alarm); }
 .conservation-inspector > section { margin-top: 10px; }
 .model-table-wrap { overflow-x: auto; }
-.conservation-inspector table { width: 100%; border-collapse: collapse; color: var(--text-mid); font: 500 8px/1.3 var(--font-mono); }
+.conservation-inspector table { width: 100%; border-collapse: collapse; color: var(--text-mid); font: 500 var(--fs-10)/1.3 var(--font-mono); }
 .conservation-inspector th,
 .conservation-inspector td { padding: 6px 7px; border: 1px solid var(--line); text-align: right; white-space: nowrap; }
 .conservation-inspector th:first-child,
 .conservation-inspector td:first-child { color: var(--text-low); text-align: left; }
-.model-inspector-note { margin-top: 8px; color: var(--text-low); font: 500 8px/1.5 var(--font-mono); }
+.model-inspector-note { margin-top: 8px; color: var(--text-low); font: 500 var(--fs-10)/1.5 var(--font-mono); }
 
 @media (max-width: 700px) {
   .model-modal-backdrop { align-items: end; padding: 0; }
@@ -3579,7 +3613,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 10px 12px;
   border: 1px solid var(--line);
   color: var(--text-hi);
-  font: 600 9px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -3594,7 +3628,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .app-recovery details {
   color: var(--text-low);
-  font: 500 9px/1.5 var(--font-mono);
+  font: 500 var(--fs-10)/1.5 var(--font-mono);
 }
 
 .app-recovery code {
@@ -3624,7 +3658,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border: 1px solid rgba(255, 179, 71, 0.4);
   background: rgba(8, 11, 16, 0.9);
   color: var(--caution);
-  font: 600 8px/1.4 var(--font-mono);
+  font: 600 var(--fs-10)/1.4 var(--font-mono);
   letter-spacing: 0.07em;
   text-align: center;
   pointer-events: none;
@@ -3666,14 +3700,14 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .custom-panel-header > span {
   color: var(--text-low);
-  font: 400 9px/1.4 var(--font-mono);
+  font: 400 var(--fs-10)/1.4 var(--font-mono);
   letter-spacing: 0.04em;
 }
 
 .custom-eyebrow {
   margin: 0;
   color: var(--cryo);
-  font: 500 9px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
   letter-spacing: 0.12em;
 }
 
@@ -3693,7 +3727,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-catalog-group h2 {
   margin: 13px 3px 7px;
   color: var(--text-low);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -3727,7 +3761,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-catalog-card > div span,
 .custom-catalog-card footer {
   color: var(--text-low);
-  font: 400 8px/1.25 var(--font-mono);
+  font: 400 var(--fs-10)/1.25 var(--font-mono);
 }
 
 .custom-catalog-card p {
@@ -3738,7 +3772,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .custom-catalog-card .custom-catalog-rating {
   color: var(--text-low);
-  font: 500 7px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
   letter-spacing: 0.04em;
 }
 
@@ -3754,7 +3788,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 7px;
   border: 1px solid rgba(111, 211, 242, 0.38);
   color: var(--cryo);
-  font: 600 8px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.09em;
 }
 
@@ -3774,7 +3808,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 10px 12px;
   border-top: 1px solid var(--line);
   color: var(--text-low);
-  font: 500 8px/1.35 var(--font-mono);
+  font: 500 var(--fs-10)/1.35 var(--font-mono);
   letter-spacing: 0.08em;
   text-align: center;
 }
@@ -3846,7 +3880,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding-top: 15px;
   border-top: 1px solid var(--line);
   color: var(--text-low);
-  font: 400 8px/1.3 var(--font-mono);
+  font: 400 var(--fs-10)/1.3 var(--font-mono);
   letter-spacing: 0.06em;
 }
 
@@ -3868,7 +3902,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 8px 9px;
   border: 1px solid rgba(116, 216, 255, 0.35);
   color: var(--cryo);
-  font: 600 8px/1.2 var(--font-mono);
+  font: 600 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.06em;
 }
 
@@ -3891,7 +3925,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border: 1px solid rgba(111, 211, 242, 0.24);
   background: rgba(8, 11, 16, 0.82);
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.07em;
   pointer-events: auto;
 }
@@ -3930,7 +3964,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 7px 8px;
   border: 1px solid var(--line);
   color: var(--text-mid);
-  font: 600 8px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.07em;
 }
 
@@ -3960,7 +3994,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   display: grid;
   gap: 7px;
   color: var(--text-low);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.09em;
 }
 
@@ -3983,7 +4017,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-field-hint {
   margin: 7px 0 0;
   color: var(--text-low);
-  font: 400 8px/1.4 var(--font-mono);
+  font: 400 var(--fs-10)/1.4 var(--font-mono);
 }
 
 .custom-segmented button:disabled {
@@ -4031,7 +4065,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-asset-summary span {
   margin-top: 3px;
   color: var(--text-low);
-  font: 500 8px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .custom-asset-summary p {
@@ -4057,7 +4091,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-performance-note p:not(.custom-eyebrow) {
   margin: 0;
   color: var(--text-low);
-  font: 400 8px/1.5 var(--font-mono);
+  font: 400 var(--fs-10)/1.5 var(--font-mono);
 }
 
 .custom-performance-note.caution {
@@ -4081,7 +4115,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-group-summary > span,
 .custom-alignment-list span {
   color: var(--text-low);
-  font: 500 8px/1.35 var(--font-mono);
+  font: 500 var(--fs-10)/1.35 var(--font-mono);
 }
 
 .custom-group-members,
@@ -4115,7 +4149,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-group-members strong,
 .custom-asset-roster li strong {
   overflow: hidden;
-  font: 500 9px/1.3 var(--font-display);
+  font: 500 var(--fs-10)/1.3 var(--font-display);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4124,7 +4158,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-asset-roster li span {
   flex: 0 0 auto;
   color: var(--text-low);
-  font: 500 7px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .custom-alignment-list {
@@ -4149,7 +4183,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 7px;
   border: 1px solid var(--line);
   color: var(--text-mid);
-  font: 600 8px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
 }
 
 .custom-nudge-grid button:first-child {
@@ -4208,7 +4242,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 5px 6px;
   border: 1px solid var(--line);
   color: var(--text-mid);
-  font: 600 7px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.07em;
 }
 
@@ -4262,7 +4296,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-port footer span,
 .custom-port p {
   color: var(--text-low);
-  font: 500 7px/1.35 var(--font-mono);
+  font: 500 var(--fs-10)/1.35 var(--font-mono);
   letter-spacing: 0.04em;
 }
 
@@ -4307,7 +4341,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .custom-connection-summary > span {
   color: var(--text-low);
-  font: 500 8px/1.3 var(--font-mono);
+  font: 500 var(--fs-10)/1.3 var(--font-mono);
   text-transform: uppercase;
 }
 
@@ -4334,14 +4368,14 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-route-editor > ol > li > span {
   align-self: center;
   color: var(--cryo);
-  font: 600 8px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
 }
 
 .custom-route-editor label {
   display: grid;
   gap: 3px;
   color: var(--text-low);
-  font: 600 7px/1 var(--font-mono);
+  font: 600 var(--fs-10)/1 var(--font-mono);
 }
 
 .custom-route-editor input {
@@ -4351,7 +4385,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border: 1px solid var(--line);
   background: var(--bg-inset);
   color: var(--text-hi);
-  font: 500 9px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
 }
 
 .custom-route-editor > ol button {
@@ -4385,7 +4419,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .custom-endpoint-list span {
   color: var(--text-low);
-  font: 500 7px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
 }
 
 .custom-endpoint-list strong {
@@ -4397,7 +4431,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-endpoint-list p {
   margin: 2px 0 0;
   color: var(--text-mid);
-  font: 400 8px/1.3 var(--font-mono);
+  font: 400 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .custom-endpoint-list i {
@@ -4419,7 +4453,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-fieldset legend {
   margin-bottom: 7px;
   color: var(--text-low);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.09em;
 }
 
@@ -4432,7 +4466,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-segmented button {
   padding: 8px;
   color: var(--text-low);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.06em;
 }
 
@@ -4461,7 +4495,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   gap: 10px;
   padding: 7px 0;
   border-bottom: 1px solid var(--line);
-  font: 400 9px/1.3 var(--font-mono);
+  font: 400 var(--fs-10)/1.3 var(--font-mono);
 }
 
 .custom-document-meta dt {
@@ -4494,7 +4528,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-validation-heading > span {
   padding: 5px 6px;
   border: 1px solid currentColor;
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -4511,7 +4545,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   gap: 9px;
   margin-top: 10px;
   color: var(--text-low);
-  font: 400 8px/1.3 var(--font-mono);
+  font: 400 var(--fs-10)/1.3 var(--font-mono);
   text-transform: uppercase;
 }
 
@@ -4523,12 +4557,12 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border-left: 2px solid var(--alarm);
   background: rgba(255, 77, 77, 0.05);
   color: var(--text-mid);
-  font: 400 9px/1.4 var(--font-body);
+  font: 400 var(--fs-10)/1.4 var(--font-body);
 }
 
 .custom-bottleneck span {
   color: var(--alarm);
-  font: 600 7px/1.2 var(--font-mono);
+  font: 600 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -4543,14 +4577,14 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .custom-model-disclosure strong {
   color: var(--text-hi);
-  font: 600 9px/1.35 var(--font-mono);
+  font: 600 var(--fs-10)/1.35 var(--font-mono);
 }
 
 .custom-model-disclosure p,
 .custom-model-disclosure small {
   margin: 0;
   color: var(--text-mid);
-  font: 400 9px/1.45 var(--font-body);
+  font: 400 var(--fs-10)/1.45 var(--font-body);
 }
 
 .custom-model-disclosure small {
@@ -4585,18 +4619,18 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .custom-capacity-groups span {
   color: var(--text-mid);
-  font-size: 8px;
+  font-size: var(--fs-10);
 }
 
 .custom-capacity-groups strong {
   color: var(--text-hi);
-  font-size: 9px;
+  font-size: var(--fs-10);
 }
 
 .custom-capacity-groups small {
   grid-column: 1 / -1;
   color: var(--text-low);
-  font-size: 7px;
+  font-size: var(--fs-10);
 }
 
 .custom-findings {
@@ -4631,13 +4665,13 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-findings li > span {
   padding-top: 2px;
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
 }
 
 .custom-findings li p {
   margin: 0;
   color: var(--text-mid);
-  font: 400 9px/1.4 var(--font-body);
+  font: 400 var(--fs-10)/1.4 var(--font-body);
 }
 
 .custom-findings li > button {
@@ -4661,7 +4695,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-findings li > button > span {
   padding-top: 2px;
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
 }
 
 .custom-findings li > button > p {
@@ -4686,7 +4720,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 7px 8px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 500 8px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.06em;
 }
 
@@ -4701,7 +4735,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   padding: 9px;
   border: 1px solid var(--line);
   color: var(--text-low);
-  font: 500 9px/1.2 var(--font-mono);
+  font: 500 var(--fs-10)/1.2 var(--font-mono);
   letter-spacing: 0.08em;
 }
 
@@ -4740,7 +4774,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .custom-evaluation-strip span {
   overflow: hidden;
   color: var(--text-low);
-  font: 500 7px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.09em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4774,7 +4808,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border-top: 1px solid var(--line);
   background: rgba(13, 17, 23, 0.96);
   color: var(--text-low);
-  font: 500 8px/1 var(--font-mono);
+  font: 500 var(--fs-10)/1 var(--font-mono);
   letter-spacing: 0.08em;
   pointer-events: auto;
 }
@@ -4879,7 +4913,7 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
   .site-btn {
     padding: 6px 7px;
-    font-size: 8px;
+    font-size: var(--fs-10);
   }
 
   .custom-site-workspace {
