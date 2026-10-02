@@ -13,7 +13,9 @@ import {
   type MissionConstraints,
   type OptimizationResult
 } from "../analysis/brief";
+import { briefCandidatesCsv } from "../analysis/panelExports";
 import { useDialog } from "../lib/a11y";
+import { ExportButton } from "./panels/ExportButton";
 import { formatQtyText } from "../lib/format";
 import { useStore } from "../state/store";
 
@@ -141,6 +143,12 @@ export function MissionBrief(): React.JSX.Element | null {
                   applyPatch(selected.params);
                   setUi({ currentScenarioName: `${activeGoal.title} recommendation`, missionBriefOpen: false, view: "study", mobileTab: "study", sheetDetent: "full", studyTab: "scenarios" });
                 }}>APPLY + OPEN TRADE STUDY</button>
+                <ExportButton
+                  label={`ALL ${optimization.evaluated} CANDIDATES CSV`}
+                  what="brief-candidates"
+                  title="Every evaluated design in ranked order, with its inputs, outputs, and any violated constraints"
+                  build={() => briefCandidatesCsv(optimization.all)}
+                />
                 <button type="button" className="topbar-btn" onClick={close}>CLOSE WITHOUT APPLYING</button>
               </div>
             </section>

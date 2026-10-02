@@ -1,9 +1,15 @@
 import { sampleUncertainty, simulate } from "@selene-isru/engine";
 import type { SimParams, UncertaintySpec } from "@selene-isru/engine";
 import { useMemo, useState } from "react";
+import { bandsCsv, sensitivityCsv } from "../../analysis/panelExports";
 import { oneAtATimeSensitivity } from "../../analysis/sensitivity";
+import { ExportButton } from "./ExportButton";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
+
+/** Fixed so the bands are reproducible; the CSV export records both. */
+const BAND_SAMPLES = 256;
+const BAND_SEED = 2026;
 
 type SensitivityMetric = "mass-throughput" | "sec" | "missions" | "mass";
 
@@ -66,7 +72,7 @@ export function UncertaintyPanel(): React.JSX.Element {
   [available, evidenceDefaults, keys, sigma]);
 
   const bands = useMemo(
-    () => sampleUncertainty(params, spec, { n: 256, seed: 2026 }),
+    () => sampleUncertainty(params, spec, { n: BAND_SAMPLES, seed: BAND_SEED }),
     [params, spec]
   );
 
@@ -89,7 +95,7 @@ export function UncertaintyPanel(): React.JSX.Element {
     <div className="panel-section uncertainty-section">
       <div className="panel-header">
         ILLUSTRATIVE SENSITIVITY
-        <span className="num">256 DETERMINISTIC RUNS</span>
+        <span className="num">{BAND_SAMPLES} DETERMINISTIC RUNS</span>
       </div>
       <div className="uncertainty-mode-row">
         <button type="button" className={evidenceDefaults ? "active" : ""} onClick={() => setEvidenceDefaults(true)}>
@@ -172,6 +178,10 @@ export function UncertaintyPanel(): React.JSX.Element {
             <strong>{row.low.toFixed(1)}% / {row.high >= 0 ? "+" : ""}{row.high.toFixed(1)}%</strong>
           </div>
         ))}
+      </div>
+      <div className="panel-exports">
+        <ExportButton label="RANKING CSV" what="sensitivity-ranking" build={() => sensitivityCsv(sensitivity, metric)} />
+        <ExportButton label="BANDS CSV" what="uncertainty-bands" build={() => bandsCsv(bands, spec, BAND_SAMPLES, BAND_SEED)} />
       </div>
       <p className="panel-caption">
         Deterministic sampled bands combine the selected input spreads. They are illustrative model sensitivity, not calibrated uncertainty or empirical confidence.

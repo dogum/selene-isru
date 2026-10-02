@@ -4,7 +4,9 @@ import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
+import { flowsCsv } from "../../analysis/panelExports";
 import { Qty } from "../Qty";
+import { ExportButton } from "./ExportButton";
 
 /** fixed node order — no relayout jumps on param change (§4.1) */
 const NODE_ORDER = ["mine", "melt", "sublimation", "electrolysis", "parasitic", "cryo", "product"];
@@ -236,6 +238,9 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
             ))}
         </tbody>
       </table>
+      <div className="panel-exports">
+        <ExportButton label="FLOWS CSV" what="energy-flows" build={() => flowsCsv(result)} />
+      </div>
 
       <p className="panel-caption">
         Per-kg energy ledger from the engine&apos;s flow edges — link width is kWh per kg of

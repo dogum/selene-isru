@@ -4,7 +4,9 @@ import { scaleLog } from "d3-scale";
 import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
 import { formatQty, formatQtyText } from "../../lib/format";
+import { timeseriesCsv } from "../../analysis/panelExports";
 import { useStore } from "../../state/store";
+import { ExportButton } from "./ExportButton";
 
 /**
  * §4.3 — solar vs nuclear mass trade on log-log axes, driven only by
@@ -14,6 +16,7 @@ export function PowerTrade(): React.JSX.Element {
   const result = useStore((s) => s.result);
   const compareResult = useStore((s) => s.compareResult);
   const params = useStore((s) => s.params);
+  const timeseries = useStore((s) => s.timeseries);
   const [ref, size] = useSize<HTMLDivElement>();
   const [tYears, setTYears] = useState(0);
 
@@ -220,6 +223,14 @@ export function PowerTrade(): React.JSX.Element {
             <div>RX OUTAGE <b className="num">{formatQtyText(result.power.siteProfile.longestReceiverOutageHours, "h")}</b></div>
           </>
         )}
+      </div>
+      <div className="panel-exports">
+        <ExportButton
+          label="TIMESERIES CSV"
+          what="timeseries"
+          title="One lunar day/night cycle at 96 samples: solar output, load, storage state, tank fill, boil-off, and production"
+          build={() => timeseriesCsv(timeseries)}
+        />
       </div>
     </div>
   );

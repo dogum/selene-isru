@@ -4,15 +4,17 @@ import { scaleLog } from "d3-scale";
 import { useMemo, useState } from "react";
 import { useSize } from "../../lib/hooks";
 import { FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
+import { frontierCsv } from "../../analysis/panelExports";
 import { useStore } from "../../state/store";
+import { ExportButton } from "./ExportButton";
 
 type Objective = "mass-throughput-missions" | "sec-power" | "mass-sec" | "mass-missions";
 
-const OBJECTIVES: Array<{ id: Objective; label: string; x: string; y: string }> = [
-  { id: "mass-throughput-missions", label: "Plant-mass equivalent / missions", x: "PLANT-MASS EQUIV. · DAYS", y: "MISSIONS" },
-  { id: "sec-power", label: "SEC / grid power", x: "SEC · KWH/KG", y: "GRID POWER · W" },
-  { id: "mass-sec", label: "Infra mass / SEC", x: "INFRA MASS · KG", y: "SEC · KWH/KG" },
-  { id: "mass-missions", label: "Infra mass / missions", x: "INFRA MASS · KG", y: "MISSIONS" }
+const OBJECTIVES: Array<{ id: Objective; label: string; x: string; y: string; xPath: string; yPath: string }> = [
+  { id: "mass-throughput-missions", label: "Plant-mass equivalent / missions", x: "PLANT-MASS EQUIV. · DAYS", y: "MISSIONS", xPath: "logistics.plantMassThroughputDays", yPath: "logistics.nMissions" },
+  { id: "sec-power", label: "SEC / grid power", x: "SEC · KWH/KG", y: "GRID POWER · W", xPath: "energy.secTotal_kWhPerKg", yPath: "energy.gridPowerW" },
+  { id: "mass-sec", label: "Infra mass / SEC", x: "INFRA MASS · KG", y: "SEC · KWH/KG", xPath: "logistics.totalInfraMassKg", yPath: "energy.secTotal_kWhPerKg" },
+  { id: "mass-missions", label: "Infra mass / missions", x: "INFRA MASS · KG", y: "MISSIONS", xPath: "logistics.totalInfraMassKg", yPath: "logistics.nMissions" }
 ];
 
 interface FrontierPoint {
@@ -162,6 +164,12 @@ export function FrontierExplorer(): React.JSX.Element {
           MAX GRID · MW
           <input type="number" min="0.1" max="500" step="0.5" value={maxPowerMw} onChange={(event) => setMaxPowerMw(Number(event.target.value))} />
         </label>
+        <ExportButton
+          label="POINTS CSV"
+          what="pareto-points"
+          title="Every grid point with its sweep inputs, both objectives, constraint status, and Pareto flag"
+          build={() => frontierCsv(data, bParam === null ? [aParam.key] : [aParam.key, bParam.key], { x: objectiveMeta.xPath, y: objectiveMeta.yPath })}
+        />
         <span><i className="frontier-key frontier-key-good" /> PARETO</span>
         <span><i className="frontier-key frontier-key-bad" /> OUTSIDE ACTIVE CONSTRAINTS</span>
       </div>

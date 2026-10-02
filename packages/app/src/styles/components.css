@@ -5133,3 +5133,15 @@ body.selene-photo-mode .custom-scene-label-overlay {
 body.selene-photo-mode .intro-card {
   display: none;
 }
+
+/* ============ panel data exports (ExportButton.tsx) ============ */
+
+.panel-exports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panel-export {
+  font-size: var(--fs-10);
+}

@@ -33,7 +33,10 @@ export interface Candidate {
 }
 
 export interface OptimizationResult {
+  /** distinct shortlist, best first */
   candidates: Candidate[];
+  /** every evaluated grid point in ranked order, for export */
+  all: Candidate[];
   evaluated: number;
   feasible: number;
 }
@@ -203,7 +206,12 @@ export function optimize(base: SimParams, constraints: MissionConstraints): Opti
     seen.add(signature);
     return true;
   });
-  return { candidates: distinct.slice(0, 5), evaluated: candidates.length, feasible: candidates.filter((candidate) => candidate.feasible).length };
+  return {
+    candidates: distinct.slice(0, 5),
+    all: candidates,
+    evaluated: candidates.length,
+    feasible: candidates.filter((candidate) => candidate.feasible).length
+  };
 }
 
 export function candidateDetail(candidate: Candidate): string {
