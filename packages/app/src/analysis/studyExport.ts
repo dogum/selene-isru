@@ -8,7 +8,9 @@ import {
 } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
 import type { StudyScenario } from "../state/store";
+import { formatQtyText } from "../lib/format";
 import { paramsToUrl } from "../lib/url";
+import { CASE_SCHEMA, CASE_VERSION, fileStem, resultDrift } from "./caseExport";
 
 export interface StudyExport {
   schema: "selene-isru-study";
@@ -24,6 +26,8 @@ export interface StudyImportFinding {
 }
 
 export interface StudyImportPreview {
+  /** "case" for a single full-fidelity case file (caseExport.ts) */
+  sourceKind: "study" | "case";
   sourceVersion: 1 | 2 | null;
   scenarios: StudyScenario[];
   findings: StudyImportFinding[];
@@ -51,6 +55,7 @@ function finiteNumber(value: unknown): value is number {
 
 export function previewStudyExport(value: unknown): StudyImportPreview {
   const blocked: StudyImportPreview = {
+    sourceKind: "study",
     sourceVersion: null,
     scenarios: [],
     findings: [{
@@ -61,6 +66,9 @@ export function previewStudyExport(value: unknown): StudyImportPreview {
   };
   if (typeof value !== "object" || value === null) {
     return blocked;
+  }
+  if ((value as { schema?: unknown }).schema === CASE_SCHEMA) {
+    return previewCaseFile(value as Record<string, unknown>, blocked);
   }
   const payload = value as {
     schema?: unknown;
@@ -182,11 +190,74 @@ export function previewStudyExport(value: unknown): StudyImportPreview {
     }
   }
   return {
+    sourceKind: "study",
     sourceVersion: payload.version,
     scenarios,
     findings,
     rejectedCount
   };
+}
+
+/**
+ * A case file imports as one library case. Its id derives from the file, so
+ * importing the same file twice replaces rather than duplicates. Headline
+ * results are re-run and any difference from the file is reported, because
+ * it means the model changed between export and import.
+ */
+function previewCaseFile(file: Record<string, unknown>, blocked: StudyImportPreview): StudyImportPreview {
+  const meta = file.case as { name?: unknown; kind?: unknown } | undefined;
+  const params = file.params;
+  const exportedAt = typeof file.exportedAt === "string" ? Date.parse(file.exportedAt) : Number.NaN;
+  if (file.version !== CASE_VERSION || typeof meta !== "object" || meta === null || typeof params !== "object" || params === null) {
+    return blocked;
+  }
+  const name = typeof meta.name === "string" && meta.name.trim().length > 0 ? meta.name.slice(0, 80) : "Imported case";
+  const timestamp = Number.isFinite(exportedAt) ? exportedAt : Date.now();
+  const id = `case-${timestamp.toString(36)}-${fileStem(name)}`.slice(0, 64);
+  const findings: StudyImportFinding[] = [];
+  let scenario: StudyScenario;
+
+  if (meta.kind === "custom") {
+    const custom = file.customSite as { design?: unknown } | undefined;
+    const parsed = parseSiteDesign(custom?.design);
+    if (parsed.document === null) {
+      return {
+        ...blocked,
+        sourceKind: "case",
+        rejectedCount: 1,
+        findings: [{ severity: "error", scenarioName: name, message: "The case's custom design document is unsupported or malformed." }]
+      };
+    }
+    const evaluation = evaluateSiteDesign(parsed.document);
+    for (const finding of [...parsed.findings, ...evaluation.findings]) {
+      findings.push({ severity: finding.severity, scenarioName: name, message: finding.message });
+    }
+    scenario = {
+      id, name, kind: "custom",
+      params: evaluation.normalizedDesign.params,
+      design: evaluation.normalizedDesign,
+      createdAt: timestamp, updatedAt: timestamp, pinned: false
+    };
+  } else {
+    // Deliberately not normalized: loading goes through applyPatch, which
+    // clamps and reports, exactly as for study imports.
+    scenario = {
+      id, name, kind: "authored",
+      params: { ...DEFAULTS, ...(params as Partial<SimParams>) },
+      createdAt: timestamp, updatedAt: timestamp, pinned: false
+    };
+  }
+
+  const build = file.build as { commit?: unknown } | undefined;
+  const from = typeof build?.commit === "string" ? ` (exported from build ${build.commit})` : "";
+  for (const drift of resultDrift(file.result, studyScenarioResult(scenario))) {
+    findings.push({
+      severity: "caution",
+      scenarioName: name,
+      message: `The current model computes ${drift.label} ${formatQtyText(drift.current, drift.unit, 4)}; the file recorded ${formatQtyText(drift.exported, drift.unit, 4)}${from}. The inputs import unchanged.`
+    });
+  }
+  return { sourceKind: "case", sourceVersion: null, scenarios: [scenario], findings, rejectedCount: 0 };
 }
 
 export function parseStudyExport(value: unknown): StudyScenario[] {

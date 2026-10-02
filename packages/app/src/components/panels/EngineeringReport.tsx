@@ -1,13 +1,14 @@
 import { simulate } from "@selene-isru/engine";
 import { useMemo } from "react";
+import { caseExport, fileStem } from "../../analysis/caseExport";
 import {
   downloadText,
   reportScenarios,
   reportSnapshot,
   scenariosCsv,
-  studyExport,
   studyScenarioResult
 } from "../../analysis/studyExport";
+import { BUILD_INFO } from "../../lib/build";
 import { formatQtyText } from "../../lib/format";
 import { paramsToUrl } from "../../lib/url";
 import { useStore } from "../../state/store";
@@ -32,7 +33,7 @@ export function EngineeringReport(): React.JSX.Element {
   const flows = energyRows(result);
   const generatedAt = new Date().toLocaleString();
   const alarmCount = result.warnings.filter((warning) => warning.severity === "alarm").length;
-  const reportFileStem = `selene-report-${currentName.replaceAll(/[^a-z0-9]+/gi, "-").replaceAll(/^-|-$/g, "").toLowerCase() || "case"}`;
+  const reportFileStem = `selene-report-${fileStem(currentName)}`;
 
   return (
     <section className="engineering-report" aria-label="Engineering study report">
@@ -44,14 +45,14 @@ export function EngineeringReport(): React.JSX.Element {
         <button
           type="button"
           className="topbar-btn"
-          title="This report's case and its pinned comparison cases, as importable study JSON"
+          title="Every input with units, the full engine result, the day/night timeseries, and build provenance. Importable into the library."
           onClick={() => downloadText(
-            `${reportFileStem}.json`,
-            JSON.stringify(studyExport(reportScenarios(currentName, params, scenarios)), null, 2),
+            `selene-case-${fileStem(currentName)}-${BUILD_INFO.commit}.json`,
+            JSON.stringify(caseExport({ name: currentName, kind: "authored", params }), null, 2),
             "application/json"
           )}
         >
-          JSON
+          CASE JSON
         </button>
         <button
           type="button"

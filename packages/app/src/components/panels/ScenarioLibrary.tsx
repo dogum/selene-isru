@@ -1,4 +1,6 @@
 import { serializeSiteDesign } from "@selene-isru/engine";
+import { caseExport, fileStem } from "../../analysis/caseExport";
+import { BUILD_INFO } from "../../lib/build";
 import { useRef, useState } from "react";
 import {
   downloadText,
@@ -139,6 +141,7 @@ export function ScenarioLibrary(): React.JSX.Element {
           hidden
           type="file"
           accept="application/json,.json"
+          aria-label="Import a study or case JSON file"
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (file === undefined) {
@@ -169,7 +172,7 @@ export function ScenarioLibrary(): React.JSX.Element {
         <section className="scenario-import-preview" aria-label="Study import preview">
           <div>
             <strong>
-              VERSION {importPreview.sourceVersion ?? "?"} ·{" "}
+              {importPreview.sourceKind === "case" ? "CASE FILE" : `VERSION ${importPreview.sourceVersion ?? "?"}`} ·{" "}
               {importPreview.scenarios.length} ACCEPTABLE CASES
             </strong>
             <span>
@@ -301,6 +304,22 @@ export function ScenarioLibrary(): React.JSX.Element {
                     {copiedId === scenario.id ? "COPIED" : "LINK"}
                   </button>
                 )}
+                <button
+                  type="button"
+                  title="Full case: every input with units, engine result, timeseries, and build provenance"
+                  onClick={() => downloadText(
+                    `selene-case-${fileStem(scenario.name)}-${BUILD_INFO.commit}.json`,
+                    JSON.stringify(caseExport({
+                      name: scenario.name,
+                      kind: scenario.kind,
+                      params: scenario.params,
+                      ...(scenario.design === undefined ? {} : { design: scenario.design })
+                    }), null, 2),
+                    "application/json"
+                  )}
+                >
+                  JSON
+                </button>
                 <button type="button" onClick={() => deleteScenario(scenario.id)}>DELETE</button>
               </div>
             </article>

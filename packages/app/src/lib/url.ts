@@ -6,22 +6,31 @@ import type { SimParams } from "@selene-isru/engine";
  * Only non-default params are serialized; parsing tolerates unknown keys and
  * garbage values (the engine clamps on simulate anyway).
  */
-export function serializeParams(params: SimParams): string {
-  const search = new URLSearchParams();
+/** Inputs that differ from DEFAULTS (float noise ignored), in PARAM_META order. */
+export function nonDefaultParams(params: SimParams): Partial<SimParams> {
+  const changed: Record<string, SimParams[keyof SimParams]> = {};
   for (const key of Object.keys(PARAM_META) as Array<keyof SimParams>) {
     const value = params[key];
     const fallback = DEFAULTS[key];
     if (value === fallback) {
       continue;
     }
-    if (typeof value === "number") {
-      if (typeof fallback === "number" && Math.abs(value - fallback) < 1e-12 * Math.max(1, Math.abs(fallback))) {
-        continue;
-      }
-      search.set(key, String(value));
-    } else {
-      search.set(key, String(value));
+    if (
+      typeof value === "number" &&
+      typeof fallback === "number" &&
+      Math.abs(value - fallback) < 1e-12 * Math.max(1, Math.abs(fallback))
+    ) {
+      continue;
     }
+    changed[key] = value;
+  }
+  return changed as Partial<SimParams>;
+}
+
+export function serializeParams(params: SimParams): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(nonDefaultParams(params))) {
+    search.set(key, String(value));
   }
   return search.toString();
 }
