@@ -2,6 +2,7 @@ import {
   canonicalSiteDesign,
   DEFAULTS,
   evaluateSiteDesign,
+  PARAM_META,
   parseSiteDesign,
   sampleUncertainty,
   simulate
@@ -10,7 +11,9 @@ import type { SimParams } from "@selene-isru/engine";
 import type { StudyScenario } from "../state/store";
 import { formatQtyText } from "../lib/format";
 import { paramsToUrl } from "../lib/url";
+import { BUILD_INFO, type BuildInfo } from "../lib/build";
 import { CASE_SCHEMA, CASE_VERSION, fileStem, resultDrift } from "./caseExport";
+import { toCsv, type CsvColumn, type CsvValue } from "./csv";
 
 export interface StudyExport {
   schema: "selene-isru-study";
@@ -286,67 +289,97 @@ export function studyScenarioResult(
     : evaluation.baseResult;
 }
 
-function csvCell(value: string | number | boolean): string {
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+interface CsvCaseRow {
+  scenario: StudyScenario;
+  result: ReturnType<typeof simulate>;
+  evaluation: ReturnType<typeof evaluateSiteDesign> | null;
+  flows: Map<string, number>;
 }
 
-export function scenariosCsv(scenarios: StudyScenario[]): string {
-  const rows = scenarios.map((scenario) => {
-    const evaluation = scenario.kind === "custom" &&
-      scenario.design !== undefined
-      ? evaluateSiteDesign(scenario.design)
-      : null;
+const STANDARD_MANIFEST = ["excavation fleet", "reactor/plant", "power system", "cryo block"];
+
+/**
+ * One row per case and one column per quantity: headline outputs named by
+ * their result path (the name carries the unit), each energy-flow stage,
+ * every input as `param.<key> [unit]`, the warning text, and provenance.
+ * Numbers are unformatted so the file is ready for analysis.
+ */
+export function scenariosCsv(scenarios: StudyScenario[], exportedAt: Date = new Date(), build: BuildInfo = BUILD_INFO): string {
+  const rows: CsvCaseRow[] = scenarios.map((scenario) => {
+    const evaluation = scenario.kind === "custom" && scenario.design !== undefined ? evaluateSiteDesign(scenario.design) : null;
     const result = studyScenarioResult(scenario);
     return {
-      name: scenario.name,
-      kind: scenario.kind,
-      site: scenario.params.site,
-      pinned: scenario.pinned,
-      targetKgPerDay: scenario.params.targetKgPerDay,
-      achievableKgPerDay:
-        evaluation?.achievableOutputKgPerDay ??
-        result.production.targetKgPerDay,
-      topologyValid: evaluation?.topologyValid ?? true,
-      bottleneck: evaluation?.bottleneck?.label ?? "",
-      missionYears: scenario.params.missionYears,
-      architecture: result.power.architecture,
-      secKWhPerKg: result.energy.secTotal_kWhPerKg,
-      gridPowerW: result.energy.gridPowerW,
-      infrastructureMassKg: result.logistics.totalInfraMassKg,
-      missions: result.logistics.nMissions,
-      plantMassThroughputDays: result.logistics.plantMassThroughputDays,
-      leverage: result.logistics.leverageL,
-      warnings: result.warnings.length,
-      reproducibilityUrl: paramsToUrl(scenario.params)
+      scenario,
+      result,
+      evaluation,
+      flows: new Map(result.energy.flows.map((flow) => [`${flow.from}->${flow.to}`, flow.kWhPerKg]))
     };
   });
-  const keys = Object.keys(rows[0] ?? {
-    name: "",
-    kind: "",
-    site: "",
-    pinned: false,
-    targetKgPerDay: 0,
-    achievableKgPerDay: 0,
-    topologyValid: true,
-    bottleneck: "",
-    missionYears: 0,
-    architecture: "",
-    secKWhPerKg: 0,
-    gridPowerW: 0,
-    infrastructureMassKg: 0,
-    missions: 0,
-    plantMassThroughputDays: 0,
-    leverage: 0,
-    warnings: 0,
-    reproducibilityUrl: ""
-  });
-  return [
-    keys.join(","),
-    ...rows.map((row) =>
-      keys.map((key) => csvCell(row[key as keyof typeof row])).join(",")
-    )
-  ].join("\n");
+  const flowKeys = [...new Set(rows.flatMap((row) => [...row.flows.keys()]))];
+  const manifestMass = (row: CsvCaseRow, subsystem: string): number =>
+    row.result.logistics.manifest.filter((item) => item.subsystem === subsystem).reduce((total, item) => total + item.massKg, 0);
+  const otherMass = (row: CsvCaseRow): number =>
+    row.result.logistics.manifest
+      .filter((item) => !STANDARD_MANIFEST.includes(item.subsystem))
+      .reduce((total, item) => total + item.massKg, 0);
+
+  const columns: Array<CsvColumn<CsvCaseRow>> = [
+    { header: "name", value: (row) => row.scenario.name },
+    { header: "kind", value: (row) => row.scenario.kind },
+    { header: "site", value: (row) => row.scenario.params.site },
+    { header: "pinned", value: (row) => row.scenario.pinned },
+    { header: "power.architecture", value: (row) => row.result.power.architecture },
+    { header: "production.targetKgPerDay", value: (row) => row.result.production.targetKgPerDay },
+    { header: "custom.achievableKgPerDay", value: (row) => row.evaluation?.achievableOutputKgPerDay ?? row.result.production.targetKgPerDay },
+    { header: "custom.topologyValid", value: (row) => row.evaluation?.topologyValid ?? true },
+    { header: "custom.bottleneck", value: (row) => row.evaluation?.bottleneck?.label ?? "" },
+    { header: "energy.secTotal_kWhPerKg", value: (row) => row.result.energy.secTotal_kWhPerKg },
+    { header: "energy.gridPowerW", value: (row) => row.result.energy.gridPowerW },
+    { header: "logistics.totalInfraMassKg", value: (row) => row.result.logistics.totalInfraMassKg },
+    { header: "logistics.nMissions", value: (row) => row.result.logistics.nMissions },
+    { header: "logistics.leverageL", value: (row) => row.result.logistics.leverageL },
+    { header: "logistics.plantMassThroughputDays", value: (row) => row.result.logistics.plantMassThroughputDays },
+    { header: "logistics.payloadPerMissionKg", value: (row) => row.result.logistics.payloadPerMissionKg },
+    ...STANDARD_MANIFEST.map((subsystem) => ({
+      header: `manifest.${subsystem} [kg]`,
+      value: (row: CsvCaseRow) => manifestMass(row, subsystem)
+    })),
+    { header: "manifest.other [kg]", value: otherMass },
+    { header: "power.solarMassKg", value: (row) => row.result.power.solarMassKg },
+    { header: "power.nuclearMassKg", value: (row) => row.result.power.nuclearMassKg },
+    { header: "power.pCritW", value: (row) => row.result.power.pCritW },
+    { header: "power.pCritDynamicW", value: (row) => row.result.power.pCritDynamicW },
+    { header: "production.regolithKgPerDay", value: (row) => row.result.production.regolithKgPerDay },
+    { header: "production.o2KgPerDay", value: (row) => row.result.production.o2KgPerDay },
+    { header: "production.waterKgPerDay", value: (row) => row.result.production.waterKgPerDay },
+    { header: "production.h2KgPerDay", value: (row) => row.result.production.h2KgPerDay },
+    { header: "production.ch4KgPerDay", value: (row) => row.result.production.ch4KgPerDay },
+    { header: "production.co2ImportedKgPerDay", value: (row) => row.result.production.co2ImportedKgPerDay },
+    { header: "cryo.boiloffKgPerDay", value: (row) => row.result.cryo.boiloffKgPerDay },
+    { header: "cryo.totalStorageMassKg", value: (row) => row.result.cryo.totalStorageMassKg },
+    { header: "cryo.cryocoolerPowerW", value: (row) => row.result.cryo.cryocoolerPowerW },
+    ...flowKeys.map((key) => ({
+      header: `flow.${key} [kWh/kg]`,
+      value: (row: CsvCaseRow) => row.flows.get(key) ?? null
+    })),
+    ...(Object.keys(PARAM_META) as Array<keyof SimParams>)
+      .filter((key) => key !== "polarProfileData")
+      .map((key) => ({
+        header: `param.${String(key)}${PARAM_META[key].unit.length > 0 ? ` [${PARAM_META[key].unit}]` : ""}`,
+        value: (row: CsvCaseRow) => row.scenario.params[key] as CsvValue
+      })),
+    { header: "param.polarProfileData [bytes]", value: (row) => row.scenario.params.polarProfileData.length },
+    { header: "warnings.count", value: (row) => row.result.warnings.length },
+    {
+      header: "warnings.text",
+      value: (row) => row.result.warnings.map((warning) => `${warning.severity} ${warning.id}: ${warning.message}`).join(" | ")
+    },
+    { header: "reproducibilityUrl", value: (row) => (row.scenario.kind === "custom" ? "" : paramsToUrl(row.scenario.params)) },
+    { header: "build.commit", value: () => build.commit },
+    { header: "build.engine", value: () => build.engine },
+    { header: "exportedAt", value: () => exportedAt.toISOString() }
+  ];
+  return toCsv(columns, rows);
 }
 
 /**

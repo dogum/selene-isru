@@ -2,7 +2,7 @@
 import { DEFAULTS, PARAM_META, SEEDED_SITE_DESIGN_FIXTURES, simulate } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
 import { CASE_SCHEMA, caseExport, resultDrift } from "../src/analysis/caseExport";
-import { previewStudyExport } from "../src/analysis/studyExport";
+import { previewStudyExport, scenariosCsv } from "../src/analysis/studyExport";
 import { MODEL_BOUNDARY } from "../src/lib/build";
 
 const NOW = new Date("2026-10-02T12:00:00.000Z");
@@ -63,5 +63,29 @@ describe("full-fidelity case export", () => {
   it("rejects malformed case files", () => {
     expect(previewStudyExport({ schema: CASE_SCHEMA, version: 99 }).scenarios).toEqual([]);
     expect(previewStudyExport({ schema: CASE_SCHEMA, version: 1, case: { kind: "custom" }, params: {} }).rejectedCount).toBe(1);
+  });
+});
+
+describe("wide study CSV", () => {
+  it("has one unit-labelled column per input and full-precision numbers", () => {
+    const scenario = {
+      id: "wide", name: "Wide, \"quoted\" case", kind: "authored" as const,
+      params: { ...DEFAULTS, targetKgPerDay: 1234.5678 }, createdAt: 1, updatedAt: 1, pinned: false
+    };
+    const csv = scenariosCsv([scenario], NOW, BUILD);
+    const [header, row] = csv.split("\n") as [string, string];
+    const headers = header.split(",");
+    expect(headers).toContain("param.targetKgPerDay [kg/day]");
+    expect(headers).toContain("param.chiIce [kg/kg]");
+    expect(headers).toContain("energy.secTotal_kWhPerKg");
+    expect(headers).toContain("flow.electrolysis->product [kWh/kg]");
+    expect(headers).toContain("build.commit");
+    // Every numeric input except the profile blob has its own column.
+    const numericInputs = Object.keys(PARAM_META).filter((key) => key !== "polarProfileData");
+    expect(numericInputs.every((key) => headers.some((h) => h.startsWith(`param.${key} `) || h === `param.${key}`))).toBe(true);
+    expect(row.startsWith('"Wide, ""quoted"" case",authored,equatorial,false')).toBe(true);
+    expect(row).toContain(",1234.5678,");
+    expect(row).toContain("abc1234");
+    expect(String(simulate(scenario.params).energy.secTotal_kWhPerKg)).toSatisfy((value: string) => row.includes(value));
   });
 });
