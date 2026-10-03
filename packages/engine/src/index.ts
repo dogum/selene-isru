@@ -228,21 +228,22 @@ export function simulate(
     !isFeed(inventory) && !isWaterBuffer(inventory) && (inventory.role === "product" || inventory.role === "custom");
   const storageLossKgPerDay = (matches: (inventory: StorageInventory) => boolean): number =>
     cryo.inventories.filter(matches).reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
-  const productLossKgPerDay = (stream: string): number =>
-    storageLossKgPerDay((inventory) => isProduct(inventory) && inventory.stream === stream);
   const bufferLossKgPerDay = storageLossKgPerDay(isWaterBuffer);
   const loopThroughput =
     bufferLossKgPerDay > 0 && production.waterKgPerDay > 0
       ? Math.max(0, 1 - bufferLossKgPerDay / production.waterKgPerDay)
       : 1;
-  // Oxygen and hydrogen that reach the vehicle in propellant mode. A
-  // one-stream storage what-if holding some other stream still stores the
-  // product, so its loss takes both gases down in proportion.
-  const otherProductLossKgPerDay = storageLossKgPerDay(
-    (inventory) => isProduct(inventory) && inventory.stream !== "lox" && inventory.stream !== "lh2"
-  );
-  const storedO2KgPerDay = Math.max(0, production.o2KgPerDay * loopThroughput - productLossKgPerDay("lox"));
-  const storedH2KgPerDay = Math.max(0, production.h2KgPerDay * loopThroughput - productLossKgPerDay("lh2"));
+  // Oxygen and hydrogen that reach the vehicle in propellant mode. Only auto
+  // storage keeps LOX and LH2 in stores of their own; a one-stream what-if
+  // store holds the whole product whatever its stream is called, so its loss
+  // takes both gases down in proportion.
+  const ownStore = (inventory: StorageInventory): boolean =>
+    params.storageStream === "auto" && (inventory.stream === "lox" || inventory.stream === "lh2");
+  const otherProductLossKgPerDay = storageLossKgPerDay((inventory) => isProduct(inventory) && !ownStore(inventory));
+  const ownStoreLossKgPerDay = (stream: string): number =>
+    storageLossKgPerDay((inventory) => isProduct(inventory) && ownStore(inventory) && inventory.stream === stream);
+  const storedO2KgPerDay = Math.max(0, production.o2KgPerDay * loopThroughput - ownStoreLossKgPerDay("lox"));
+  const storedH2KgPerDay = Math.max(0, production.h2KgPerDay * loopThroughput - ownStoreLossKgPerDay("lh2"));
   const keptShare =
     otherProductLossKgPerDay > 0 && storedO2KgPerDay + storedH2KgPerDay > 0
       ? Math.max(0, 1 - otherProductLossKgPerDay / (storedO2KgPerDay + storedH2KgPerDay))

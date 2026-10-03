@@ -121,23 +121,30 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
                 total += inventory["actualLossKgPerDay"]
         return total
 
-    def product_loss_kg_per_day(stream: str) -> float:
-        return storage_loss_kg_per_day(lambda inventory: is_product(inventory) and inventory["stream"] == stream)
-
     buffer_loss_kg_per_day = storage_loss_kg_per_day(is_water_buffer)
     loop_throughput = (
         max(0, 1 - buffer_loss_kg_per_day / production["waterKgPerDay"])
         if buffer_loss_kg_per_day > 0 and production["waterKgPerDay"] > 0
         else 1
     )
-    # Oxygen and hydrogen that reach the vehicle in propellant mode. A
-    # one-stream storage what-if holding some other stream still stores the
-    # product, so its loss takes both gases down in proportion.
+    # Oxygen and hydrogen that reach the vehicle in propellant mode. Only auto
+    # storage keeps LOX and LH2 in stores of their own; a one-stream what-if
+    # store holds the whole product whatever its stream is called, so its loss
+    # takes both gases down in proportion.
+    def own_store(inventory: dict[str, Any]) -> bool:
+        return params["storageStream"] == "auto" and inventory["stream"] in ("lox", "lh2")
+
     other_product_loss_kg_per_day = storage_loss_kg_per_day(
-        lambda inventory: is_product(inventory) and inventory["stream"] not in ("lox", "lh2")
+        lambda inventory: is_product(inventory) and not own_store(inventory)
     )
-    stored_o2_kg_per_day = max(0, production["o2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lox"))
-    stored_h2_kg_per_day = max(0, production["h2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lh2"))
+
+    def own_store_loss_kg_per_day(stream: str) -> float:
+        return storage_loss_kg_per_day(
+            lambda inventory: is_product(inventory) and own_store(inventory) and inventory["stream"] == stream
+        )
+
+    stored_o2_kg_per_day = max(0, production["o2KgPerDay"] * loop_throughput - own_store_loss_kg_per_day("lox"))
+    stored_h2_kg_per_day = max(0, production["h2KgPerDay"] * loop_throughput - own_store_loss_kg_per_day("lh2"))
     kept_share = (
         max(0, 1 - other_product_loss_kg_per_day / (stored_o2_kg_per_day + stored_h2_kg_per_day))
         if other_product_loss_kg_per_day > 0 and stored_o2_kg_per_day + stored_h2_kg_per_day > 0

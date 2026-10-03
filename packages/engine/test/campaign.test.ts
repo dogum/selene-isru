@@ -246,8 +246,8 @@ describe("campaign ledger behaviour", () => {
     expectRel(result.campaign.deliveredKgPerDay, usable * params.plantAvailability, 1e-12);
   });
 
-  test("a one-stream what-if storing another stream still loses propellant", () => {
-    const { params, result } = run({ site: "polar", polarProduct: "propellant", cryoControlMode: "passive", storageStream: "custom" });
+  test.each(["custom", "lox", "lh2"] as const)("a one-stream %s what-if loses both gases in proportion", (storageStream) => {
+    const { params, result } = run({ site: "polar", polarProduct: "propellant", cryoControlMode: "passive", storageStream });
     const [selected] = result.cryo.inventories;
     expect(result.cryo.inventories).toHaveLength(1);
     expect(selected!.actualLossKgPerDay).toBeGreaterThan(1);

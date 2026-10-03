@@ -99,6 +99,18 @@ describe("refuelling demand", () => {
     }
   });
 
+  test("a one-stream store's loss comes off both gases the demand draws on", () => {
+    for (const storageStream of ["lox", "lh2"] as const) {
+      const { params, result } = run({ ...PROPELLANT, storageStream, cryoControlMode: "passive" });
+      const [store] = result.cryo.inventories;
+      expect(store!.actualLossKgPerDay, storageStream).toBeGreaterThan(1);
+      const { o2KgPerDay: o2, h2KgPerDay: h2 } = result.production;
+      const kept = 1 - store!.actualLossKgPerDay / (o2 + h2);
+      expectRel(result.refuel!.supplyO2KgPerDay, o2 * kept * params.plantAvailability, 1e-12);
+      expectRel(result.refuel!.supplyH2KgPerDay, h2 * kept * params.plantAvailability, 1e-12);
+    }
+  });
+
   test("a demand changes nothing where the plant makes no lander propellant", () => {
     for (const site of [{ site: "polar" as const }, { site: "polar" as const, enableSabatier: true }]) {
       const without = run(site).result;
