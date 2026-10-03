@@ -103,8 +103,11 @@ export function outputValue(result: SimResult, path: string): number | null {
 /**
  * Every numeric output the engine reports for this case: the headline list,
  * then each scalar leaf of the result's sections (arrays such as flows and
- * the manifest are left to their own panels). Nullable leaves (payback) are
- * listed from the result's type, so they stay offered when this case has none.
+ * the manifest are left to their own panels). A null leaf is a nullable
+ * number (`number | null` in the result type: payback, beamed floor power), so
+ * it stays offered when this case has none, since a swept input can make it
+ * numeric. A null section (refuel, ilmenite) is switched off by a discrete
+ * choice that no sweep input reaches, so its leaves are not offered.
  */
 export function sweepOutputs(result: SimResult): SweepOutput[] {
   const outputs: SweepOutput[] = HEADLINE_OUTPUTS.map((item) => ({ ...item, section: "HEADLINE" }));
@@ -113,7 +116,7 @@ export function sweepOutputs(result: SimResult): SweepOutput[] {
     if (typeof node !== "object" || node === null || Array.isArray(node)) return;
     for (const [key, value] of Object.entries(node)) {
       const next = `${path}.${key}`;
-      if (typeof value === "number" && !listed.has(next)) {
+      if ((typeof value === "number" || value === null) && !listed.has(next)) {
         outputs.push({ path: next, label: next, section });
         listed.add(next);
       } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {

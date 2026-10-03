@@ -75,11 +75,41 @@ describe("general sweep", () => {
     expect(outputs.map((item) => item.path)).toContain("power.radiatorM2");
     expect(new Set(outputs.map((item) => item.path)).size).toBe(outputs.length);
     for (const item of outputs.filter((output) => output.section !== "HEADLINE")) {
-      expect(outputValue(result, item.path)).not.toBeNull();
+      // numeric here, or a leaf the engine reports as null at this case
+      const [section, ...rest] = item.path.split(".");
+      const parent = rest.slice(0, -1).reduce<unknown>(
+        (node, key) => (node as Record<string, unknown>)[key],
+        (result as unknown as Record<string, unknown>)[section!]
+      ) as Record<string, unknown>;
+      expect(rest.at(-1)! in parent).toBe(true);
+      const value = outputValue(result, item.path);
+      if (value === null) expect(parent[rest.at(-1)!]).toBeNull();
     }
     expect(outputValue(result, "campaign.paybackDays")).toBe(result.campaign.paybackDays);
     expect(outputValue(result, "energy.flows")).toBeNull();
     expect(outputValue(result, "no.such.path")).toBeNull();
+  });
+
+  it("offers outputs this case reports as null, since a sweep can make them numeric", () => {
+    // the polar reference plant: the automatic choice powers it with fission, so no beamed floor power
+    const nuclear: SimParams = polar;
+    const live = simulate(nuclear);
+    expect(live.power.architecture).toBe("nuclear");
+    expect(live.power.beamedFloorPowerW).toBeNull();
+    const paths = sweepOutputs(live).map((item) => item.path);
+    expect(paths).toContain("power.beamedFloorPowerW");
+    expect(paths).toContain("power.beamDeliveryMarginW");
+    // sections a discrete choice switches off stay out: no input on the sweep list turns them on
+    expect(live.ilmenite).toBeNull();
+    expect(paths.some((path) => path.startsWith("ilmenite."))).toBe(false);
+
+    // a small enough plant is lighter on solar, which beams power to the floor
+    const target = sweepInputs(nuclear).find((input) => input.key === "targetKgPerDay")!;
+    const run = runSweep(nuclear, { ...target, log: true }, null, "power.beamedFloorPowerW");
+    expect(simulate({ ...nuclear, targetKgPerDay: target.min }).power.architecture).toBe("solar");
+    expect(run.points[0]!.value).toBe(simulate({ ...nuclear, targetKgPerDay: target.min }).power.beamedFloorPowerW);
+    expect(run.points[0]!.value).toBeGreaterThan(0);
+    expect(run.points.at(-1)!.value).toBeNull();
   });
 
   it("exports each point with its inputs, the output by path, and alarms", () => {
