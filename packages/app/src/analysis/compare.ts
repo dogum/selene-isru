@@ -19,6 +19,9 @@ export const COMPARE_METRICS: CompareMetric[] = [
   { label: "PLANT-MASS EQUIV.", unit: "days", value: (r) => r.logistics.plantMassThroughputDays, better: "lower" },
   // Lifetime product per kg of landed infrastructure: more is better.
   { label: "LEVERAGE L", unit: "x", value: (r) => r.logistics.leverageL, better: "higher" },
+  // No payback reads as a dash and is never coloured.
+  { label: "PAYBACK", unit: "days", value: (r) => r.campaign.paybackDays ?? Number.NaN, better: "lower" },
+  { label: "CAMPAIGN RETURN", unit: "x", value: (r) => r.campaign.returnRatio, better: "higher" },
   // Output is the requirement being met, not a figure of merit.
   { label: "OUTPUT", unit: "kg/day", value: (r) => r.production.targetKgPerDay, better: "neutral", sig: 4 }
 ];

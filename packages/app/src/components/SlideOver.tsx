@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useDialog } from "../lib/a11y";
 import { useStore, type ViewTab } from "../state/store";
+import { CampaignPanel } from "./panels/CampaignPanel";
 import { EnergySankey } from "./panels/EnergySankey";
 import { MassManifest } from "./panels/MassManifest";
 import { PowerTrade } from "./panels/PowerTrade";
@@ -11,6 +12,7 @@ const TABS: Array<{ id: ViewTab; label: string }> = [
   { id: "energy", label: "ENERGY" },
   { id: "mass", label: "MASS" },
   { id: "power", label: "POWER" },
+  { id: "campaign", label: "CAMPAIGN" },
   { id: "study", label: "TRADE STUDY" }
 ];
 
@@ -69,6 +71,7 @@ export function SlideOver(): React.JSX.Element | null {
         {view === "energy" && <EnergySankey />}
         {view === "mass" && <MassManifest />}
         {view === "power" && <PowerTrade />}
+        {view === "campaign" && <CampaignPanel />}
         {view === "study" && <TradeStudyPanel />}
       </div>
     </aside>

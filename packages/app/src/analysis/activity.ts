@@ -32,7 +32,8 @@ const HEADLINE_PREFIXES = [
   "logistics.totalInfraMassKg",
   "logistics.nMissions",
   "logistics.leverageL",
-  "logistics.plantMassThroughputDays"
+  "logistics.plantMassThroughputDays",
+  "campaign."
 ];
 
 const LABELS: Record<string, string> = {
@@ -48,7 +49,21 @@ const LABELS: Record<string, string> = {
   "power.solarArrayM2": "solar array area",
   "power.solarMassKg": "solar option mass",
   "power.nuclearMassKg": "nuclear option mass",
-  "power.radiatorM2": "radiator area"
+  "power.radiatorM2": "radiator area",
+  "campaign.paybackDays": "payback day",
+  "campaign.paysBackInCampaign": "payback within the campaign",
+  "campaign.returnRatio": "campaign return",
+  "campaign.netLeoMassKg": "net LEO mass",
+  "campaign.leoMassSpentKg": "LEO mass spent",
+  "campaign.leoMassSavedKg": "LEO mass saved",
+  "campaign.leoMassPerLandedKg": "LEO mass per landed kg",
+  "campaign.deploymentDays": "deployment time",
+  "campaign.firstProductDay": "first product day",
+  "campaign.campaignEndDay": "campaign end",
+  "campaign.deliveredKgPerDay": "delivered output",
+  "campaign.resupplyKgPerYear": "spares per year",
+  "campaign.cumulativeProductKg": "campaign product",
+  "campaign.landedMassKg": "landed mass with spares"
 };
 
 /** String fields that name an array element, in preference order. */
@@ -174,7 +189,10 @@ export function inputActivity(params: SimParams, key: keyof SimParams): Activity
     return {
       activity: "no-effect",
       changed: [],
-      reason: "Moving this input across its whole range changes no result in the current configuration."
+      reason:
+        key === "landingsPerYear"
+          ? "The plant fits on one lander here, so landing cadence cannot delay production. It matters once the plant needs two or more landers."
+          : "Moving this input across its whole range changes no result in the current configuration."
     };
   }
   const labels = [...new Set(ordered.map((path) => describeResultPath(path, base)))].slice(0, 3).join(", ");

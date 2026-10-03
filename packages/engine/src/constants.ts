@@ -1594,7 +1594,7 @@ export const PARAM_META = {
     "unit": "1/yr",
     "kind": "parameter",
     "group": "campaign",
-    "description": "Infrastructure landings per year available to deploy the plant",
+    "description": "Landing cadence",
     "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), 120-day launch interval"
   },
   "commissioningDays": {
@@ -1604,7 +1604,7 @@ export const PARAM_META = {
     "unit": "day",
     "kind": "parameter",
     "group": "campaign",
-    "description": "Commissioning time from last landing to first product",
+    "description": "Commissioning time",
     "source": "spec (illustrative; Kleinhenz & Paz 2020, AIAA 2020-4042, assume 48 h)"
   },
   "plantAvailability": {
@@ -1614,7 +1614,7 @@ export const PARAM_META = {
     "unit": "1",
     "kind": "parameter",
     "group": "campaign",
-    "description": "Fraction of production days achieved after commissioning (unplanned downtime)",
+    "description": "Plant availability",
     "source": "spec (illustrative downtime allowance)"
   },
   "sparesFracPerYear": {
@@ -1624,7 +1624,7 @@ export const PARAM_META = {
     "unit": "1/yr",
     "kind": "parameter",
     "group": "campaign",
-    "description": "Spares landed per year as a fraction of plant mass",
+    "description": "Annual spares (fraction of plant)",
     "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), ISRU maintenance 10% of system mass per year"
   },
   "deploymentManifest": {
@@ -1632,7 +1632,7 @@ export const PARAM_META = {
     "unit": "mode",
     "kind": "parameter",
     "group": "campaign",
-    "description": "How deployment landers are charged: whole dedicated landers, or the plant's mass share of landers shared with other cargo",
+    "description": "Deployment lander charging",
     "source": "model switch"
   },
   "Pinternal": {

@@ -30,6 +30,11 @@ const REPO_CONSTANTS =
 
 const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
   {
+    match: /arXiv:1910\.04265/,
+    url: "https://arxiv.org/abs/1910.04265",
+    section: "Chen, Sarton du Jonchay, Hou & Ho 2021, Multifidelity Space Mission Planning and Infrastructure Design Framework for Space Resource Logistics (J. Spacecraft & Rockets; arXiv:1910.04265), Table 4"
+  },
+  {
     match: /Kleinhenz/i,
     url: "https://ntrs.nasa.gov/citations/20205007966",
     section: "NASA · Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water (AIAA 2020-4042)"
@@ -74,15 +79,39 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
 const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = {
   targetKgPerDay: {
     rangeRationale: "Pilot-to-industrial sweep spanning 10 kg/day through 20 t/day product output.",
-    validity: "Steady-state sizing only; no ramp-up, downtime, or campaign scheduling.",
+    validity: "Sizes the plant at steady state. Deployment, commissioning, downtime, and spares are applied in the campaign ledger, not in sizing.",
     applicability: "Both sites · mission-level product target",
     defaultUncertainty: 0.1
   },
   missionYears: {
     rangeRationale: "One-to-twenty-year surface campaign envelope used for degradation and mass-leverage trades.",
-    validity: "Does not include component replacement schedules or probabilistic mission loss.",
+    validity: "Years of production after commissioning. Spares are a constant annual mass fraction; replacement schedules and probabilistic mission loss are not modelled.",
     applicability: "Both sites · logistics and power lifecycle",
     defaultUncertainty: 0.05
+  },
+  landingsPerYear: {
+    rangeRationale: "From one landing every two years to monthly cargo service; the source assumes a launch every 120 days.",
+    validity: "Landings arrive evenly from day 0, each carrying up to one lander capacity of plant. Matters only when the plant needs more than one lander. No launch failures or schedule slips.",
+    applicability: "Both sites · deployment campaign",
+    defaultUncertainty: 0.3
+  },
+  commissioningDays: {
+    rangeRationale: "Immediate start to a full year of checkout. NASA's polar case study assumes 48 hours; the 30-day default allows for a first-of-a-kind plant.",
+    validity: "One block of time after the last landing with no output. Partial early operation and phased start-up are not modelled.",
+    applicability: "Both sites · deployment campaign",
+    defaultUncertainty: 0.5
+  },
+  plantAvailability: {
+    rangeRationale: "Half to full uptime after commissioning.",
+    validity: "A constant average derate on output for unplanned downtime. Separate from night-time power storage, which plant sizing already covers.",
+    applicability: "Both sites · operations campaign",
+    defaultUncertainty: 0.1
+  },
+  sparesFracPerYear: {
+    rangeRationale: "No resupply up to 30% of plant mass each year; published ISRU logistics studies use 5% and 10%.",
+    validity: "Spares ride as a mass share of other cargo at the lander's LEO cost per landed kg. They do not add capacity or wear out on a schedule.",
+    applicability: "Both sites · operations campaign",
+    defaultUncertainty: 0.5
   },
   rhoReg: {
     rangeRationale: "Loose-to-compacted lunar bulk-regolith engineering envelope.",
@@ -264,6 +293,7 @@ function applicabilityFor(group: string): string {
     cryo: "Both sites · cryogenic storage",
     power: "Both sites · surface power",
     logistics: "Both sites · landing and logistics",
+    campaign: "Both sites · deployment and operations campaign",
     construction: "Equatorial site · slag construction"
   };
   return labels[group] ?? `Model group · ${group}`;

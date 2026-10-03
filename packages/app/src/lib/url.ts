@@ -65,6 +65,10 @@ export function parseParams(query: string): Partial<SimParams> {
       if (["zero-boiloff", "passive", "capacity-limited"].includes(raw)) {
         patch[key] = raw;
       }
+    } else if (key === "deploymentManifest") {
+      if (raw === "dedicated" || raw === "shared") {
+        patch[key] = raw;
+      }
     } else if (key === "polarProfileMode") {
       if (raw === "scalar" || raw === "profile") {
         patch[key] = raw;

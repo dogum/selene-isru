@@ -220,6 +220,7 @@ function RailGroup({ group, defs, open, onToggle, warned }: RailGroupProps): Rea
       {open && !gatedOff && (
         <div className="rail-group-body">
           {group.id === "cryo" && <StorageModeControls />}
+          {group.id === "campaign" && <CampaignModeControls />}
           {group.id === "power" && site === "polar" && <PolarSiteProfileControls />}
           {defs.map((def) => {
             const w = warned.get(def.key);
@@ -264,6 +265,23 @@ function StorageModeControls(): React.JSX.Element {
           <option value="zero-boiloff">ZERO BOIL-OFF</option>
           <option value="passive">PASSIVE LOSS</option>
           <option value="capacity-limited">CAPACITY LIMITED</option>
+        </select>
+      </label>
+    </div>
+  );
+}
+
+function CampaignModeControls(): React.JSX.Element {
+  const manifest = useStore((s) => s.params.deploymentManifest);
+  const setParam = useStore((s) => s.setParam);
+
+  return (
+    <div className="rail-mode-grid">
+      <label>
+        <span>DEPLOYMENT LANDERS</span>
+        <select value={manifest} onChange={(event) => setParam("deploymentManifest", event.target.value as typeof manifest)}>
+          <option value="dedicated">DEDICATED (WHOLE LANDERS)</option>
+          <option value="shared">SHARED (MASS SHARE)</option>
         </select>
       </label>
     </div>

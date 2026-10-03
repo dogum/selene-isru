@@ -41,8 +41,9 @@ export function outputLabel(params: SimParams, result: SimResult): string {
 }
 
 /**
- * One sentence a newcomer can read before any KPI: what the plant makes, what
- * it lands, and what powers it. Every number is an engine output.
+ * What a newcomer can read before any KPI: what the plant makes, what it
+ * lands, what powers it, and when its product repays the launch mass. Every
+ * number is an engine output.
  */
 export function caseSummary(params: SimParams, result: SimResult): string {
   const plant =
@@ -63,7 +64,14 @@ export function caseSummary(params: SimParams, result: SimResult): string {
     `on ${formatQtyProse(result.energy.gridPowerW, "W")} of ${result.power.architecture} power`
   ];
   const alarms = result.warnings.filter((warning) => warning.severity === "alarm").length;
-  const sentence = `${parts[0]} ${parts.slice(1).join(" ")}.`;
+  const { campaign } = result;
+  const payback =
+    campaign.leoMassSpentKg === 0
+      ? ""
+      : campaign.paysBackInCampaign && campaign.paybackDays !== null
+        ? ` Its product repays the launch mass by day ${Math.round(campaign.paybackDays).toLocaleString("en-US")}.`
+        : " Its product does not repay the launch mass within the campaign.";
+  const sentence = `${parts[0]} ${parts.slice(1).join(" ")}.${payback}`;
   return alarms > 0
     ? `${sentence} ${alarms} implemented constraint${alarms === 1 ? " is" : "s are"} violated.`
     : sentence;

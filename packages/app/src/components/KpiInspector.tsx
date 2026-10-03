@@ -82,7 +82,7 @@ function explainKpi(key: KpiKey, params: ReturnType<typeof useStore.getState>["p
         equation: "equivalent days = landed plant mass / daily product throughput",
         substitution: `${formatQtyText(result.logistics.totalInfraMassKg, "kg")} / ${formatQtyText(params.targetKgPerDay, "kg/day")} = ${formatQtyText(result.logistics.plantMassThroughputDays, "days")}`,
         maturity: "Derived sizing proxy",
-        caveat: "This is not financial, energy, schedule, or lifecycle payback."
+        caveat: "This is not financial, energy, schedule, or lifecycle payback. Launch-mass payback, with deployment and spares, is in the Campaign panel."
       };
     case "leverage":
       return {
@@ -90,7 +90,7 @@ function explainKpi(key: KpiKey, params: ReturnType<typeof useStore.getState>["p
         equation: "L = annual product × mission years × gear ratio / landed plant mass",
         substitution: `${formatQtyText(params.targetKgPerDay * 365, "kg/yr")} × ${params.missionYears.toFixed(1)} yr × ${params.gearRatio.toFixed(2)} / ${formatQtyText(result.logistics.totalInfraMassKg, "kg")}`,
         maturity: "Derived campaign proxy",
-        caveat: "Assumes constant production and does not include replacements, downtime, or reliability."
+        caveat: `Divides launch mass saved by mass landed, so it ignores what landing costs, and assumes full output from day one with no spares or downtime. The Campaign panel counts both sides in LEO mass: ${result.campaign.returnRatio.toFixed(2)}× here.`
       };
     case "output":
       return {

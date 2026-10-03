@@ -1,5 +1,5 @@
 import { PARAM_META } from "@selene-isru/engine";
-import type { SimParams, SimResult, TimeseriesResult, UncertaintyBand, UncertaintyResult } from "@selene-isru/engine";
+import type { CampaignTimelinePoint, SimParams, SimResult, TimeseriesResult, UncertaintyBand, UncertaintyResult } from "@selene-isru/engine";
 import type { Candidate } from "./brief";
 import { toCsv, type CsvColumn } from "./csv";
 import type { SensitivityRow } from "./sensitivity";
@@ -48,6 +48,22 @@ export function timeseriesCsv(timeseries: TimeseriesResult): string {
   return toCsv(
     keys.map((key) => ({ header: String(key), value: (point: typeof first) => point[key] })),
     timeseries.points
+  );
+}
+
+/** The campaign ledger over time; LEO columns are kg of mass in low Earth orbit. */
+export function campaignCsv(timeline: readonly CampaignTimelinePoint[]): string {
+  return toCsv<CampaignTimelinePoint>(
+    [
+      { header: "tDays [day from first landing]", value: (point) => point.tDays },
+      { header: "event", value: (point) => point.event },
+      { header: "landers", value: (point) => point.landers },
+      { header: "landedMassKg [kg]", value: (point) => point.landedMassKg },
+      { header: "productKg [kg]", value: (point) => point.productKg },
+      { header: "leoMassSpentKg [kg in LEO]", value: (point) => point.leoMassSpentKg },
+      { header: "leoMassSavedKg [kg in LEO]", value: (point) => point.leoMassSavedKg }
+    ],
+    timeline
   );
 }
 

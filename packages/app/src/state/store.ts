@@ -56,9 +56,9 @@ import {
   updateSiteAsset
 } from "../site-design/editor";
 
-export type ViewTab = "site" | "energy" | "mass" | "power" | "study";
+export type ViewTab = "site" | "energy" | "mass" | "power" | "campaign" | "study";
 export type SheetDetent = "peek" | "half" | "full";
-export type MobileTab = "controls" | "energy" | "mass" | "power" | "study";
+export type MobileTab = "controls" | "energy" | "mass" | "power" | "campaign" | "study";
 export type ParameterNameMode = "plain" | "code";
 export type StudyTab = "scenarios" | "frontier" | "uncertainty" | "report";
 export type KpiKey = "sec" | "power" | "missions" | "mass-throughput" | "leverage" | "output";

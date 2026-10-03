@@ -78,6 +78,13 @@ export const GROUPS: GroupDef[] = [
     readout: (r) => ({ value: r.logistics.nMissions, unit: "msn" })
   },
   {
+    id: "campaign",
+    label: "Campaign",
+    engineGroup: "campaign",
+    // Payback day; a dash (NaN) when it does not fall within the campaign.
+    readout: (r) => ({ value: r.campaign.paysBackInCampaign ? (r.campaign.paybackDays ?? Number.NaN) : Number.NaN, unit: "days" })
+  },
+  {
     id: "construction",
     label: "Construction",
     engineGroup: "construction",

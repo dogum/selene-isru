@@ -23,7 +23,7 @@ describe("view tabs", () => {
     useStore.getState().setUi({ view: "site" });
     render(<><ViewTabs /><SlideOver /></>);
     const tabs = within(screen.getByRole("tablist", { name: "View" })).getAllByRole("tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["SITE", "ENERGY", "MASS", "POWER", "TRADE STUDY"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["SITE", "ENERGY", "MASS", "POWER", "CAMPAIGN", "TRADE STUDY"]);
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -36,7 +36,7 @@ describe("view tabs", () => {
     const panel = screen.getByRole("dialog", { name: "mass panel" });
     expect(panel.contains(lists[0]!)).toBe(true);
     const tabs = within(lists[0]!).getAllByRole("tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["ENERGY", "MASS", "POWER", "TRADE STUDY"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["ENERGY", "MASS", "POWER", "CAMPAIGN", "TRADE STUDY"]);
     expect(within(lists[0]!).getByRole("tab", { name: "MASS" }).getAttribute("aria-selected")).toBe("true");
 
     fireEvent.click(within(lists[0]!).getByRole("tab", { name: "POWER" }));
