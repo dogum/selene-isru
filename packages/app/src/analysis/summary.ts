@@ -33,12 +33,19 @@ function deliveredInventories(result: SimResult): SimResult["cryo"]["inventories
   return products.length > 0 ? products : result.cryo.inventories.filter((inventory) => inventory.role === "custom");
 }
 
+/** Whether the plant splits its water into other products (Sabatier loop or propellant mode). */
+function convertsWater(params: SimParams): boolean {
+  return params.site === "polar" && (params.enableSabatier || params.polarProduct === "propellant");
+}
+
 /**
  * Plain label for the OUTPUT KPI, which is the engine's target throughput.
- * With one product that is the product itself; when the target stream is
- * converted into several products (polar + Sabatier) it is what was processed.
+ * With one product that is the product itself; when the plant converts its
+ * water into other products it is the water processed, however many of them
+ * a storage what-if keeps.
  */
 export function outputLabel(params: SimParams, result: SimResult): string {
+  if (convertsWater(params)) return "WATER PROCESSED";
   const products = productInventories(result);
   if (products.length === 1) {
     return `${STREAM_SHORT[products[0]!.stream]} OUTPUT`;

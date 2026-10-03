@@ -27,6 +27,19 @@ describe("plain case summary", () => {
     expect(perKgBasis(propellant.params, propellant.result)).toBe("water processed");
     const sabatier = run({ site: "polar", enableSabatier: true });
     expect(perKgBasis(sabatier.params, sabatier.result)).toBe("water processed");
+    // A one-stream storage what-if leaves one product inventory, but the
+    // engine still counts energy per kg of water converted.
+    for (const patch of [
+      { site: "polar", polarProduct: "propellant", storageStream: "lox" },
+      { site: "polar", enableSabatier: true, storageStream: "lch4" }
+    ] as Partial<SimParams>[]) {
+      const whatIf = run(patch);
+      expect(outputLabel(whatIf.params, whatIf.result)).toBe("WATER PROCESSED");
+      expect(perKgBasis(whatIf.params, whatIf.result)).toBe("water processed");
+    }
+    // Where the target is the product, a what-if still names it.
+    const equatorialWhatIf = run({ storageStream: "lox" });
+    expect(perKgBasis(equatorialWhatIf.params, equatorialWhatIf.result)).toBe("product");
   });
 
   it("names the propellant plant and its usable propellant", () => {
