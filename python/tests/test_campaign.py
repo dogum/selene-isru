@@ -135,3 +135,14 @@ def test_propellant_losses_reduce_usable_propellant() -> None:
     ratio = params["mixtureRatio"]
     usable = min(o2, ratio * h2) + min(h2, o2 / ratio)
     assert_rel(result["campaign"]["deliveredKgPerDay"], usable * params["plantAvailability"], 1e-12)
+
+
+def test_propellant_what_if_of_another_stream_still_loses_propellant() -> None:
+    params, result = run({"site": "polar", "polarProduct": "propellant", "cryoControlMode": "passive", "storageStream": "custom"})
+    (selected,) = result["cryo"]["inventories"]
+    assert selected["actualLossKgPerDay"] > 1
+    o2, h2 = result["production"]["o2KgPerDay"], result["production"]["h2KgPerDay"]
+    kept = 1 - selected["actualLossKgPerDay"] / (o2 + h2)
+    ratio = params["mixtureRatio"]
+    usable = min(o2, ratio * h2) + min(h2, o2 / ratio)
+    assert_rel(result["campaign"]["deliveredKgPerDay"], usable * kept * params["plantAvailability"], 1e-12)

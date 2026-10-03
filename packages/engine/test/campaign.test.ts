@@ -246,6 +246,18 @@ describe("campaign ledger behaviour", () => {
     expectRel(result.campaign.deliveredKgPerDay, usable * params.plantAvailability, 1e-12);
   });
 
+  test("a one-stream what-if storing another stream still loses propellant", () => {
+    const { params, result } = run({ site: "polar", polarProduct: "propellant", cryoControlMode: "passive", storageStream: "custom" });
+    const [selected] = result.cryo.inventories;
+    expect(result.cryo.inventories).toHaveLength(1);
+    expect(selected!.actualLossKgPerDay).toBeGreaterThan(1);
+    const { o2KgPerDay: o2, h2KgPerDay: h2 } = result.production;
+    // The stored product loses both gases in proportion, so usable propellant falls by the same share.
+    const kept = 1 - selected!.actualLossKgPerDay / (o2 + h2);
+    const usable = Math.min(o2, params.mixtureRatio * h2) + Math.min(h2, o2 / params.mixtureRatio);
+    expectRel(result.campaign.deliveredKgPerDay, usable * kept * params.plantAvailability, 1e-12);
+  });
+
   test("a lander with no payload deploys nothing and says so", () => {
     const { params, result } = run({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 });
     expect(result.logistics.payloadPerMissionKg).toBeLessThan(0);

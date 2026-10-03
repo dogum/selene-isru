@@ -218,14 +218,24 @@ export function simulate(
       : params.enableSabatier
         ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
         : production.waterKgPerDay;
+  // Oxygen and hydrogen that reach the vehicle in propellant mode. A
+  // one-stream storage what-if holding some other stream still stores the
+  // product, so its loss takes both gases down in proportion.
+  const otherProductLossKgPerDay = storageLossKgPerDay(
+    (inventory) => isProduct(inventory) && inventory.stream !== "lox" && inventory.stream !== "lh2"
+  );
+  const storedO2KgPerDay = Math.max(0, production.o2KgPerDay * loopThroughput - productLossKgPerDay("lox"));
+  const storedH2KgPerDay = Math.max(0, production.h2KgPerDay * loopThroughput - productLossKgPerDay("lh2"));
+  const keptShare =
+    otherProductLossKgPerDay > 0 && storedO2KgPerDay + storedH2KgPerDay > 0
+      ? Math.max(0, 1 - otherProductLossKgPerDay / (storedO2KgPerDay + storedH2KgPerDay))
+      : 1;
+  const netO2KgPerDay = storedO2KgPerDay * keptShare;
+  const netH2KgPerDay = storedH2KgPerDay * keptShare;
   const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
     productKgPerDay:
       propellant !== null
-        ? usablePropellantKgPerDay(
-            Math.max(0, production.o2KgPerDay * loopThroughput - productLossKgPerDay("lox")),
-            Math.max(0, production.h2KgPerDay * loopThroughput - productLossKgPerDay("lh2")),
-            params.mixtureRatio
-          )
+        ? usablePropellantKgPerDay(netO2KgPerDay, netH2KgPerDay, params.mixtureRatio)
         : Math.max(0, grossProductKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
     importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed)
   });

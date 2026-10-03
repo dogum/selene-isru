@@ -110,11 +110,24 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         if buffer_loss_kg_per_day > 0 and production["waterKgPerDay"] > 0
         else 1
     )
+    # Oxygen and hydrogen that reach the vehicle in propellant mode. A
+    # one-stream storage what-if holding some other stream still stores the
+    # product, so its loss takes both gases down in proportion.
+    other_product_loss_kg_per_day = storage_loss_kg_per_day(
+        lambda inventory: is_product(inventory) and inventory["stream"] not in ("lox", "lh2")
+    )
+    stored_o2_kg_per_day = max(0, production["o2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lox"))
+    stored_h2_kg_per_day = max(0, production["h2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lh2"))
+    kept_share = (
+        max(0, 1 - other_product_loss_kg_per_day / (stored_o2_kg_per_day + stored_h2_kg_per_day))
+        if other_product_loss_kg_per_day > 0 and stored_o2_kg_per_day + stored_h2_kg_per_day > 0
+        else 1
+    )
+    net_o2_kg_per_day = stored_o2_kg_per_day * kept_share
+    net_h2_kg_per_day = stored_h2_kg_per_day * kept_share
     if propellant is not None:
         net_product_kg_per_day = _usable_propellant_kg_per_day(
-            max(0, production["o2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lox")),
-            max(0, production["h2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lh2")),
-            params["mixtureRatio"],
+            net_o2_kg_per_day, net_h2_kg_per_day, params["mixtureRatio"]
         )
     else:
         if params["site"] == "equatorial":
