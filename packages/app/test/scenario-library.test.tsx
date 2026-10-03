@@ -220,6 +220,22 @@ describe("saved-case notes, updates, and input comparison", () => {
     expect(byName("Live twin").params.targetKgPerDay).toBe(3000);
   });
 
+  it("shows an updated pinned case's new outputs in the comparison matrix", () => {
+    clearLibrary();
+    useStore.getState().importScenarios([
+      { id: "pin-x", name: "X", kind: "authored", params: { ...DEFAULTS }, createdAt: 1, updatedAt: 1, pinned: true },
+      { id: "pin-y", name: "Y", kind: "authored", params: { ...DEFAULTS, site: "polar" }, createdAt: 1, updatedAt: 1, pinned: true }
+    ]);
+    render(<ScenarioLibrary />);
+    const outputRow = () => [...document.querySelectorAll(".scenario-matrix tbody tr")].find((row) => row.querySelector("th")?.textContent === "Output")!;
+    expect(outputRow().querySelectorAll("td")[0]!.textContent).toMatch(/^1,000/);
+    act(() => {
+      useStore.getState().setParam("targetKgPerDay", 2500);
+      useStore.getState().updateScenarioFromCurrent("pin-x");
+    });
+    expect(outputRow().querySelectorAll("td")[0]!.textContent).toMatch(/^2,500/);
+  });
+
   it("lists, side by side, only the inputs that differ between pinned cases", () => {
     expect(differingInputRows([DEFAULTS])).toEqual([]);
     const rows = differingInputRows([DEFAULTS, { ...DEFAULTS, targetKgPerDay: 2500, site: "polar" }]);

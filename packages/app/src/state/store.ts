@@ -1875,7 +1875,8 @@ export const useStore = create<Store>((set, get) => {
     keepTourCase: () => {
       const { restore } = get().tour;
       set({ tour: { activeId: null, beatIndex: 0, restore: null } });
-      if (restore === null || sameParams(restore.params, get().params)) {
+      // a beat that only renamed the case still changed it
+      if (restore === null || !changesCase(restore.params, restore.scenarioName)) {
         return;
       }
       lastParamEdit = null;

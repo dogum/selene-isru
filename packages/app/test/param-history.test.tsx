@@ -260,6 +260,18 @@ describe("tours return the user's case", () => {
     expect(store().params.targetKgPerDay).toBe(1500);
   });
 
+  it("keeps a tour's case one undo away even when only the name differs", () => {
+    store().applyPatch({ site: "polar" });
+    store().setUi({ currentScenarioName: "Saved polar" });
+    store().startTour("polar-water");
+    // the first beat applies the inputs already shown, renaming the case
+    store().applyPatch({ site: "polar" });
+    expect(store().ui.currentScenarioName).toBe("Polar working case");
+    store().keepTourCase();
+    store().undoParams();
+    expect(store().ui.currentScenarioName).toBe("Saved polar");
+  });
+
   it("returns to the user's case when one tour starts another, or undo is pressed mid-tour", () => {
     store().setParam("targetKgPerDay", 1500);
     store().startTour("polar-water");

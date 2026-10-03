@@ -19,7 +19,8 @@ import {
   MAX_PINNED_SCENARIOS,
   MAX_STUDY_SCENARIOS,
   useStore,
-  type ScenarioImportSummary
+  type ScenarioImportSummary,
+  type StudyScenario
 } from "../../state/store";
 
 const COMPARISON_METRICS = [
@@ -31,18 +32,21 @@ const COMPARISON_METRICS = [
   { label: "Plant-mass throughput equivalent", value: (id: string) => formatQtyText(simulateFor(id).logistics.plantMassThroughputDays, "days") }
 ];
 
-const resultCache = new Map<string, ReturnType<typeof studyScenarioResult>>();
+// Keyed by the case object, which every edit to a case replaces, so an
+// updated case can never show the result of its earlier inputs.
+const resultCache = new WeakMap<StudyScenario, ReturnType<typeof studyScenarioResult>>();
 function simulateFor(id: string): ReturnType<typeof studyScenarioResult> {
   const state = useStore.getState();
   const scenario = state.scenarioLibrary.find((item) => item.id === id);
-  const cached = resultCache.get(id);
-  if (cached !== undefined && scenario !== undefined) {
+  if (scenario === undefined) {
+    return state.result;
+  }
+  const cached = resultCache.get(scenario);
+  if (cached !== undefined) {
     return cached;
   }
-  const result = scenario === undefined
-    ? state.result
-    : studyScenarioResult(scenario);
-  resultCache.set(id, result);
+  const result = studyScenarioResult(scenario);
+  resultCache.set(scenario, result);
   return result;
 }
 
@@ -104,8 +108,6 @@ export function ScenarioLibrary(): React.JSX.Element {
   const pinsFull = scenarios.filter((scenario) => scenario.pinned).length >= MAX_PINNED_SCENARIOS;
   const fullReason = `The library holds ${MAX_STUDY_SCENARIOS} cases. Delete one to save, copy, or import more.`;
   const pinReason = `Up to ${MAX_PINNED_SCENARIOS} cases can be pinned. Unpin one first.`;
-
-  resultCache.clear();
 
   return (
     <section className="scenario-library">
