@@ -20,8 +20,11 @@ def simulate_construction(params: dict[str, Any], slag_kg_per_day: float) -> dic
     hab_shield_mass = params["areaHabRoof"] * params["shieldDesignM"] * params["rhoSlag"]
     days_to_shield_habitat = hab_shield_mass / slag_kg_per_day if slag_kg_per_day > 0 else 0
     warnings: list[dict[str, Any]] = []
+    # Both limits are on cast slag: with none made (the pole, ilmenite
+    # reduction) nothing is cast or laid to exceed them.
+    casts = slag_kg_per_day > 0
 
-    if params["castDeltaT"] > max_safe_cooling_delta_k:
+    if casts and params["castDeltaT"] > max_safe_cooling_delta_k:
         warnings.append(
             {
                 "id": "thermal-stress",
@@ -33,7 +36,7 @@ def simulate_construction(params: dict[str, Any], slag_kg_per_day: float) -> dic
             }
         )
 
-    if pad_joint_utilization > 1:
+    if casts and pad_joint_utilization > 1:
         warnings.append(
             {
                 "id": "pad-shear",

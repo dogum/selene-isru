@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from selene_isru import ilmenite_oxygen_fraction, simulate
+from selene_isru import DEFAULTS, ilmenite_oxygen_fraction, simulate
+from selene_isru.modules.construction import simulate_construction
 from selene_isru.normalize import normalize_params
 
 ILMENITE = {"equatorialProcess": "ilmenite"}
@@ -87,3 +88,22 @@ def test_no_castable_slag_and_a_beneficiation_row() -> None:
     rows = {row["subsystem"]: row["massKg"] for row in result["logistics"]["manifest"]}
     assert rows["beneficiation plant"] == result["ilmenite"]["beneficiationMassKg"]
     assert rows["excavation fleet"] == result["ilmenite"]["miningMassKg"]
+
+
+def test_no_slag_raises_no_casting_or_pad_alarms() -> None:
+    def construction_alarms(overrides: dict) -> list[str]:
+        result = simulate({"castDeltaT": 200, **overrides})
+        return [warning["id"] for warning in result["warnings"] if warning["module"] == "construction"]
+
+    assert construction_alarms({}) == ["thermal-stress"]
+    assert construction_alarms(ILMENITE) == []
+    assert construction_alarms({"site": "polar"}) == []
+    pad_params = {
+        **DEFAULTS, "castDeltaT": 200, "rhoGasPlume": 0.1, "vGasPlume": 4000, "Cf": 0.02, "tauAllowable": 100, "FS": 4
+    }
+    cast = simulate_construction(pad_params, 1000)
+    assert [warning["id"] for warning in cast["warnings"]] == ["thermal-stress", "pad-shear"]
+    idle = simulate_construction(pad_params, 0)
+    assert idle["warnings"] == []
+    assert idle["padJointUtilization"] > 1
+    assert idle["maxSafeCoolingDeltaK"] < 200

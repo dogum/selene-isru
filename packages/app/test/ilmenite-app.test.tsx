@@ -10,6 +10,7 @@ import { assetKnowledge, processEdges } from "../src/analysis/process";
 import { caseSummary } from "../src/analysis/summary";
 import { scenariosCsv } from "../src/analysis/studyExport";
 import { appliesToCase, FRONTIER_PARAMS } from "../src/analysis/sweep";
+import { AssetInspector } from "../src/components/AssetInspector";
 import { ControlGroups } from "../src/components/ControlRail";
 import { placeSankeyLabels } from "../src/components/panels/EnergySankey";
 import { FrontierExplorer } from "../src/components/panels/FrontierExplorer";
@@ -258,3 +259,46 @@ describe("analysis panels follow a process switch", () => {
   });
 });
 
+
+describe("asset inspector on the ilmenite route", () => {
+  afterEach(() => {
+    cleanup();
+    useStore.getState().setUi({ selectedAsset: null });
+    useStore.getState().applyPatch({});
+  });
+
+  const inspect = (patch: Partial<SimParams>, asset: string): void => {
+    useStore.getState().applyPatch(patch);
+    useStore.getState().setUi({ selectedAsset: asset });
+    render(<AssetInspector />);
+  };
+
+  it("shows the landing pad without slag-cast pad controls or readings", () => {
+    inspect({ site: "equatorial" }, "pad");
+    expect(screen.getByText("Pads per year")).toBeTruthy();
+    expect(screen.getByText("Joint utilization")).toBeTruthy();
+    cleanup();
+    inspect({ site: "equatorial", equatorialProcess: "ilmenite" }, "pad");
+    expect(screen.getByText("Lander specific impulse")).toBeTruthy();
+    for (const slagOnly of ["Pads per year", "Joint utilization"]) {
+      expect(screen.queryByText(slagOnly)).toBeNull();
+    }
+  });
+
+  it("shows the habitat without slag shielding controls or readings", () => {
+    inspect({ site: "equatorial" }, "habitat");
+    expect(screen.getByText("Designed shielding")).toBeTruthy();
+    expect(screen.getByText("Time to shield")).toBeTruthy();
+    cleanup();
+    inspect({ site: "equatorial", equatorialProcess: "ilmenite" }, "habitat");
+    expect(screen.getByRole("complementary", { name: /HABITAT/ })).toBeTruthy();
+    for (const slagOnly of ["Designed shielding", "Shield material density", "Time to shield", "Full-balance shield"]) {
+      expect(screen.queryByText(slagOnly)).toBeNull();
+    }
+  });
+
+  it("stays nominal when an unsafe casting input carries over from MRE", () => {
+    inspect({ site: "equatorial", equatorialProcess: "ilmenite", castDeltaT: 200 }, "castingYard");
+    expect(screen.getByText("NOMINAL")).toBeTruthy();
+  });
+});

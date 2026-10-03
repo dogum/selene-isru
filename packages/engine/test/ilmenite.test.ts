@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { ilmeniteOxygenFraction, normalizeParams, simulate } from "../src/index";
+import { DEFAULTS, ilmeniteOxygenFraction, normalizeParams, simulate } from "../src/index";
+import { simulateConstruction } from "../src/modules/construction";
 import type { SimParams } from "../src/types";
 
 function expectRel(actual: number, expected: number, relTol: number): void {
@@ -152,6 +153,22 @@ describe("ilmenite reduction", () => {
     expect(changedMre.campaign).toEqual(ilmenite.campaign);
     // The polar site has no ilmenite plant.
     expect(simulate({ site: "polar", equatorialProcess: "ilmenite" })).toEqual(simulate({ site: "polar" }));
+  });
+
+  test("a plant that casts no slag raises no casting or pad alarms", () => {
+    // castDeltaT=200 is over the thermal-stress limit; switching from MRE carries it over.
+    const constructionAlarms = (overrides: Partial<SimParams>) =>
+      simulate({ castDeltaT: 200, ...overrides }).warnings.filter((warning) => warning.module === "construction");
+    expect(constructionAlarms({}).map((warning) => warning.id)).toEqual(["thermal-stress"]);
+    expect(constructionAlarms(ILMENITE)).toEqual([]);
+    expect(constructionAlarms({ site: "polar" })).toEqual([]);
+    const padParams: SimParams = { ...DEFAULTS, castDeltaT: 200, rhoGasPlume: 0.1, vGasPlume: 4000, Cf: 0.02, tauAllowable: 100, FS: 4 };
+    expect(simulateConstruction(padParams, 1000).warnings.map((warning) => warning.id)).toEqual(["thermal-stress", "pad-shear"]);
+    const idle = simulateConstruction(padParams, 0);
+    expect(idle.warnings).toEqual([]);
+    // The limits are still reported; there is just nothing cast to exceed them.
+    expect(idle.padJointUtilization).toBeGreaterThan(1);
+    expect(idle.maxSafeCoolingDeltaK).toBeLessThan(200);
   });
 
   test("MRE warnings stay with MRE, and a refuelling demand draws on the oxygen", () => {

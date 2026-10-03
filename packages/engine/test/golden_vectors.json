@@ -1207,26 +1207,9 @@
           "padJointUtilization": 0.00024803283948948,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 123.9240925953,
-              "limit": 43.038661022731
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 123.9240925953,
-            "limit": 43.038661022731
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -1842,27 +1825,9 @@
           "padJointUtilization": 1.4060860644446e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 82.420444032766,
-              "limit": 21.546737250948
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 82.420444032766,
-            "limit": 21.546737250948
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -2522,27 +2487,9 @@
           "padJointUtilization": 7.2500342734177e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 49.508809326277,
-              "limit": 26.765225899372
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 49.508809326277,
-            "limit": 26.765225899372
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -3724,26 +3671,9 @@
           "padJointUtilization": 9.3181577158651e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 65.42994943704,
-              "limit": 52.437787089193
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 65.42994943704,
-            "limit": 52.437787089193
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -4386,26 +4316,9 @@
           "padJointUtilization": 0.00089399795660444,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 196.1865226283,
-              "limit": 30.432698128296
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 196.1865226283,
-            "limit": 30.432698128296
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -4933,27 +4846,9 @@
           "padJointUtilization": 0.00073704485484934,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 158.36916801753,
-              "limit": 27.944506990509
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 158.36916801753,
-            "limit": 27.944506990509
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -6185,26 +6080,9 @@
           "padJointUtilization": 5.1886112383587e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 184.05219286288,
-              "limit": 124.21816152135
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 184.05219286288,
-            "limit": 124.21816152135
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -7377,27 +7255,9 @@
           "padJointUtilization": 3.2369474407336e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 182.6643569914,
-              "limit": 76.517064251417
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 182.6643569914,
-            "limit": 76.517064251417
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -8560,27 +8420,9 @@
           "padJointUtilization": 7.4343255546666e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 167.37946308604,
-              "limit": 40.8762000813
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 167.37946308604,
-            "limit": 40.8762000813
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -11025,26 +10867,9 @@
           "padJointUtilization": 0.00022027157888543,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 44.855741834266,
-              "limit": 35.807179280528
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 44.855741834266,
-            "limit": 35.807179280528
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -12181,27 +12006,9 @@
           "padJointUtilization": 0.00011356569759511,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 71.177369994095,
-              "limit": 28.208607596012
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 71.177369994095,
-            "limit": 28.208607596012
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -13452,27 +13259,9 @@
           "padJointUtilization": 2.3903561744323e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 163.00297413243,
-              "limit": 88.597502429433
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 163.00297413243,
-            "limit": 88.597502429433
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -14079,16 +13868,7 @@
           "padJointUtilization": 0.00056475159171416,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 28.206274405277,
-              "limit": 17.952385094784
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
           {
@@ -14098,14 +13878,6 @@
             "message": "Radiator sink temperature must exceed its environment temperature.",
             "value": 313.98868686988,
             "limit": 383.36135767132
-          },
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 28.206274405277,
-            "limit": 17.952385094784
           }
         ]
       }
@@ -14626,27 +14398,9 @@
           "padJointUtilization": 4.8360204080966e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 162.00705887097,
-              "limit": 87.179928035804
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 162.00705887097,
-            "limit": 87.179928035804
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -16465,27 +16219,9 @@
           "padJointUtilization": 0.00016001614230729,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 94.718906295604,
-              "limit": 65.608467325197
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 94.718906295604,
-            "limit": 65.608467325197
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -17145,27 +16881,9 @@
           "padJointUtilization": 0.0010060686619253,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 175.92159140968,
-              "limit": 45.981017387298
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 175.92159140968,
-            "limit": 45.981017387298
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -18319,27 +18037,9 @@
           "padJointUtilization": 0.00038254861090327,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 102.72334448135,
-              "limit": 53.743247739623
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 102.72334448135,
-            "limit": 53.743247739623
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -18965,26 +18665,9 @@
           "padJointUtilization": 4.5951313595434e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 161.34993939355,
-              "limit": 47.961742986307
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 161.34993939355,
-            "limit": 47.961742986307
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -21901,26 +21584,9 @@
           "padJointUtilization": 5.125410367521e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 101.52259939974,
-              "limit": 95.88371627353
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 101.52259939974,
-            "limit": 95.88371627353
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -23712,27 +23378,9 @@
           "padJointUtilization": 1.5308033898069e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 91.505695743447,
-              "limit": 23.794632007003
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 91.505695743447,
-            "limit": 23.794632007003
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -24392,27 +24040,9 @@
           "padJointUtilization": 4.7945894591956e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 149.50942657624,
-              "limit": 59.621096840691
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 149.50942657624,
-            "limit": 59.621096840691
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -25580,26 +25210,9 @@
           "padJointUtilization": 0.00030356737814028,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 84.599661301376,
-              "limit": 79.36458466941
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 84.599661301376,
-            "limit": 79.36458466941
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -26736,27 +26349,9 @@
           "padJointUtilization": 2.1338553998269e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 67.940157036736,
-              "limit": 32.292513920633
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 67.940157036736,
-            "limit": 32.292513920633
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -28616,27 +28211,9 @@
           "padJointUtilization": 5.5942816480427e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 145.37941002049,
-              "limit": 28.584896479699
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 145.37941002049,
-            "limit": 28.584896479699
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -29155,27 +28732,9 @@
           "padJointUtilization": 0.00027910763169862,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 74.957369697902,
-              "limit": 41.938070988152
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 74.957369697902,
-            "limit": 41.938070988152
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -30957,16 +30516,7 @@
           "padJointUtilization": 0.00025458152438814,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 144.10106997439,
-              "limit": 58.226750026746
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
           {
@@ -30976,14 +30526,6 @@
             "message": "Radiator sink temperature must exceed its environment temperature.",
             "value": 355.08931838441,
             "limit": 385.61766956074
-          },
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 144.10106997439,
-            "limit": 58.226750026746
           },
           {
             "id": "refuel-tank-exceeded",
@@ -33427,26 +32969,9 @@
           "padJointUtilization": 3.6916508095693e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 129.04930404708,
-              "limit": 40.446443387128
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 129.04930404708,
-            "limit": 40.446443387128
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -33974,27 +33499,9 @@
           "padJointUtilization": 1.9899996379121e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 173.03035791867,
-              "limit": 31.080478721163
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 173.03035791867,
-            "limit": 31.080478721163
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -35870,27 +35377,9 @@
           "padJointUtilization": 0.00011153817251207,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 114.83385247443,
-              "limit": 94.48400176244
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 114.83385247443,
-            "limit": 94.48400176244
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -36409,27 +35898,9 @@
           "padJointUtilization": 0.00016267531865184,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 164.01955207889,
-              "limit": 58.740045754396
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 164.01955207889,
-            "limit": 58.740045754396
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -38239,27 +37710,9 @@
           "padJointUtilization": 9.4736288683388e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 169.2051143421,
-              "limit": 79.641643224822
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 169.2051143421,
-            "limit": 79.641643224822
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -38919,26 +38372,9 @@
           "padJointUtilization": 0.00013120649224246,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 151.22139803599,
-              "limit": 73.803526940406
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 151.22139803599,
-            "limit": 73.803526940406
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -40129,26 +39565,9 @@
           "padJointUtilization": 0.00014644009061801,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 117.28228249625,
-              "limit": 31.877339364206
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 117.28228249625,
-            "limit": 31.877339364206
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -40783,26 +40202,9 @@
           "padJointUtilization": 6.5812669120795e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 166.27608639269,
-              "limit": 17.006421799125
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 166.27608639269,
-            "limit": 17.006421799125
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -43216,26 +42618,9 @@
           "padJointUtilization": 1.7477222812998e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 57.537090447084,
-              "limit": 51.127979714731
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 57.537090447084,
-            "limit": 51.127979714731
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -43763,27 +43148,9 @@
           "padJointUtilization": 0.00014220590338119,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 99.453493698379,
-              "limit": 40.866795979473
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 99.453493698379,
-            "limit": 40.866795979473
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -44929,27 +44296,9 @@
           "padJointUtilization": 5.5349424765137e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 179.07845650969,
-              "limit": 32.013269460001
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 179.07845650969,
-            "limit": 32.013269460001
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -45556,27 +44905,9 @@
           "padJointUtilization": 0.00012446928445337,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 116.33898945087,
-              "limit": 108.73243492114
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 116.33898945087,
-            "limit": 108.73243492114
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -46236,27 +45567,9 @@
           "padJointUtilization": 0.00010513071660659,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 138.078792088,
-              "limit": 47.624398628182
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 138.078792088,
-            "limit": 47.624398628182
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -48055,27 +47368,9 @@
           "padJointUtilization": 8.3230370149212e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 189.65512797095,
-              "limit": 45.528155595939
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 189.65512797095,
-            "limit": 45.528155595939
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -48594,27 +47889,9 @@
           "padJointUtilization": 2.0905045249101e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 127.4987046377,
-              "limit": 96.029542627634
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 127.4987046377,
-            "limit": 96.029542627634
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -49881,27 +49158,9 @@
           "padJointUtilization": 0.00030930093073885,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 64.201778949211,
-              "limit": 36.822000652833
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 64.201778949211,
-            "limit": 36.822000652833
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -50508,27 +49767,9 @@
           "padJointUtilization": 1.6142356798536e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 186.15628211485,
-              "limit": 54.889806141635
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 186.15628211485,
-            "limit": 54.889806141635
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -51047,27 +50288,9 @@
           "padJointUtilization": 0.00027486329657965,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 131.62747777203,
-              "limit": 61.630423816672
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 131.62747777203,
-            "limit": 61.630423816672
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -52870,26 +52093,9 @@
           "padJointUtilization": 2.7950526207496e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 106.09613334053,
-              "limit": 38.655539591439
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 106.09613334053,
-            "limit": 38.655539591439
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -53558,26 +52764,9 @@
           "padJointUtilization": 0.0008304561960413,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 81.624030753689,
-              "limit": 28.937436057346
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 81.624030753689,
-            "limit": 28.937436057346
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -54733,27 +53922,9 @@
           "padJointUtilization": 0.00020762953590417,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 187.56643895007,
-              "limit": 37.810127847369
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 187.56643895007,
-            "limit": 37.810127847369
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -55379,27 +54550,9 @@
           "padJointUtilization": 4.8787287870087e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 193.47882279847,
-              "limit": 41.25648696143
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 193.47882279847,
-            "limit": 41.25648696143
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -57128,27 +56281,9 @@
           "padJointUtilization": 1.1079698063782e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 68.428017749548,
-              "limit": 29.379993850991
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 68.428017749548,
-            "limit": 29.379993850991
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -58285,26 +57420,9 @@
           "padJointUtilization": 0.0012739544700311,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 122.17963759402,
-              "limit": 51.888807158493
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 122.17963759402,
-            "limit": 51.888807158493
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -59487,27 +58605,9 @@
           "padJointUtilization": 0.00036287485752677,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 109.30319394919,
-              "limit": 73.102707762952
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 109.30319394919,
-            "limit": 73.102707762952
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -60114,27 +59214,9 @@
           "padJointUtilization": 0.00056609765360366,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 53.57299040151,
-              "limit": 14.092826635532
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 53.57299040151,
-            "limit": 14.092826635532
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -60794,27 +59876,9 @@
           "padJointUtilization": 6.4791345204411e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 78.029713314133,
-              "limit": 58.266909058283
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 78.029713314133,
-            "limit": 58.266909058283
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -62633,26 +61697,9 @@
           "padJointUtilization": 9.3572993857999e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 133.70926987273,
-              "limit": 94.316969115882
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 133.70926987273,
-            "limit": 94.316969115882
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -65017,26 +64064,9 @@
           "padJointUtilization": 0.0005793828294085,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 101.70566598766,
-              "limit": 14.647010026667
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 101.70566598766,
-            "limit": 14.647010026667
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -65564,26 +64594,9 @@
           "padJointUtilization": 0.00024898068013872,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 172.12192074787,
-              "limit": 29.366555385488
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 172.12192074787,
-            "limit": 29.366555385488
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -67367,26 +66380,9 @@
           "padJointUtilization": 0.001558940735883,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 157.30554313745,
-              "limit": 41.762435971399
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 157.30554313745,
-            "limit": 41.762435971399
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -68055,27 +67051,9 @@
           "padJointUtilization": 0.0002729804522065,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 130.04842660319,
-              "limit": 46.022907493129
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 130.04842660319,
-            "limit": 46.022907493129
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -70344,27 +69322,9 @@
           "padJointUtilization": 0.00063280300974249,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 143.3411472936,
-              "limit": 77.461355029927
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 143.3411472936,
-            "limit": 77.461355029927
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -71623,27 +70583,9 @@
           "padJointUtilization": 0.00010247528417568,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 136.13175475324,
-              "limit": 30.849808109061
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 136.13175475324,
-            "limit": 30.849808109061
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -72250,27 +71192,9 @@
           "padJointUtilization": 1.0812646158188e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 160.84735369276,
-              "limit": 47.78200641065
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 160.84735369276,
-            "limit": 47.78200641065
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -72789,27 +71713,9 @@
           "padJointUtilization": 0.00026632732688632,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 106.95137637244,
-              "limit": 12.996375848282
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 106.95137637244,
-            "limit": 12.996375848282
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -74002,26 +72908,9 @@
           "padJointUtilization": 8.8304898047394e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 55.943945146622,
-              "limit": 16.859659061567
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 55.943945146622,
-            "limit": 16.859659061567
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -74637,26 +73526,9 @@
           "padJointUtilization": 0.00010529148226206,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 153.13105635922,
-              "limit": 52.257619220214
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 153.13105635922,
-            "limit": 52.257619220214
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -75325,27 +74197,9 @@
           "padJointUtilization": 0.00013707770224421,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 148.94304791165,
-              "limit": 9.913621104711
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 148.94304791165,
-            "limit": 9.913621104711
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -76510,26 +75364,9 @@
           "padJointUtilization": 0.00042304090279863,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 47.659846000748,
-              "limit": 41.463287488678
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 47.659846000748,
-            "limit": 41.463287488678
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -77164,26 +76001,9 @@
           "padJointUtilization": 3.9620541052238e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 190.73489090603,
-              "limit": 51.190771424963
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 190.73489090603,
-            "limit": 51.190771424963
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -77711,27 +76531,9 @@
           "padJointUtilization": 0.00032209654687566,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 197.70613885861,
-              "limit": 35.481131537965
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 197.70613885861,
-            "limit": 35.481131537965
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -78947,27 +77749,9 @@
           "padJointUtilization": 0.00010678812488598,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 195.01604892408,
-              "limit": 28.768698779584
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 195.01604892408,
-            "limit": 28.768698779584
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -80123,27 +78907,9 @@
           "padJointUtilization": 1.6970661603039e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 58.299776372814,
-              "limit": 54.761199763579
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 58.299776372814,
-            "limit": 54.761199763579
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -81899,27 +80665,9 @@
           "padJointUtilization": 7.0600894356203e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 88.817315281687,
-              "limit": 55.085001212993
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 88.817315281687,
-            "limit": 55.085001212993
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -83779,27 +82527,9 @@
           "padJointUtilization": 5.080992056236e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 159.94634297899,
-              "limit": 17.148549291399
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 159.94634297899,
-            "limit": 17.148549291399
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -84406,27 +83136,9 @@
           "padJointUtilization": 5.2505497794405e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 86.73854541747,
-              "limit": 13.403637381114
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 86.73854541747,
-            "limit": 13.403637381114
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -84945,26 +83657,9 @@
           "padJointUtilization": 0.000196010950863,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 80.769358183886,
-              "limit": 72.282075112299
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 80.769358183886,
-            "limit": 72.282075112299
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -86232,26 +84927,9 @@
           "padJointUtilization": 4.7700278729091e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 59.130082806908,
-              "limit": 33.138507136169
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 59.130082806908,
-            "limit": 33.138507136169
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -87388,27 +86066,9 @@
           "padJointUtilization": 0.00029164411820127,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 107.81985200753,
-              "limit": 15.683246996791
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 107.81985200753,
-            "limit": 15.683246996791
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -88590,27 +87250,9 @@
           "padJointUtilization": 5.3095964564118e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 170.04782704971,
-              "limit": 26.429046012903
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 170.04782704971,
-            "limit": 26.429046012903
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -89907,27 +88549,9 @@
           "padJointUtilization": 1.0726436300854e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 192.5073656469,
-              "limit": 16.01015204452
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 192.5073656469,
-            "limit": 16.01015204452
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -91074,27 +89698,9 @@
           "padJointUtilization": 0.00023909775886224,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 29.646342390963,
-              "limit": 22.85887025854
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 29.646342390963,
-            "limit": 22.85887025854
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -91720,26 +90326,9 @@
           "padJointUtilization": 0.00018127726665558,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 92.062870776802,
-              "limit": 46.097318093187
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 92.062870776802,
-            "limit": 46.097318093187
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -92267,26 +90856,9 @@
           "padJointUtilization": 3.7350713883676e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 60.868786667681,
-              "limit": 31.03116474711
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 60.868786667681,
-            "limit": 31.03116474711
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -93511,26 +92083,9 @@
           "padJointUtilization": 0.00029082774678108,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 119.90125539077,
-              "limit": 61.297766048213
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 119.90125539077,
-            "limit": 61.297766048213
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -94667,26 +93222,9 @@
           "padJointUtilization": 0.003193417658178,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 153.24605402189,
-              "limit": 41.199210129516
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 153.24605402189,
-            "limit": 41.199210129516
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -96469,27 +95007,9 @@
           "padJointUtilization": 6.6726965928654e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 110.70891331756,
-              "limit": 36.861003223503
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 110.70891331756,
-            "limit": 36.861003223503
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -97149,27 +95669,9 @@
           "padJointUtilization": 0.00045001008129383,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 50.60923433551,
-              "limit": 13.698650165656
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 50.60923433551,
-            "limit": 13.698650165656
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -98362,27 +96864,9 @@
           "padJointUtilization": 0.00013264391186267,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 93.563463001758,
-              "limit": 85.880176782323
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 93.563463001758,
-            "limit": 85.880176782323
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -98989,26 +97473,9 @@
           "padJointUtilization": 0.00019349033778483,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 199.40904793111,
-              "limit": 82.674430833978
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 199.40904793111,
-            "limit": 82.674430833978
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -99536,27 +98003,9 @@
           "padJointUtilization": 2.9031243292648e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 127.85714627234,
-              "limit": 36.646820160354
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 127.85714627234,
-            "limit": 36.646820160354
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -100804,26 +99253,9 @@
           "padJointUtilization": 0.0001031370555391,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 165.54673106063,
-              "limit": 39.903819736803
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 165.54673106063,
-            "limit": 39.903819736803
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -101458,26 +99890,9 @@
           "padJointUtilization": 8.6303840071868e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 97.948391235681,
-              "limit": 43.530770247609
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 97.948391235681,
-            "limit": 43.530770247609
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -102005,27 +100420,9 @@
           "padJointUtilization": 0.00044154926894896,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 111.87821836838,
-              "limit": 28.827643797636
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 111.87821836838,
-            "limit": 28.827643797636
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -103180,27 +101577,9 @@
           "padJointUtilization": 0.00028103629118314,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 175.25724517459,
-              "limit": 34.363222693924
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 175.25724517459,
-            "limit": 34.363222693924
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -103826,27 +102205,9 @@
           "padJointUtilization": 0.00011585356156353,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 23.115665875279,
-              "limit": 14.511060054453
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 23.115665875279,
-            "limit": 14.511060054453
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -105679,27 +104040,9 @@
           "padJointUtilization": 2.5639994878976e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 171.48658458094,
-              "limit": 43.396326809216
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 171.48658458094,
-            "limit": 43.396326809216
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -106306,27 +104649,9 @@
           "padJointUtilization": 3.8068785476982e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 187.05760737034,
-              "limit": 53.546482956338
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 187.05760737034,
-            "limit": 53.546482956338
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -106845,16 +105170,7 @@
           "padJointUtilization": 0.00033383389010746,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 174.04087356115,
-              "limit": 77.799668358135
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
           {
@@ -106864,14 +105180,6 @@
             "message": "Radiator sink temperature must exceed its environment temperature.",
             "value": 305.78236812493,
             "limit": 341.19905961309
-          },
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 174.04087356115,
-            "limit": 77.799668358135
           }
         ]
       }
@@ -108725,27 +107033,9 @@
           "padJointUtilization": 6.1215122032118e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 118.42417023482,
-              "limit": 65.088962132077
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 118.42417023482,
-            "limit": 65.088962132077
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -109264,27 +107554,9 @@
           "padJointUtilization": 1.7316817618224e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 120.81162750453,
-              "limit": 16.756740323537
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 120.81162750453,
-            "limit": 16.756740323537
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -110493,26 +108765,9 @@
           "padJointUtilization": 0.0003368791287417,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 78.467107640331,
-              "limit": 37.136904443169
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 78.467107640331,
-            "limit": 37.136904443169
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -111799,27 +110054,9 @@
           "padJointUtilization": 8.5673747123743e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 131.96423307828,
-              "limit": 19.21122530768
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 131.96423307828,
-            "limit": 19.21122530768
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -113613,26 +111850,9 @@
           "padJointUtilization": 2.4121317908185e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 70.088603772021,
-              "limit": 51.948719100457
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 70.088603772021,
-            "limit": 51.948719100457
-          },
           {
             "id": "lander-no-payload",
             "severity": "alarm",
@@ -114168,27 +112388,9 @@
           "padJointUtilization": 0.0002101587071954,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 89.037461255599,
-              "limit": 77.188677835248
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 89.037461255599,
-            "limit": 77.188677835248
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -115387,27 +113589,9 @@
           "padJointUtilization": 0.00041546769994655,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 25.302508285088,
-              "limit": 11.879995710958
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 25.302508285088,
-            "limit": 11.879995710958
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -116033,26 +114217,9 @@
           "padJointUtilization": 2.9403113696924e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 155.95684874621,
-              "limit": 94.098223126417
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 155.95684874621,
-            "limit": 94.098223126417
-          },
           {
             "id": "refuel-tank-exceeded",
             "severity": "caution",
@@ -118338,27 +116505,9 @@
           "padJointUtilization": 0.00013238116851875,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 80.015387519411,
-              "limit": 10.978165898121
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 80.015387519411,
-            "limit": 10.978165898121
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -119018,27 +117167,9 @@
           "padJointUtilization": 0.00034422413758076,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 66.118778944803,
-              "limit": 34.445142205677
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 66.118778944803,
-            "limit": 34.445142205677
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -120212,27 +118343,9 @@
           "padJointUtilization": 3.4052357777149e-06,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 104.77917196606,
-              "limit": 57.649111446932
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 104.77917196606,
-            "limit": 57.649111446932
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -120839,27 +118952,9 @@
           "padJointUtilization": 6.9011896448296e-05,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 110.28607716474,
-              "limit": 107.67369301922
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 110.28607716474,
-            "limit": 107.67369301922
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -121378,27 +119473,9 @@
           "padJointUtilization": 0.00025290790127708,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 104.43387238463,
-              "limit": 30.329183290559
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 104.43387238463,
-            "limit": 30.329183290559
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -125145,27 +123222,9 @@
           "padJointUtilization": 0.00128,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 200.0,
-              "limit": 43.333333333333
-            }
-          ]
+          "warnings": []
         },
-        "warnings": [
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 200.0,
-            "limit": 43.333333333333
-          }
-        ]
+        "warnings": []
       }
     },
     {
@@ -125822,16 +123881,7 @@
           "padJointUtilization": 1.92e-07,
           "padsPerYear": 0,
           "daysToShieldHabitat": 0,
-          "warnings": [
-            {
-              "id": "thermal-stress",
-              "severity": "alarm",
-              "module": "construction",
-              "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-              "value": 200.0,
-              "limit": 85.0
-            }
-          ]
+          "warnings": []
         },
         "warnings": [
           {
@@ -125841,14 +123891,6 @@
             "message": "Radiator sink temperature must exceed its environment temperature.",
             "value": 300.0,
             "limit": 400.0
-          },
-          {
-            "id": "thermal-stress",
-            "severity": "alarm",
-            "module": "construction",
-            "message": "Slag casting cooling delta exceeds the thermal stress limit.",
-            "value": 200.0,
-            "limit": 85.0
           }
         ]
       }

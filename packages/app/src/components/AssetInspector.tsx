@@ -78,6 +78,35 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
       { label: "Slag feed", value: formatQtyText(r.production.slagKgPerDay, "kg/day") },
       { label: "Tailings + spent solids", value: formatQtyText((r.ilmenite?.tailingsKgPerDay ?? 0) + (r.ilmenite?.spentSolidsKgPerDay ?? 0), "kg/day") }
     ]
+  },
+  pad: {
+    id: "LP-01",
+    title: "LANDING SYSTEM",
+    group: "logistics",
+    module: "logistics",
+    controlLabels: {
+      IspLander: "Lander specific impulse",
+      MdryLander: "Lander dry mass"
+    },
+    note: "Mission markers scale with logistics and the lander runs its arrival/departure cycle. No slag is cast on this route, so the pad tiles stand for an uncast landing area.",
+    metrics: (r) => [
+      { label: "Missions", value: formatQtyText(r.logistics.nMissions, "msn", 0) },
+      { label: "Payload per mission", value: formatQtyText(r.logistics.payloadPerMissionKg, "kg") },
+      { label: "Landed infra", value: formatQtyText(r.logistics.totalInfraMassKg, "kg") }
+    ]
+  },
+  habitat: {
+    id: "HAB-01",
+    title: "SURFACE HABITAT",
+    group: "construction",
+    module: "construction",
+    controlLabels: {},
+    note: "No slag is cast on this route, so the habitat's shielding is not made on site; the roof sections show the designed depth only.",
+    metrics: (r) => [
+      { label: "Slag for shielding", value: formatQtyText(r.construction.slagPerYearT, "t/yr") },
+      { label: "Tailings + spent solids", value: formatQtyText((r.ilmenite?.tailingsKgPerDay ?? 0) + (r.ilmenite?.spentSolidsKgPerDay ?? 0), "kg/day") },
+      { label: "Landed infra", value: formatQtyText(r.logistics.totalInfraMassKg, "kg") }
+    ]
   }
 };
 

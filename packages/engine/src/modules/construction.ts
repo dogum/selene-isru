@@ -28,8 +28,11 @@ export function simulateConstruction(params: SimParams, slagKgPerDay: number): C
   const habShieldMass = params.areaHabRoof * params.shieldDesignM * params.rhoSlag;
   const daysToShieldHabitat = slagKgPerDay > 0 ? habShieldMass / slagKgPerDay : 0;
   const warnings: Warning[] = [];
+  // Both limits are on cast slag: with none made (the pole, ilmenite
+  // reduction) nothing is cast or laid to exceed them.
+  const casts = slagKgPerDay > 0;
 
-  if (params.castDeltaT > maxSafeCoolingDeltaK) {
+  if (casts && params.castDeltaT > maxSafeCoolingDeltaK) {
     warnings.push({
       id: "thermal-stress",
       severity: "alarm",
@@ -40,7 +43,7 @@ export function simulateConstruction(params: SimParams, slagKgPerDay: number): C
     });
   }
 
-  if (padJointUtilization > 1) {
+  if (casts && padJointUtilization > 1) {
     warnings.push({
       id: "pad-shear",
       severity: "alarm",

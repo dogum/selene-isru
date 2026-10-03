@@ -206,7 +206,7 @@ const ILMENITE_KNOWLEDGE: Record<string, AssetKnowledge> = {
   },
   habitat: {
     purpose: "Represent the outpost; this route makes no cast slag, so its shielding is not produced on site.",
-    inputs: ["Shield depth", "Roof area", "Internal pressure"],
+    inputs: ["Landed infrastructure", "Stored oxygen"],
     assumptions: [
       "The simulator sizes bulk overhead shielding, not a complete pressure-vessel structure.",
       "Shielding from tailings would need its own handling model."

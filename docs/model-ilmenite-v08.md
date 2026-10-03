@@ -64,6 +64,12 @@ out of the soil chain.
 construction. The spent solids carry metallic iron, 0.37 kg per kg of
 ilmenite reduced. The model reports that iron but does not credit it.
 
+With no slag, the casting thermal-stress and pad-shear alarms no longer fire.
+Both limits are on cast slag, so with nothing cast there is nothing to exceed
+them. The same holds at the pole, which also makes no slag. Before this, an
+unsafe casting input left over from an MRE case could mark a non-casting plant
+as alarmed.
+
 `simulate()` returns the chain as `result.ilmenite`, which is null on the MRE
 route. It carries:
 - the soil, concentrate, tailings, water, hydrogen-recycle, spent-solids, and
@@ -191,6 +197,8 @@ What the table shows:
     oxygen at the defaults.
   - The casting yard reads *idle*, and the process overlay draws soil and
     tailings instead of slag.
+  - The landing pad and habitat inspectors drop the slag pad and shielding
+    readings and controls on this route.
 - **Reports and exports:**
   - The report gains an ilmenite section.
   - The study CSV gains twelve `ilmenite.*` columns and a beneficiation-plant
