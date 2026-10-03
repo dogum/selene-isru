@@ -11,7 +11,13 @@ from .modules.electrolysis import (
     sec_elec_j_per_kg,
     sensible_heat_regolith_j_per_kg,
 )
-from .modules.ilmenite import ilmenite_oxygen_fraction, ilmenite_separates, ilmenite_soil_per_kg_o2, reduces_ilmenite
+from .modules.ilmenite import (
+    ilmenite_conversion,
+    ilmenite_oxygen_fraction,
+    ilmenite_separates,
+    ilmenite_soil_per_kg_o2,
+    reduces_ilmenite,
+)
 from .modules.logistics import payload_per_mission_kg
 from .modules.power import p_crit_dynamic_kw, p_crit_kw
 from .modules.refuel import refuel_timeline, sortie_propellant_kg
@@ -33,6 +39,7 @@ __all__ = [
     "p_crit_dynamic_kw",
     "p_crit_kw",
     "refuel_timeline",
+    "ilmenite_conversion",
     "ilmenite_oxygen_fraction",
     "ilmenite_separates",
     "ilmenite_soil_per_kg_o2",

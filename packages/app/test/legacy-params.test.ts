@@ -43,6 +43,18 @@ describe("inputs renamed or retired in v0.9", () => {
     expect(upgradeLegacyParams(untouched)).toBe(untouched);
   });
 
+  it("drops the ilmenite inputs v0.10 turned into outcomes", () => {
+    // Conversion now follows from temperature and residence time, and the
+    // reactor splits into a hydrogen loop and a bed sized by its hold-up.
+    const upgraded = upgradeLegacyParams({ ...DEFAULTS, equatorialProcess: "ilmenite", fIlmConversion: 0.5, kIlmReactorMass: 30 });
+    expect(upgraded).not.toHaveProperty("fIlmConversion");
+    expect(upgraded).not.toHaveProperty("kIlmReactorMass");
+    expect(parseParams("equatorialProcess=ilmenite&fIlmConversion=0.5&kIlmReactorMass=30")).toEqual({ equatorialProcess: "ilmenite" });
+    // A v0.8 case at its defaults reads the same plant: 90% and 18.6 kg per kg/day.
+    const result = simulate({ ...DEFAULTS, ...upgraded } as SimParams).ilmenite!;
+    expect(result.conversion).toBeCloseTo(0.9, 12);
+  });
+
   it("reads a shared link made before v0.9", () => {
     expect(parseParams("equatorialProcess=ilmenite&eIlmMining=50000&kIlmMiningMass=0.1")).toEqual({
       equatorialProcess: "ilmenite",

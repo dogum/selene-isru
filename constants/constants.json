@@ -405,6 +405,34 @@
     "description": "Heat of FeTiO3 + H2 -> Fe + TiO2 + H2O per kg of ilmenite reduced",
     "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), App. A: 294 kJ/kg at 900 C"
   },
+  "nIlmBedStages": {
+    "value": 3,
+    "unit": "1",
+    "kind": "physical",
+    "description": "Fluidized-bed stages in series in the reduction reactor",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 4 and Fig. 4-1b: three-stage fluidized bed"
+  },
+  "ilmConversionRef": {
+    "value": 0.9,
+    "unit": "1",
+    "kind": "physical",
+    "description": "Ilmenite conversion at the reactor design point",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 4: 90% conversion to iron and rutile in the three-stage bed"
+  },
+  "tIlmResidenceRefH": {
+    "value": 4,
+    "unit": "h",
+    "kind": "physical",
+    "description": "Solids residence time at the reactor design point",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 4: reactor sized for 4 h of solids residence"
+  },
+  "TIlmReactorRef": {
+    "value": 1273,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Reactor temperature at the design point",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 4: 1,000 C and 10 atm"
+  },
   "tDay": {
     "value": 354,
     "unit": "h",
@@ -1829,7 +1857,7 @@
   },
   "ilmConcentrateGrade": {
     "value": 0.9,
-    "min": 0.1,
+    "min": 0.005,
     "max": 1,
     "unit": "kg/kg",
     "kind": "parameter",
@@ -1837,15 +1865,25 @@
     "description": "Ilmenite mass fraction in the reactor feed concentrate",
     "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), App. A.9: 90 wt% ilmenite product stream; Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050) cap magnetic enrichment at 3x after Berggren et al. simulant data"
   },
-  "fIlmConversion": {
-    "value": 0.9,
-    "min": 0.2,
-    "max": 1,
-    "unit": "1",
+  "tIlmResidenceH": {
+    "value": 4,
+    "min": 0.25,
+    "max": 12,
+    "unit": "h",
     "kind": "parameter",
     "group": "ilmenite",
-    "description": "Fraction of the fed ilmenite reduced to iron and rutile",
-    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1: 90% in a three-stage fluidized bed, 4 h residence; Sargeant et al. 2020 measured about a third in short static runs at 1000 C"
+    "description": "Solids residence time in the reduction reactor",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 4: reactor sized for 4 h of solids residence for 90% conversion at 1,000 C; its single-stage case runs 1 h; Sargeant et al. 2020 measured about a third reduced in short static runs at 1000 C"
+  },
+  "EaIlmReduction": {
+    "value": 93300,
+    "min": 50000,
+    "max": 185000,
+    "unit": "J/mol",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Activation energy of the reduction rate",
+    "source": "Zhao & Shadman 1991, Kinetics and mechanism of ilmenite reduction with hydrogen, Ind. Eng. Chem. Res. 30(9) (NASA NTRS 19910015054): 22.3 kcal/mol apparent over 807-1014 C; Eagle Engineering 1988, EEI 88-182, Sec. 4: cited complete-reduction times (2 h at 873 K, 0.25 h at 1,073 K) imply 81 kJ/mol, and per-pass equilibrium conversions (10.5% at 1,000 C, 7% at 900 C) about 50 kJ/mol for a gas-limited bed; Briggs & Sacco 1991, J. Mater. Res. 6(3): 43.2 kcal/mol under reaction control at 823-1023 K"
   },
   "TIlmReactor": {
     "value": 1273,
@@ -1897,15 +1935,25 @@
     "description": "Beneficiation plant mass per kg/day of soil processed",
     "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 93.6 t for 995 t/d of soil; Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Table 2 gives about 0.22"
   },
-  "kIlmReactorMass": {
-    "value": 18.6,
+  "kIlmGasLoopMass": {
+    "value": 17.43,
     "min": 5,
     "max": 60,
     "unit": "kg/(kg/day)",
     "kind": "parameter",
     "group": "ilmenite",
-    "description": "Reduction reactor, heater, gas handling and radiator mass per kg/day of oxygen",
-    "source": "derived from Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515): Table 6-5 process area (65.1 t at 1,000 t/yr) less electrolysis, liquefier and LOX tanks in the Table 6-3 pilot proportion (87%)"
+    "description": "Hydrogen loop, heater and radiator mass per kg/day of oxygen",
+    "source": "derived from Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515): Table 6-5 process area (65.1 t at 1,000 t/yr) less electrolysis, liquefier and LOX tanks in the Table 6-3 pilot proportion (87%), less the fluidized bed at its 4 h hold-up (1.17 kg per kg/day)"
+  },
+  "kIlmBedMass": {
+    "value": 0.6,
+    "min": 0.1,
+    "max": 3,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Fluidized-bed reactor mass per kg of solids held",
+    "source": "calibrated to Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6.3.5 and Fig. 6-21: feeding sized soil instead of concentrate (144 t/yr LOX, 4 h residence) raised process mass from 12.5 to 18.1 t for 9.4 t more solids held"
   },
   "Pinternal": {
     "value": 101325,

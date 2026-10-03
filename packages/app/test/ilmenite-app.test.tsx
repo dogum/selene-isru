@@ -36,16 +36,22 @@ describe("oxygen process rail", () => {
     expect(shown("oxygen-process", mre)).toEqual([]);
     const visible = shown("oxygen-process", ilmenite);
     expect(visible).toEqual(expect.arrayContaining([...ILMENITE_KEYS, "Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]));
-    // v0.9 moved its two mining inputs to the shared excavation group.
-    expect(ILMENITE_KEYS).toHaveLength(11);
+    // v0.9 moved its two mining inputs to the shared excavation group; v0.10
+    // replaced conversion with residence time and split the reactor mass.
+    expect(ILMENITE_KEYS).toHaveLength(13);
+    expect(ILMENITE_KEYS).toEqual(expect.arrayContaining(["tIlmResidenceH", "EaIlmReduction", "kIlmGasLoopMass", "kIlmBedMass"]));
   });
 
   it("only hides inputs where they cannot act", () => {
     // Every ilmenite input is inert on the MRE route and acts on its own.
     for (const key of ILMENITE_KEYS) {
       expect(inputActivity(mre, key as keyof SimParams).activity, `${key} on MRE`).toBe("no-effect");
-      expect(inputActivity(ilmenite, key as keyof SimParams).activity, `${key} on ilmenite`).toBe("drives-results");
+      // The activation energy is conditional by design: at Eagle's design
+      // temperature, where the rate is pinned, it cannot act.
+      const at = key === "EaIlmReduction" ? { ...ilmenite, TIlmReactor: 1173 } : ilmenite;
+      expect(inputActivity(at, key as keyof SimParams).activity, `${key} on ilmenite`).toBe("drives-results");
     }
+    expect(inputActivity(ilmenite, "EaIlmReduction").activity).toBe("no-effect");
     // The shared inputs the ilmenite group borrows drive its results.
     for (const key of ["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"] as const) {
       expect(inputActivity(ilmenite, key).activity, key).toBe("drives-results");
@@ -187,6 +193,7 @@ describe("ilmenite route across the app", () => {
       evidenceForParam({ key, group: "ilmenite", source, min: 0, max: 1, unit: "1" });
     expect(evidence("fIlmenite", "Eagle Engineering 1988, Conceptual Design").sourceUrl).toBe("https://ntrs.nasa.gov/citations/19890004515");
     expect(evidence("eMining", "Guerrero-Gonzalez & Zabel 2023, Acta").sourceUrl).toBe("https://doi.org/10.1016/j.actaastro.2022.11.050");
+    expect(evidence("EaIlmReduction", "Zhao & Shadman 1991, Kinetics").sourceUrl).toBe("https://ntrs.nasa.gov/citations/19910015054");
     expect(evidence("fIlmHeatLoss", "calibrated to Eagle Engineering 1988").maturity).toBe("SIMPLIFIED CORRELATION");
     expect(evidence("fIlmenite", "Eagle Engineering 1988").applicability).toMatch(/ilmenite/);
   });

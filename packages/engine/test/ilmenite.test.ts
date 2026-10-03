@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, ilmeniteOxygenFraction, normalizeParams, simulate } from "../src/index";
+import { DEFAULTS, PHYSICAL_CONSTANTS, ilmeniteConversion, ilmeniteOxygenFraction, normalizeParams, simulate } from "../src/index";
 import { simulateConstruction } from "../src/modules/construction";
 import type { SimParams } from "../src/types";
 
@@ -110,7 +110,7 @@ describe("ilmenite reduction", () => {
     expectRel(bypass.concentrateGrade, params.fIlmenite, 1e-12);
     expectRel(
       bypass.soilPerKgO2,
-      1 / (params.fIlmenite * params.fIlmSized * params.fIlmConversion * ilmeniteOxygenFraction()),
+      1 / (params.fIlmenite * params.fIlmSized * ilmeniteConversion(params) * ilmeniteOxygenFraction()),
       1e-12
     );
     expect(simulate({ ...params, etaIlmRecovery: 1 }).ilmenite).toEqual(bypass);
@@ -141,9 +141,9 @@ describe("ilmenite reduction", () => {
     const mre = simulate({});
     expect(mre.ilmenite).toBeNull();
     const ilmeniteInputs: Partial<SimParams> = {
-      fIlmenite: 0.2, fIlmSized: 0.7, etaIlmRecovery: 0.6, ilmConcentrateGrade: 0.5, fIlmConversion: 0.4,
+      fIlmenite: 0.2, fIlmSized: 0.7, etaIlmRecovery: 0.6, ilmConcentrateGrade: 0.5, tIlmResidenceH: 1,
       TIlmReactor: 1100, etaIlmHeatRecovery: 0.8, fIlmHeatLoss: 0.6,
-      eIlmBeneficiation: 30_000, kIlmBeneficiationMass: 0.3, kIlmReactorMass: 40
+      eIlmBeneficiation: 30_000, kIlmBeneficiationMass: 0.3, kIlmGasLoopMass: 40, kIlmBedMass: 1.5
     };
     expect(simulate(ilmeniteInputs)).toEqual(mre);
     const ilmenite = simulate(ILMENITE);
@@ -188,3 +188,60 @@ describe("ilmenite reduction", () => {
     expect(refuel.refuel!.supplyO2KgPerDay).toBeGreaterThan(0);
   });
 });
+
+describe("reduction kinetics and bed hold-up (v0.10)", () => {
+  test("conversion follows the staged first-order form, pinned to Eagle's design point", () => {
+    const params = normalizeParams(ILMENITE).params;
+    // 90% at 1,000 °C and 4 h in three stages, by construction.
+    expectRel(ilmeniteConversion(params), 0.9, 1e-12);
+    expect(simulate(params).ilmenite!.conversion).toBe(ilmeniteConversion(params));
+    // Written out: k_ref from the design point, Arrhenius with Zhao & Shadman's Ea.
+    const T = 1173;
+    const tau = 2;
+    const kRef = (3 * (Math.pow(0.1, -1 / 3) - 1)) / 4;
+    const k = kRef * Math.exp((-93_300 / PHYSICAL_CONSTANTS.R.value) * (1 / T - 1 / 1273));
+    expectRel(ilmeniteConversion({ TIlmReactor: T, tIlmResidenceH: tau, EaIlmReduction: 93_300 }), 1 - Math.pow(1 + (k * tau) / 3, -3), 1e-12);
+    // Hotter or longer reduces more; neither reaches complete reduction.
+    const at = (TIlmReactor: number, tIlmResidenceH: number) =>
+      ilmeniteConversion({ TIlmReactor, tIlmResidenceH, EaIlmReduction: DEFAULTS.EaIlmReduction });
+    expect(at(1173, 4)).toBeLessThan(at(1273, 4));
+    expect(at(1373, 4)).toBeGreaterThan(at(1273, 4));
+    expect(at(1273, 1)).toBeLessThan(at(1273, 4));
+    expect(at(1273, 12)).toBeLessThan(1);
+    expect(at(1273, 1e-9)).toBeLessThan(1e-8);
+    // A weaker temperature dependence (a gas-limited bed) narrows the spread;
+    // the design point does not move.
+    const weak = (TIlmReactor: number) => ilmeniteConversion({ TIlmReactor, tIlmResidenceH: 4, EaIlmReduction: 50_000 });
+    expectRel(weak(1273), 0.9, 1e-12);
+    expect(weak(1173)).toBeGreaterThan(at(1173, 4));
+  });
+
+  test("temperature now trades heat against conversion", () => {
+    // Before v0.10 a cooler reactor only saved heat. Now it reduces less, so
+    // the plant mines and heats more soil per kg of oxygen.
+    const hot = simulate({ ...ILMENITE, TIlmReactor: 1273 });
+    const cool = simulate({ ...ILMENITE, TIlmReactor: 1073 });
+    expectRel(cool.ilmenite!.conversion, 0.454, 0.002);
+    expect(cool.ilmenite!.soilPerKgO2).toBeGreaterThan(1.9 * hot.ilmenite!.soilPerKgO2);
+    expect(cool.energy.secTotal_kWhPerKg).toBeGreaterThan(hot.energy.secTotal_kWhPerKg);
+  });
+
+  test("the bed holds the feed for its residence time and weighs in proportion", () => {
+    const params = normalizeParams({ ...ILMENITE, tIlmResidenceH: 6 }).params;
+    const ilmenite = simulate(params).ilmenite!;
+    expectRel(ilmenite.bedHoldupKg, (ilmenite.concentrateKgPerDay / 24) * 6, 1e-12);
+    expectRel(ilmenite.bedMassKg, params.kIlmBedMass * ilmenite.bedHoldupKg, 1e-12);
+    expectRel(ilmenite.reactorMassKg, params.kIlmGasLoopMass * params.targetKgPerDay + ilmenite.bedMassKg, 1e-12);
+    // At the defaults the split adds back to v0.8's 18.6 kg per kg/day of oxygen.
+    const defaults = simulate(ILMENITE).ilmenite!;
+    expectRel(defaults.reactorMassKg / DEFAULTS.targetKgPerDay, 18.6, 1e-3);
+  });
+
+  test("residence time has an optimum: a longer stay mines less soil but holds more", () => {
+    const landed = (tIlmResidenceH: number) => simulate({ ...ILMENITE, tIlmResidenceH }).logistics.totalInfraMassKg;
+    expect(landed(8)).toBeLessThan(landed(4));
+    expect(landed(12)).toBeGreaterThan(landed(8));
+    expect(landed(1)).toBeGreaterThan(landed(4));
+  });
+});
+
