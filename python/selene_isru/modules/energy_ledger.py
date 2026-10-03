@@ -25,6 +25,7 @@ def energy_ledger(
     electrolysis: dict[str, Any],
     cryo: dict[str, Any],
     water_electrolysis: dict[str, Any] | None,
+    ilmenite: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     mass_flow = params["targetKgPerDay"] / 86400
 
@@ -33,10 +34,29 @@ def energy_ledger(
         return 0 if line is None else line["jPerKg"] * mass_flow
 
     balances: list[dict[str, Any]] = []
-    excavation_input = power_for("mine", "melt" if params["site"] == "equatorial" else "sublimation")
+    excavation_target = "beneficiation" if ilmenite is not None else "melt" if params["site"] == "equatorial" else "sublimation"
+    excavation_input = power_for("mine", excavation_target)
     excavation_useful = min(excavation_input, max(0, excavation_mech_power_w))
     balances.append(_balance("excavation-energy", "Excavation drive", excavation_input, 0, excavation_useful, excavation_input - excavation_useful, 0))
-    if params["site"] == "equatorial":
+
+    def water_electrolysis_balance() -> dict[str, Any]:
+        electrolysis_input = power_for("electrolysis", "product")
+        fraction = min(1, c("VthermoneutralWater") * params["etaFaradayEl"] / params["Vel"])
+        chemical = electrolysis_input * fraction
+        return _balance("water-electrolysis-energy", "Water electrolysis", electrolysis_input, 0, chemical, electrolysis_input - chemical, 0)
+
+    if ilmenite is not None:
+        beneficiation = power_for("beneficiation", "reduction")
+        balances.append(_balance("ilmenite-beneficiation-energy", "Soil sizing and separation", beneficiation, 0, 0, beneficiation, 0))
+        # The reduction heat leaves as chemical energy in the water; the feed
+        # heat not recovered leaves with the spent solids.
+        reactor = power_for("reduction", "electrolysis")
+        reaction = min(reactor, ilmenite["secReaction_JPerKg"] * mass_flow)
+        balances.append(_balance("ilmenite-reactor-energy", "Ilmenite feed heat and reduction", reactor, 0, reaction, reactor - reaction, 0))
+        reactor_loss = power_for("reduction", "parasitic")
+        balances.append(_balance("ilmenite-aux-energy", "Reactor heat loss and gas recycle", reactor_loss, 0, 0, reactor_loss, 0))
+        balances.append(water_electrolysis_balance())
+    elif params["site"] == "equatorial":
         melt_input = power_for("melt", "electrolysis")
         balances.append(_balance("mre-melt-energy", "Regolith melt duty", melt_input, 0, 0, 0, melt_input))
         electrolysis_input = power_for("electrolysis", "product")
@@ -50,10 +70,7 @@ def energy_ledger(
         distillation = power_for("sublimation", "parasitic")
         balances.append(_balance("polar-aux-energy", "Heater loss, vapor handling, and process allowance", distillation, 0, 0, distillation, 0))
         if water_electrolysis is not None:
-            electrolysis_input = power_for("electrolysis", "product")
-            fraction = min(1, c("VthermoneutralWater") * params["etaFaradayEl"] / params["Vel"])
-            chemical = electrolysis_input * fraction
-            balances.append(_balance("water-electrolysis-energy", "Water electrolysis", electrolysis_input, 0, chemical, electrolysis_input - chemical, 0))
+            balances.append(water_electrolysis_balance())
     balances.append(_balance("storage-conditioning-energy", "Product conditioning", cryo["totalConditioningPowerW"], 0, 0, 0, cryo["totalConditioningPowerW"]))
     balances.append(_balance("storage-cooling-energy", "Storage heat lift", cryo["cryocoolerPowerW"], cryo["qRemovedW"], 0, cryo["cryocoolerPowerW"] + cryo["qRemovedW"], 0))
     allocated = sum(item["electricalInputW"] for item in balances)

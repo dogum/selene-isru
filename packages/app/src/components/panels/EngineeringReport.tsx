@@ -14,15 +14,10 @@ import { BUILD_INFO, buildStamp, MODEL_BOUNDARY } from "../../lib/build";
 import { formatQtyText } from "../../lib/format";
 import { paramsToUrl } from "../../lib/url";
 import { useStore } from "../../state/store";
+import { energyStages } from "../../analysis/energyStages";
 
 function energyRows(result: ReturnType<typeof simulate>): Array<{ label: string; value: number }> {
-  const totals = new Map<string, number>();
-  for (const edge of result.energy.flows) {
-    totals.set(edge.to, (totals.get(edge.to) ?? 0) + edge.kWhPerKg);
-  }
-  return [...totals.entries()]
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value);
+  return energyStages(result).map((stage) => ({ label: stage.label, value: stage.kWhPerKg }));
 }
 
 export function EngineeringReport(): React.JSX.Element {
@@ -212,7 +207,26 @@ export function EngineeringReport(): React.JSX.Element {
         <p className="report-note">Maximum modeled energy residual: {formatQtyText(result.energy.maxAbsResidualW, "W", 4)} · grid allocation residual: {formatQtyText(result.energy.gridAllocationResidualW, "W", 4)}.</p>
       </section>
 
-      {result.site === "equatorial" && (
+      {result.ilmenite !== null && (
+        <section className="report-section">
+          <h3>Ilmenite hydrogen reduction</h3>
+          <table><tbody>
+            <tr><th>Soil mined / per kg O₂</th><td>{formatQtyText(result.ilmenite.soilKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.soilPerKgO2, "kg/kg")}</td></tr>
+            <tr><th>Sized feed / concentrate fed</th><td>{formatQtyText(result.ilmenite.sizedSoilKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.concentrateKgPerDay, "kg/day")}</td></tr>
+            <tr><th>Concentrate grade</th><td>{(result.ilmenite.concentrateGrade * 100).toFixed(1)}% ilmenite</td></tr>
+            <tr><th>Ilmenite reduced / water split</th><td>{formatQtyText(result.ilmenite.ilmeniteReducedKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.waterKgPerDay, "kg/day")}</td></tr>
+            <tr><th>Tailings / spent solids</th><td>{formatQtyText(result.ilmenite.tailingsKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.spentSolidsKgPerDay, "kg/day")}</td></tr>
+            <tr><th>Iron in spent solids</th><td>{formatQtyText(result.ilmenite.ironKgPerDay, "kg/day")}</td></tr>
+            <tr><th>Mining / beneficiation</th><td>{formatQtyText(result.ilmenite.secMining_JPerKg / 3.6e6, "kWh/kg")} · {formatQtyText(result.ilmenite.secBeneficiation_JPerKg / 3.6e6, "kWh/kg")}</td></tr>
+            <tr><th>Feed heat / reduction heat / reactor loss</th><td>{formatQtyText(result.ilmenite.secSensible_JPerKg / 3.6e6, "kWh/kg")} · {formatQtyText(result.ilmenite.secReaction_JPerKg / 3.6e6, "kWh/kg")} · {formatQtyText(result.ilmenite.secReactorLoss_JPerKg / 3.6e6, "kWh/kg")}</td></tr>
+            <tr><th>Water electrolysis</th><td>{formatQtyText(result.ilmenite.secWaterElectrolysis_JPerKg / 3.6e6, "kWh/kg")}</td></tr>
+            <tr><th>Fleet / beneficiation / reactor / electrolyzer</th><td>{formatQtyText(result.ilmenite.miningMassKg, "kg")} · {formatQtyText(result.ilmenite.beneficiationMassKg, "kg")} · {formatQtyText(result.ilmenite.reactorMassKg, "kg")} · {formatQtyText(result.ilmenite.electrolyzerMassKg, "kg")}</td></tr>
+          </tbody></table>
+          <p className="report-note">Energies are per kg of oxygen. The soil chain, beneficiation, and reactor are calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant design and the mining to RASSOR (Guerrero-Gonzalez &amp; Zabel 2023). Conversion is an input, not a kinetics model.</p>
+        </section>
+      )}
+
+      {result.site === "equatorial" && result.ilmenite === null && (
         <section className="report-section">
           <h3>MRE voltage and electrode operating point</h3>
           <table><tbody>

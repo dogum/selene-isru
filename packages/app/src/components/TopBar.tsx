@@ -35,6 +35,15 @@ const POLAR_EQUIPMENT = [
   ["habitat", "Polar habitat"]
 ] as const;
 
+/** The site's equipment; the ilmenite plant borrows the reactor model and leaves the yard idle. */
+function equipmentFor(site: string, reducesIlmenite: boolean): ReadonlyArray<readonly [string, string]> {
+  if (site !== "equatorial") return POLAR_EQUIPMENT;
+  if (!reducesIlmenite) return EQUATORIAL_EQUIPMENT;
+  return EQUATORIAL_EQUIPMENT.map(([key, label]) =>
+    [key, key === "reactor" ? "Ilmenite plant" : key === "castingYard" ? "Casting yard (idle)" : label] as const
+  );
+}
+
 export function TopBar(): React.JSX.Element {
   const site = useStore((s) => s.params.site);
   const workspaceMode = useStore((s) => s.workspaceMode);
@@ -183,7 +192,8 @@ function EquipmentDropdown(): React.JSX.Element {
 
   useMenu(ref, open, setOpen);
 
-  const equipment = site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT;
+  const reducesIlmenite = useStore((s) => s.result.ilmenite !== null);
+  const equipment = equipmentFor(site, reducesIlmenite);
 
   return (
     <div className="presets" ref={ref}>
@@ -390,6 +400,7 @@ function MobileMenu(): React.JSX.Element {
   const ref = useRef<HTMLDivElement | null>(null);
   const applyPatch = useStore((s) => s.applyPatch);
   const site = useStore((s) => s.params.site);
+  const reducesIlmenite = useStore((s) => s.result.ilmenite !== null);
   const workspaceMode = useStore((s) => s.workspaceMode);
   const viewMode = useStore((s) => s.customSite.viewMode);
   const learningMode = useStore((s) => s.ui.learningMode);
@@ -458,7 +469,7 @@ function MobileMenu(): React.JSX.Element {
                 </button>
               ))}
               <div className="presets-section">ASSETS</div>
-              {(site === "equatorial" ? EQUATORIAL_EQUIPMENT : POLAR_EQUIPMENT).map(([key, label]) => (
+              {equipmentFor(site, reducesIlmenite).map(([key, label]) => (
                 <button
                   key={key}
                   role="menuitem"

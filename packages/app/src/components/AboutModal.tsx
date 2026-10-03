@@ -33,7 +33,7 @@ export function AboutModal(): React.JSX.Element | null {
           <p>
             <strong>selene-isru</strong> is an open-source engineering trade-space simulator for a
             conceptual integrated lunar in-situ resource utilization chain. Move a slider and the entire
-            industrial chain — excavation, molten-regolith electrolysis or polar ice sublimation,
+            industrial chain — excavation, molten-regolith electrolysis, hydrogen reduction of ilmenite, or polar ice sublimation,
             cryogenic storage, surface power, Earth logistics — recomputes in the same frame, in
             your browser, with no server.
           </p>
@@ -86,6 +86,11 @@ export function AboutModal(): React.JSX.Element | null {
               MRE now separates reversible decomposition, activation, ohmic, concentration, and
               unallocated voltage terms and sizes electrode area from current density. These remain
               lumped, bounded approximations—not geometry-, bubble-, material-, or lifetime-resolved reactor design.
+            </li>
+            <li>
+              Ilmenite hydrogen reduction is calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant
+              design, with RASSOR-class mining. Conversion and concentrate grade are inputs, not kinetics or
+              separation models, and the diorama shows the MRE reactor as a stand-in for its plant.
             </li>
             <li>
               Sabatier is a single-pass conversion-fraction model with explicit CO₂ import, water

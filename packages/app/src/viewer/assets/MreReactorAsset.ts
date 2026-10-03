@@ -3,7 +3,7 @@ import type { SimParams, SimResult } from "@selene-isru/engine";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import reactorUrl from "../../assets/models/mre-reactor.glb?url";
-import { meltThermalLoad, reactorActivity } from "../bindings";
+import { meltThermalLoad, processReactorActivity } from "../bindings";
 import { disposeObject } from "../dioramas/shared";
 import { enableBloom } from "../layers";
 
@@ -77,8 +77,10 @@ export class MreReactorAsset {
   }
 
   apply(result: SimResult, params: SimParams, glow: number): void {
-    this.activity = reactorActivity(result.electrolysis.currentA);
-    this.thermalLoad = meltThermalLoad(params.Tmelt);
+    // The ilmenite plant borrows this model as a stand-in: it runs cooler than
+    // a melt, so its thermal glow reads from the reduction temperature.
+    this.activity = processReactorActivity(result);
+    this.thermalLoad = meltThermalLoad(result.ilmenite === null ? params.Tmelt : params.TIlmReactor);
     this.glow = glow;
     if (this.loaded) {
       this.updateState(0);

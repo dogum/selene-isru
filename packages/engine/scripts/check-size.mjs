@@ -15,7 +15,11 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 // chain, the refuelling-demand model and its tank-drawdown timeline, and the
 // cited vehicle, delta-v, and liquefier parameters that ship with them. Still
 // zero runtime dependencies.
-const limitBytes = 176 * 1024;
+// 176 -> 192 KiB (v0.8 ilmenite reduction): the hydrogen-reduction process
+// model with its soil, energy, and mass chain, and the fourteen cited Eagle
+// 1988 and Guerrero-Gonzalez & Zabel 2023 parameters that ship with it. Still
+// zero runtime dependencies.
+const limitBytes = 192 * 1024;
 
 function jsSize(dir) {
   let total = 0;

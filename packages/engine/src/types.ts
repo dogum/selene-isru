@@ -4,6 +4,7 @@ export type PowerStrategy = "auto" | PowerArchitecture;
 export type DeploymentManifest = "dedicated" | "shared";
 export type PolarProduct = "water" | "propellant";
 export type RefuelDemand = "none" | "lander";
+export type EquatorialProcess = "mre" | "ilmenite";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -389,6 +390,33 @@ export interface SimParams {
   dvDescent: number;
   /** [m/s] */
   dvAscent: number;
+  equatorialProcess: EquatorialProcess;
+  /** [kg/kg] */
+  fIlmenite: number;
+  /** [1] */
+  fIlmSized: number;
+  /** [1] */
+  etaIlmRecovery: number;
+  /** [kg/kg] */
+  ilmConcentrateGrade: number;
+  /** [1] */
+  fIlmConversion: number;
+  /** [K] */
+  TIlmReactor: number;
+  /** [1] */
+  etaIlmHeatRecovery: number;
+  /** [1] */
+  fIlmHeatLoss: number;
+  /** [J/kg-regolith] */
+  eIlmMining: number;
+  /** [kg/(kg/day)] per soil mined */
+  kIlmMiningMass: number;
+  /** [J/kg-regolith] */
+  eIlmBeneficiation: number;
+  /** [kg/(kg/day)] per soil processed */
+  kIlmBeneficiationMass: number;
+  /** [kg/(kg/day)] per O2 */
+  kIlmReactorMass: number;
   /** [Pa] */
   Pinternal: number;
   /** [Pa] */
@@ -461,6 +489,52 @@ export interface CampaignResult {
   /** when cumulative saved first reaches spent, on a sortie day with a demand [day]; null if output never outpaces spares and feed */
   paybackDays: number | null;
   paysBackInCampaign: boolean;
+}
+
+/** Hydrogen reduction of ilmenite; energies per kg O2. */
+export interface IlmeniteResult {
+  /** soil mined per kg O2 [kg/kg] */
+  soilPerKgO2: number;
+  /** soil mined [kg/day] */
+  soilKgPerDay: number;
+  /** soil inside the reactor feed size window [kg/day] */
+  sizedSoilKgPerDay: number;
+  /** concentrate fed to the reactor [kg/day] */
+  concentrateKgPerDay: number;
+  /** ilmenite mass fraction of the concentrate actually fed [kg/kg] */
+  concentrateGrade: number;
+  /** soil rejected by sizing and separation [kg/day] */
+  tailingsKgPerDay: number;
+  /** ilmenite reduced to iron and rutile [kg/day] */
+  ilmeniteReducedKgPerDay: number;
+  /** water made in the reactor and split [kg/day] */
+  waterKgPerDay: number;
+  /** hydrogen returned from electrolysis to the reactor [kg/day] */
+  hydrogenRecycleKgPerDay: number;
+  /** reduced concentrate discharged: iron, rutile, unreduced ilmenite and gangue [kg/day] */
+  spentSolidsKgPerDay: number;
+  /** metallic iron in the spent solids [kg/day] */
+  ironKgPerDay: number;
+  /** excavation energy per kg O2 [J/kg] */
+  secMining_JPerKg: number;
+  /** sizing, magnetic separation, and handling energy per kg O2 [J/kg] */
+  secBeneficiation_JPerKg: number;
+  /** feed heating after heat recovery, per kg O2 [J/kg] */
+  secSensible_JPerKg: number;
+  /** endothermic reduction heat per kg O2 [J/kg] */
+  secReaction_JPerKg: number;
+  /** reactor heat loss, heater inefficiency, and gas recycle per kg O2 [J/kg] */
+  secReactorLoss_JPerKg: number;
+  /** water electrolysis per kg O2 [J/kg] */
+  secWaterElectrolysis_JPerKg: number;
+  /** excavation fleet [kg] */
+  miningMassKg: number;
+  /** sizing, separation, and handling plant [kg] */
+  beneficiationMassKg: number;
+  /** reduction reactor, heater, gas handling, and radiators [kg] */
+  reactorMassKg: number;
+  /** water electrolyzer [kg] */
+  electrolyzerMassKg: number;
 }
 
 /** A surface-based reusable lander refuelled with the plant's product. */
@@ -670,6 +744,8 @@ export interface SimResult {
   campaign: CampaignResult;
   /** null unless a refuelling demand is set and the plant makes oxygen or LOX/LH2 */
   refuel: RefuelResult | null;
+  /** null unless the equatorial plant reduces ilmenite */
+  ilmenite: IlmeniteResult | null;
   materials: {
     flows: MaterialFlow[];
     balances: ProcessBalance[];

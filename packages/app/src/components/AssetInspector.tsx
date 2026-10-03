@@ -21,6 +21,95 @@ interface AssetConfig {
   metrics: (result: SimResult, params: SimParams) => MetricValue[];
 }
 
+/** Equatorial assets whose controls and readings change when the plant reduces ilmenite. */
+const ILMENITE_CONFIG: Record<string, AssetConfig> = {
+  hauler: {
+    id: "HV-01",
+    title: "SOIL HAULER",
+    group: "ilmenite",
+    module: "excavation",
+    controlLabels: {
+      eIlmMining: "Bulk mining energy",
+      kIlmMiningMass: "Fleet mass per soil mined"
+    },
+    note: "The hauler shuttles between trench and plant with a throughput-scaled load. An ilmenite plant moves hundreds of kilograms of soil per kilogram of oxygen, so the fleet scales with soil.",
+    metrics: (r) => [
+      { label: "Soil moved", value: formatQtyText(r.ilmenite?.soilKgPerDay ?? 0, "kg/day") },
+      { label: "Soil per kg O₂", value: formatQtyText(r.ilmenite?.soilPerKgO2 ?? 0, "kg/kg") },
+      { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") },
+      { label: "Mining energy", value: formatQtyText((r.ilmenite?.secMining_JPerKg ?? 0) / 3.6e6, "kWh/kg") }
+    ]
+  },
+  reactor: {
+    id: "ILM-01",
+    title: "ILMENITE H₂ REDUCTION",
+    group: "ilmenite",
+    module: "ilmenite",
+    controlLabels: {
+      fIlmenite: "Ilmenite in soil",
+      ilmConcentrateGrade: "Concentrate grade",
+      fIlmConversion: "Ilmenite reduced",
+      TIlmReactor: "Reactor temperature",
+      etaIlmHeatRecovery: "Feed heat recovered"
+    },
+    note: "Shown with the MRE reactor model as a stand-in; its glow follows the reactor heater power. The beneficiation plant, fluidized bed, and electrolyzer have no dedicated 3D assets yet.",
+    metrics: (r) => {
+      const ilmenite = r.ilmenite;
+      if (ilmenite === null) return [];
+      const kgPerS = r.production.targetKgPerDay / 86_400;
+      return [
+        { label: "O₂ output", value: formatQtyText(r.production.o2KgPerDay, "kg/day") },
+        { label: "Concentrate fed", value: formatQtyText(ilmenite.concentrateKgPerDay, "kg/day") },
+        { label: "Concentrate grade", value: formatQtyText(ilmenite.concentrateGrade, "kg/kg", 3) },
+        { label: "Reactor heater", value: formatQtyText((ilmenite.secSensible_JPerKg + ilmenite.secReaction_JPerKg + ilmenite.secReactorLoss_JPerKg) * kgPerS, "W") },
+        { label: "Water electrolysis", value: formatQtyText(ilmenite.secWaterElectrolysis_JPerKg * kgPerS, "W") },
+        { label: "Iron in spent solids", value: formatQtyText(ilmenite.ironKgPerDay, "kg/day") }
+      ];
+    }
+  },
+  castingYard: {
+    id: "CY-01",
+    title: "SLAG CASTING YARD · IDLE",
+    group: "construction",
+    module: "construction",
+    controlLabels: {},
+    note: "Ilmenite reduction leaves granular tailings and spent solids rather than a melt, so nothing is cast on this route.",
+    metrics: (r) => [
+      { label: "Slag feed", value: formatQtyText(r.production.slagKgPerDay, "kg/day") },
+      { label: "Tailings + spent solids", value: formatQtyText((r.ilmenite?.tailingsKgPerDay ?? 0) + (r.ilmenite?.spentSolidsKgPerDay ?? 0), "kg/day") }
+    ]
+  },
+  pad: {
+    id: "LP-01",
+    title: "LANDING SYSTEM",
+    group: "logistics",
+    module: "logistics",
+    controlLabels: {
+      IspLander: "Lander specific impulse",
+      MdryLander: "Lander dry mass"
+    },
+    note: "Mission markers scale with logistics and the lander runs its arrival/departure cycle. No slag is cast on this route, so the pad tiles stand for an uncast landing area.",
+    metrics: (r) => [
+      { label: "Missions", value: formatQtyText(r.logistics.nMissions, "msn", 0) },
+      { label: "Payload per mission", value: formatQtyText(r.logistics.payloadPerMissionKg, "kg") },
+      { label: "Landed infra", value: formatQtyText(r.logistics.totalInfraMassKg, "kg") }
+    ]
+  },
+  habitat: {
+    id: "HAB-01",
+    title: "SURFACE HABITAT",
+    group: "construction",
+    module: "construction",
+    controlLabels: {},
+    note: "No slag is cast on this route, so the habitat's shielding is not made on site; the roof sections show the designed depth only.",
+    metrics: (r) => [
+      { label: "Slag for shielding", value: formatQtyText(r.construction.slagPerYearT, "t/yr") },
+      { label: "Tailings + spent solids", value: formatQtyText((r.ilmenite?.tailingsKgPerDay ?? 0) + (r.ilmenite?.spentSolidsKgPerDay ?? 0), "kg/day") },
+      { label: "Landed infra", value: formatQtyText(r.logistics.totalInfraMassKg, "kg") }
+    ]
+  }
+};
+
 const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
   excavator: {
     id: "EX-01",
@@ -339,9 +428,10 @@ export function AssetInspector(): React.JSX.Element | null {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selected, setUi]);
 
+  const ilmenite = site === "equatorial" && result.ilmenite !== null;
   const config = selected === null
     ? undefined
-    : (site === "equatorial" ? EQUATORIAL_CONFIG : POLAR_CONFIG)[selected];
+    : (ilmenite ? ILMENITE_CONFIG[selected] : undefined) ?? (site === "equatorial" ? EQUATORIAL_CONFIG : POLAR_CONFIG)[selected];
 
   if (config === undefined) {
     return null;
@@ -349,9 +439,9 @@ export function AssetInspector(): React.JSX.Element | null {
 
   const controls = paramsForGroup(config.group).filter((def) => def.key in config.controlLabels);
   const warnings = result.warnings.filter((warning) => warning.module === config.module);
-  const knowledge = assetKnowledge(site, selected ?? "");
+  const knowledge = assetKnowledge(site, selected ?? "", ilmenite);
   const flows = flowsForAsset(result, params, selected ?? "");
-  const configs = site === "equatorial" ? EQUATORIAL_CONFIG : POLAR_CONFIG;
+  const configs = site === "equatorial" ? { ...EQUATORIAL_CONFIG, ...(ilmenite ? ILMENITE_CONFIG : {}) } : POLAR_CONFIG;
   const nearestBound = controls
     .map((def) => {
       const value = params[def.key];

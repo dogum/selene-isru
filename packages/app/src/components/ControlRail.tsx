@@ -50,14 +50,18 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [query, setQuery] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
 
-  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand } = params;
+  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess } = params;
+  // Custom Site plans the MRE plant only, so its rail has no process switch.
+  const customWorkspace = useStore((s) => s.workspaceMode === "custom");
   // Engine-reported streams, joined so the memo only reruns when the set changes.
   const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
-    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand };
+    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess };
     const activeStreams = new Set(streamKey.split(",").filter(Boolean));
-    return groupsForSite(site).map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, streamKey]);
+    return groupsForSite(site)
+      .filter((group) => !(customWorkspace && group.id === "oxygen-process"))
+      .map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, customWorkspace, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   // A gated-off group's sliders cannot be shown, so they do not count either.
@@ -244,6 +248,7 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
       </div>
       {open && !gatedOff && (
         <div className="rail-group-body">
+          {group.id === "oxygen-process" && showMode("equatorialProcess") && <OxygenProcessControls />}
           {group.id === "extraction-sub" && showMode("polarProduct") && <PolarProductControls />}
           {group.id === "cryo" && (showMode("storageStream") || showMode("cryoControlMode")) && (
             <StorageModeControls stream={showMode("storageStream")} heat={showMode("cryoControlMode")} />
@@ -296,6 +301,29 @@ function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: b
           <option value="capacity-limited">CAPACITY LIMITED</option>
         </select>
       </label>}
+    </div>
+  );
+}
+
+function OxygenProcessControls(): React.JSX.Element {
+  const process = useStore((s) => s.params.equatorialProcess);
+  const setParam = useStore((s) => s.setParam);
+
+  return (
+    <div className="rail-mode-grid">
+      <label>
+        <span>OXYGEN PROCESS</span>
+        <select value={process} onChange={(event) => setParam("equatorialProcess", event.target.value as typeof process)}>
+          <option value="mre">MOLTEN REGOLITH ELECTROLYSIS</option>
+          <option value="ilmenite">ILMENITE H₂ REDUCTION</option>
+        </select>
+      </label>
+      {process === "ilmenite" && (
+        <p className="rail-mode-note">
+          Soil is sized and its ilmenite concentrated, reduced by hydrogen at about 1,000 °C, and the water split. Calibrated
+          to Eagle Engineering's 1988 pilot plant design; the diorama still shows the MRE reactor.
+        </p>
+      )}
     </div>
   );
 }

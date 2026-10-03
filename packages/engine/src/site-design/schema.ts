@@ -317,7 +317,9 @@ function sortedConfiguration(
 export function canonicalSiteDesign(design: SiteDesignDocument): SiteDesignDocument {
   return {
     ...design,
-    params: { ...design.params, site: design.environment },
+    // The planner's equatorial catalog is the MRE plant; ilmenite reduction
+    // has no equipment here.
+    params: { ...design.params, site: design.environment, equatorialProcess: "mre" },
     assets: design.assets
       .map((item) => ({
         ...item,

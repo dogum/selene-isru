@@ -1,6 +1,7 @@
 import { simulate } from "@selene-isru/engine";
 import type { SimParams, SimResult } from "@selene-isru/engine";
 import { formatQtyText } from "../lib/format";
+import { energyStages } from "./energyStages";
 
 export type GoalSite = "either" | SimParams["site"];
 export type GoalObjective = "landed-mass" | "energy" | "missions" | "mass-throughput" | "crossover";
@@ -88,23 +89,12 @@ export const OBJECTIVES: Array<{ id: GoalObjective; label: string }> = [
 ];
 
 export interface Driver { label: string; value: number }
-const DRIVER_LABELS: Record<string, string> = {
-  product: "Product processing + conditioning",
-  parasitic: "Parasitic systems",
-  electrolysis: "Molten-regolith electrolysis",
-  melt: "Regolith melt heating",
-  sublimation: "Ice sublimation",
-  cryo: "Cryogenic storage",
-  excavation: "Excavation"
-};
 
+/** The three stages that spend the most energy per kg. */
 export function energyDrivers(result: SimResult): Driver[] {
-  const totals = new Map<string, number>();
-  for (const flow of result.energy.flows) totals.set(flow.to, (totals.get(flow.to) ?? 0) + flow.kWhPerKg);
-  return [...totals.entries()]
-    .map(([label, value]) => ({ label: DRIVER_LABELS[label] ?? label, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
+  return energyStages(result)
+    .slice(0, 3)
+    .map((stage) => ({ label: stage.label, value: stage.kWhPerKg }));
 }
 
 export function score(result: SimResult, objective: GoalObjective): number {
@@ -172,7 +162,8 @@ export function optimize(base: SimParams, constraints: MissionConstraints): Opti
                   etaCell,
                   alphaSpecific,
                   enableSabatier,
-                  ...(site === "equatorial" ? { Vcell: a, etaCurrent: b } : { chiIce: a, cpRegCold: b })
+                  // The equatorial levers are MRE's, so its candidates run MRE.
+                  ...(site === "equatorial" ? { equatorialProcess: "mre" as const, Vcell: a, etaCurrent: b } : { chiIce: a, cpRegCold: b })
                 };
                 const result = simulate(params);
                 const failed = violations(result, constraints);

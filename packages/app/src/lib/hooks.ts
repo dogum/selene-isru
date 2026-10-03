@@ -78,3 +78,25 @@ export function useSize<T extends HTMLElement>(): [React.RefObject<T>, { width: 
   }, []);
   return [ref, size];
 }
+
+/**
+ * State that starts over from `initial()` whenever `scope` changes, so a
+ * selection made for one site or process is not carried into another where
+ * it may not apply. The reset happens during render, with no effect pass.
+ */
+export function useScopedState<T>(scope: string, initial: () => T): [T, (next: T | ((current: T) => T)) => void] {
+  const [state, setState] = useState(() => ({ scope, value: initial() }));
+  const value = state.scope === scope ? state.value : initial();
+  const set = (next: T | ((current: T) => T)): void =>
+    setState((previous) => {
+      const current = previous.scope === scope ? previous.value : initial();
+      return { scope, value: typeof next === "function" ? (next as (current: T) => T)(current) : next };
+    });
+  return [value, set];
+}
+
+/** The site and, at the equator, the oxygen process: what decides which levers apply. */
+export function processScope(params: { site: string; equatorialProcess: string }): string {
+  return params.site === "equatorial" ? `equatorial:${params.equatorialProcess}` : params.site;
+}
+

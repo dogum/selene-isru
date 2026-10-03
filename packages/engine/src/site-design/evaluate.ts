@@ -278,6 +278,14 @@ export function compileSiteDesign(
 ): CompiledSiteDesign {
   const normalizedDesign = canonicalSiteDesign(design);
   const findings = validateSiteDesign(normalizedDesign);
+  if (design.environment === "equatorial" && design.params.equatorialProcess !== "mre") {
+    findings.push({
+      id: "params.equatorial-process",
+      severity: "info",
+      message: "Custom Site plans the MRE plant; ilmenite reduction has no planner equipment, so this design is evaluated as MRE.",
+      entityIds: []
+    });
+  }
   const assetsById = new Map(
     normalizedDesign.assets.map((asset) => [asset.id, asset])
   );

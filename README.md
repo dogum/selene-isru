@@ -133,6 +133,11 @@ when they are useful:
   refuelling demand, a reusable lander flying sorties from the plant, credits
   only the propellant it burns and charts how its stores draw down
   ([`docs/model-refuel-v07.md`](docs/model-refuel-v07.md)).
+- **Two equatorial oxygen processes.** Molten regolith electrolysis is the
+  default. Hydrogen reduction of ilmenite is the alternative, calibrated to
+  Eagle Engineering's 1988 pilot-plant design. Its soil chain shows how ilmenite
+  grade drives the soil handled, the beneficiation plant, and payback
+  ([`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md)).
 - **Conserve** opens the executed material and energy ledgers beside independently
   sized product/feed inventories. Polar studies can import a time-resolved JSON
   or CSV illumination, receiver-visibility, and temperature profile. Numeric
@@ -197,7 +202,10 @@ and hardware derived from NASA's polar propellant design) is in
 [`docs/model-propellant-v06.md`](docs/model-propellant-v06.md). The v0.7
 refuelling demand (a reusable lander's propellant per sortie, with the ledger
 crediting only what it burns) is in
-[`docs/model-refuel-v07.md`](docs/model-refuel-v07.md).
+[`docs/model-refuel-v07.md`](docs/model-refuel-v07.md). The v0.8 ilmenite
+hydrogen-reduction process (soil sizing, magnetic concentration, reduction at
+1,000 °C, and water electrolysis, calibrated to Eagle Engineering 1988) is in
+[`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md).
 
 ## Architecture
 

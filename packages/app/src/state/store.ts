@@ -418,6 +418,13 @@ function normalizeScenario(value: unknown): StudyScenario | null {
   };
 }
 
+
+/** Site, and the equatorial process when it is not the default, for case names. */
+function siteCaseName(params: Pick<SimParams, "site" | "equatorialProcess">): string {
+  if (params.site === "polar") return "Polar";
+  return params.equatorialProcess === "ilmenite" ? "Equatorial ilmenite" : "Equatorial";
+}
+
 function initialScenarioLibrary(params: SimParams, compareParams: SimParams): StudyScenario[] {
   if (typeof window !== "undefined") {
     try {
@@ -442,7 +449,7 @@ function initialScenarioLibrary(params: SimParams, compareParams: SimParams): St
   return [
     {
       id: scenarioId(),
-      name: `${params.site === "polar" ? "Polar" : "Equatorial"} baseline`,
+      name: `${siteCaseName(params)} baseline`,
       kind: "authored",
       params: { ...params },
       createdAt: now,
@@ -451,7 +458,7 @@ function initialScenarioLibrary(params: SimParams, compareParams: SimParams): St
     },
     {
       id: scenarioId(),
-      name: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
+      name: `${siteCaseName(compareParams)} reference`,
       kind: "authored",
       params: { ...compareParams },
       createdAt: now,

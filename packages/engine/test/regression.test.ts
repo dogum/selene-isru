@@ -137,6 +137,21 @@ describe("regression anchors", () => {
     expectRel(matched.campaign.returnRatio, 6.59, 0.001);
   });
 
+  test("ilmenite reduction: Eagle's mare soil plant uses less power but lands more (v0.8)", () => {
+    // New and deliberate: soil chain from Eagle 1988 Table 6-1, bulk mining
+    // from Guerrero-Gonzalez & Zabel 2023, beneficiation and reactor from
+    // Eagle Table 6-5.
+    const ilmenite = simulate({ equatorialProcess: "ilmenite" });
+    expectRel(ilmenite.ilmenite!.soilPerKgO2, 327.3, 0.001);
+    expectRel(ilmenite.energy.secTotal_kWhPerKg, 19.81, 0.001);
+    expectRel(ilmenite.energy.gridPowerW / 1000, 825.3, 0.001);
+    expectRel(ilmenite.logistics.totalInfraMassKg / 1000, 93.75, 0.001);
+    expectRel(ilmenite.campaign.paybackDays!, 585.5, 0.001);
+    // High-Ti mare soil halves the soil handled and matches MRE's payback.
+    const highTi = simulate({ equatorialProcess: "ilmenite", fIlmenite: 0.15 });
+    expectRel(highTi.campaign.paybackDays!, 243.3, 0.001);
+  });
+
   test("keeps the v1 aggregate electrolysis path reachable", () => {
     const fallback = simulate({ oxideModel: false });
     const direct = oxideModelYield({ ...DEFAULTS, oxideModel: false });

@@ -2,8 +2,8 @@ import { simulate } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { useMemo, useState } from "react";
-import { useSize } from "../../lib/hooks";
-import { FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
+import { processScope, useScopedState, useSize } from "../../lib/hooks";
+import { appliesToCase, FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
 import { frontierCsv } from "../../analysis/panelExports";
 import { useStore } from "../../state/store";
 import { ExportButton } from "./ExportButton";
@@ -60,13 +60,17 @@ export function FrontierExplorer(): React.JSX.Element {
   const params = useStore((s) => s.params);
   const applyPatch = useStore((s) => s.applyPatch);
   const [ref, size] = useSize<HTMLDivElement>();
-  const available = FRONTIER_PARAMS.filter((param) => param.site === undefined || param.site === params.site);
-  const [aKey, setAKey] = useState<SweepKey>("targetKgPerDay");
-  const [bKey, setBKey] = useState<SweepKey | "none">(params.site === "polar" ? "chiIce" : "etaCurrent");
+  const available = FRONTIER_PARAMS.filter((param) => appliesToCase(param, params));
+  // Axes and the picked point belong to the site and process they were chosen for.
+  const scope = processScope(params);
+  const [aKey, setAKey] = useScopedState<SweepKey>(scope, () => "targetKgPerDay");
+  const [bKey, setBKey] = useScopedState<SweepKey | "none">(scope, () =>
+    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? "fIlmenite" : "etaCurrent"
+  );
   const [objective, setObjective] = useState<Objective>("mass-sec");
   const [maxMissions, setMaxMissions] = useState(30);
   const [maxPowerMw, setMaxPowerMw] = useState(20);
-  const [candidate, setCandidate] = useState<FrontierPoint | null>(null);
+  const [candidate, setCandidate] = useScopedState<FrontierPoint | null>(scope, () => null);
 
   const width = Math.max(280, size.width);
   const height = 280;

@@ -1,5 +1,6 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
 import type { SimParams } from "../types";
+import { ilmeniteSoilPerKgO2, reducesIlmenite } from "./ilmenite";
 
 export interface ExcavationOutput {
   cuttingForceN: number;
@@ -10,6 +11,7 @@ export interface ExcavationOutput {
 }
 
 export function regolithPerKgProduct(params: SimParams, xO2Effective?: number): number {
+  if (reducesIlmenite(params)) return ilmeniteSoilPerKgO2(params);
   if (params.site === "equatorial") {
     return 1 / (xO2Effective ?? params.xO2 * params.fExtract);
   }
@@ -28,8 +30,13 @@ export function simulateExcavation(params: SimParams, xO2Effective?: number): Ex
     params.dBlade;
   const mechPowerW = (cuttingForceN * params.vCut) / params.etaDrive;
   const regolithPerKg = regolithPerKgProduct(params, xO2Effective);
-  const secExcavation_JPerKg = params.eMining * regolithPerKg;
-  const fleetMassKg = params.kExcFleet * params.targetKgPerDay;
+  // MRE and polar fleets scale with product; an ilmenite plant moves tens of
+  // times more soil per kg of oxygen, so its fleet scales with soil mined.
+  const ilmenite = reducesIlmenite(params);
+  const secExcavation_JPerKg = (ilmenite ? params.eIlmMining : params.eMining) * regolithPerKg;
+  const fleetMassKg = ilmenite
+    ? params.kIlmMiningMass * (params.targetKgPerDay * regolithPerKg)
+    : params.kExcFleet * params.targetKgPerDay;
 
   return {
     cuttingForceN,

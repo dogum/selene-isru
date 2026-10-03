@@ -6,6 +6,7 @@ import { simulateRefuel, sortiePropellantKg, type SortiePropellant } from "./mod
 import { energyLedger } from "./modules/energyLedger";
 import { simulateElectrolysis } from "./modules/electrolysis";
 import { simulateExcavation } from "./modules/excavation";
+import { reducesIlmenite, simulateIlmenite } from "./modules/ilmenite";
 import { simulateCampaign } from "./modules/campaign";
 import { simulateLogistics } from "./modules/logistics";
 import { materialLedger } from "./modules/materials";
@@ -23,6 +24,7 @@ import type {
 } from "./site-design/types";
 import type {
   FlowEdge,
+  IlmeniteResult,
   PowerStrategy,
   SimParams,
   SimResult,
@@ -54,6 +56,7 @@ export {
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
 export { campaignAt, campaignTimeline } from "./modules/campaign";
+export { ilmeniteOxygenFraction, ilmeniteSeparates, ilmeniteSoilPerKgO2, reducesIlmenite } from "./modules/ilmenite";
 export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
 export { payloadPerMissionKg } from "./modules/logistics";
 export { refuelTimeline, sortiePropellantKg } from "./modules/refuel";
@@ -73,7 +76,9 @@ export { secSubDeliveredJPerKg, secSubJPerKg } from "./modules/thermal";
 export type {
   CampaignResult,
   DeploymentManifest,
+  EquatorialProcess,
   FlowEdge,
+  IlmeniteResult,
   PolarProduct,
   RefuelDemand,
   RefuelResult,
@@ -116,6 +121,9 @@ export function simulate(
   const excavation = simulateExcavation(params, electrolysis.xO2Effective);
   const thermal = simulateThermal(params);
   const siteProfile = resolvePolarProfile(params);
+  // The equatorial plant runs MRE unless it reduces ilmenite with hydrogen.
+  const ilmenite = reducesIlmenite(params) ? simulateIlmenite(params, params.targetKgPerDay) : null;
+  const mre = params.site === "equatorial" && ilmenite === null;
   const sabatier =
     params.site === "polar" && params.enableSabatier
       ? simulateSabatier(params, params.targetKgPerDay)
@@ -134,7 +142,7 @@ export function simulate(
       ? sortiePropellantKg(params)
       : null;
 
-  const production = productionState(params, excavation.regolithPerKgProduct, sabatier, propellant);
+  const production = productionState(params, excavation.regolithPerKgProduct, sabatier, propellant, ilmenite !== null);
   const cryo = simulateCryo(params, storageDemands(params, production, refuelSortie), siteProfile.profile);
   const processEnergyLines = energyLineItems(
     params,
@@ -144,7 +152,8 @@ export function simulate(
     thermal.heaterLoss_JPerKg,
     cryo.conditioningSecKWhPerKg,
     cryo.cryocoolerPowerW,
-    waterElectrolysis
+    waterElectrolysis,
+    ilmenite
   );
   const supplementalLoads = (options.supplementalLoads ?? [])
     .filter((load) => Number.isFinite(load.powerW) && load.powerW > 0);
@@ -173,6 +182,7 @@ export function simulate(
     electrolysis,
     cryo,
     waterElectrolysis,
+    ilmenite,
     supplementalLoads
   );
   const power = simulatePower(
@@ -183,12 +193,14 @@ export function simulate(
   );
   // Polar plants always carry the water extractor; the Sabatier loop adds its
   // reactor on top, and propellant mode its electrolyzer. Equatorial plants
-  // are the MRE reactor. Liquefiers are part of the cryo block.
+  // are the MRE reactor, or the ilmenite reactor and its electrolyzer, whose
+  // beneficiation plant is listed apart. Liquefiers are part of the cryo block.
   const reactorMassKg =
-    (params.site === "equatorial" || params.enableSabatier
+    (mre || sabatier !== null
       ? params.kReactorMass * params.targetKgPerDay
       : 0) +
     (propellant !== null ? params.kElectrolyzerMass * params.targetKgPerDay : 0) +
+    (ilmenite !== null ? ilmenite.reactorMassKg + ilmenite.electrolyzerMassKg : 0) +
     thermal.extractorMassKg;
   // The product each landed kilogram is measured against, before storage
   // losses and downtime: O2 at the equator, water at the pole, propellant
@@ -207,6 +219,7 @@ export function simulate(
     reactorMassKg,
     power.selectedPowerMassKg,
     cryo.cryoMassKg,
+    ilmenite === null ? 0 : ilmenite.beneficiationMassKg,
     productKgPerDay,
     options.supplementalMasses
   );
@@ -274,12 +287,12 @@ export function simulate(
     usedKgPerDay: refuelOutput === null ? null : refuelOutput.refuel.usedKgPerDay,
     sortieIntervalDays: refuelOutput === null ? null : refuelOutput.refuel.sortieIntervalDays
   });
-  const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
-  const materials = materialLedger(params, production);
+  const construction = simulateConstruction(params, production.slagKgPerDay);
+  const materials = materialLedger(params, production, ilmenite);
   const warnings: Warning[] = [
     ...normalized.warnings,
     ...siteProfile.warnings,
-    ...(params.site === "equatorial" ? electrolysis.warnings : []),
+    ...(mre ? electrolysis.warnings : []),
     ...cryo.warnings,
     ...power.warnings,
     ...construction.warnings,
@@ -307,7 +320,7 @@ export function simulate(
       limit: 1e-6
     });
   }
-  if (params.site === "equatorial" && params.oxideModel) {
+  if (mre && params.oxideModel) {
     const oxideSum =
       params.oxideSiO2 + params.oxideTiO2 + params.oxideAl2O3 +
       params.oxideFeO + params.oxideMgO + params.oxideCaO;
@@ -340,9 +353,9 @@ export function simulate(
       fleetMassKg: excavation.fleetMassKg
     },
     electrolysis: {
-      secElec_JPerKg: params.site === "equatorial" ? electrolysis.secElec_JPerKg : 0,
-      secThermal_JPerKg: params.site === "equatorial" ? electrolysis.secThermal_JPerKg : 0,
-      currentA: params.site === "equatorial" ? electrolysis.currentA : 0,
+      secElec_JPerKg: mre ? electrolysis.secElec_JPerKg : 0,
+      secThermal_JPerKg: mre ? electrolysis.secThermal_JPerKg : 0,
+      currentA: mre ? electrolysis.currentA : 0,
       cellVoltageV: params.Vcell,
       jLimit_APerM2: electrolysis.jLimit_APerM2,
       jOperating_APerM2: params.jOperating,
@@ -399,6 +412,7 @@ export function simulate(
     logistics,
     campaign,
     refuel: refuelOutput === null ? null : refuelOutput.refuel,
+    ilmenite,
     materials,
     construction,
     warnings
@@ -451,14 +465,17 @@ function productionState(
   params: SimParams,
   regolithPerKgProduct: number,
   sabatier: ActiveSabatier | null,
-  propellant: WaterElectrolysisOutput | null
+  propellant: WaterElectrolysisOutput | null,
+  reducesIlmenite: boolean
 ): ProductionState {
   const regolithKgPerDay = params.targetKgPerDay * regolithPerKgProduct;
   if (params.site === "equatorial") {
     return {
       targetKgPerDay: params.targetKgPerDay,
       regolithKgPerDay,
-      slagKgPerDay: regolithKgPerDay - params.targetKgPerDay,
+      // Ilmenite reduction leaves granular tailings and spent solids, not a
+      // castable melt.
+      slagKgPerDay: reducesIlmenite ? 0 : regolithKgPerDay - params.targetKgPerDay,
       o2KgPerDay: params.targetKgPerDay,
       waterKgPerDay: 0,
       grossH2KgPerDay: 0,
@@ -565,12 +582,24 @@ function energyLineItems(
   heaterLoss_JPerKg: number | null,
   conditioningSecKWhPerKg: number,
   cryocoolerPowerW: number,
-  waterElectrolysis: Pick<WaterElectrolysisOutput, "secWaterElectrolysis_JPerKg"> | null
+  waterElectrolysis: Pick<WaterElectrolysisOutput, "secWaterElectrolysis_JPerKg"> | null,
+  ilmenite: IlmeniteResult | null
 ): EnergyLine[] {
   const mdotProduct_kgPerS = params.targetKgPerDay / SECONDS_PER_DAY;
   const cryoJPerKg =
     conditioningSecKWhPerKg * J_PER_KWH +
     (mdotProduct_kgPerS > 0 ? cryocoolerPowerW / mdotProduct_kgPerS : 0);
+
+  if (ilmenite !== null) {
+    return [
+      { from: "mine", to: "beneficiation", jPerKg: secExcavation_JPerKg },
+      { from: "beneficiation", to: "reduction", jPerKg: ilmenite.secBeneficiation_JPerKg },
+      { from: "reduction", to: "electrolysis", jPerKg: ilmenite.secSensible_JPerKg + ilmenite.secReaction_JPerKg },
+      { from: "reduction", to: "parasitic", jPerKg: ilmenite.secReactorLoss_JPerKg },
+      { from: "electrolysis", to: "product", jPerKg: ilmenite.secWaterElectrolysis_JPerKg },
+      { from: "cryo", to: "product", jPerKg: cryoJPerKg }
+    ];
+  }
 
   if (params.site === "equatorial") {
     return [

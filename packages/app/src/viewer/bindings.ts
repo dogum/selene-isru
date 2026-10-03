@@ -97,6 +97,25 @@ export function reactorActivity(currentA: number): number {
   return clamp(currentA / REACTOR_FULL_CURRENT_A, 0.08, 1);
 }
 
+/**
+ * Ilmenite reactor activity from its heater power: the feed heat, reduction
+ * heat, and losses. Full at 520 kW, which matches the MRE scale per kg of
+ * oxygen at the defaults (600 kA and 520 kW both near 3.9 t/day).
+ */
+export const ILMENITE_REACTOR_FULL_HEAT_W = 520_000;
+export function ilmeniteReactorHeatW(result: Pick<SimResult, "ilmenite" | "production">): number {
+  if (result.ilmenite === null) return 0;
+  const { secSensible_JPerKg, secReaction_JPerKg, secReactorLoss_JPerKg } = result.ilmenite;
+  return ((secSensible_JPerKg + secReaction_JPerKg + secReactorLoss_JPerKg) * result.production.targetKgPerDay) / 86_400;
+}
+
+/** Visible reactor activity for whichever equatorial process runs. */
+export function processReactorActivity(result: Pick<SimResult, "ilmenite" | "production" | "electrolysis">): number {
+  return result.ilmenite === null
+    ? reactorActivity(result.electrolysis.currentA)
+    : clamp(ilmeniteReactorHeatW(result) / ILMENITE_REACTOR_FULL_HEAT_W, 0.08, 1);
+}
+
 /** melt thermal load from target melt temperature, normalized over 1400–2300 K */
 export const MELT_LOAD_FLOOR_K = 1_400;
 export const MELT_LOAD_SPAN_K = 900;
@@ -330,6 +349,7 @@ export const GROUP_CAMERA: Record<SiteMode, Record<string, string>> = {
   equatorial: {
     mission: "overview",
     excavation: "excavator",
+    "oxygen-process": "reactor",
     "extraction-mre": "reactor",
     cryo: "tanks",
     power: "station",

@@ -394,6 +394,20 @@ export const PHYSICAL_CONSTANTS = {
     "description": "Sabatier reaction entropy",
     "source": "standard reaction thermodynamics"
   },
+  "cpIlmeniteFeed": {
+    "value": 1080,
+    "unit": "J/(kg*K)",
+    "kind": "physical",
+    "description": "Mean heat capacity of the ilmenite reactor feed, ambient to reaction temperature",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6: 0.3 kWh/(t*C)"
+  },
+  "dHIlmeniteReduction": {
+    "value": 294000,
+    "unit": "J/kg",
+    "kind": "physical",
+    "description": "Heat of FeTiO3 + H2 -> Fe + TiO2 + H2O per kg of ilmenite reduced",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), App. A: 294 kJ/kg at 900 C"
+  },
   "tDay": {
     "value": 354,
     "unit": "h",
@@ -1771,6 +1785,144 @@ export const PARAM_META = {
     "description": "Surface to staging orbit delta-v",
     "source": "Merancy 2023, NRHO: The Artemis Orbit, NASA Architecture Workshop, LLO ascent ~1,860 m/s (NRHO ~2,700 m/s)"
   },
+  "equatorialProcess": {
+    "value": "mre",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Equatorial oxygen process: molten regolith electrolysis, or hydrogen reduction of ilmenite",
+    "source": "model switch"
+  },
+  "fIlmenite": {
+    "value": 0.075,
+    "min": 0.005,
+    "max": 0.25,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Ilmenite mass fraction in the mined soil",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1: mare soil at 5 vol% (7.5 wt%) ilmenite; high-Ti mare soils reach about 17 wt%, highland soils about 1 wt% (Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050))"
+  },
+  "fIlmSized": {
+    "value": 0.438,
+    "min": 0.2,
+    "max": 0.9,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Share of the mined soil inside the reactor's feed size window",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1: 44.9% of soil 10084 below and 11.3% above the 0.045-0.5 mm feed sizes"
+  },
+  "etaIlmRecovery": {
+    "value": 0.98,
+    "min": 0.5,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Ilmenite recovered by magnetic separation",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1 and App. A.9: multi-stage induced magnetic roll"
+  },
+  "ilmConcentrateGrade": {
+    "value": 0.9,
+    "min": 0.1,
+    "max": 1,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Ilmenite mass fraction in the reactor feed concentrate",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), App. A.9: 90 wt% ilmenite product stream; Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050) cap magnetic enrichment at 3x after Berggren et al. simulant data"
+  },
+  "fIlmConversion": {
+    "value": 0.9,
+    "min": 0.2,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Fraction of the fed ilmenite reduced to iron and rutile",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1: 90% in a three-stage fluidized bed, 4 h residence; Sargeant et al. 2020 measured about a third in short static runs at 1000 C"
+  },
+  "TIlmReactor": {
+    "value": 1273,
+    "min": 1073,
+    "max": 1373,
+    "unit": "K",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Ilmenite reduction reactor temperature",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6.2: fluidized bed at 1000 C and 10 atm"
+  },
+  "etaIlmHeatRecovery": {
+    "value": 0.5,
+    "min": 0,
+    "max": 0.9,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Share of the feed's sensible heat recovered from hot solids and gas",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6: multistage counter-current reactor recovers 50%"
+  },
+  "fIlmHeatLoss": {
+    "value": 0.25,
+    "min": 0,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Reactor heat loss, heater inefficiency and gas recycle, as a fraction of reactor heat",
+    "source": "calibrated to Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 1,160 kW process power for the 1,000 t/yr soil plant"
+  },
+  "eIlmMining": {
+    "value": 10100,
+    "min": 3000,
+    "max": 150000,
+    "unit": "J/kg-regolith",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Bulk soil excavation energy",
+    "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1 and Table 2: RASSOR fleet, 19.3 kW for 61 vehicles of 2.7 t/d; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5 gives 11.9 kJ/kg"
+  },
+  "kIlmMiningMass": {
+    "value": 0.0244,
+    "min": 0.005,
+    "max": 0.2,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Excavation fleet mass per kg/day of soil mined",
+    "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1: 66 kg RASSOR per 2.7 t/d; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5 gives 0.014"
+  },
+  "eIlmBeneficiation": {
+    "value": 87000,
+    "min": 20000,
+    "max": 200000,
+    "unit": "J/kg-regolith",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Size sorting, magnetic separation and handling energy per kg of soil",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 1,002 kW for 995 t/d of soil; Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Table 2 gives about 58 kJ/kg"
+  },
+  "kIlmBeneficiationMass": {
+    "value": 0.094,
+    "min": 0.02,
+    "max": 0.5,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Beneficiation plant mass per kg/day of soil processed",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 93.6 t for 995 t/d of soil; Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Table 2 gives about 0.22"
+  },
+  "kIlmReactorMass": {
+    "value": 18.6,
+    "min": 5,
+    "max": 60,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Reduction reactor, heater, gas handling and radiator mass per kg/day of oxygen",
+    "source": "derived from Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515): Table 6-5 process area (65.1 t at 1,000 t/yr) less electrolysis, liquefier and LOX tanks in the Table 6-3 pilot proportion (87%)"
+  },
   "Pinternal": {
     "value": 101325,
     "min": 50000,
@@ -2102,6 +2254,20 @@ export const DEFAULTS = {
   "McargoUp": 5000,
   "dvDescent": 2050,
   "dvAscent": 1860,
+  "equatorialProcess": "mre",
+  "fIlmenite": 0.075,
+  "fIlmSized": 0.438,
+  "etaIlmRecovery": 0.98,
+  "ilmConcentrateGrade": 0.9,
+  "fIlmConversion": 0.9,
+  "TIlmReactor": 1273,
+  "etaIlmHeatRecovery": 0.5,
+  "fIlmHeatLoss": 0.25,
+  "eIlmMining": 10100,
+  "kIlmMiningMass": 0.0244,
+  "eIlmBeneficiation": 87000,
+  "kIlmBeneficiationMass": 0.094,
+  "kIlmReactorMass": 18.6,
   "Pinternal": 101325,
   "Eslag": 80000000000,
   "alphaCte": 0.000007,

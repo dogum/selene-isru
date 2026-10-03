@@ -7,7 +7,7 @@ import {
   sampleUncertainty,
   simulate
 } from "@selene-isru/engine";
-import type { CampaignResult, ParamMeta, RefuelResult, SimParams, UncertaintySpec } from "@selene-isru/engine";
+import type { CampaignResult, IlmeniteResult, ParamMeta, RefuelResult, SimParams, UncertaintySpec } from "@selene-isru/engine";
 import { evidenceForParam } from "../controls/evidence";
 import type { StudyScenario } from "../state/store";
 import { formatQtyText } from "../lib/format";
@@ -334,7 +334,23 @@ const REFUEL_COLUMNS: Array<keyof RefuelResult> = [
   "earthPropellantKgPerYear"
 ];
 
-const STANDARD_MANIFEST = ["excavation fleet", "reactor/plant", "power system", "cryo block"];
+/** Ilmenite reduction fields; empty for MRE and polar cases. Energies are per kg of oxygen. */
+const ILMENITE_COLUMNS: Array<keyof IlmeniteResult> = [
+  "soilPerKgO2",
+  "soilKgPerDay",
+  "concentrateKgPerDay",
+  "concentrateGrade",
+  "tailingsKgPerDay",
+  "ironKgPerDay",
+  "secMining_JPerKg",
+  "secBeneficiation_JPerKg",
+  "secSensible_JPerKg",
+  "secReaction_JPerKg",
+  "secReactorLoss_JPerKg",
+  "secWaterElectrolysis_JPerKg"
+];
+
+const STANDARD_MANIFEST = ["excavation fleet", "reactor/plant", "beneficiation plant", "power system", "cryo block"];
 
 /**
  * One row per case and one column per quantity: headline outputs named by
@@ -387,6 +403,10 @@ export function scenariosCsv(scenarios: StudyScenario[], exportedAt: Date = new 
     ...REFUEL_COLUMNS.map((key) => ({
       header: `refuel.${key}`,
       value: (row: CsvCaseRow) => row.result.refuel?.[key] ?? ""
+    })),
+    ...ILMENITE_COLUMNS.map((key) => ({
+      header: `ilmenite.${key}`,
+      value: (row: CsvCaseRow) => row.result.ilmenite?.[key] ?? ""
     })),
     ...STANDARD_MANIFEST.map((subsystem) => ({
       header: `manifest.${subsystem} [kg]`,
@@ -466,11 +486,15 @@ export function reportSnapshot(params: SimParams): {
   uncertainty: ReportUncertainty;
 } {
   const result = simulate(params);
-  const dominant: keyof SimParams = params.site === "polar" ? "chiIce" : "etaCurrent";
+  // The input with the widest stated spread for this plant: ice grade at the
+  // pole, ilmenite grade for an ilmenite plant, MRE current efficiency otherwise.
+  const dominant: keyof SimParams =
+    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? "fIlmenite" : "etaCurrent";
+  const spread: Partial<Record<keyof SimParams, number>> = { chiIce: 0.25, fIlmenite: 0.3, etaCurrent: 0.12 };
   // A fixed, stated spec so a printed report says exactly what it sampled.
   const spec: UncertaintySpec[] = [
     { key: "targetKgPerDay", rel: 0.1 },
-    { key: dominant, rel: dominant === "chiIce" ? 0.25 : 0.12 }
+    { key: dominant, rel: spread[dominant] ?? 0.12 }
   ];
   const samples = 192;
   const seed = 2026;

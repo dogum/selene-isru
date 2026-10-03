@@ -11,7 +11,10 @@ export type SweepKey =
   | "Nmli"
   | "etaCell"
   | "alphaSpecific"
-  | "shieldDesignM";
+  | "shieldDesignM"
+  | "fIlmenite"
+  | "ilmConcentrateGrade"
+  | "etaIlmHeatRecovery";
 
 export interface SweepParam {
   key: SweepKey;
@@ -20,6 +23,17 @@ export interface SweepParam {
   max: number;
   log?: boolean;
   site?: SimParams["site"];
+  /** restrict to one equatorial oxygen process; omit = either */
+  process?: SimParams["equatorialProcess"];
+}
+
+/** Whether a site- or process-specific option acts on this configuration. */
+export function appliesToCase(
+  option: { site?: SimParams["site"]; process?: SimParams["equatorialProcess"] },
+  params: Pick<SimParams, "site" | "equatorialProcess">
+): boolean {
+  if (option.site !== undefined && option.site !== params.site) return false;
+  return option.process === undefined || params.site !== "equatorial" || option.process === params.equatorialProcess;
 }
 
 /**
@@ -34,9 +48,12 @@ export const FRONTIER_PARAMS: SweepParam[] = [
   { key: "etaCell", label: "PV efficiency", min: 0.15, max: 0.4 },
   { key: "alphaSpecific", label: "Nuclear kg/kW", min: 8, max: 80, log: true },
   { key: "Nmli", label: "MLI layers", min: 10, max: 80 },
-  { key: "Vcell", label: "MRE cell voltage", min: 3.5, max: 5, site: "equatorial" },
-  { key: "etaCurrent", label: "Current efficiency", min: 0.5, max: 0.95, site: "equatorial" },
-  { key: "shieldDesignM", label: "Shield depth", min: 0.5, max: 5, site: "equatorial" },
+  { key: "Vcell", label: "MRE cell voltage", min: 3.5, max: 5, site: "equatorial", process: "mre" },
+  { key: "etaCurrent", label: "Current efficiency", min: 0.5, max: 0.95, site: "equatorial", process: "mre" },
+  { key: "shieldDesignM", label: "Shield depth", min: 0.5, max: 5, site: "equatorial", process: "mre" },
+  { key: "fIlmenite", label: "Ilmenite in soil", min: 0.01, max: 0.2, log: true, site: "equatorial", process: "ilmenite" },
+  { key: "ilmConcentrateGrade", label: "Concentrate grade", min: 0.2, max: 1, site: "equatorial", process: "ilmenite" },
+  { key: "etaIlmHeatRecovery", label: "Feed heat recovered", min: 0, max: 0.9, site: "equatorial", process: "ilmenite" },
   { key: "chiIce", label: "Polar ice fraction", min: 0.005, max: 0.12, log: true, site: "polar" }
 ];
 

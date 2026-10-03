@@ -1,4 +1,4 @@
-import type { MaterialFlow, ProcessBalance, SimParams } from "../types";
+import type { IlmeniteResult, MaterialFlow, ProcessBalance, SimParams } from "../types";
 
 interface ProductionLedger {
   regolithKgPerDay: number;
@@ -20,20 +20,49 @@ export interface MaterialLedger {
 
 function balance(id: string, label: string, massInKgPerDay: number, massOutKgPerDay: number): ProcessBalance {
   const rawResidual = massInKgPerDay - massOutKgPerDay;
+  // Roundoff grows with the flow: a lean ilmenite plant mines thousands of
+  // tonnes a day.
+  const toleranceKgPerDay = Math.max(1e-9, 64 * Number.EPSILON * Math.max(Math.abs(massInKgPerDay), Math.abs(massOutKgPerDay)));
   return {
     id,
     label,
     massInKgPerDay,
     massOutKgPerDay,
-    residualKgPerDay: Math.abs(rawResidual) < 1e-9 ? 0 : rawResidual
+    residualKgPerDay: Math.abs(rawResidual) < toleranceKgPerDay ? 0 : rawResidual
   };
 }
 
-export function materialLedger(params: SimParams, production: ProductionLedger): MaterialLedger {
+export function materialLedger(
+  params: SimParams,
+  production: ProductionLedger,
+  ilmenite: IlmeniteResult | null = null
+): MaterialLedger {
   const flows: MaterialFlow[] = [];
   const balances: ProcessBalance[] = [];
 
-  if (params.site === "equatorial") {
+  if (ilmenite !== null) {
+    // Sizing and separation reject most of the soil; the reactor takes the
+    // concentrate's oxygen as water, and electrolysis returns its hydrogen.
+    flows.push(
+      { material: "regolith", from: "terrain", to: "beneficiation", kgPerDay: ilmenite.soilKgPerDay },
+      { material: "tailings", from: "beneficiation", to: "tailings", kgPerDay: ilmenite.tailingsKgPerDay },
+      { material: "ilmenite-concentrate", from: "beneficiation", to: "reduction", kgPerDay: ilmenite.concentrateKgPerDay },
+      { material: "hydrogen", from: "electrolysis", to: "reduction", kgPerDay: ilmenite.hydrogenRecycleKgPerDay },
+      { material: "water", from: "reduction", to: "electrolysis", kgPerDay: ilmenite.waterKgPerDay },
+      { material: "spent-solids", from: "reduction", to: "tailings", kgPerDay: ilmenite.spentSolidsKgPerDay },
+      { material: "oxygen", from: "electrolysis", to: "product-storage", kgPerDay: production.o2KgPerDay }
+    );
+    balances.push(
+      balance("ilmenite-beneficiation", "Soil sizing and ilmenite separation", ilmenite.soilKgPerDay, ilmenite.concentrateKgPerDay + ilmenite.tailingsKgPerDay),
+      balance(
+        "ilmenite-reduction",
+        "Hydrogen reduction of ilmenite",
+        ilmenite.concentrateKgPerDay + ilmenite.hydrogenRecycleKgPerDay,
+        ilmenite.spentSolidsKgPerDay + ilmenite.waterKgPerDay
+      ),
+      balance("water-electrolysis", "Water electrolysis", ilmenite.waterKgPerDay, production.o2KgPerDay + ilmenite.hydrogenRecycleKgPerDay)
+    );
+  } else if (params.site === "equatorial") {
     flows.push(
       { material: "regolith", from: "terrain", to: "mre", kgPerDay: production.regolithKgPerDay },
       { material: "oxygen", from: "mre", to: "product-storage", kgPerDay: production.o2KgPerDay },
