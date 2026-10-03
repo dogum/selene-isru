@@ -58,3 +58,21 @@ export function compareWithLive(scenario: StudyScenario, live: LiveCase): LiveCo
   }
   return { comparable: true, inputs: differingInputCount(scenario.params, live.params), layout: false };
 }
+
+/**
+ * The saved case a live custom design belongs to: one holding the same design
+ * (by design id, which loading and saving keep and a new, reset, seeded, or
+ * duplicated design does not). Undo and redo of design edits therefore carry
+ * the link with them. When several saved cases hold the design (it was saved
+ * as new twice), the one it was last loaded from or saved as is preferred,
+ * then the most recently updated.
+ */
+export function linkedCustomCase(
+  scenarios: readonly StudyScenario[],
+  preferredId: string | null,
+  design: Pick<SiteDesignDocument, "id">
+): StudyScenario | null {
+  const holders = scenarios.filter((scenario) => scenario.kind === "custom" && scenario.design?.id === design.id);
+  return holders.find((scenario) => scenario.id === preferredId) ??
+    holders.reduce<StudyScenario | null>((latest, scenario) => (latest === null || scenario.updatedAt > latest.updatedAt ? scenario : latest), null);
+}

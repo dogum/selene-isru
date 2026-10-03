@@ -84,8 +84,9 @@ describe("undo and redo of authored edits", () => {
   it("ignores edits that change nothing", () => {
     store().setParam("targetKgPerDay", DEFAULTS.targetKgPerDay);
     store().applyPatch({});
-    // swapping two identical cases changes nothing on screen either
+    // swapping two identical cases, names included, changes nothing on screen either
     store().setCompareFromCurrent();
+    store().setUi({ compareScenarioName: store().ui.currentScenarioName });
     store().swapCompare();
     expect(store().paramHistory.past).toHaveLength(0);
   });
@@ -152,6 +153,31 @@ describe("undo and redo of authored edits", () => {
     store().setCompareFromCurrent();
     store().undoParams();
     expect(store().compareParams.reserveDays).toBe(45);
+  });
+
+  it("records a swap of equal inputs under different names, and drops a stale swap redo", () => {
+    store().setUi({ currentScenarioName: "Working" });
+    store().setCompareFromCurrent();
+    expect(store().ui.compareScenarioName).toBe("Working snapshot");
+    store().swapCompare();
+    expect(store().ui.currentScenarioName).toBe("Working snapshot");
+    store().undoParams();
+    expect(store().ui.currentScenarioName).toBe("Working");
+    expect(store().ui.compareScenarioName).toBe("Working snapshot");
+
+    // undo a swap, then take a new comparison: redo must not bring the old one back
+    later();
+    store().setParam("targetKgPerDay", 1500);
+    store().setCompareFromCurrent();
+    store().applyPatch({ site: "polar" });
+    store().swapCompare();
+    store().undoParams();
+    store().setParam("reserveDays", 45);
+    store().setCompareFromCurrent();
+    const snapshot = store().compareParams;
+    expect(store().paramHistory.future.some((entry) => entry.compare !== undefined)).toBe(false);
+    store().redoParams();
+    expect(store().compareParams).toEqual(snapshot);
   });
 
   it("keeps at most the history limit", () => {

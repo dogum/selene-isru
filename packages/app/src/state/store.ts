@@ -147,9 +147,9 @@ export interface CustomSiteState {
   editor: CustomEditorSession;
   history: CustomDesignHistory;
   /**
-   * The saved library case this design was loaded from or last saved as, so
-   * the workspace can update it in place; null for a new, reset, seeded, or
-   * imported design (session-local).
+   * The saved library case this design was last loaded from or saved as. The
+   * link itself follows the design id (see `linkedCustomCase`); this only
+   * picks between saved cases holding the same design (session-local).
    */
   sourceScenarioId: string | null;
 }
@@ -878,8 +878,7 @@ export const useStore = create<Store>((set, get) => {
         customSite: {
           ...get().customSite,
           viewMode: "planner",
-          editor: customEditorSession(),
-          sourceScenarioId: null
+          editor: customEditorSession()
         }
       });
       if (get().workspaceMode === "custom") {
@@ -904,8 +903,7 @@ export const useStore = create<Store>((set, get) => {
         customSite: {
           ...get().customSite,
           viewMode: "planner",
-          editor: customEditorSession(),
-          sourceScenarioId: null
+          editor: customEditorSession()
         },
         ui: {
           ...get().ui,
@@ -1521,8 +1519,12 @@ export const useStore = create<Store>((set, get) => {
     },
 
     setCompareFromCurrent: () => {
-      const { params, result } = get();
+      const { params, result, paramHistory } = get();
+      // A redo step that restores a comparison (from an undone swap) would
+      // overwrite this one, so it and the steps after it go.
+      const stale = paramHistory.future.findIndex((entry) => entry.compare !== undefined);
       set({
+        ...(stale === -1 ? {} : { paramHistory: { ...paramHistory, future: paramHistory.future.slice(0, stale) } }),
         compareParams: { ...params },
         compareResult: result,
         ui: {
@@ -1533,7 +1535,10 @@ export const useStore = create<Store>((set, get) => {
     },
 
     swapCompare: () => {
-      if (recordsAuthoredHistory() && !sameParams(get().compareParams, get().params)) {
+      const { ui: before } = get();
+      const changesSomething =
+        !sameParams(get().compareParams, get().params) || before.compareScenarioName !== before.currentScenarioName;
+      if (recordsAuthoredHistory() && changesSomething) {
         // a swap changes both sides, so its step keeps the comparison too
         rememberAuthoredCase(null, true);
       }
@@ -1830,7 +1835,6 @@ export const useStore = create<Store>((set, get) => {
         return;
       }
       activateCustomDesign(parsed.document, true, parsed.document.name);
-      set({ customSite: { ...get().customSite, sourceScenarioId: null } });
     },
 
     startTour: (id) => {

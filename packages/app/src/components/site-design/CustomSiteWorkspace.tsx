@@ -12,7 +12,7 @@ import type {
   SiteDesignFindingSeverity
 } from "@selene-isru/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { compareWithLive } from "../../analysis/caseDiff";
+import { compareWithLive, linkedCustomCase } from "../../analysis/caseDiff";
 import { downloadText } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
 import { useIsMobile } from "../../lib/hooks";
@@ -104,10 +104,9 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const saveCurrentScenario = useStore((state) => state.saveCurrentScenario);
   const studyLibraryFull = useStore((state) => state.scenarioLibrary.length >= MAX_STUDY_SCENARIOS);
   const updateScenarioFromCurrent = useStore((state) => state.updateScenarioFromCurrent);
-  // The saved case this design was opened from or saved as, if it is still in the library.
+  // The saved case this design belongs to, if it is still in the library.
   const sourceCase = useStore((state) =>
-    state.scenarioLibrary.find((scenario) =>
-      scenario.id === state.customSite.sourceScenarioId && scenario.kind === "custom") ?? null);
+    linkedCustomCase(state.scenarioLibrary, state.customSite.sourceScenarioId, state.customSite.design));
   const liveParams = useStore((state) => state.params);
   const [confirmUpdate, setConfirmUpdate] = useState(false);
   const flyTo = useStore((state) => state.flyTo);
