@@ -6,6 +6,7 @@ import { KpiCells } from "../KpiStrip";
 import { WarningsDock } from "../WarningsDock";
 import { EnergySankey } from "../panels/EnergySankey";
 import { MassManifest } from "../panels/MassManifest";
+import { CampaignPanel } from "../panels/CampaignPanel";
 import { PowerTrade } from "../panels/PowerTrade";
 import { TradeStudyPanel } from "../panels/TradeStudyPanel";
 import { BottomSheet } from "./BottomSheet";
@@ -50,6 +51,7 @@ const TABS: Array<{ id: MobileTab; label: string }> = [
   { id: "energy", label: "ENERGY" },
   { id: "mass", label: "MASS" },
   { id: "power", label: "POWER" },
+  { id: "campaign", label: "CAMPAIGN" },
   { id: "study", label: "STUDY" }
 ];
 
@@ -89,6 +91,7 @@ export function MobileSheetContent(): React.JSX.Element {
             {tab === "energy" && <EnergySankey vertical />}
             {tab === "mass" && <MassManifest />}
             {tab === "power" && <PowerTrade />}
+            {tab === "campaign" && <CampaignPanel />}
             {tab === "study" && <TradeStudyPanel />}
           </div>
         </>

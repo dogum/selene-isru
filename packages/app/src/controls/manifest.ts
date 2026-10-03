@@ -1,4 +1,4 @@
-import { PARAM_META } from "@selene-isru/engine";
+import { DEFAULTS, PARAM_META } from "@selene-isru/engine";
 import type { SimParams, SimResult } from "@selene-isru/engine";
 import { evidenceForParam, type ParamEvidence } from "./evidence";
 
@@ -76,6 +76,13 @@ export const GROUPS: GroupDef[] = [
     label: "Logistics",
     engineGroup: "logistics",
     readout: (r) => ({ value: r.logistics.nMissions, unit: "msn" })
+  },
+  {
+    id: "campaign",
+    label: "Campaign",
+    engineGroup: "campaign",
+    // Payback day; a dash (NaN) when it does not fall within the campaign.
+    readout: (r) => ({ value: r.campaign.paysBackInCampaign ? (r.campaign.paybackDays ?? Number.NaN) : Number.NaN, unit: "days" })
   },
   {
     id: "construction",
@@ -215,9 +222,39 @@ export function matchesParamQuery(def: NumericParamDef, groupLabel: string, quer
   return terms.every((term) => haystack.includes(term));
 }
 
+/**
+ * Non-numeric inputs a rail group edits through its own controls (selects
+ * and the Sabatier switch). They count toward CHANGED like any slider.
+ */
+const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
+  cryo: ["storageStream", "cryoControlMode"],
+  power: ["polarProfileMode"],
+  sabatier: ["enableSabatier"],
+  campaign: ["deploymentManifest"]
+};
+
+/** The mode inputs a group shows for this configuration (polar profile controls only at the pole). */
+export function railModeParamsForGroup(group: GroupDef, site: SiteMode): Array<keyof SimParams> {
+  if (group.id === "power" && site !== "polar") return [];
+  return GROUP_MODE_PARAMS[group.id] ?? [];
+}
+
+/** Mode inputs whose plain name, code name, or group matches the query. */
+export function matchesModeQuery(key: keyof SimParams, groupLabel: string, query: string): boolean {
+  const terms = query.toLowerCase().split(/\s+/).filter((term) => term.length > 0);
+  if (terms.length === 0) return true;
+  const haystack = `${PARAM_META[key].description} ${String(key)} ${groupLabel}`.toLowerCase();
+  return terms.every((term) => haystack.includes(term));
+}
+
 /** True when a numeric input differs from its default beyond float noise. */
 export function isChangedFromDefault(value: number, defaultValue: number): boolean {
   return Math.abs(value - defaultValue) > 1e-12 * Math.max(1, Math.abs(defaultValue));
+}
+
+/** True when a mode input differs from its default. */
+export function isModeChanged(params: SimParams, key: keyof SimParams): boolean {
+  return params[key] !== DEFAULTS[key];
 }
 
 export function groupsForSite(site: SiteMode): GroupDef[] {

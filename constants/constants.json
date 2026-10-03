@@ -1581,6 +1581,54 @@
     "description": "Earth launch mass saved per kg product",
     "source": "spec"
   },
+  "landingsPerYear": {
+    "value": 3,
+    "min": 0.5,
+    "max": 12,
+    "unit": "1/yr",
+    "kind": "parameter",
+    "group": "campaign",
+    "description": "Landing cadence",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), 120-day launch interval"
+  },
+  "commissioningDays": {
+    "value": 30,
+    "min": 0,
+    "max": 365,
+    "unit": "day",
+    "kind": "parameter",
+    "group": "campaign",
+    "description": "Commissioning time",
+    "source": "spec (illustrative; Kleinhenz & Paz 2020, AIAA 2020-4042, assume 48 h)"
+  },
+  "plantAvailability": {
+    "value": 0.9,
+    "min": 0.5,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "campaign",
+    "description": "Plant availability",
+    "source": "spec (illustrative downtime allowance)"
+  },
+  "sparesFracPerYear": {
+    "value": 0.1,
+    "min": 0,
+    "max": 0.3,
+    "unit": "1/yr",
+    "kind": "parameter",
+    "group": "campaign",
+    "description": "Annual spares (fraction of plant)",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), ISRU maintenance 10% of system mass per year"
+  },
+  "deploymentManifest": {
+    "value": "dedicated",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "campaign",
+    "description": "Deployment lander charging",
+    "source": "model switch"
+  },
   "Pinternal": {
     "value": 101325,
     "min": 50000,

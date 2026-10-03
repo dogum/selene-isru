@@ -1,5 +1,5 @@
 import { PARAM_META } from "@selene-isru/engine";
-import type { SimParams, SimResult, TimeseriesResult, UncertaintyBand, UncertaintyResult } from "@selene-isru/engine";
+import type { CampaignTimelinePoint, SimParams, SimResult, TimeseriesResult, UncertaintyBand, UncertaintyResult } from "@selene-isru/engine";
 import type { Candidate } from "./brief";
 import { toCsv, type CsvColumn } from "./csv";
 import type { SensitivityRow } from "./sensitivity";
@@ -51,6 +51,22 @@ export function timeseriesCsv(timeseries: TimeseriesResult): string {
   );
 }
 
+/** The campaign ledger over time; LEO columns are kg of mass in low Earth orbit. */
+export function campaignCsv(timeline: readonly CampaignTimelinePoint[]): string {
+  return toCsv<CampaignTimelinePoint>(
+    [
+      { header: "tDays [day from first landing]", value: (point) => point.tDays },
+      { header: "event", value: (point) => point.event },
+      { header: "landers", value: (point) => point.landers },
+      { header: "landedMassKg [kg]", value: (point) => point.landedMassKg },
+      { header: "productKg [kg]", value: (point) => point.productKg },
+      { header: "leoMassSpentKg [kg in LEO]", value: (point) => point.leoMassSpentKg },
+      { header: "leoMassSavedKg [kg in LEO]", value: (point) => point.leoMassSavedKg }
+    ],
+    timeline
+  );
+}
+
 export interface FrontierCsvPoint {
   x: number;
   y: number;
@@ -85,8 +101,8 @@ export function sensitivityCsv(rows: readonly SensitivityRow[], metric: string):
       { header: "lowInput", value: (row) => row.lowInput },
       { header: "highInput", value: (row) => row.highInput },
       { header: "cappedAtEngineBound", value: (row) => row.capped },
-      { header: `${metric} at low input [% of base]`, value: (row) => row.low },
-      { header: `${metric} at high input [% of base]`, value: (row) => row.high },
+      { header: `${metric} at low input [% change from base]`, value: (row) => row.low },
+      { header: `${metric} at high input [% change from base]`, value: (row) => row.high },
       { header: "swing [percentage points]", value: (row) => row.swing }
     ],
     rows

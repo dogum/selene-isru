@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import math
 import sys
+from collections.abc import Callable
 from typing import Any
 
+from .modules.campaign import simulate_campaign
 from .modules.construction import simulate_construction
 from .modules.cryo import simulate_cryo
 from .modules.energy_ledger import energy_ledger
@@ -59,6 +61,57 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         power["selectedPowerMassKg"],
         cryo["cryoMassKg"],
     )
+    # What the plant delivers: O2 at the equator, water at the pole, or the
+    # Sabatier products, whose imported CO2 feed must be landed. Storage losses
+    # (passive or capacity-limited control) are product never delivered, and
+    # feed lost in storage must be landed again.
+    # While the Sabatier loop runs, CO2 is its process feed and water its buffer
+    # whatever role a one-stream storage what-if gives them; without the loop
+    # there is no feed. Water lost from the buffer never reaches electrolysis,
+    # so the loop runs that much slower: its products and its CO2 draw scale
+    # down together.
+    def is_feed(inventory: dict[str, Any]) -> bool:
+        return inventory["role"] == "feed" or (sabatier is not None and inventory["stream"] == "co2-feed")
+
+    def is_water_buffer(inventory: dict[str, Any]) -> bool:
+        return inventory["role"] == "buffer" or (sabatier is not None and inventory["stream"] == "water-ice")
+
+    def is_product(inventory: dict[str, Any]) -> bool:
+        return (
+            not is_feed(inventory)
+            and not is_water_buffer(inventory)
+            and inventory["role"] in ("product", "custom")
+        )
+
+    def storage_loss_kg_per_day(matches: Callable[[dict[str, Any]], bool]) -> float:
+        total = 0.0
+        for inventory in cryo["inventories"]:
+            if matches(inventory):
+                total += inventory["actualLossKgPerDay"]
+        return total
+
+    buffer_loss_kg_per_day = storage_loss_kg_per_day(is_water_buffer)
+    loop_throughput = (
+        max(0, 1 - buffer_loss_kg_per_day / production["waterKgPerDay"])
+        if buffer_loss_kg_per_day > 0 and production["waterKgPerDay"] > 0
+        else 1
+    )
+    if params["site"] == "equatorial":
+        product_kg_per_day = production["o2KgPerDay"]
+    elif params["enableSabatier"]:
+        product_kg_per_day = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    else:
+        product_kg_per_day = production["waterKgPerDay"]
+    campaign = simulate_campaign(
+        params,
+        logistics,
+        {
+            "productKgPerDay": max(0, product_kg_per_day * loop_throughput - storage_loss_kg_per_day(is_product)),
+            "importedFeedKgPerDay": production["co2ImportedKgPerDay"] * loop_throughput
+            + storage_loss_kg_per_day(is_feed),
+        },
+    )
+    campaign_warnings = campaign.pop("warnings")
     construction = simulate_construction(params, production["slagKgPerDay"] if params["site"] == "equatorial" else 0)
     materials = material_ledger(params, production)
     warnings = [
@@ -68,6 +121,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         *cryo["warnings"],
         *power["warnings"],
         *construction["warnings"],
+        *campaign_warnings,
     ]
     if materials["maxAbsResidualKgPerDay"] > 1e-6:
         warnings.append({"id": "material-balance", "severity": "alarm", "module": "materials", "message": "A process-node material balance exceeds the conservation tolerance.", "value": materials["maxAbsResidualKgPerDay"], "limit": 1e-6})
@@ -152,6 +206,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "siteProfile": power["siteProfile"],
         },
         "logistics": logistics,
+        "campaign": campaign,
         "materials": materials,
         "construction": construction,
         "warnings": warnings,

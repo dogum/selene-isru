@@ -1,9 +1,12 @@
 import { useMemo, useRef, useState } from "react";
-import type { Warning } from "@selene-isru/engine";
+import type { SimParams, Warning } from "@selene-isru/engine";
 import {
   groupsForSite,
   isChangedFromDefault,
+  isModeChanged,
+  matchesModeQuery,
   matchesParamQuery,
+  railModeParamsForGroup,
   railParamsForGroup,
   WARNING_PARAM,
   type GroupDef,
@@ -57,21 +60,34 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
+  // A gated-off group's sliders cannot be shown, so they do not count either.
+  const gatedOff = (group: GroupDef): boolean => group.gatedBy !== undefined && !params[group.gatedBy];
   const changedCount = groups.reduce(
-    (count, { defs }) => count + defs.filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length,
+    (count, { group, defs }) =>
+      count +
+      (gatedOff(group) ? [] : defs).filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length +
+      railModeParamsForGroup(group, site).filter((key) => isModeChanged(params, key)).length,
     0
   );
   const filtering = query.trim().length > 0 || changedOnly;
   const shown = groups.map(({ group, defs }) => ({
     group,
+    // A gated-off group (the Sabatier loop switched off) cannot show or use its
+    // inputs, so a filter does not count them; its switch can still match.
     defs: filtering
-      ? defs.filter((def) =>
+      ? (gatedOff(group) ? [] : defs).filter((def) =>
           matchesParamQuery(def, group.label, query) &&
           (!changedOnly || isChangedFromDefault(params[def.key] as number, def.defaultValue))
         )
-      : defs
+      : defs,
+    // Selects and switches stay reachable through search and CHANGED too.
+    modes: filtering
+      ? railModeParamsForGroup(group, site).filter((key) =>
+          matchesModeQuery(key, group.label, query) && (!changedOnly || isModeChanged(params, key))
+        )
+      : []
   }));
-  const matchCount = shown.reduce((count, { defs }) => count + defs.length, 0);
+  const matchCount = shown.reduce((count, { defs, modes }) => count + defs.length + modes.length, 0);
 
   const toggle = (id: string): void => {
     setOpen((prev) => {
@@ -122,12 +138,13 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
             : `${matchCount} input${matchCount === 1 ? "" : "s"} shown`}
         </p>
       )}
-      {shown.map(({ group, defs }) =>
-        filtering && defs.length === 0 ? null : (
+      {shown.map(({ group, defs, modes }) =>
+        filtering && defs.length === 0 && modes.length === 0 ? null : (
           <RailGroup
             key={group.id}
             group={group}
             defs={defs}
+            modes={filtering ? modes : null}
             open={filtering || open.has(group.id)}
             onToggle={() => toggle(group.id)}
             warned={warned}
@@ -169,12 +186,16 @@ interface RailGroupProps {
   group: GroupDef;
   /** inputs to show, already filtered for configuration and search */
   defs: NumericParamDef[];
+  /** selects and switches to show while filtering; null shows every control */
+  modes: ReadonlyArray<keyof SimParams> | null;
   open: boolean;
   onToggle: () => void;
   warned: Map<string, WarnInfo>;
 }
 
-function RailGroup({ group, defs, open, onToggle, warned }: RailGroupProps): React.JSX.Element {
+function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProps): React.JSX.Element {
+  // A filter shows only the controls it counted.
+  const showMode = (key: keyof SimParams): boolean => modes === null || modes.includes(key);
   const site = useStore((s) => s.params.site);
   const result = useStore((s) => s.result);
   const enableSabatier = useStore((s) => s.params.enableSabatier);
@@ -195,7 +216,7 @@ function RailGroup({ group, defs, open, onToggle, warned }: RailGroupProps): Rea
         <span className="rail-group-readout num">
           {formatQtyText(readout.value, readout.unit)}
         </span>
-        {group.gatedBy !== undefined && (
+        {group.gatedBy !== undefined && showMode(group.gatedBy) && (
           <button
             className={`rail-gate ${enableSabatier ? "on" : ""}`}
             role="switch"
@@ -219,8 +240,11 @@ function RailGroup({ group, defs, open, onToggle, warned }: RailGroupProps): Rea
       </div>
       {open && !gatedOff && (
         <div className="rail-group-body">
-          {group.id === "cryo" && <StorageModeControls />}
-          {group.id === "power" && site === "polar" && <PolarSiteProfileControls />}
+          {group.id === "cryo" && (showMode("storageStream") || showMode("cryoControlMode")) && (
+            <StorageModeControls stream={showMode("storageStream")} heat={showMode("cryoControlMode")} />
+          )}
+          {group.id === "campaign" && showMode("deploymentManifest") && <CampaignModeControls />}
+          {group.id === "power" && site === "polar" && showMode("polarProfileMode") && <PolarSiteProfileControls />}
           {defs.map((def) => {
             const w = warned.get(def.key);
             return (
@@ -238,14 +262,14 @@ function RailGroup({ group, defs, open, onToggle, warned }: RailGroupProps): Rea
   );
 }
 
-function StorageModeControls(): React.JSX.Element {
+function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: boolean; heat: boolean }): React.JSX.Element {
   const stream = useStore((s) => s.params.storageStream);
   const mode = useStore((s) => s.params.cryoControlMode);
   const setParam = useStore((s) => s.setParam);
 
   return (
     <div className="rail-mode-grid">
-      <label>
+      {showStream && <label>
         <span>STORED STREAM</span>
         <select value={stream} onChange={(event) => setParam("storageStream", event.target.value as typeof stream)}>
           <option value="auto">AUTO BY SITE</option>
@@ -257,13 +281,30 @@ function StorageModeControls(): React.JSX.Element {
           <option value="co2-feed">CARBON DIOXIDE FEED</option>
           <option value="custom">CUSTOM CRYOGEN</option>
         </select>
-      </label>
-      <label>
+      </label>}
+      {showHeat && <label>
         <span>HEAT CONTROL</span>
         <select value={mode} onChange={(event) => setParam("cryoControlMode", event.target.value as typeof mode)}>
           <option value="zero-boiloff">ZERO BOIL-OFF</option>
           <option value="passive">PASSIVE LOSS</option>
           <option value="capacity-limited">CAPACITY LIMITED</option>
+        </select>
+      </label>}
+    </div>
+  );
+}
+
+function CampaignModeControls(): React.JSX.Element {
+  const manifest = useStore((s) => s.params.deploymentManifest);
+  const setParam = useStore((s) => s.setParam);
+
+  return (
+    <div className="rail-mode-grid">
+      <label>
+        <span>DEPLOYMENT LANDERS</span>
+        <select value={manifest} onChange={(event) => setParam("deploymentManifest", event.target.value as typeof manifest)}>
+          <option value="dedicated">DEDICATED (WHOLE LANDERS)</option>
+          <option value="shared">SHARED (MASS SHARE)</option>
         </select>
       </label>
     </div>

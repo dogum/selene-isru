@@ -5,6 +5,7 @@ import { simulateCryo, type StorageDemand } from "./modules/cryo";
 import { energyLedger } from "./modules/energyLedger";
 import { simulateElectrolysis } from "./modules/electrolysis";
 import { simulateExcavation } from "./modules/excavation";
+import { simulateCampaign } from "./modules/campaign";
 import { simulateLogistics } from "./modules/logistics";
 import { materialLedger } from "./modules/materials";
 import { simulatePower } from "./modules/power";
@@ -25,6 +26,7 @@ import type {
   SimParams,
   SimResult,
   SimulationOptions,
+  StorageInventory,
   TimeseriesOptions,
   TimeseriesResult,
   UncertaintyBand,
@@ -50,6 +52,8 @@ export {
   secElecJPerKg,
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
+export { campaignAt, campaignTimeline } from "./modules/campaign";
+export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
 export { payloadPerMissionKg } from "./modules/logistics";
 export {
   beamedPowerW,
@@ -64,6 +68,8 @@ export { sabatierKp } from "./modules/sabatier";
 export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 export { secSubDeliveredJPerKg, secSubJPerKg } from "./modules/thermal";
 export type {
+  CampaignResult,
+  DeploymentManifest,
   FlowEdge,
   ManifestRow,
   MaterialFlow,
@@ -170,6 +176,38 @@ export function simulate(
     cryo.cryoMassKg,
     options.supplementalMasses
   );
+  // What the plant delivers: O2 at the equator, water at the pole, or the
+  // Sabatier products, whose imported CO2 feed must be landed. Storage losses
+  // (passive or capacity-limited control) are product never delivered, and
+  // feed lost in storage must be landed again.
+  // While the Sabatier loop runs, CO2 is its process feed and water its buffer
+  // whatever role a one-stream storage what-if gives them; without the loop
+  // there is no feed. Water lost from the buffer never reaches electrolysis,
+  // so the loop runs that much slower: its products and its CO2 draw scale
+  // down together.
+  const isFeed = (inventory: StorageInventory): boolean =>
+    inventory.role === "feed" || (sabatier !== null && inventory.stream === "co2-feed");
+  const isWaterBuffer = (inventory: StorageInventory): boolean =>
+    inventory.role === "buffer" || (sabatier !== null && inventory.stream === "water-ice");
+  const isProduct = (inventory: StorageInventory): boolean =>
+    !isFeed(inventory) && !isWaterBuffer(inventory) && (inventory.role === "product" || inventory.role === "custom");
+  const storageLossKgPerDay = (matches: (inventory: StorageInventory) => boolean): number =>
+    cryo.inventories.filter(matches).reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
+  const bufferLossKgPerDay = storageLossKgPerDay(isWaterBuffer);
+  const loopThroughput =
+    bufferLossKgPerDay > 0 && production.waterKgPerDay > 0
+      ? Math.max(0, 1 - bufferLossKgPerDay / production.waterKgPerDay)
+      : 1;
+  const grossProductKgPerDay =
+    params.site === "equatorial"
+      ? production.o2KgPerDay
+      : params.enableSabatier
+        ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
+        : production.waterKgPerDay;
+  const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
+    productKgPerDay: Math.max(0, grossProductKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
+    importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed)
+  });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);
   const warnings: Warning[] = [
@@ -178,7 +216,8 @@ export function simulate(
     ...(params.site === "equatorial" ? electrolysis.warnings : []),
     ...cryo.warnings,
     ...power.warnings,
-    ...construction.warnings
+    ...construction.warnings,
+    ...campaignWarnings
   ];
 
   if (materials.maxAbsResidualKgPerDay > 1e-6) {
@@ -291,6 +330,7 @@ export function simulate(
       siteProfile: power.siteProfile
     },
     logistics,
+    campaign,
     materials,
     construction,
     warnings

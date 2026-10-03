@@ -9,7 +9,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "python"))
 
-from selene_isru import DEFAULTS, PARAM_META, sample_uncertainty, simulate, simulate_timeseries  # noqa: E402
+from selene_isru import DEFAULTS, PARAM_META, campaign_timeline, sample_uncertainty, simulate, simulate_timeseries  # noqa: E402
+from selene_isru.normalize import normalize_params  # noqa: E402
 
 OUT_PATH = ROOT / "packages" / "engine" / "test" / "golden_vectors.json"
 DYNAMICS_OUT_PATH = ROOT / "packages" / "engine" / "test" / "dynamics_vectors.json"
@@ -89,7 +90,21 @@ def named_scenarios() -> list[tuple[str, dict[str, Any]]]:
         ],
     }, separators=(",", ":"))
     scenarios.append(("polar-imported-profile", {"site": "polar", "polarProfileMode": "profile", "polarProfileData": imported_profile}))
+    # Campaign ledger: multi-lander deployment, and a pilot charged by mass share.
+    scenarios.append(("equatorial-campaign-multi-lander", {"targetKgPerDay": 10000, "landingsPerYear": 2}))
+    scenarios.append(("polar-campaign-shared-pilot", {"site": "polar", "targetKgPerDay": 10, "deploymentManifest": "shared"}))
     return scenarios
+
+
+CAMPAIGN_VECTORS: list[tuple[str, dict[str, Any], float]] = [
+    ("equatorial-multi-lander-timeline", {"targetKgPerDay": 10000, "landingsPerYear": 2}, 90),
+    ("polar-shared-pilot-timeline", {"site": "polar", "targetKgPerDay": 10, "deploymentManifest": "shared"}, 120),
+]
+
+
+def _campaign_vector(name: str, params: dict[str, Any], step_days: float) -> dict[str, Any]:
+    normalized, _ = normalize_params(params)
+    return {"name": name, "params": params, "stepDays": step_days, "result": campaign_timeline(normalized, simulate(normalized), step_days)}
 
 
 def _profile_default(site: str) -> dict[str, Any]:
@@ -159,9 +174,9 @@ def main() -> None:
             },
             {
                 "name": "polar-imported-profile-cycle",
-                "params": {"site": "polar", "polarProfileMode": "profile", "polarProfileData": named_scenarios()[-1][1]["polarProfileData"]},
+                "params": {"site": "polar", "polarProfileMode": "profile", "polarProfileData": dict(named_scenarios())["polar-imported-profile"]["polarProfileData"]},
                 "opts": {"cycles": 1, "samplesPerCycle": 12},
-                "result": simulate_timeseries({"site": "polar", "polarProfileMode": "profile", "polarProfileData": named_scenarios()[-1][1]["polarProfileData"]}, {"cycles": 1, "samplesPerCycle": 12}),
+                "result": simulate_timeseries({"site": "polar", "polarProfileMode": "profile", "polarProfileData": dict(named_scenarios())["polar-imported-profile"]["polarProfileData"]}, {"cycles": 1, "samplesPerCycle": 12}),
             },
         ],
         "uncertainty": [
@@ -188,6 +203,7 @@ def main() -> None:
                 ),
             },
         ],
+        "campaign": [_campaign_vector(name, params, step) for name, params, step in CAMPAIGN_VECTORS],
     }
     with DYNAMICS_OUT_PATH.open("w", encoding="utf-8") as handle:
         json.dump(canonicalize_numbers(dynamics), handle, indent=2, allow_nan=False)

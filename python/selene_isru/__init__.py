@@ -1,5 +1,6 @@
 from .constants import DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS
 from .engine import sample_uncertainty, simulate, simulate_timeseries
+from .modules.campaign import campaign_at, campaign_timeline
 from .modules.construction import shield_full_balance_m
 from .modules.electrolysis import (
     cp_regolith_j_per_kg_k,
@@ -19,6 +20,8 @@ __all__ = [
     "DEFAULTS",
     "PARAM_META",
     "PHYSICAL_CONSTANTS",
+    "campaign_at",
+    "campaign_timeline",
     "cp_regolith_j_per_kg_k",
     "melt_heat_j_per_kg",
     "oxide_decomposition_voltage",

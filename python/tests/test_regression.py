@@ -59,6 +59,24 @@ def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
     assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
+def test_campaign_ledger_equatorial_payback_v05() -> None:
+    # v0.5 adds the ledger; no earlier number moves.
+    result = simulate({})
+    logistics, campaign = result["logistics"], result["campaign"]
+    leo_per_kg = DEFAULTS["M0leo"] / (DEFAULTS["etaPack"] * logistics["payloadPerMissionKg"])
+    net_per_day = (
+        DEFAULTS["gearRatio"] * DEFAULTS["targetKgPerDay"] * DEFAULTS["plantAvailability"]
+        - leo_per_kg * DEFAULTS["sparesFracPerYear"] * logistics["totalInfraMassKg"] / 365
+    )
+    assert_rel(campaign["paybackDays"], DEFAULTS["commissioningDays"] + DEFAULTS["M0leo"] / net_per_day, 1e-12)
+    assert_rel(campaign["paybackDays"], 241.8, 0.001)
+    assert_rel(campaign["returnRatio"], 6.67, 0.001)
+    assert campaign["paysBackInCampaign"] is True
+    sabatier = simulate({"site": "polar", "enableSabatier": True})["campaign"]
+    assert sabatier["paybackDays"] is None
+    assert_rel(sabatier["returnRatio"], 0.794, 0.001)
+
+
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
     fallback = simulate({"oxideModel": False})
     direct = oxide_model_yield({**DEFAULTS, "oxideModel": False})
@@ -99,6 +117,7 @@ def test_public_warning_paths() -> None:
     assert "anode-current" in warning_ids(simulate({"jOperating": 10000, "Dox": 1e-11}))
     assert "thermal-stress" in warning_ids(simulate({"castDeltaT": 200}))
     assert "param-clamped" in warning_ids(simulate({"targetKgPerDay": 1}))
+    assert "lander-no-payload" in warning_ids(simulate({"M0leo": 500_000, "dvTotal": 6500, "IspLander": 310, "MdryLander": 200_000}))
 
 
 def test_direct_warning_branches_unreachable_by_bounded_public_params() -> None:

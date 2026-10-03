@@ -1,3 +1,4 @@
+import { campaignStatus } from "../../analysis/campaign";
 import { simulate } from "@selene-isru/engine";
 import { useMemo } from "react";
 import { caseExport, fileStem } from "../../analysis/caseExport";
@@ -89,6 +90,8 @@ export function EngineeringReport(): React.JSX.Element {
         <div><span>INFRASTRUCTURE</span><strong>{formatQtyText(result.logistics.totalInfraMassKg, "kg")}</strong></div>
         <div><span>MISSIONS</span><strong>{formatQtyText(result.logistics.nMissions, "msn", 0)}</strong></div>
         <div><span>PLANT-MASS THROUGHPUT EQUIV.</span><strong>{formatQtyText(result.logistics.plantMassThroughputDays, "days")}</strong></div>
+        <div><span>LAUNCH-MASS PAYBACK</span><strong>{campaignStatus(result.campaign).payback}</strong></div>
+        <div><span>CAMPAIGN RETURN (LEO MASS)</span><strong>{result.campaign.returnRatio.toFixed(2)}×</strong></div>
       </div>
 
       <section className="report-section">
@@ -256,7 +259,7 @@ export function EngineeringReport(): React.JSX.Element {
           <p>No engine warning is active at the current operating point.</p>
         )}
         <ul>
-          <li>Steady-state analytical sizing; campaign scheduling, reliability, crew, and spares are outside the present boundary.</li>
+          <li>Plant sizing is steady-state and analytical. The campaign ledger adds landing cadence, commissioning, average availability, spares, and imported feed as mass flows; reliability, launch or landing failure, crew, and schedule risk are outside the present boundary.</li>
           <li>Input evidence and validity limits are available from each control's information disclosure.</li>
           <li>{MODEL_BOUNDARY}</li>
         </ul>

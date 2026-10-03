@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { DEFAULTS } from "@selene-isru/engine";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ControlGroups } from "../src/components/ControlRail";
 import {
@@ -81,5 +81,60 @@ describe("control rail search, changed filter, and reset", () => {
     expect(document.querySelectorAll(".param-row")).toHaveLength(1);
     const row = document.querySelector(".param-row") as HTMLElement;
     expect(within(row).getByRole("button", { name: /Reset .* to default 1000/ })).toBeTruthy();
+  });
+
+  it("counts and shows changed selects and switches, not only sliders", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "equatorial", storageStream: "custom", deploymentManifest: "shared" });
+    render(<ControlGroups />);
+    const changed = screen.getByRole("button", { name: "CHANGED · 2" });
+    fireEvent.click(changed);
+    expect(screen.queryByText("Every input is at its default.")).toBeNull();
+    expect(screen.getByText("2 inputs shown")).toBeTruthy();
+    // The groups that hold the changed selects stay on screen with the selects in them.
+    expect(screen.getByDisplayValue("CUSTOM CRYOGEN")).toBeTruthy();
+    expect(screen.getByDisplayValue("SHARED (MASS SHARE)")).toBeTruthy();
+    // Only the controls it counted: the unchanged heat-control select stays hidden.
+    expect(screen.queryByDisplayValue("ZERO BOIL-OFF")).toBeNull();
+    expect(document.querySelectorAll(".rail-mode-grid select")).toHaveLength(2);
+    expect(document.querySelectorAll(".param-row")).toHaveLength(0);
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
+  it("shows the Sabatier switch under a filter only when the filter counts it", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", enableSabatier: true });
+    render(<ControlGroups />);
+    const search = screen.getByRole("searchbox", { name: /Search inputs/ });
+    fireEvent.change(search, { target: { value: "conversion fraction" } });
+    expect(screen.getByText("1 input shown")).toBeTruthy();
+    expect(screen.queryByRole("switch", { name: "Enable Sabatier loop" })).toBeNull();
+    fireEvent.change(search, { target: { value: "enable sabatier" } });
+    expect(screen.getByText("1 input shown")).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Enable Sabatier loop" })).toBeTruthy();
+    // With the loop off its sliders cannot act, so a search does not count them.
+    useStore.getState().applyPatch({ enableSabatier: false });
+    fireEvent.change(search, { target: { value: "conversion fraction" } });
+    expect(screen.getByText("No inputs match.")).toBeTruthy();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
+  it("does not count a changed slider in a gated-off group", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", enableSabatier: true, fConversion: 0.8 });
+    render(<ControlGroups />);
+    expect(screen.getByRole("button", { name: "CHANGED · 2" })).toBeTruthy();
+    // Switching the loop off hides its sliders; the badge drops them but counts the switch.
+    act(() => useStore.getState().setParam("enableSabatier", false));
+    expect(useStore.getState().params.fConversion).toBe(0.8);
+    const changed = screen.getByRole("button", { name: "CHANGED · 0" });
+    fireEvent.click(changed);
+    expect(screen.getByText("Every input is at its default.")).toBeTruthy();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
+  it("finds a select by searching its name", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "equatorial" });
+    render(<ControlGroups />);
+    fireEvent.change(screen.getByRole("searchbox", { name: /Search inputs/ }), { target: { value: "lander charging" } });
+    expect(screen.getByDisplayValue("DEDICATED (WHOLE LANDERS)")).toBeTruthy();
+    expect(screen.getByText("1 input shown")).toBeTruthy();
   });
 });

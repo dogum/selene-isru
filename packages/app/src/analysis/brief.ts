@@ -47,7 +47,7 @@ export const GOALS: BriefGoal[] = [
     title: "1 t/day oxygen",
     prompt: "Find a low-mass equatorial oxygen-production case.",
     constraints: { site: "equatorial", objective: "landed-mass", targetKgPerDay: 1000, missionYears: 5, maxMissions: 30, maxPowerMw: 20, maxInfraT: 250, allowSabatier: false },
-    caveats: ["Aggregate oxygen recovery stands in for a reactor-scale kinetics model.", "Crew, spares, and campaign scheduling are outside the manifest."]
+    caveats: ["Aggregate oxygen recovery stands in for a reactor-scale kinetics model.", "Crew is outside the manifest; spares and deployment timing appear in the Campaign view, not in this landed-mass ranking."]
   },
   {
     id: "polar-water",

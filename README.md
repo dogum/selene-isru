@@ -123,6 +123,13 @@ when they are useful:
 - Inputs use plain engineering names by default, can toggle to engine variable
   names, and expose model maturity, source links/sections, illustrative input spreads,
   range rationale, applicability, and validity limits beside the control.
+- **Campaign** follows the plant from its first landing to the end of its
+  mission. It counts the mass in low Earth orbit spent landing and sustaining
+  the plant against the mass its product saves, and reports when the product
+  has repaid the launch mass. The model covers deployment cadence,
+  commissioning, downtime, spares, and dedicated versus shared landers. It is a
+  mass account only, not cost or schedule risk
+  ([`docs/model-campaign-v05.md`](docs/model-campaign-v05.md)).
 - **Conserve** opens the executed material and energy ledgers beside independently
   sized product/feed inventories. Polar studies can import a time-resolved JSON
   or CSV illumination, receiver-visibility, and temperature profile. Numeric
@@ -141,9 +148,10 @@ and engine versions plus commit), so a file read out of context can be traced.
   reported.
 - **Study CSV** (library and Report): one row per case with headline outputs,
   every energy-flow stage, and every input as `param.<key> [unit]`.
-- **Panel CSVs**: energy flows, mass manifest, the 96-sample timeseries, every
-  Pareto grid point, the sensitivity ranking and uncertainty bands (with
-  sample count and seed), and every candidate the Brief evaluated.
+- **Panel CSVs**: energy flows, mass manifest, the 96-sample timeseries, the
+  campaign ledger over time, every Pareto grid point, the sensitivity ranking
+  and uncertainty bands (with sample count and seed), and every candidate the
+  Brief evaluated.
 
 Numbers are written at full precision. Result columns are named by engine field,
 which carries its unit (`energy.secTotal_kWhPerKg`, `logistics.totalInfraMassKg`).
@@ -178,7 +186,9 @@ items and their remaining limits are documented in
 [`docs/model-depth-v03.md`](docs/model-depth-v03.md). The v0.4 fidelity pass
 (polar capture loss, heater loss, and extractor mass anchored to NASA's
 polar-water case study, and storage provenance moved into `constants.json`) is in
-[`docs/model-fidelity-v04.md`](docs/model-fidelity-v04.md).
+[`docs/model-fidelity-v04.md`](docs/model-fidelity-v04.md). The v0.5 campaign
+ledger (launch-mass payback with deployment, commissioning, downtime, and
+spares) is in [`docs/model-campaign-v05.md`](docs/model-campaign-v05.md).
 
 ## Architecture
 
@@ -264,7 +274,10 @@ import { simulate, DEFAULTS, PARAM_META } from "@selene-isru/engine";
 const result = simulate({ targetKgPerDay: 1000, site: "equatorial" });
 ```
 
-All internal model units are SI. Energy Sankey lines are exposed as
+Units are annotated on every input (`constants/constants.json`) and carried in
+every result field name (`secElec_JPerKg`, `gridPowerW`, `paybackDays`). Most
+process equations are SI, but storage sizing, the timeseries, and the campaign
+ledger work in hours, watt-hours, and days. Energy Sankey lines are exposed as
 `kWhPerKg`, and all out-of-range numeric inputs are clamped to
 `constants/constants.json` bounds with a `param-clamped` warning.
 

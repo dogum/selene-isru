@@ -40,7 +40,7 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       inputs: ["Regolith throughput", "Fleet mass factor", "Traverse speed", "Drive efficiency"],
       assumptions: [
         "Haul duty is folded into the fleet-level mining energy and mass factors.",
-        "Availability, spares, and route congestion are outside the present steady-state model."
+        "Availability and spares apply plant-wide in the campaign ledger, not per vehicle; route congestion is not modelled."
       ],
       maturity: "DESIGN ASSUMPTION"
     },
@@ -85,7 +85,7 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       inputs: ["Infrastructure mass", "Lander performance", "Packing efficiency", "Pad design"],
       assumptions: [
         "Mission count uses an ideal rocket-equation payload estimate.",
-        "Launch cadence, boil-off during flight, crew, spares, and schedule risk are excluded."
+        "Landing cadence and spares are in the campaign ledger; boil-off during flight, crew, and schedule risk are excluded."
       ],
       maturity: "SIMPLIFIED CORRELATION"
     },

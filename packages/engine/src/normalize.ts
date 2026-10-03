@@ -104,6 +104,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "deploymentManifest") {
+      if (raw === "dedicated" || raw === "shared") {
+        assign("deploymentManifest", raw);
+      } else {
+        assign("deploymentManifest", DEFAULTS.deploymentManifest);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "cryoControlMode") {
       const options = new Set(["zero-boiloff", "passive", "capacity-limited"]);
       if (typeof raw === "string" && options.has(raw)) {

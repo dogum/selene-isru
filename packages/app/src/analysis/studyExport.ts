@@ -7,7 +7,7 @@ import {
   sampleUncertainty,
   simulate
 } from "@selene-isru/engine";
-import type { ParamMeta, SimParams, UncertaintySpec } from "@selene-isru/engine";
+import type { CampaignResult, ParamMeta, SimParams, UncertaintySpec } from "@selene-isru/engine";
 import { evidenceForParam } from "../controls/evidence";
 import type { StudyScenario } from "../state/store";
 import { formatQtyText } from "../lib/format";
@@ -306,6 +306,21 @@ interface CsvCaseRow {
   flows: Map<string, number>;
 }
 
+/** Campaign ledger fields in the study CSV; paybackDays is empty when the plant never pays back. */
+const CAMPAIGN_COLUMNS: Array<keyof CampaignResult> = [
+  "paybackDays",
+  "paysBackInCampaign",
+  "returnRatio",
+  "netLeoMassKg",
+  "leoMassSpentKg",
+  "leoMassSavedKg",
+  "deploymentDays",
+  "firstProductDay",
+  "deliveredKgPerDay",
+  "resupplyKgPerYear",
+  "cumulativeProductKg"
+];
+
 const STANDARD_MANIFEST = ["excavation fleet", "reactor/plant", "power system", "cryo block"];
 
 /**
@@ -350,6 +365,10 @@ export function scenariosCsv(scenarios: StudyScenario[], exportedAt: Date = new 
     { header: "logistics.leverageL", value: (row) => row.result.logistics.leverageL },
     { header: "logistics.plantMassThroughputDays", value: (row) => row.result.logistics.plantMassThroughputDays },
     { header: "logistics.payloadPerMissionKg", value: (row) => row.result.logistics.payloadPerMissionKg },
+    ...CAMPAIGN_COLUMNS.map((key) => ({
+      header: `campaign.${key}`,
+      value: (row: CsvCaseRow) => row.result.campaign[key]
+    })),
     ...STANDARD_MANIFEST.map((subsystem) => ({
       header: `manifest.${subsystem} [kg]`,
       value: (row: CsvCaseRow) => manifestMass(row, subsystem)

@@ -109,8 +109,12 @@ describe("A/B compare delta tone", () => {
       MISSIONS: "lower",
       "PLANT-MASS EQUIV.": "lower",
       "LEVERAGE L": "higher",
+      PAYBACK: "lower",
+      "CAMPAIGN RETURN": "higher",
       OUTPUT: "neutral"
     });
+    // A case that never pays back has no payback value and is never coloured.
+    expect(deltaTone(Number.NaN - 242, "lower")).toBe("neutral");
     expect(deltaTone(-1, "lower")).toBe("good");
     expect(deltaTone(1, "lower")).toBe("warn");
     // Before the fix a leverage drop rendered as an improvement.
