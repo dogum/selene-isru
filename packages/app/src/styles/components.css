@@ -5266,6 +5266,12 @@ body.selene-photo-mode .intro-card {
   background: var(--ok);
 }
 
+.refuel-demand {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
 .refuel-cards {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }

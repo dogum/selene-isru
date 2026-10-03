@@ -203,6 +203,8 @@ and [shared](screenshots/campaign/campaign-pilot-shared.png),
 - **Product demand.** Every kilogram produced is assumed useful. A demand
   ceiling, for example a refuelling campaign's propellant need, would cap
   `saved`. This connects to the planned lander-refuelling scenario.
+  *(Done in v0.7: [`model-refuel-v07.md`](model-refuel-v07.md) adds a refuelled
+  lander demand, and the ledger then credits only the propellant it burns.)*
 - **Lander reuse.** Landers refuelled with ISRU propellant would change
   `M0leo` per landing after the first.
 - **Spares that change over time.** Infant-mortality and wear-out curves

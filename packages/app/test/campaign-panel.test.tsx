@@ -121,7 +121,7 @@ describe("campaign panel", () => {
     const refuel = useStore.getState().result.refuel!;
     expect(screen.getByText(/REFUELLING DEMAND · REUSABLE LANDER/)).toBeTruthy();
     expect(screen.getByText(`PLANT SUPPLIES ${Math.round(refuel.isruShare * 100)}% OF ITS PROPELLANT`)).toBeTruthy();
-    expect(screen.getByText("sorties; all hydrogen comes from Earth")).toBeTruthy();
+    expect(screen.getByText("all hydrogen comes from Earth")).toBeTruthy();
     expect(screen.getByText("SAVED · PROPELLANT BURNED × GEAR RATIO")).toBeTruthy();
     // One crewed sortie a year uses a ninth of the plant, so it never pays back.
     expect(screen.getByText("NO PAYBACK WITHIN THE CAMPAIGN")).toBeTruthy();

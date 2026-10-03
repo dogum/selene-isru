@@ -204,6 +204,8 @@ Screenshots: [rail](screenshots/propellant/propellant-rail.png),
 - **Surplus oxygen.** It is stored and liquefied but not credited. A
   life-support or second-vehicle demand could credit it. This connects to the
   planned lander-refuelling scenario.
+  *(v0.7: under a refuelling demand the surplus oxygen is used, because Earth
+  tops up the hydrogen. See [`model-refuel-v07.md`](model-refuel-v07.md).)*
 - **Electrolysis balance of plant.** The cell-voltage model runs about 10% below
   NASA's system power. A separate auxiliary term would close that gap.
 - **Sabatier plant mass** still reuses the MRE reactor coefficient (v0.4 item).

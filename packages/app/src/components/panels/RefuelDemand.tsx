@@ -71,12 +71,12 @@ export function RefuelDemand({ refuel }: { refuel: RefuelResult }): React.JSX.El
           <small>{params.sortiesPerYear} sortie{params.sortiesPerYear === 1 ? "" : "s"} a year</small>
         </div>
         <div>
-          <span>OXYGEN COVERS</span>
-          <strong className="num">{refuel.oxidizerSortiesPerYear.toFixed(1)} /YR</strong>
+          <span>ITS OXYGEN COVERS</span>
+          <strong className="num">{refuel.oxidizerSortiesPerYear.toFixed(1)} SORTIES/YR</strong>
           <small>
             {makesHydrogen
-              ? `sorties; its hydrogen covers ${refuel.fuelSortiesPerYear.toFixed(1)} /yr`
-              : "sorties; all hydrogen comes from Earth"}
+              ? `its hydrogen covers ${refuel.fuelSortiesPerYear.toFixed(1)} a year`
+              : "all hydrogen comes from Earth"}
           </small>
         </div>
         <div>
