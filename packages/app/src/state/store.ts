@@ -1796,7 +1796,9 @@ export const useStore = create<Store>((set, get) => {
           : scenario
       );
       persistScenarioLibrary(next);
-      set({ scenarioLibrary: next, ui: { ...get().ui, currentScenarioName: target.name } });
+      // Like saving, updating a case leaves the live case's name alone, so it
+      // never changes the case on screen behind the undo history's back.
+      set({ scenarioLibrary: next });
       return true;
     },
 

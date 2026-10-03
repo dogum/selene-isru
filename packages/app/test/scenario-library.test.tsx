@@ -194,7 +194,10 @@ describe("saved-case notes, updates, and input comparison", () => {
     expect(after.params.targetKgPerDay).toBe(2500);
     expect(after.notes).toBe("Keep me");
     expect(after.pinned).toBe(before.pinned);
-    expect(useStore.getState().ui.currentScenarioName).toBe("Baseline to revise");
+    // the live case keeps its own name, as when saving
+    const liveName = useStore.getState().ui.currentScenarioName;
+    expect(liveName).not.toBe("Baseline to revise");
+    expect(useStore.getState().paramHistory.past.at(-1)?.scenarioName ?? liveName).toBe(liveName);
 
     // A custom case cannot take an authored case's inputs.
     useStore.setState({
