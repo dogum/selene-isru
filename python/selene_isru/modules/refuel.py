@@ -72,6 +72,7 @@ def simulate_refuel(
         "oxidizerSortiesPerYear": available_o2 * DAYS_PER_YEAR / sortie["oxidizerKg"] if sortie["oxidizerKg"] > 0 else 0,
         "fuelSortiesPerYear": available_h2 * DAYS_PER_YEAR / sortie["fuelKg"] if sortie["fuelKg"] > 0 else 0,
         "usedKgPerDay": used,
+        "sortieIntervalDays": DAYS_PER_YEAR / params["sortiesPerYear"],
     }
     return refuel, warnings
 
@@ -86,7 +87,7 @@ def refuel_timeline(params: dict[str, Any], result: dict[str, Any]) -> list[dict
     loads = [refuel["oxidizerPerSortieKg"], refuel["fuelPerSortieKg"]]
     rates = [refuel["supplyO2KgPerDay"], refuel["supplyH2KgPerDay"]]
     capacities = _store_capacities_kg(params, result, loads, rates)
-    interval = DAYS_PER_YEAR / params["sortiesPerYear"]
+    interval = refuel["sortieIntervalDays"]
     operating_days = campaign["campaignEndDay"] - campaign["firstProductDay"]
     horizon = min(operating_days, max(MIN_HORIZON_DAYS, HORIZON_SORTIES * interval))
     sorties = math.floor(horizon / interval + 1e-9)

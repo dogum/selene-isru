@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { normalizeParams, PHYSICAL_CONSTANTS, refuelTimeline, simulate, sortiePropellantKg } from "../src/index";
+import { campaignAt, campaignTimeline, normalizeParams, PHYSICAL_CONSTANTS, refuelTimeline, simulate, sortiePropellantKg } from "../src/index";
 import type { SimParams } from "../src/types";
 
 function run(input: Partial<SimParams>): { params: SimParams; result: ReturnType<typeof simulate> } {
@@ -127,6 +127,57 @@ describe("refuelling demand", () => {
     const warning = nrho.warnings.find((item) => item.id === "refuel-tank-exceeded")!;
     expect(warning.value).toBe(nrho.refuel!.propellantPerSortieKg);
     expect(warning.limit).toBe(68040);
+  });
+});
+
+describe("the ledger credits a sortie when it flies", () => {
+  test("a campaign shorter than a sortie interval credits nothing", () => {
+    const { result } = run({ ...EQUATORIAL, missionYears: 1, sortiesPerYear: 0.5 });
+    expect(result.campaign.sortieIntervalDays).toBe(730);
+    expect(result.campaign.cumulativeUsedKg).toBe(0);
+    expect(result.campaign.leoMassSavedKg).toBe(0);
+    expect(result.campaign.paysBackInCampaign).toBe(false);
+  });
+
+  test("only whole sorties count, as in the drawdown", () => {
+    // Five years at one sortie every two years: two sorties fly, not 2.5.
+    const { params, result } = run({ ...EQUATORIAL, sortiesPerYear: 0.5 });
+    const perSortieKg = result.campaign.usedKgPerDay * result.campaign.sortieIntervalDays!;
+    expectRel(result.campaign.cumulativeUsedKg, 2 * perSortieKg, 1e-12);
+    expectRel(result.campaign.leoMassSavedKg, params.gearRatio * 2 * perSortieKg, 1e-12);
+    const drawn = refuelTimeline(params, result).filter((point) => /^sortie \d+$/.test(point.event));
+    expect(drawn).toHaveLength(2);
+  });
+
+  test("used product steps at each sortie and stays flat between", () => {
+    const { params, result } = run({ ...EQUATORIAL, sortiesPerYear: 4 });
+    const { firstProductDay, sortieIntervalDays, usedKgPerDay } = result.campaign;
+    const perSortieKg = usedKgPerDay * sortieIntervalDays!;
+    for (const k of [1, 2, 7]) {
+      const t = firstProductDay + k * sortieIntervalDays!;
+      expectRel(campaignAt(params, result, t).usedKg, k * perSortieKg, 1e-12);
+      expectRel(campaignAt(params, result, t - 1).usedKg, (k - 1) * perSortieKg, 1e-12);
+    }
+    const timeline = campaignTimeline(params, result);
+    const before = timeline.find((point) => point.event === "before sortie 3")!;
+    const at = timeline.find((point) => point.event === "sortie 3")!;
+    expect(before.tDays).toBe(at.tDays);
+    expectRel(at.usedKg - before.usedKg, perSortieKg, 1e-12);
+    expect(timeline.filter((point) => point.event.startsWith("sortie "))).toHaveLength(20);
+  });
+
+  test("payback falls on the first sortie that clears the spend", () => {
+    for (const input of [{ ...EQUATORIAL, sortiesPerYear: 9 }, { ...PROPELLANT, sortiesPerYear: 8, McargoDown: 5000 }]) {
+      const { params, result } = run(input);
+      const { firstProductDay, sortieIntervalDays, paybackDays } = result.campaign;
+      const k = (paybackDays! - firstProductDay) / sortieIntervalDays!;
+      expect(Math.abs(k - Math.round(k))).toBeLessThan(1e-9);
+      const at = campaignAt(params, result, paybackDays!);
+      const previous = campaignAt(params, result, paybackDays! - sortieIntervalDays!);
+      expect(at.leoMassSavedKg).toBeGreaterThanOrEqual(at.leoMassSpentKg * (1 - 1e-12));
+      expect(previous.leoMassSavedKg).toBeLessThan(previous.leoMassSpentKg);
+      expect(campaignAt(params, result, paybackDays! - 1).leoMassSavedKg).toBeLessThan(at.leoMassSpentKg);
+    }
   });
 });
 

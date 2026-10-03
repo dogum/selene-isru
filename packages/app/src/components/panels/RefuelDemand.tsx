@@ -123,8 +123,8 @@ export function RefuelDemand({ refuel }: { refuel: RefuelResult }): React.JSX.El
         return ({formatQtyProse(params.dvAscent, "m/s")}), then lands with {formatQtyProse(params.McargoDown, "kg")} (
         {formatQtyProse(params.dvDescent, "m/s")}), all loaded on the surface. The ideal rocket equation at Isp {params.IspReusable} s
         gives the load, split at O/F {params.mixtureRatio}. The plant supplies each component up to its demand and Earth
-        supplies the rest. The campaign credits only the {formatQtyProse(refuel.usedKgPerDay, "kg/day")} the lander burns.
-        Stores hold at least one sortie's load and start empty at production start.
+        supplies the rest. The campaign credits only the {formatQtyProse(refuel.usedKgPerDay, "kg/day")} the lander burns, a
+        sortie at a time. Stores hold at least one sortie's load and start empty at production start.
       </p>
 
       <div className="panel-exports">

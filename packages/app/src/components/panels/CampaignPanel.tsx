@@ -170,7 +170,9 @@ export function CampaignPanel(): React.JSX.Element {
           starts on day {Math.round(campaign.firstProductDay)}, after the last landing and {params.commissioningDays} days of
           commissioning, and averages {formatQtyProse(campaign.deliveredKgPerDay, "kg/day")} at{" "}
           {Math.round(params.plantAvailability * 100)}% availability
-          {refuel === null ? "." : `, of which the lander burns ${formatQtyProse(campaign.usedKgPerDay, "kg/day")}.`}
+          {refuel === null
+            ? "."
+            : `, of which the lander burns ${formatQtyProse(campaign.usedKgPerDay, "kg/day")}, credited as each sortie flies, every ${Math.round(campaign.sortieIntervalDays ?? 0)} days.`}
           {refuel === null &&
             result.production.propellantKgPerDay > 0 &&
             ` Only propellant usable at O/F ${params.mixtureRatio} counts as product; the ${formatQtyProse(result.production.excessO2KgPerDay, "kg/day")} of surplus oxygen is not credited.`}

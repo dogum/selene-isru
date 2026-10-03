@@ -438,6 +438,8 @@ export interface CampaignResult {
   deliveredKgPerDay: number;
   /** delivered product that a demand uses, which the ledger credits; all of it when there is no demand [kg/day] */
   usedKgPerDay: number;
+  /** days between the demand's sorties, which the ledger credits one at a time; null without a demand [day] */
+  sortieIntervalDays: number | null;
   /** spares landed per year of operation [kg/yr] */
   resupplyKgPerYear: number;
   /** imported process feed (Sabatier CO2) landed per year of operation [kg/yr] */
@@ -456,7 +458,7 @@ export interface CampaignResult {
   netLeoMassKg: number;
   /** saved / spent over the campaign [kg/kg]; 0 when nothing is spent */
   returnRatio: number;
-  /** when cumulative saved first equals spent [day]; null if output never outpaces spares and feed */
+  /** when cumulative saved first reaches spent, on a sortie day with a demand [day]; null if output never outpaces spares and feed */
   paybackDays: number | null;
   paysBackInCampaign: boolean;
 }
@@ -497,6 +499,8 @@ export interface RefuelResult {
   fuelSortiesPerYear: number;
   /** product the demand uses, after downtime [kg/day] */
   usedKgPerDay: number;
+  /** days between sorties: 365 / sortiesPerYear [day] */
+  sortieIntervalDays: number;
 }
 
 export interface SimResult {

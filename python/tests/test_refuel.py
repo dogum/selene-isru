@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from selene_isru import refuel_timeline, simulate, sortie_propellant_kg
+from selene_isru import campaign_at, refuel_timeline, simulate, sortie_propellant_kg
 from selene_isru.constants import c
 from selene_isru.normalize import normalize_params
 
@@ -101,4 +101,28 @@ def test_one_stream_store_shares_its_capacity_in_the_drawdown(stream: str) -> No
     assert_rel(before["h2Kg"], capacity * refuel["fuelPerSortieKg"] / load, 1e-12)
     assert_rel(after["o2Kg"], before["o2Kg"] - refuel["oxidizerPerSortieKg"], 1e-12)
     assert_rel(after["h2Kg"], before["h2Kg"] - refuel["fuelPerSortieKg"], 1e-12)
+
+
+def test_campaign_shorter_than_a_sortie_interval_credits_nothing() -> None:
+    _, result = run({**EQUATORIAL, "missionYears": 1, "sortiesPerYear": 0.5})
+    assert result["campaign"]["cumulativeUsedKg"] == 0
+    assert result["campaign"]["paysBackInCampaign"] is False
+
+
+def test_only_whole_sorties_count() -> None:
+    _, result = run({**EQUATORIAL, "sortiesPerYear": 0.5})
+    campaign = result["campaign"]
+    assert_rel(campaign["cumulativeUsedKg"], 2 * campaign["usedKgPerDay"] * campaign["sortieIntervalDays"], 1e-12)
+
+
+@pytest.mark.parametrize("overrides", [{**EQUATORIAL, "sortiesPerYear": 9}, {**PROPELLANT, "sortiesPerYear": 8, "McargoDown": 5000}])
+def test_payback_falls_on_the_first_sortie_that_clears_the_spend(overrides: dict) -> None:
+    params, result = run(overrides)
+    campaign = result["campaign"]
+    k = (campaign["paybackDays"] - campaign["firstProductDay"]) / campaign["sortieIntervalDays"]
+    assert abs(k - round(k)) < 1e-9
+    at = campaign_at(params, result, campaign["paybackDays"])
+    previous = campaign_at(params, result, campaign["paybackDays"] - campaign["sortieIntervalDays"])
+    assert at["leoMassSavedKg"] >= at["leoMassSpentKg"] * (1 - 1e-12)
+    assert previous["leoMassSavedKg"] < previous["leoMassSpentKg"]
 

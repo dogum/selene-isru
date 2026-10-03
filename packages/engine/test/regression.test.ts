@@ -129,9 +129,11 @@ describe("regression anchors", () => {
     expectRel(crew.logistics.totalInfraMassKg / 1000, 61.69, 0.001);
     expect(crew.campaign.paysBackInCampaign).toBe(false);
     expectRel(crew.campaign.returnRatio, 0.732, 0.001);
-    // Nine sorties a year use the whole plant and restore the v0.5 payback.
+    // Nine sorties a year use the whole plant. The ledger credits each sortie
+    // when it flies, so payback falls on the sixth, on day 273, not on the
+    // v0.5 day 242 that crediting by the day would give.
     const matched = simulate({ refuelDemand: "lander", sortiesPerYear: 9 });
-    expectRel(matched.campaign.paybackDays!, 242.2, 0.001);
+    expectRel(matched.campaign.paybackDays!, 273.3, 0.001);
     expectRel(matched.campaign.returnRatio, 6.59, 0.001);
   });
 

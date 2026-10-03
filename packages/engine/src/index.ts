@@ -271,7 +271,8 @@ export function simulate(
           ? netO2KgPerDay + netH2KgPerDay
           : usablePropellantKgPerDay(netO2KgPerDay, netH2KgPerDay, params.mixtureRatio),
     importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed),
-    usedKgPerDay: refuelOutput === null ? null : refuelOutput.refuel.usedKgPerDay
+    usedKgPerDay: refuelOutput === null ? null : refuelOutput.refuel.usedKgPerDay,
+    sortieIntervalDays: refuelOutput === null ? null : refuelOutput.refuel.sortieIntervalDays
   });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);
