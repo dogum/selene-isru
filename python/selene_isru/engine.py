@@ -64,9 +64,10 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     # Sabatier products, whose imported CO2 feed must be landed. Storage losses
     # (passive or capacity-limited control) are product never delivered, and
     # feed lost in storage must be landed again.
-    # CO2 is process feed whatever role a one-stream storage what-if gives it.
+    # While the Sabatier loop runs, CO2 is its process feed whatever role a
+    # one-stream storage what-if gives it; without the loop there is no feed.
     def is_feed(inventory: dict[str, Any]) -> bool:
-        return inventory["role"] == "feed" or inventory["stream"] == "co2-feed"
+        return inventory["role"] == "feed" or (sabatier is not None and inventory["stream"] == "co2-feed")
 
     def storage_loss_kg_per_day(feed: bool) -> float:
         return sum(

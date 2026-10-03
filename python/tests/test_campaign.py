@@ -96,3 +96,12 @@ def test_storage_losses_are_not_delivered() -> None:
     lost = sum(inventory["actualLossKgPerDay"] for inventory in result["cryo"]["inventories"])
     assert lost > 10
     assert_rel(result["campaign"]["deliveredKgPerDay"], (result["production"]["o2KgPerDay"] - lost) * params["plantAvailability"], 1e-12)
+
+
+def test_co2_storage_what_if_is_feed_only_with_sabatier() -> None:
+    params, result = run({"site": "polar", "enableSabatier": True, "cryoControlMode": "passive", "storageStream": "co2-feed"})
+    lost = result["cryo"]["inventories"][0]["actualLossKgPerDay"]
+    expected_feed = (result["production"]["co2ImportedKgPerDay"] + lost) * params["plantAvailability"] * 365
+    assert_rel(result["campaign"]["feedKgPerYear"], expected_feed, 1e-12)
+    _, equatorial = run({"cryoControlMode": "passive", "storageStream": "co2-feed"})
+    assert equatorial["campaign"]["feedKgPerYear"] == 0

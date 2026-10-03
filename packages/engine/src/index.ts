@@ -180,8 +180,10 @@ export function simulate(
   // Sabatier products, whose imported CO2 feed must be landed. Storage losses
   // (passive or capacity-limited control) are product never delivered, and
   // feed lost in storage must be landed again.
-  // CO2 is process feed whatever role a one-stream storage what-if gives it.
-  const isFeed = (inventory: StorageInventory): boolean => inventory.role === "feed" || inventory.stream === "co2-feed";
+  // While the Sabatier loop runs, CO2 is its process feed whatever role a
+  // one-stream storage what-if gives it; without the loop there is no feed.
+  const isFeed = (inventory: StorageInventory): boolean =>
+    inventory.role === "feed" || (sabatier !== null && inventory.stream === "co2-feed");
   const storageLossKgPerDay = (feed: boolean): number =>
     cryo.inventories
       .filter((inventory) => (feed ? isFeed(inventory) : !isFeed(inventory) && (inventory.role === "product" || inventory.role === "custom")))

@@ -178,6 +178,17 @@ describe("campaign ledger behaviour", () => {
       1e-12
     );
     expectRel(campaign.feedKgPerYear, (production.co2ImportedKgPerDay + selected!.actualLossKgPerDay) * params.plantAvailability * 365, 1e-12);
+
+    // Without the loop there is no CO2 feed: the what-if tank's loss is lost product.
+    const equatorial = run({ cryoControlMode: "passive", storageStream: "co2-feed" });
+    const [tank] = equatorial.result.cryo.inventories;
+    expect(tank!.actualLossKgPerDay).toBeGreaterThan(0);
+    expect(equatorial.result.campaign.feedKgPerYear).toBe(0);
+    expectRel(
+      equatorial.result.campaign.deliveredKgPerDay,
+      (equatorial.result.production.o2KgPerDay - tank!.actualLossKgPerDay) * equatorial.params.plantAvailability,
+      1e-12
+    );
   });
 
   test("a lander with no payload deploys nothing and says so", () => {
