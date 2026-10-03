@@ -9,8 +9,10 @@ import {
   waitFor
 } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { GOALS, candidateCaseName, candidateNotes, optimize } from "../src/analysis/brief";
 import { caseExport } from "../src/analysis/caseExport";
 import { differingInputRows, previewStudyExport, scenariosCsv, studyExport } from "../src/analysis/studyExport";
+import { MissionBrief } from "../src/components/MissionBrief";
 import { ScenarioLibrary } from "../src/components/panels/ScenarioLibrary";
 import { MAX_SCENARIO_NOTES } from "../src/lib/scenarioNotes";
 import { MAX_STUDY_SCENARIOS, useStore } from "../src/state/store";
@@ -235,5 +237,54 @@ describe("saved-case notes, updates, and input comparison", () => {
     const table = document.querySelector(".scenario-input-diff")!;
     expect(table.querySelectorAll("tbody tr")).toHaveLength(1);
     expect(table.textContent).toContain("60");
+  });
+});
+
+describe("Mission Brief picks in the library", () => {
+  const clearLibrary = (): void => {
+    for (const item of useStore.getState().scenarioLibrary) {
+      useStore.getState().deleteScenario(item.id);
+    }
+  };
+  afterEach(() => {
+    cleanup();
+    clearLibrary();
+    useStore.getState().setUi({ missionBriefOpen: false });
+  });
+
+  it("saves picks with their search provenance, pinning while slots are free, and stops at capacity", () => {
+    clearLibrary();
+    const constraints = GOALS[2]!.constraints;
+    const optimization = optimize(DEFAULTS, constraints);
+    const picks = optimization.candidates.slice(0, 3);
+    const outcome = useStore.getState().saveScenarios(picks.map((candidate, index) => ({
+      name: candidateCaseName(GOALS[2]!.title, index + 1, candidate),
+      params: candidate.params,
+      notes: candidateNotes(GOALS[2]!.title, constraints, candidate, index + 1, optimization)
+    })));
+    expect(outcome).toEqual({ added: 3, skipped: 0 });
+    const saved = useStore.getState().scenarioLibrary;
+    expect(saved.map((item) => item.params)).toEqual(picks.map((candidate) => candidate.params));
+    expect(saved.every((item) => item.pinned && item.kind === "authored")).toBe(true);
+    expect(saved[0]!.name).toMatch(new RegExp(`^${GOALS[2]!.title} #1 · `));
+    expect(saved[0]!.notes).toContain(`Searched ${optimization.evaluated} cases`);
+    expect(saved[0]!.notes).toContain(`at most ${constraints.maxMissions} missions`);
+
+    const fill = Array.from({ length: MAX_STUDY_SCENARIOS }, (_, index) => ({ name: `fill ${index}`, params: DEFAULTS }));
+    const capped = useStore.getState().saveScenarios(fill);
+    expect(capped).toEqual({ added: MAX_STUDY_SCENARIOS - 3, skipped: 3 });
+    expect(useStore.getState().scenarioLibrary.filter((item) => item.pinned)).toHaveLength(4);
+  });
+
+  it("saves the top three from the Brief dialog and says what landed", () => {
+    clearLibrary();
+    useStore.getState().setUi({ missionBriefOpen: true });
+    render(<MissionBrief />);
+    fireEvent.click(screen.getByRole("button", { name: "RUN DESIGN SEARCH" }));
+    fireEvent.click(screen.getByRole("button", { name: "SAVE TOP 3 TO LIBRARY" }));
+    expect(useStore.getState().scenarioLibrary).toHaveLength(3);
+    expect(screen.getByRole("status").textContent).toMatch(/^3 cases saved to the library/);
+    // nothing about the live case changed
+    expect(useStore.getState().params).toEqual(DEFAULTS);
   });
 });

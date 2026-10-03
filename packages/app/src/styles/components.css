@@ -3451,8 +3451,16 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .brief-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.brief-save-status {
+  margin: 8px 0 0;
+  text-align: right;
+  color: var(--cryo);
+  font: 500 var(--fs-11)/1.4 var(--font-mono);
 }
 
 @media (max-width: 1099px) {

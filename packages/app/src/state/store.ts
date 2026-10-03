@@ -275,6 +275,11 @@ interface Store {
   toggleScenarioPin: (id: string) => void;
   setScenarioNotes: (id: string, notes: string) => void;
   /**
+   * Add authored cases (Brief picks) to the library, pinning them while pin
+   * slots are free. Cases beyond the library's capacity are not added.
+   */
+  saveScenarios: (cases: Array<{ name: string; params: SimParams; notes?: string }>) => { added: number; skipped: number };
+  /**
    * Overwrite a saved case's inputs (or design) with the live case, keeping
    * its identity, name, notes, and pin. Only a case of the live workspace's
    * kind can take it; returns whether the case was updated.
@@ -1652,6 +1657,33 @@ export const useStore = create<Store>((set, get) => {
       );
       persistScenarioLibrary(next);
       set({ scenarioLibrary: next });
+    },
+
+    saveScenarios: (cases) => {
+      const current = get().scenarioLibrary;
+      const room = Math.max(0, MAX_STUDY_SCENARIOS - current.length);
+      let pins = current.filter((scenario) => scenario.pinned).length;
+      const now = Date.now();
+      const added: StudyScenario[] = cases.slice(0, room).map((item) => {
+        const pinned = pins < MAX_PINNED_SCENARIOS;
+        if (pinned) pins += 1;
+        return {
+          id: scenarioId(),
+          name: item.name.slice(0, 80),
+          kind: "authored",
+          params: { ...item.params },
+          createdAt: now,
+          updatedAt: now,
+          pinned,
+          ...scenarioNotes(item.notes)
+        };
+      });
+      if (added.length > 0) {
+        const next = [...current, ...added];
+        persistScenarioLibrary(next);
+        set({ scenarioLibrary: next });
+      }
+      return { added: added.length, skipped: cases.length - added.length };
     },
 
     setScenarioNotes: (id, notes) => {

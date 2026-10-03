@@ -395,18 +395,14 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     title: "POLAR SURFACE HABITAT",
     group: "construction",
     module: "construction",
-    controlLabels: {
-      shieldDesignM: "Designed shielding",
-      areaHabRoof: "Habitat roof area",
-      Pinternal: "Internal pressure",
-      rhoSlag: "Shield material density"
-    },
-    note: "The pressure shell, airlock, radiator, human-scale windows, and quantized shielding sections provide a readable occupied anchor on the crater floor.",
+    // The pole makes no slag, so the slag-shielding inputs (hidden from the
+    // rail here) have nothing to act on.
+    controlLabels: {},
+    note: "The pressure shell, airlock, radiator, human-scale windows, and shielding sections provide a readable occupied anchor on the crater floor. The pole makes no slag, so its shielding is not produced on site.",
     metrics: (r, p) => [
-      { label: "Shield design", value: formatQtyText(r.construction.shieldDesignM, "m", 2) },
-      { label: "Time to shield", value: formatQtyText(r.construction.daysToShieldHabitat, "days") },
-      { label: "Internal pressure", value: formatQtyText(p.Pinternal, "Pa") },
-      { label: "Roof area", value: formatQtyText(p.areaHabRoof, "m²") }
+      { label: "Slag for shielding", value: formatQtyText(r.construction.slagPerYearT, "t/yr") },
+      { label: "Landed infra", value: formatQtyText(r.logistics.totalInfraMassKg, "kg") },
+      { label: "Product reserve", value: formatQtyText(p.reserveDays, "days", 2) }
     ]
   }
 };
