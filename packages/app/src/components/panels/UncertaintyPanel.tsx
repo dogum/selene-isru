@@ -26,7 +26,7 @@ interface UncertaintyOption {
 
 const OPTIONS: UncertaintyOption[] = [
   { key: "targetKgPerDay", label: "Product target", rel: 0.1 },
-  { key: "eMining", label: "Mining energy", rel: 0.2, process: "mre" },
+  { key: "eMining", label: "Mining energy", rel: 0.3 },
   { key: "reserveDays", label: "Reserve duration", rel: 0.1 },
   { key: "Nmli", label: "MLI construction", rel: 0.15 },
   { key: "etaCell", label: "PV efficiency", rel: 0.08 },
@@ -41,7 +41,8 @@ const OPTIONS: UncertaintyOption[] = [
   { key: "eIlmBeneficiation", label: "Beneficiation energy", rel: 0.3, site: "equatorial", process: "ilmenite" },
   { key: "chiIce", label: "Polar ice fraction", rel: 0.25, site: "polar" },
   { key: "cpRegCold", label: "Cold heat capacity", rel: 0.12, site: "polar" },
-  { key: "rPore", label: "Representative pore radius", rel: 0.3, site: "polar" }
+  { key: "rPore", label: "Representative pore radius", rel: 0.3, site: "polar" },
+  { key: "overburdenRatio", label: "Overburden per kg mined", rel: 0.5, site: "polar" }
 ];
 
 function toggle(list: Array<keyof SimParams>, key: keyof SimParams): Array<keyof SimParams> {
@@ -65,7 +66,7 @@ export function UncertaintyPanel(): React.JSX.Element {
     !(option.key === "xO2" && params.oxideModel)
   );
   const defaultKeys: Array<keyof SimParams> = params.site === "polar"
-    ? ["targetKgPerDay", "chiIce", "eMining"]
+    ? ["targetKgPerDay", "chiIce", "cpRegCold"]
     : params.equatorialProcess === "ilmenite"
       ? ["targetKgPerDay", "fIlmenite", "ilmConcentrateGrade"]
       : ["targetKgPerDay", "etaCurrent", "Vcell"];

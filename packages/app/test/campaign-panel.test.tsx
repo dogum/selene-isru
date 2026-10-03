@@ -20,14 +20,14 @@ const run = (patch: Partial<SimParams>) => {
 describe("campaign status wording", () => {
   it("states the payback day when the plant pays back within the campaign", () => {
     const status = campaignStatus(run({}).result.campaign);
-    expect(status).toMatchObject({ headline: "PAYS BACK ON DAY 242", payback: "DAY 242" });
+    expect(status).toMatchObject({ headline: "PAYS BACK ON DAY 241", payback: "DAY 241" });
     expect(status.paybackDetail).toBe("0.66 yr after the first landing");
   });
 
   it("separates a late payback, no payback, and nothing landed", () => {
     expect(campaignStatus(run({ site: "polar", targetKgPerDay: 10 }).result.campaign)).toMatchObject({
       payback: "NOT IN CAMPAIGN",
-      paybackDetail: expect.stringMatching(/^Would need day 22,501 \(61\.6 yr\)$/)
+      paybackDetail: expect.stringMatching(/^Would need day 22,182 \(60\.8 yr\)$/)
     });
     const outpaced = run({ site: "polar", targetKgPerDay: 10, gearRatio: 2, plantAvailability: 0.5, sparesFracPerYear: 0.3, chiIce: 0.005 });
     expect(campaignStatus(outpaced.result.campaign)).toMatchObject({
@@ -44,7 +44,7 @@ describe("campaign status wording", () => {
 describe("campaign compare row", () => {
   it("shows payback only when it falls within the campaign", () => {
     const payback = COMPARE_METRICS.find((metric) => metric.label === "PAYBACK")!;
-    expect(Math.round(payback.value(run({}).result))).toBe(242);
+    expect(Math.round(payback.value(run({}).result))).toBe(241);
     const pilot = run({ site: "polar", targetKgPerDay: 10 }).result;
     expect(pilot.campaign.paybackDays).toBeGreaterThan(pilot.campaign.campaignEndDay);
     expect(payback.value(pilot)).toBeNaN();
@@ -96,7 +96,7 @@ describe("campaign panel", () => {
   it("shows the engine's payback and switches how landers are charged", () => {
     act(() => useStore.getState().applyPatch({ ...DEFAULTS }));
     render(<CampaignPanel />);
-    expect(screen.getByText("PAYS BACK ON DAY 242")).toBeTruthy();
+    expect(screen.getByText("PAYS BACK ON DAY 241")).toBeTruthy();
     expect(screen.getByText(/Charged 1 whole lander at/)).toBeTruthy();
 
     act(() => {

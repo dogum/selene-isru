@@ -562,24 +562,34 @@ export const PARAM_META = {
     "source": "spec"
   },
   "eMining": {
-    "value": 120000,
-    "min": 20000,
-    "max": 500000,
+    "value": 10100,
+    "min": 3000,
+    "max": 150000,
     "unit": "J/kg-regolith",
     "kind": "parameter",
     "group": "excavation",
-    "description": "Fleet-level specific mining energy",
-    "source": "NASA RASSOR-class fleet-level estimate"
+    "description": "Mining energy per kg of soil moved",
+    "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1 and Table 2: RASSOR fleet, 19.3 kW for 61 vehicles of 2.7 t/d on 100 m hauls; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5 gives 11.9 kJ/kg; Kleinhenz & Paz 2020, AIAA 2020-4042, mine icy regolith with the same RASSOR excavator"
   },
-  "kExcFleet": {
-    "value": 8.5,
-    "min": 2,
-    "max": 30,
-    "unit": "kg/(kg/day)",
+  "kMiningMass": {
+    "value": 0.0244,
+    "min": 0.005,
+    "max": 0.2,
+    "unit": "kg/(kg-regolith/day)",
     "kind": "parameter",
     "group": "excavation",
-    "description": "Excavation fleet mass coefficient",
-    "source": "spec"
+    "description": "Excavation fleet mass per soil moved",
+    "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1: 66 kg RASSOR per 2.7 t/d; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5 gives 0.014; Kleinhenz & Paz 2020, AIAA 2020-4042, two margined RASSORs for 1.8 t/d of icy regolith come to about 0.1"
+  },
+  "overburdenRatio": {
+    "value": 0.667,
+    "min": 0,
+    "max": 5,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "excavation",
+    "description": "Overburden per kg of icy regolith",
+    "source": "Kleinhenz & Paz 2020, AIAA 2020-4042, Sec. IV-A and Table 3: pit mine with 20 cm of dry overburden over a 30 cm mined depth"
   },
   "chiIce": {
     "value": 0.05,
@@ -1873,26 +1883,6 @@ export const PARAM_META = {
     "description": "Reactor heat loss, heater inefficiency and gas recycle, as a fraction of reactor heat",
     "source": "calibrated to Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 1,160 kW process power for the 1,000 t/yr soil plant"
   },
-  "eIlmMining": {
-    "value": 10100,
-    "min": 3000,
-    "max": 150000,
-    "unit": "J/kg-regolith",
-    "kind": "parameter",
-    "group": "ilmenite",
-    "description": "Bulk soil excavation energy",
-    "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1 and Table 2: RASSOR fleet, 19.3 kW for 61 vehicles of 2.7 t/d; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5 gives 11.9 kJ/kg"
-  },
-  "kIlmMiningMass": {
-    "value": 0.0244,
-    "min": 0.005,
-    "max": 0.2,
-    "unit": "kg/(kg/day)",
-    "kind": "parameter",
-    "group": "ilmenite",
-    "description": "Excavation fleet mass per kg/day of soil mined",
-    "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1: 66 kg RASSOR per 2.7 t/d; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5 gives 0.014"
-  },
   "eIlmBeneficiation": {
     "value": 87000,
     "min": 20000,
@@ -2130,8 +2120,9 @@ export const DEFAULTS = {
   "dBlade": 0.1,
   "vCut": 0.05,
   "etaDrive": 0.6,
-  "eMining": 120000,
-  "kExcFleet": 8.5,
+  "eMining": 10100,
+  "kMiningMass": 0.0244,
+  "overburdenRatio": 0.667,
   "chiIce": 0.05,
   "cpRegCold": 800,
   "Tpsr": 40,
@@ -2263,8 +2254,6 @@ export const DEFAULTS = {
   "TIlmReactor": 1273,
   "etaIlmHeatRecovery": 0.5,
   "fIlmHeatLoss": 0.25,
-  "eIlmMining": 10100,
-  "kIlmMiningMass": 0.0244,
   "eIlmBeneficiation": 87000,
   "kIlmBeneficiationMass": 0.094,
   "kIlmReactorMass": 18.6,

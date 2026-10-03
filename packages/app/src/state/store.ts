@@ -28,6 +28,7 @@ import type {
   WorkspaceMode
 } from "@selene-isru/engine";
 import { create } from "zustand";
+import { upgradeLegacyParams } from "../lib/legacyParams";
 import { scenarioNotes } from "../lib/scenarioNotes";
 import { parseParams, serializeParams } from "../lib/url";
 import {
@@ -475,7 +476,7 @@ function normalizeScenario(value: unknown): StudyScenario | null {
     kind,
     params: parsedDesign?.params ?? {
       ...DEFAULTS,
-      ...candidate.params
+      ...upgradeLegacyParams(candidate.params ?? {})
     },
     ...(parsedDesign === null ? {} : { design: parsedDesign }),
     createdAt: candidate.createdAt!,

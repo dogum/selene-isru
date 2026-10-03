@@ -11,6 +11,7 @@ import type { CampaignResult, IlmeniteResult, ParamMeta, RefuelResult, SimParams
 import { evidenceForParam } from "../controls/evidence";
 import type { StudyScenario } from "../state/store";
 import { formatInputValue, formatQtyText } from "../lib/format";
+import { upgradeLegacyParams } from "../lib/legacyParams";
 import { scenarioNotes } from "../lib/scenarioNotes";
 import { nonDefaultParams, paramsToUrl } from "../lib/url";
 import { BUILD_INFO, type BuildInfo } from "../lib/build";
@@ -181,7 +182,7 @@ export function previewStudyExport(value: unknown): StudyImportPreview {
       kind: "authored",
       params: {
         ...DEFAULTS,
-        ...candidate.params
+        ...upgradeLegacyParams(candidate.params)
       },
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -260,7 +261,7 @@ function previewCaseFile(file: Record<string, unknown>, blocked: StudyImportPrev
     // clamps and reports, exactly as for study imports.
     scenario = {
       id, name, kind: "authored",
-      params: { ...DEFAULTS, ...(params as Partial<SimParams>) },
+      params: { ...DEFAULTS, ...upgradeLegacyParams(params as Partial<SimParams>) },
       createdAt: timestamp, updatedAt: timestamp, pinned: false,
       ...scenarioNotes(meta.notes)
     };

@@ -74,3 +74,18 @@ def test_polar_propellant_calibration_reproduces_nasa_baseline() -> None:
     }
     for key, value in row["expected"].items():
         assert actual[key] == pytest.approx(value, rel=row["relativeTolerance"]), key
+
+
+def test_polar_excavation_compares_with_nasa_mine() -> None:
+    row = item("kleinhenz-paz-2020-polar-excavation")
+    assert row["kind"] == "documentation-only"
+    expected = row["expected"]
+    excavation = simulate({"site": "polar", **row["inputs"]})["excavation"]
+    assert excavation["soilMovedKgPerDay"] == pytest.approx(67.26 / (0.05 * 0.75) * 1.667, rel=1e-12)
+    # Two whole 66 kg RASSORs at 2.7 t/day each, with the study's 20% growth margin.
+    whole_vehicles = -(-excavation["soilMovedKgPerDay"] // 2700)
+    assert whole_vehicles == 2
+    assert whole_vehicles * 66 * 1.2 == pytest.approx(expected["excavatorMassKg"], rel=0.05)
+    assert expected["excavatorMassKg"] / 2.5 < excavation["fleetMassKg"] < expected["excavatorMassKg"]
+    mining_power_w = DEFAULTS["eMining"] * excavation["soilMovedKgPerDay"] / 86_400
+    assert 0.5 < mining_power_w / expected["excavatorPowerW"] < 2

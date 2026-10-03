@@ -117,6 +117,8 @@ Regression anchors for the polar default were added deliberately in
   estimate is roughly 20× lighter per tonne of regolith than the current
   equatorial default. Re-basing it on regolith throughput would move equatorial
   numbers too, on one data point, so it needs its own calibration pass.
+  *(v0.9: re-based on soil moved from three studies, with polar overburden. See
+  [`model-excavation-v09.md`](model-excavation-v09.md).)*
 - **Conditioning energy from cryocooler efficiency.** The conditioning energies
   could be derived from ideal liquefaction work and the existing second-law
   cryocooler efficiency, which would make that input drive results. LOX would

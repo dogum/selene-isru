@@ -460,6 +460,21 @@ body.selene-photo-mode .app {
   flex-shrink: 0;
 }
 
+/* A long unit (kg/(kg-regolith/day)) wraps under its value rather than
+   squeezing the name into a broken word. */
+.param-row-top .param-label-wrap {
+  flex: 1 1 0;
+  min-width: 45%;
+}
+
+.param-row-top .param-value {
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 0;
+}
+
 .param-input {
   font-family: var(--font-mono);
   font-size: var(--fs-12);

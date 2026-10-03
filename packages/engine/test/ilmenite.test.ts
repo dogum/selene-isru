@@ -44,7 +44,7 @@ describe("ilmenite reduction", () => {
     const ilmenite = result.ilmenite!;
     const line = (from: string, to: string) =>
       result.energy.flows.find((flow) => flow.from === from && flow.to === to)!.kWhPerKg * J_PER_KWH;
-    expectRel(line("mine", "beneficiation"), params.eIlmMining * ilmenite.soilPerKgO2, 1e-12);
+    expectRel(line("mine", "beneficiation"), params.eMining * ilmenite.soilPerKgO2, 1e-12);
     expectRel(line("beneficiation", "reduction"), params.eIlmBeneficiation * ilmenite.soilPerKgO2, 1e-12);
     const concentratePerKgO2 = ilmenite.concentrateKgPerDay / params.targetKgPerDay;
     const sensible = concentratePerKgO2 * 1080 * (params.TIlmReactor - params.Tambient) * (1 - params.etaIlmHeatRecovery);
@@ -126,7 +126,7 @@ describe("ilmenite reduction", () => {
     const ilmenite = result.ilmenite!;
     const row = (subsystem: string) => result.logistics.manifest.find((item) => item.subsystem === subsystem)!.massKg;
     expect(row("excavation fleet")).toBe(ilmenite.miningMassKg);
-    expectRel(ilmenite.miningMassKg, params.kIlmMiningMass * ilmenite.soilKgPerDay, 1e-12);
+    expectRel(ilmenite.miningMassKg, params.kMiningMass * ilmenite.soilKgPerDay, 1e-12);
     expect(row("beneficiation plant")).toBe(ilmenite.beneficiationMassKg);
     expect(row("reactor/plant")).toBe(ilmenite.reactorMassKg + ilmenite.electrolyzerMassKg);
     expect(result.production.regolithKgPerDay).toBe(ilmenite.soilKgPerDay);
@@ -142,17 +142,21 @@ describe("ilmenite reduction", () => {
     expect(mre.ilmenite).toBeNull();
     const ilmeniteInputs: Partial<SimParams> = {
       fIlmenite: 0.2, fIlmSized: 0.7, etaIlmRecovery: 0.6, ilmConcentrateGrade: 0.5, fIlmConversion: 0.4,
-      TIlmReactor: 1100, etaIlmHeatRecovery: 0.8, fIlmHeatLoss: 0.6, eIlmMining: 50_000, kIlmMiningMass: 0.1,
+      TIlmReactor: 1100, etaIlmHeatRecovery: 0.8, fIlmHeatLoss: 0.6,
       eIlmBeneficiation: 30_000, kIlmBeneficiationMass: 0.3, kIlmReactorMass: 40
     };
     expect(simulate(ilmeniteInputs)).toEqual(mre);
     const ilmenite = simulate(ILMENITE);
-    const changedMre = simulate({ ...ILMENITE, Vcell: 3.6, etaCurrent: 0.6, kReactorMass: 30, eMining: 400_000, kExcFleet: 25, fParasitic: 0.4 });
+    const changedMre = simulate({ ...ILMENITE, Vcell: 3.6, etaCurrent: 0.6, kReactorMass: 30, overburdenRatio: 3, fParasitic: 0.4 });
     expect(changedMre.energy).toEqual(ilmenite.energy);
     expect(changedMre.logistics).toEqual(ilmenite.logistics);
     expect(changedMre.campaign).toEqual(ilmenite.campaign);
     // The polar site has no ilmenite plant.
     expect(simulate({ site: "polar", equatorialProcess: "ilmenite" })).toEqual(simulate({ site: "polar" }));
+    // Mining is shared: both plants move soil with the same fleet (v0.9).
+    const heavier = simulate({ ...ILMENITE, eMining: 50_000, kMiningMass: 0.1 });
+    expect(heavier.energy.secTotal_kWhPerKg).toBeGreaterThan(ilmenite.energy.secTotal_kWhPerKg);
+    expectRel(heavier.ilmenite!.miningMassKg, 0.1 * heavier.ilmenite!.soilKgPerDay, 1e-12);
   });
 
   test("a Sabatier switch left over from a polar case adds nothing at the equator", () => {

@@ -145,7 +145,9 @@ def _ledger_at(
         "landedMassKg": plant_landed_kg + supplies_kg,
         "productKg": product_kg,
         "usedKg": used_kg,
-        "leoMassSpentKg": plant_leo_kg + campaign["leoMassPerLandedKg"] * supplies_kg,
+        # Grouped as simulate_campaign groups it, so the end point equals its total exactly.
+        "leoMassSpentKg": plant_leo_kg
+        + campaign["leoMassPerLandedKg"] * (campaign["resupplyKgPerYear"] + campaign["feedKgPerYear"]) / DAYS_PER_YEAR * operating_days,
         "leoMassSavedKg": params["gearRatio"] * used_kg,
     }
 

@@ -40,15 +40,18 @@ describe("regression anchors", () => {
     expectRel(meltHeatJPerKg(DEFAULTS), 2_099_805, 1e-9);
     // v0.6 moved these from 24.78 kWh/kg and 1,032 kW: LOX conditioning is now
     // 1.32 kWh/kg, derived from NASA's polar propellant case, not 2.2 (uncited).
-    expectRel(result.energy.secTotal_kWhPerKg, 23.9, 0.03);
-    expectRel(result.energy.gridPowerW / 1000, 996, 0.03);
+    // v0.9 moved them from 23.89 and 996 kW: mining costs 10.1 kJ per kg of
+    // soil moved (a RASSOR fleet), not 120 kJ.
+    expectRel(result.energy.secTotal_kWhPerKg, 23.76, 0.001);
+    expectRel(result.energy.gridPowerW / 1000, 990.0, 0.001);
     expectRel(pCritKw(1500, 250, 30) ?? 0, 6.818, 0.001);
     expectRel(secSubJPerKg(0.005, 800, 40, 263) / J_PER_KWH, 10.7, 0.01);
     expectRel(secSubJPerKg(0.05, 800, 40, 263) / J_PER_KWH, 1.78, 0.01);
     expect(result.logistics.nMissions).toBe(1);
     expect(result.logistics.plantMassThroughputDays).toBe(result.logistics.totalInfraMassKg / 1000);
-    expect(result.logistics.plantMassThroughputDays).toBeGreaterThanOrEqual(55);
-    expect(result.logistics.plantMassThroughputDays).toBeLessThanOrEqual(62);
+    // v0.9 moved this from 60.4: the excavation fleet is sized on soil moved,
+    // 8.5 t -> 108 kg.
+    expectRel(result.logistics.plantMassThroughputDays, 51.81, 0.001);
     expectRel(shieldFullBalanceM(101325, 3000), 20.85, 0.005);
     expect(payloadPerMissionKg(DEFAULTS)).toBeGreaterThanOrEqual(95_000);
     expect(payloadPerMissionKg(DEFAULTS)).toBeLessThanOrEqual(107_000);
@@ -61,18 +64,22 @@ describe("regression anchors", () => {
   test("polar chain charges capture loss, heater loss, and extractor mass (v0.4)", () => {
     // v0.4 deliberately moved these from 2.814 kWh/kg and 19.5 t: the polar
     // chain had no capture loss, a lower-bound heater, and no extractor mass.
+    // v0.9 moved them from 7.24 kWh/kg and 29.85 t: mining energy and fleet
+    // scale with soil moved, overburden included.
     const polar = simulate({ site: "polar" });
     expect(polar.production.regolithKgPerDay).toBeCloseTo(1000 / (0.05 * 0.75), 9);
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
-    expectRel(polar.energy.secTotal_kWhPerKg, 7.24, 0.01);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 29.85, 0.01);
+    expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.48, 0.001);
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
-  test("campaign ledger pays the equatorial default back on day ~242 (v0.5)", () => {
+  test("campaign ledger pays the equatorial default back on day ~241 (v0.5)", () => {
     // v0.5 adds the ledger; no earlier number moves. Payback is commissioning
-    // plus one 1,100 t lander divided by the daily net LEO-mass saving.
+    // plus one 1,100 t lander divided by the daily net LEO-mass saving. v0.9
+    // moved it from day 242.0 and the return from 6.63: a lighter fleet needs
+    // fewer spares.
     const { logistics, campaign } = simulate({});
     const leoPerKg = DEFAULTS.M0leo / (DEFAULTS.etaPack * logistics.payloadPerMissionKg);
     const netPerDay =
@@ -80,14 +87,14 @@ describe("regression anchors", () => {
       (leoPerKg * DEFAULTS.sparesFracPerYear * logistics.totalInfraMassKg) / 365;
     expectRel(campaign.leoMassPerLandedKg, leoPerKg, 1e-12);
     expectRel(campaign.paybackDays!, DEFAULTS.commissioningDays + DEFAULTS.M0leo / netPerDay, 1e-12);
-    expectRel(campaign.paybackDays!, 242.0, 0.001);
-    expectRel(campaign.returnRatio, 6.63, 0.001);
+    expectRel(campaign.paybackDays!, 240.8, 0.001);
+    expectRel(campaign.returnRatio, 6.882, 0.001);
     expectRel(campaign.leoMassPerLandedKg, 12.82, 0.001);
     expect(campaign.paysBackInCampaign).toBe(true);
     // The Sabatier loop's CO2 is landed from Earth and outweighs its products' saving.
     const sabatier = simulate({ site: "polar", enableSabatier: true }).campaign;
     expect(sabatier.paybackDays).toBeNull();
-    expectRel(sabatier.returnRatio, 0.793, 0.001);
+    expectRel(sabatier.returnRatio, 0.796, 0.001);
   });
 
   test("polar propellant mode splits water into LOX and LH2 (v0.6)", () => {
@@ -101,19 +108,21 @@ describe("regression anchors", () => {
     expectRel(production.excessO2KgPerDay, production.o2KgPerDay - 6 * production.h2KgPerDay, 1e-12);
     expect(cryo.inventories.map((item) => item.stream)).toEqual(["water-ice", "lox", "lh2"]);
     expectRel(cryo.inventories[2]!.liquefierMassKg, 233 * production.h2KgPerDay, 1e-12);
-    expectRel(energy.secTotal_kWhPerKg, 20.78, 0.001);
-    expectRel(logistics.totalInfraMassKg / 1000, 82.35, 0.001);
-    expectRel(campaign.paybackDays!, 311.3, 0.001);
+    // v0.9 moved these from 20.78 kWh/kg, 82.35 t and day 311.3.
+    expectRel(energy.secTotal_kWhPerKg, 20.01, 0.001);
+    expectRel(logistics.totalInfraMassKg / 1000, 73.97, 0.001);
+    expectRel(campaign.paybackDays!, 309.2, 0.001);
     // Leverage and throughput days are measured against usable propellant,
-    // not the water processed (deliberately moved from 133x and 82.4 days).
+    // not the water processed (deliberately moved from 133x and 82.4 days;
+    // v0.9 then moved leverage from 103.4x).
     expect(logistics.productKgPerDay).toBe(production.propellantKgPerDay);
     expectRel(logistics.plantMassThroughputDays, logistics.totalInfraMassKg / production.propellantKgPerDay, 1e-12);
-    expectRel(logistics.leverageL, 103.4, 0.001);
+    expectRel(logistics.leverageL, 115.1, 0.001);
     // The Sabatier loop is measured against its products, imported carbon included.
     const sabatier = simulate({ site: "polar", enableSabatier: true });
     const p = sabatier.production;
     expect(sabatier.logistics.productKgPerDay).toBe(p.o2KgPerDay + p.ch4KgPerDay + p.h2KgPerDay);
-    expectRel(sabatier.logistics.leverageL, 186.0, 0.001);
+    expectRel(sabatier.logistics.leverageL, 213.4, 0.001);
     expect(propellant.materials.maxAbsResidualKgPerDay).toBe(0);
     expect(energy.maxAbsResidualW).toBe(0);
   });
@@ -126,15 +135,17 @@ describe("regression anchors", () => {
     expectRel(crew.refuel!.propellantPerSortieKg, 42_595, 0.001);
     expectRel(crew.refuel!.demandO2KgPerDay, 100.0, 0.001);
     expectRel(crew.refuel!.isruShare, 6 / 7, 1e-12);
-    expectRel(crew.logistics.totalInfraMassKg / 1000, 61.69, 0.001);
+    // v0.9 moved these from 61.69 t and 0.732.
+    expectRel(crew.logistics.totalInfraMassKg / 1000, 53.13, 0.001);
     expect(crew.campaign.paysBackInCampaign).toBe(false);
-    expectRel(crew.campaign.returnRatio, 0.732, 0.001);
+    expectRel(crew.campaign.returnRatio, 0.760, 0.001);
     // Nine sorties a year use the whole plant. The ledger credits each sortie
     // when it flies, so payback falls on the sixth, on day 273, not on the
-    // v0.5 day 242 that crediting by the day would give.
+    // v0.5 day 242 that crediting by the day would give. (v0.9 moved the
+    // return from 6.59.)
     const matched = simulate({ refuelDemand: "lander", sortiesPerYear: 9 });
     expectRel(matched.campaign.paybackDays!, 273.3, 0.001);
-    expectRel(matched.campaign.returnRatio, 6.59, 0.001);
+    expectRel(matched.campaign.returnRatio, 6.841, 0.001);
   });
 
   test("ilmenite reduction: Eagle's mare soil plant uses less power but lands more (v0.8)", () => {
@@ -150,6 +161,25 @@ describe("regression anchors", () => {
     // High-Ti mare soil halves the soil handled and matches MRE's payback.
     const highTi = simulate({ equatorialProcess: "ilmenite", fIlmenite: 0.15 });
     expectRel(highTi.campaign.paybackDays!, 243.3, 0.001);
+  });
+
+  test("excavation scales with soil moved, polar overburden included (v0.9)", () => {
+    // Mining energy and fleet come from the RASSOR fleet of Guerrero-Gonzalez &
+    // Zabel 2023; the polar pit mine also strips Kleinhenz & Paz 2020's 20 cm
+    // of dry overburden over 30 cm of icy regolith.
+    const equatorial = simulate({});
+    const soil = equatorial.production.regolithKgPerDay;
+    expect(equatorial.excavation.soilMovedKgPerDay).toBe(soil);
+    expect(equatorial.excavation.overburdenKgPerDay).toBe(0);
+    expectRel(equatorial.excavation.fleetMassKg, 0.0244 * soil, 1e-12);
+    expectRel(equatorial.excavation.fleetMassKg, 108.4, 0.001);
+    const polar = simulate({ site: "polar" });
+    const ore = polar.production.regolithKgPerDay;
+    expectRel(polar.excavation.overburdenKgPerDay, 0.667 * ore, 1e-12);
+    expectRel(polar.excavation.soilMovedKgPerDay, 1.667 * ore, 1e-12);
+    expectRel(polar.excavation.fleetMassKg, 1085, 0.001);
+    // A lean deposit no longer pays 120 kJ per kg of soil: 24.54 -> 20.72 kWh/kg.
+    expectRel(simulate({ site: "polar", chiIce: 0.01 }).energy.secTotal_kWhPerKg, 20.72, 0.001);
   });
 
   test("keeps the v1 aggregate electrolysis path reachable", () => {

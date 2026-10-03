@@ -32,7 +32,7 @@ export const GROUPS: GroupDef[] = [
     id: "excavation",
     label: "Excavation",
     engineGroup: "excavation",
-    readout: (r) => ({ value: r.excavation.mechPowerW, unit: "W" })
+    readout: (r) => ({ value: r.excavation.soilMovedKgPerDay, unit: "kg/day" })
   },
   {
     id: "oxygen-process",
@@ -131,7 +131,9 @@ export const SITE_ONLY_PARAMS: Partial<Record<keyof SimParams, SiteMode>> = {
   zCraterDrop: "polar",
   rReceiver: "polar",
   etaEmitter: "polar",
-  etaPvReceiver: "polar"
+  etaPvReceiver: "polar",
+  // Only the polar pit mine strips overburden to reach its ore.
+  overburdenRatio: "polar"
 };
 
 /** Params handled outside the rail (top bar / group gates). */
@@ -260,12 +262,9 @@ export function railParamsForGroup(
     const shared = new Set<keyof SimParams>(["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]);
     return [...all, ...[...paramsForGroup("electrolysis"), ...paramsForGroup("propellant")].filter((def) => shared.has(def.key))];
   }
-  // The MRE inputs, the slag construction inputs, and the product-scaled
-  // excavation fleet have nothing to act on while the plant reduces ilmenite.
+  // The MRE inputs and the slag construction inputs have nothing to act on
+  // while the plant reduces ilmenite.
   if ((group.id === "extraction-mre" || group.id === "construction") && reducesIlmenite(params)) return [];
-  if (group.id === "excavation" && reducesIlmenite(params)) {
-    return all.filter((def) => def.key !== "eMining" && def.key !== "kExcFleet");
-  }
   if (group.id === "refuel") {
     if (params.refuelDemand !== "lander" || !makesLanderPropellant(params)) return [];
     // The demand splits at the vehicle mixture ratio, which the propellant

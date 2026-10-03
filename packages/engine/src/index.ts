@@ -350,7 +350,9 @@ export function simulate(
     excavation: {
       cuttingForceN: excavation.cuttingForceN,
       mechPowerW: excavation.mechPowerW,
-      fleetMassKg: excavation.fleetMassKg
+      fleetMassKg: excavation.fleetMassKg,
+      soilMovedKgPerDay: excavation.soilMovedKgPerDay,
+      overburdenKgPerDay: excavation.overburdenKgPerDay
     },
     electrolysis: {
       secElec_JPerKg: mre ? electrolysis.secElec_JPerKg : 0,

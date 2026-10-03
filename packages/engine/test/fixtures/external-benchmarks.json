@@ -97,6 +97,17 @@
       "modelSimplification": "Calibration anchor, not independent validation: secCondLh2, secCondLox, kLiquefierLh2, kLiquefierLox, and kElectrolyzerMass were derived from this case, so their agreement confirms the derivation. Electrolysis power is the independent check (cell voltage 1.8 V at 95% Faradaic efficiency) and runs about 10% low; the study's figure includes pumps and balance of plant. Linear scaling with product rate is conservative for larger plants, most of all for H2 liquefaction."
     },
     {
+      "id": "kleinhenz-paz-2020-polar-excavation",
+      "kind": "documentation-only",
+      "quantity": "polar mine excavator mass and power for the NASA baseline case",
+      "inputs": { "targetKgPerDay": 67.26, "chiIce": 0.05, "etaIceCapture": 0.75, "overburdenRatio": 0.667 },
+      "expected": { "excavatorMassKg": 161, "excavatorPowerW": 212 },
+      "source": "Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water, AIAA 2020-4042",
+      "sourceUrl": "https://ntrs.nasa.gov/api/citations/20205007966/downloads/PolarWaterISRUstudy_Kleinhenz_final.pdf",
+      "sourceLocator": "Table 3 (398 t of icy regolith over 225 days less 48 h commissioning; 20 cm of overburden over a 30 cm mined depth); Sec. IV.C (two RASSOR excavators); Fig. 8 excavator mass (~161 kg) and mine power (~212 W), measured on the log axes, both including the study's margins.",
+      "modelSimplification": "Comparison, not calibration: the model sizes a continuous fleet at 0.0244 kg per kg/day of soil moved with no margin (Guerrero-Gonzalez & Zabel 2023), about 73 kg here. The study rounds up to two whole 66 kg RASSORs and adds its 20% growth margin (2 x 66 x 1.2 = 158 kg). Its excavators also idle while the extractor hopper is full, so they draw less power than the model's 10.1 kJ per kg of soil moved."
+    },
+    {
       "id": "mli-layer-density-units",
       "kind": "open",
       "quantity": "MLI layer-density coefficient/unit pairing",

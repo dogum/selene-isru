@@ -25,20 +25,19 @@ def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = N
     ) * params["wBlade"] * params["dBlade"]
     mech_power_w = cutting_force_n * params["vCut"] / params["etaDrive"]
     regolith_per_kg = regolith_per_kg_product(params, x_o2_effective)
-    # MRE and polar fleets scale with product; an ilmenite plant moves tens of
-    # times more soil per kg of oxygen, so its fleet scales with soil mined.
-    ilmenite = reduces_ilmenite(params)
-    sec_excavation_j_per_kg = (params["eIlmMining"] if ilmenite else params["eMining"]) * regolith_per_kg
-    fleet_mass_kg = (
-        params["kIlmMiningMass"] * (params["targetKgPerDay"] * regolith_per_kg)
-        if ilmenite
-        else params["kExcFleet"] * params["targetKgPerDay"]
-    )
+    # Every plant's mining energy and fleet scale with the soil it moves. The
+    # polar pit mine also strips dry overburden to reach the icy regolith.
+    overburden_per_kg = params["overburdenRatio"] * regolith_per_kg if params["site"] == "polar" else 0
+    soil_moved_per_kg = regolith_per_kg + overburden_per_kg
+    soil_moved_kg_per_day = params["targetKgPerDay"] * soil_moved_per_kg
 
     return {
         "cuttingForceN": cutting_force_n,
         "mechPowerW": mech_power_w,
-        "fleetMassKg": fleet_mass_kg,
-        "secExcavation_JPerKg": sec_excavation_j_per_kg,
+        "fleetMassKg": params["kMiningMass"] * soil_moved_kg_per_day,
+        "secExcavation_JPerKg": params["eMining"] * soil_moved_per_kg,
         "regolithPerKgProduct": regolith_per_kg,
+        "soilMovedPerKgProduct": soil_moved_per_kg,
+        "soilMovedKgPerDay": soil_moved_kg_per_day,
+        "overburdenKgPerDay": params["targetKgPerDay"] * overburden_per_kg,
     }

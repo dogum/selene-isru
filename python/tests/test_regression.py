@@ -34,15 +34,17 @@ def test_regression_anchors() -> None:
     )
     assert all(row["decomposed"] for row in result["electrolysis"]["oxideYield"])
     assert_rel(melt_heat_j_per_kg(DEFAULTS), 2_099_805, 1e-9)
-    # v0.6 moved these from 24.78 kWh/kg and 1,032 kW (LOX conditioning 2.2 -> 1.32 kWh/kg).
-    assert_rel(result["energy"]["secTotal_kWhPerKg"], 23.9, 0.03)
-    assert_rel(result["energy"]["gridPowerW"] / 1000, 996, 0.03)
+    # v0.6 moved these from 24.78 kWh/kg and 1,032 kW (LOX conditioning 2.2 -> 1.32 kWh/kg);
+    # v0.9 from 23.89 and 996 kW (mining 120 -> 10.1 kJ per kg of soil).
+    assert_rel(result["energy"]["secTotal_kWhPerKg"], 23.76, 0.001)
+    assert_rel(result["energy"]["gridPowerW"] / 1000, 990.0, 0.001)
     assert_rel(p_crit_kw(1500, 250, 30), 6.818, 0.001)
     assert_rel(sec_sub_j_per_kg(0.005, 800, 40, 263) / J_PER_KWH, 10.7, 0.01)
     assert_rel(sec_sub_j_per_kg(0.05, 800, 40, 263) / J_PER_KWH, 1.78, 0.01)
     assert result["logistics"]["nMissions"] == 1
     assert result["logistics"]["totalInfraMassKg"] / 1000 == result["logistics"]["plantMassThroughputDays"]
-    assert 55 <= result["logistics"]["plantMassThroughputDays"] <= 62
+    # v0.9 moved this from 60.4: the excavation fleet is sized on soil moved (8.5 t -> 108 kg).
+    assert_rel(result["logistics"]["plantMassThroughputDays"], 51.81, 0.001)
     assert_rel(shield_full_balance_m(101325, 3000), 20.85, 0.005)
     assert 95_000 <= payload_per_mission_kg(DEFAULTS) <= 107_000
     assert 1.8 <= result["construction"]["padsPerYear"] <= 2.2
@@ -50,18 +52,20 @@ def test_regression_anchors() -> None:
 
 
 def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
-    # v0.4 deliberately moved these from 2.814 kWh/kg and 19.5 t.
+    # v0.4 deliberately moved these from 2.814 kWh/kg and 19.5 t; v0.9 from 7.24 kWh/kg and
+    # 29.85 t (mining and fleet on soil moved, overburden included).
     polar = simulate({"site": "polar"})
     assert polar["production"]["regolithKgPerDay"] == pytest.approx(1000 / (0.05 * 0.75), rel=1e-12)
     assert_rel(polar["thermal"]["extractorMassKg"], 4800, 1e-9)
     assert_rel(polar["thermal"]["secSub_JPerKg"] / J_PER_KWH, 1.78 / 0.75, 0.01)
-    assert_rel(polar["energy"]["secTotal_kWhPerKg"], 7.24, 0.01)
-    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 29.85, 0.01)
+    assert_rel(polar["energy"]["secTotal_kWhPerKg"], 6.478, 0.001)
+    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.48, 0.001)
     assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
 def test_campaign_ledger_equatorial_payback_v05() -> None:
-    # v0.5 adds the ledger; no earlier number moves.
+    # v0.5 adds the ledger; no earlier number moves. v0.9 moved payback from day 242.0 and the
+    # return from 6.63 with the lighter excavation fleet.
     result = simulate({})
     logistics, campaign = result["logistics"], result["campaign"]
     leo_per_kg = DEFAULTS["M0leo"] / (DEFAULTS["etaPack"] * logistics["payloadPerMissionKg"])
@@ -70,12 +74,12 @@ def test_campaign_ledger_equatorial_payback_v05() -> None:
         - leo_per_kg * DEFAULTS["sparesFracPerYear"] * logistics["totalInfraMassKg"] / 365
     )
     assert_rel(campaign["paybackDays"], DEFAULTS["commissioningDays"] + DEFAULTS["M0leo"] / net_per_day, 1e-12)
-    assert_rel(campaign["paybackDays"], 242.0, 0.001)
-    assert_rel(campaign["returnRatio"], 6.63, 0.001)
+    assert_rel(campaign["paybackDays"], 240.8, 0.001)
+    assert_rel(campaign["returnRatio"], 6.882, 0.001)
     assert campaign["paysBackInCampaign"] is True
     sabatier = simulate({"site": "polar", "enableSabatier": True})["campaign"]
     assert sabatier["paybackDays"] is None
-    assert_rel(sabatier["returnRatio"], 0.793, 0.001)
+    assert_rel(sabatier["returnRatio"], 0.796, 0.001)
 
 
 def test_polar_propellant_mode_v06() -> None:
@@ -84,22 +88,24 @@ def test_polar_propellant_mode_v06() -> None:
     assert_rel(production["propellantKgPerDay"], 7 * production["h2KgPerDay"], 1e-12)
     assert_rel(production["excessO2KgPerDay"], production["o2KgPerDay"] - 6 * production["h2KgPerDay"], 1e-12)
     assert [item["stream"] for item in result["cryo"]["inventories"]] == ["water-ice", "lox", "lh2"]
-    assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.78, 0.001)
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 82.35, 0.001)
-    assert_rel(result["campaign"]["paybackDays"], 311.3, 0.001)
+    # v0.9 moved these from 20.78 kWh/kg, 82.35 t, day 311.3, 103.4x and 186.0x.
+    assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.01, 0.001)
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 73.97, 0.001)
+    assert_rel(result["campaign"]["paybackDays"], 309.2, 0.001)
     assert result["logistics"]["productKgPerDay"] == production["propellantKgPerDay"]
-    assert_rel(result["logistics"]["leverageL"], 103.4, 0.001)
+    assert_rel(result["logistics"]["leverageL"], 115.1, 0.001)
     sabatier = simulate({"site": "polar", "enableSabatier": True})
-    assert_rel(sabatier["logistics"]["leverageL"], 186.0, 0.001)
+    assert_rel(sabatier["logistics"]["leverageL"], 213.4, 0.001)
 
 
 def test_refuelling_demand_v07() -> None:
     crew = simulate({"refuelDemand": "lander"})
     assert_rel(crew["refuel"]["propellantPerSortieKg"], 42_595, 0.001)
     assert_rel(crew["refuel"]["demandO2KgPerDay"], 100.0, 0.001)
-    assert_rel(crew["logistics"]["totalInfraMassKg"] / 1000, 61.69, 0.001)
+    # v0.9 moved these from 61.69 t and 0.732.
+    assert_rel(crew["logistics"]["totalInfraMassKg"] / 1000, 53.13, 0.001)
     assert crew["campaign"]["paysBackInCampaign"] is False
-    assert_rel(crew["campaign"]["returnRatio"], 0.732, 0.001)
+    assert_rel(crew["campaign"]["returnRatio"], 0.760, 0.001)
     matched = simulate({"refuelDemand": "lander", "sortiesPerYear": 9})
     assert_rel(matched["campaign"]["paybackDays"], 273.3, 0.001)
 
@@ -113,6 +119,24 @@ def test_ilmenite_reduction_v08() -> None:
     assert_rel(ilmenite["campaign"]["paybackDays"], 585.5, 0.001)
     high_ti = simulate({"equatorialProcess": "ilmenite", "fIlmenite": 0.15})
     assert_rel(high_ti["campaign"]["paybackDays"], 243.3, 0.001)
+
+
+def test_excavation_on_soil_moved_v09() -> None:
+    # Mining energy and fleet scale with the soil moved, from the RASSOR fleet of
+    # Guerrero-Gonzalez & Zabel 2023; the polar pit mine also strips Kleinhenz & Paz's
+    # 20 cm of overburden over 30 cm of icy regolith.
+    equatorial = simulate({})
+    soil = equatorial["production"]["regolithKgPerDay"]
+    assert equatorial["excavation"]["soilMovedKgPerDay"] == soil
+    assert equatorial["excavation"]["overburdenKgPerDay"] == 0
+    assert_rel(equatorial["excavation"]["fleetMassKg"], 0.0244 * soil, 1e-12)
+    assert_rel(equatorial["excavation"]["fleetMassKg"], 108.4, 0.001)
+    polar = simulate({"site": "polar"})
+    ore = polar["production"]["regolithKgPerDay"]
+    assert_rel(polar["excavation"]["overburdenKgPerDay"], 0.667 * ore, 1e-12)
+    assert_rel(polar["excavation"]["soilMovedKgPerDay"], 1.667 * ore, 1e-12)
+    assert_rel(polar["excavation"]["fleetMassKg"], 1085, 0.001)
+    assert_rel(simulate({"site": "polar", "chiIce": 0.01})["energy"]["secTotal_kWhPerKg"], 20.72, 0.001)
 
 
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
@@ -147,8 +171,8 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     )
     assert result["plantMassThroughputDays"]["p10"] <= result["plantMassThroughputDays"]["p50"] <= result["plantMassThroughputDays"]["p90"]
     assert result["secTotal"]["p10"] <= result["secTotal"]["p50"] <= result["secTotal"]["p90"]
-    assert_rel(result["plantMassThroughputDays"]["p50"], 60.3325320797489, 1e-12)
-    assert_rel(result["secTotal"]["p50"], 23.897402251765627, 1e-12)
+    assert_rel(result["plantMassThroughputDays"]["p50"], 51.77811331203485, 1e-12)
+    assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
 def test_public_warning_paths() -> None:

@@ -1,5 +1,6 @@
 import { DEFAULTS, PARAM_META } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
+import { upgradeLegacyParams } from "./legacyParams";
 
 /**
  * Compact query-string round-trip for scenario sharing (§5).
@@ -36,11 +37,12 @@ export function serializeParams(params: SimParams): string {
 }
 
 export function parseParams(query: string): Partial<SimParams> {
-  const search = new URLSearchParams(query);
+  // Links made before v0.9 can carry renamed or retired inputs.
+  const search = upgradeLegacyParams(Object.fromEntries(new URLSearchParams(query)));
   const patch: Record<string, number | string | boolean> = {};
   for (const key of Object.keys(PARAM_META) as Array<keyof SimParams>) {
-    const raw = search.get(key);
-    if (raw === null) {
+    const raw = search[key];
+    if (raw === undefined) {
       continue;
     }
     const fallback = DEFAULTS[key];
