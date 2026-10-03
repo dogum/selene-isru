@@ -11,6 +11,7 @@ import {
 import { afterEach, describe, expect, it } from "vitest";
 import { GOALS, candidateCaseName, candidateNotes, optimize } from "../src/analysis/brief";
 import { caseExport } from "../src/analysis/caseExport";
+import { compareWithLive, differingInputCount } from "../src/analysis/caseDiff";
 import { differingInputRows, previewStudyExport, scenariosCsv, studyExport } from "../src/analysis/studyExport";
 import { MissionBrief } from "../src/components/MissionBrief";
 import { ScenarioLibrary } from "../src/components/panels/ScenarioLibrary";
@@ -286,5 +287,78 @@ describe("Mission Brief picks in the library", () => {
     expect(screen.getByRole("status").textContent).toMatch(/^3 cases saved to the library/);
     // nothing about the live case changed
     expect(useStore.getState().params).toEqual(DEFAULTS);
+  });
+});
+
+describe("custom cases compare with the live design, not its effective inputs", () => {
+  const clearLibrary = (): void => {
+    for (const item of useStore.getState().scenarioLibrary) {
+      useStore.getState().deleteScenario(item.id);
+    }
+  };
+  const live = () => {
+    const state = useStore.getState();
+    return { workspaceMode: state.workspaceMode, params: state.params, design: state.customSite.evaluation.normalizedDesign };
+  };
+  afterEach(() => {
+    cleanup();
+    clearLibrary();
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({});
+  });
+
+  it("sees a layout change, lets UPDATE save it, and then matches", () => {
+    clearLibrary();
+    const store = useStore.getState();
+    store.resetCustomDesign();
+    store.setCustomEnvironment("equatorial");
+    store.enterCustomSite();
+    store.placeCustomAsset("equatorial.excavator", -60, -40);
+    useStore.getState().saveCurrentScenario("Custom layout");
+    const saved = useStore.getState().scenarioLibrary.find((item) => item.name === "Custom layout")!;
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+
+    // A move changes the design but not one SimParams value.
+    const assetId = useStore.getState().customSite.design.assets[0]!.id;
+    useStore.getState().moveCustomAsset(assetId, -30, -40);
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 0, layout: true });
+
+    render(<ScenarioLibrary />);
+    expect(screen.getByText("LIVE CASE DIFFERS IN LAYOUT")).toBeTruthy();
+    const update = screen.getByRole("button", { name: /UPDATE/ }) as HTMLButtonElement;
+    expect(update.disabled).toBe(false);
+    fireEvent.click(update);
+    fireEvent.click(update);
+    const updated = useStore.getState().scenarioLibrary.find((item) => item.id === saved.id)!;
+    expect(updated.design!.assets[0]!.transform.xM).toBe(-30);
+    expect(compareWithLive(updated, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+    expect(screen.getByText("= LIVE CASE")).toBeTruthy();
+  });
+
+  it("compares a custom case's planned inputs from the design, which UPDATE can always clear", () => {
+    clearLibrary();
+    const store = useStore.getState();
+    store.resetCustomDesign();
+    store.setCustomEnvironment("equatorial");
+    store.enterCustomSite();
+    useStore.getState().saveCurrentScenario("Planned");
+    const saved = useStore.getState().scenarioLibrary.find((item) => item.name === "Planned")!;
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+    // Even if the simulated params drifted from the plan, the comparison reads the design.
+    expect(compareWithLive(saved, { ...live(), params: { ...live().params, targetKgPerDay: 1 } })).toEqual({ comparable: true, inputs: 0, layout: false });
+    useStore.getState().setParam("reserveDays", 45);
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 1, layout: false });
+    expect(differingInputCount(saved.params, { ...saved.params, reserveDays: 45 })).toBe(1);
+    expect(useStore.getState().updateScenarioFromCurrent(saved.id)).toBe(true);
+    const updated = useStore.getState().scenarioLibrary.find((item) => item.id === saved.id)!;
+    expect(compareWithLive(updated, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+  });
+
+  it("does not compare cases across workspaces", () => {
+    clearLibrary();
+    useStore.getState().saveCurrentScenario("Authored");
+    const authored = useStore.getState().scenarioLibrary.find((item) => item.name === "Authored")!;
+    useStore.getState().enterCustomSite();
+    expect(compareWithLive(authored, live())).toEqual({ comparable: false });
   });
 });

@@ -1,5 +1,5 @@
-import { PARAM_META, serializeSiteDesign } from "@selene-isru/engine";
-import type { SimParams } from "@selene-isru/engine";
+import { serializeSiteDesign } from "@selene-isru/engine";
+import { compareWithLive, type LiveComparison } from "../../analysis/caseDiff";
 import { caseExport, fileStem } from "../../analysis/caseExport";
 import { BUILD_INFO } from "../../lib/build";
 import { useRef, useState } from "react";
@@ -46,9 +46,16 @@ function simulateFor(id: string): ReturnType<typeof studyScenarioResult> {
   return result;
 }
 
-/** How many inputs a saved case sets differently from the live case. */
-function inputsDifferingFrom(params: SimParams, live: SimParams): number {
-  return (Object.keys(PARAM_META) as Array<keyof SimParams>).filter((key) => params[key] !== live[key]).length;
+/** The card's line about the live case. */
+function liveText(comparison: LiveComparison, kind: "authored" | "custom"): string {
+  if (!comparison.comparable) {
+    return kind === "custom" ? "OPEN CUSTOM SITE TO COMPARE" : "OPEN EQUATORIAL OR POLAR TO COMPARE";
+  }
+  const parts = [
+    ...(comparison.inputs > 0 ? [plural(comparison.inputs, "input").toUpperCase()] : []),
+    ...(comparison.layout ? ["LAYOUT"] : [])
+  ];
+  return parts.length === 0 ? "= LIVE CASE" : `LIVE CASE DIFFERS IN ${parts.join(" AND ")}`;
 }
 
 function plural(count: number, noun: string): string {
@@ -83,6 +90,7 @@ export function ScenarioLibrary(): React.JSX.Element {
   const updateScenarioFromCurrent = useStore((s) => s.updateScenarioFromCurrent);
   const importScenarios = useStore((s) => s.importScenarios);
   const liveParams = useStore((s) => s.params);
+  const liveDesign = useStore((s) => s.customSite.evaluation.normalizedDesign);
   const workspaceMode = useStore((s) => s.workspaceMode);
   const [confirmUpdateId, setConfirmUpdateId] = useState<string | null>(null);
   const [saveName, setSaveName] = useState(currentName);
@@ -257,13 +265,13 @@ export function ScenarioLibrary(): React.JSX.Element {
       <div className="scenario-cards">
         {scenarios.map((scenario) => {
           const result = studyScenarioResult(scenario);
-          const differing = inputsDifferingFrom(scenario.params, liveParams);
-          const sameKind = scenario.kind === workspaceMode;
-          const updateReason = !sameKind
-            ? `Open the ${workspaceMode === "custom" ? "Equatorial or Polar site" : "Custom Site"} to update this ${scenario.kind} case`
-            : differing === 0
+          const comparison = compareWithLive(scenario, { workspaceMode, params: liveParams, design: liveDesign });
+          const matches = comparison.comparable && comparison.inputs === 0 && !comparison.layout;
+          const updateReason = !comparison.comparable
+            ? `Open the ${scenario.kind === "custom" ? "Custom Site" : "Equatorial or Polar site"} to update this ${scenario.kind} case`
+            : matches
               ? "This case already matches the live case"
-              : `Replace this case's inputs with the live case (${plural(differing, "input")} change); its name, notes, and pin stay`;
+              : `Replace this case with the live ${scenario.kind === "custom" ? "design" : "case"}; its name, notes, and pin stay`;
           return (
             <article key={scenario.id} className={scenario.pinned ? "pinned" : ""}>
               <div className="scenario-card-head">
@@ -283,8 +291,8 @@ export function ScenarioLibrary(): React.JSX.Element {
                 <span>{formatQtyText(result.energy.secTotal_kWhPerKg, "kWh/kg", 4)}</span>
                 <span>{formatQtyText(result.logistics.totalInfraMassKg, "kg")}</span>
               </div>
-              <p className={`scenario-card-live mono ${differing === 0 ? "same" : ""}`}>
-                {differing === 0 ? "= LIVE CASE" : `LIVE CASE DIFFERS IN ${plural(differing, "INPUT").toUpperCase()}`}
+              <p className={`scenario-card-live mono ${matches ? "same" : ""}`}>
+                {liveText(comparison, scenario.kind)}
               </p>
               <details className="scenario-card-notes" open={scenario.notes !== undefined}>
                 <summary>NOTES{scenario.notes === undefined ? "" : ` · ${scenario.notes.length}/${MAX_SCENARIO_NOTES}`}</summary>
@@ -301,7 +309,7 @@ export function ScenarioLibrary(): React.JSX.Element {
                 <button type="button" onClick={() => loadScenario(scenario.id)}>LOAD</button>
                 <button
                   type="button"
-                  disabled={!sameKind || differing === 0}
+                  disabled={!comparison.comparable || matches}
                   title={updateReason}
                   onClick={() => {
                     if (confirmUpdateId !== scenario.id) {
