@@ -11,7 +11,7 @@ export interface SensitivityRow {
   highInput: number;
   /** True when a requested bound fell outside the engine range and was capped. */
   capped: boolean;
-  /** Output response at each input bound, percent of the base value. */
+  /** Output response at each input bound, percent change from the base value (−10 = 10% lower). */
   low: number;
   high: number;
   swing: number;
@@ -20,7 +20,7 @@ export interface SensitivityRow {
 /**
  * One-at-a-time local sensitivity: each input is moved to value·(1 ± rel),
  * clamped to its engine bounds, and the metric response is reported as a
- * percent of the base case. Clamping here matters because the engine would
+ * percent change from the base case. Clamping here matters because the engine would
  * otherwise clamp silently, so a ±12% step on a 0.9 efficiency would be
  * labelled +12% while actually simulating +10%.
  */

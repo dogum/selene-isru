@@ -101,8 +101,8 @@ export function sensitivityCsv(rows: readonly SensitivityRow[], metric: string):
       { header: "lowInput", value: (row) => row.lowInput },
       { header: "highInput", value: (row) => row.highInput },
       { header: "cappedAtEngineBound", value: (row) => row.capped },
-      { header: `${metric} at low input [% of base]`, value: (row) => row.low },
-      { header: `${metric} at high input [% of base]`, value: (row) => row.high },
+      { header: `${metric} at low input [% change from base]`, value: (row) => row.low },
+      { header: `${metric} at high input [% change from base]`, value: (row) => row.high },
       { header: "swing [percentage points]", value: (row) => row.swing }
     ],
     rows

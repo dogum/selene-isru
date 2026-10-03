@@ -30,6 +30,15 @@ describe("plain case summary", () => {
     expect(sentence).not.toContain("water ice");
   });
 
+  it("names a custom stored stream instead of leaving the product blank", () => {
+    for (const site of ["equatorial", "polar"] as const) {
+      const custom = run({ site, storageStream: "custom" });
+      const sentence = caseSummary(custom.params, custom.result);
+      expect(sentence).not.toMatch(/makes\s+from/);
+      expect(sentence).toMatch(/makes 1,000\u2009kg\/day custom cryogen from/);
+    }
+  });
+
   it("says when the product does not repay its launch mass", () => {
     const pilot = run({ site: "polar", targetKgPerDay: 10 });
     expect(pilot.result.campaign.paysBackInCampaign).toBe(false);

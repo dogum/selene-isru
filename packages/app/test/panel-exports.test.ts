@@ -70,6 +70,15 @@ describe("panel exports carry the data behind each chart", () => {
     expect(row!.slice(0, 6)).toEqual(["etaCurrent", "1", "0.12", String(rows[0]!.lowInput), "0.99", "true"]);
   });
 
+  it("labels sensitivity responses as percent change from base, which is what they are", () => {
+    const rows = oneAtATimeSensitivity(DEFAULTS, [{ key: "targetKgPerDay", rel: 0.1 }], (r) => r.logistics.totalInfraMassKg);
+    const [header, row] = lines(sensitivityCsv(rows, "mass"));
+    expect(header!.slice(6, 8)).toEqual(["mass at low input [% change from base]", "mass at high input [% change from base]"]);
+    // Less output needs less plant: a negative change, not a share of the base.
+    expect(Number(row![6])).toBeLessThan(0);
+    expect(Number(row![7])).toBeGreaterThan(0);
+  });
+
   it("bands record their sample count, seed, and input spreads", () => {
     const spec = [{ key: "targetKgPerDay" as const, rel: 0.1 }];
     const bands = sampleUncertainty(DEFAULTS, spec, { n: 64, seed: 7 });

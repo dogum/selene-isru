@@ -3,7 +3,10 @@ import type { Warning } from "@selene-isru/engine";
 import {
   groupsForSite,
   isChangedFromDefault,
+  isModeChanged,
+  matchesModeQuery,
   matchesParamQuery,
+  railModeParamsForGroup,
   railParamsForGroup,
   WARNING_PARAM,
   type GroupDef,
@@ -58,7 +61,10 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   const changedCount = groups.reduce(
-    (count, { defs }) => count + defs.filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length,
+    (count, { group, defs }) =>
+      count +
+      defs.filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length +
+      railModeParamsForGroup(group, site).filter((key) => isModeChanged(params, key)).length,
     0
   );
   const filtering = query.trim().length > 0 || changedOnly;
@@ -69,9 +75,15 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
           matchesParamQuery(def, group.label, query) &&
           (!changedOnly || isChangedFromDefault(params[def.key] as number, def.defaultValue))
         )
-      : defs
+      : defs,
+    // Selects and switches stay reachable through search and CHANGED too.
+    modes: filtering
+      ? railModeParamsForGroup(group, site).filter((key) =>
+          matchesModeQuery(key, group.label, query) && (!changedOnly || isModeChanged(params, key))
+        )
+      : []
   }));
-  const matchCount = shown.reduce((count, { defs }) => count + defs.length, 0);
+  const matchCount = shown.reduce((count, { defs, modes }) => count + defs.length + modes.length, 0);
 
   const toggle = (id: string): void => {
     setOpen((prev) => {
@@ -122,8 +134,8 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
             : `${matchCount} input${matchCount === 1 ? "" : "s"} shown`}
         </p>
       )}
-      {shown.map(({ group, defs }) =>
-        filtering && defs.length === 0 ? null : (
+      {shown.map(({ group, defs, modes }) =>
+        filtering && defs.length === 0 && modes.length === 0 ? null : (
           <RailGroup
             key={group.id}
             group={group}

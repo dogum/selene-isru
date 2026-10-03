@@ -82,4 +82,26 @@ describe("control rail search, changed filter, and reset", () => {
     const row = document.querySelector(".param-row") as HTMLElement;
     expect(within(row).getByRole("button", { name: /Reset .* to default 1000/ })).toBeTruthy();
   });
+
+  it("counts and shows changed selects and switches, not only sliders", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "equatorial", storageStream: "custom", deploymentManifest: "shared" });
+    render(<ControlGroups />);
+    const changed = screen.getByRole("button", { name: "CHANGED · 2" });
+    fireEvent.click(changed);
+    expect(screen.queryByText("Every input is at its default.")).toBeNull();
+    expect(screen.getByText("2 inputs shown")).toBeTruthy();
+    // The groups that hold the changed selects stay on screen with the selects in them.
+    expect(screen.getByDisplayValue("CUSTOM CRYOGEN")).toBeTruthy();
+    expect(screen.getByDisplayValue("SHARED (MASS SHARE)")).toBeTruthy();
+    expect(document.querySelectorAll(".param-row")).toHaveLength(0);
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
+  it("finds a select by searching its name", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "equatorial" });
+    render(<ControlGroups />);
+    fireEvent.change(screen.getByRole("searchbox", { name: /Search inputs/ }), { target: { value: "lander charging" } });
+    expect(screen.getByDisplayValue("DEDICATED (WHOLE LANDERS)")).toBeTruthy();
+    expect(screen.getByText("1 input shown")).toBeTruthy();
+  });
 });

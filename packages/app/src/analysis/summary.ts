@@ -27,6 +27,12 @@ function productInventories(result: SimResult): SimResult["cryo"]["inventories"]
   return result.cryo.inventories.filter((inventory) => inventory.role === "product");
 }
 
+/** What the plant delivers: its product inventories, or a user-defined custom stream. */
+function deliveredInventories(result: SimResult): SimResult["cryo"]["inventories"] {
+  const products = productInventories(result);
+  return products.length > 0 ? products : result.cryo.inventories.filter((inventory) => inventory.role === "custom");
+}
+
 /**
  * Plain label for the OUTPUT KPI, which is the engine's target throughput.
  * With one product that is the product itself; when the target stream is
@@ -52,10 +58,13 @@ export function caseSummary(params: SimParams, result: SimResult): string {
         ? "Polar ice plant with Sabatier loop"
         : "Polar ice plant"
       : "Equatorial molten-regolith plant";
-  const named = [...productInventories(result)]
+  const named = [...deliveredInventories(result)]
     .sort((a, b) => b.rateKgPerDay - a.rateKgPerDay)
     .map((inventory) => `${formatQtyProse(inventory.rateKgPerDay, "kg/day")} ${STREAM_NAMES[inventory.stream]}`);
-  const products = named.length > 1 ? `${named.slice(0, -1).join(", ")} and ${named[named.length - 1]}` : (named[0] ?? "");
+  const products =
+    named.length > 1
+      ? `${named.slice(0, -1).join(", ")} and ${named[named.length - 1]}`
+      : (named[0] ?? `${formatQtyProse(result.production.targetKgPerDay, "kg/day")} of product`);
   const landings = result.logistics.nMissions;
   const parts = [
     plant,
