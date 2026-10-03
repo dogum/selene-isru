@@ -123,6 +123,37 @@ describe("undo and redo of authored edits", () => {
     expect(store().params.site).toBe("polar");
   });
 
+  it("undoes and redoes a swap on both sides, without touching the comparison otherwise", () => {
+    store().setParam("targetKgPerDay", 1500);
+    store().setUi({ currentScenarioName: "Case A" });
+    store().setCompareFromCurrent();
+    store().applyPatch({ site: "polar" });
+    store().setUi({ currentScenarioName: "Case B" });
+    // live B, comparison A; swap makes live A, comparison B
+    store().swapCompare();
+    expect(store().params.site).toBe("equatorial");
+    expect(store().compareParams.site).toBe("polar");
+
+    store().undoParams();
+    expect(store().params.site).toBe("polar");
+    expect(store().ui.currentScenarioName).toBe("Case B");
+    expect(store().compareParams.site).toBe("equatorial");
+    expect(store().compareParams.targetKgPerDay).toBe(1500);
+    expect(store().compareResult.site).toBe("equatorial");
+
+    store().redoParams();
+    expect(store().params.site).toBe("equatorial");
+    expect(store().compareParams.site).toBe("polar");
+    expect(store().ui.compareScenarioName).toBe("Case B");
+
+    // an ordinary step leaves a comparison snapshot taken since alone
+    later();
+    store().setParam("reserveDays", 45);
+    store().setCompareFromCurrent();
+    store().undoParams();
+    expect(store().compareParams.reserveDays).toBe(45);
+  });
+
   it("keeps at most the history limit", () => {
     for (let i = 0; i < PARAM_HISTORY_LIMIT + 20; i += 1) {
       later();

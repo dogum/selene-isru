@@ -127,6 +127,11 @@ export interface TourState {
 export interface AuthoredCaseEntry {
   params: SimParams;
   scenarioName: string;
+  /**
+   * The comparison case beside it, kept only for a swap, which changes both
+   * sides; undoing any other step leaves the comparison as it is.
+   */
+  compare?: { params: SimParams; scenarioName: string };
 }
 
 export interface ParamHistory {
@@ -628,8 +633,8 @@ export const useStore = create<Store>((set, get) => {
    * Push the case on screen onto the undo stack before it changes. Edits to
    * the same input in quick succession (one slider drag) are one step.
    */
-  const rememberAuthoredCase = (coalesceKey: string | null = null): void => {
-    const { params, ui, paramHistory } = get();
+  const rememberAuthoredCase = (coalesceKey: string | null = null, withCompare = false): void => {
+    const { params, ui, paramHistory, compareParams } = get();
     const now = Date.now();
     const coalesce =
       coalesceKey !== null &&
@@ -641,10 +646,39 @@ export const useStore = create<Store>((set, get) => {
       paramHistory: {
         past: coalesce
           ? paramHistory.past
-          : [...paramHistory.past, { params, scenarioName: ui.currentScenarioName }].slice(-PARAM_HISTORY_LIMIT),
+          : [
+              ...paramHistory.past,
+              {
+                params,
+                scenarioName: ui.currentScenarioName,
+                ...(withCompare ? { compare: { params: compareParams, scenarioName: ui.compareScenarioName } } : {})
+              }
+            ].slice(-PARAM_HISTORY_LIMIT),
         future: []
       }
     });
+  };
+
+  /** The case on screen as a history entry, with the comparison when `target` carries one. */
+  const entryOnScreen = (target: AuthoredCaseEntry): AuthoredCaseEntry => {
+    const { params, ui, compareParams } = get();
+    return {
+      params,
+      scenarioName: ui.currentScenarioName,
+      ...(target.compare === undefined ? {} : { compare: { params: compareParams, scenarioName: ui.compareScenarioName } })
+    };
+  };
+
+  /** Show a history entry: the live case, and the comparison when the entry kept it. */
+  const showEntry = (entry: AuthoredCaseEntry): void => {
+    showAuthoredCase(entry.params, entry.scenarioName);
+    if (entry.compare !== undefined) {
+      set({
+        compareParams: entry.compare.params,
+        compareResult: simulate(entry.compare.params),
+        ui: { ...get().ui, compareScenarioName: entry.compare.scenarioName }
+      });
+    }
   };
 
   /** Simulate an authored case and show it, without touching the undo stack. */
@@ -1418,7 +1452,7 @@ export const useStore = create<Store>((set, get) => {
         get().stopTour();
         return;
       }
-      const { paramHistory, params, ui, workspaceMode } = get();
+      const { paramHistory, workspaceMode } = get();
       const previous = paramHistory.past.at(-1);
       if (workspaceMode !== "authored" || previous === undefined) {
         return;
@@ -1427,10 +1461,10 @@ export const useStore = create<Store>((set, get) => {
       set({
         paramHistory: {
           past: paramHistory.past.slice(0, -1),
-          future: [{ params, scenarioName: ui.currentScenarioName }, ...paramHistory.future].slice(0, PARAM_HISTORY_LIMIT)
+          future: [entryOnScreen(previous), ...paramHistory.future].slice(0, PARAM_HISTORY_LIMIT)
         }
       });
-      showAuthoredCase(previous.params, previous.scenarioName);
+      showEntry(previous);
     },
 
     redoParams: () => {
@@ -1438,7 +1472,7 @@ export const useStore = create<Store>((set, get) => {
         get().stopTour();
         return;
       }
-      const { paramHistory, params, ui, workspaceMode } = get();
+      const { paramHistory, workspaceMode } = get();
       const next = paramHistory.future[0];
       if (workspaceMode !== "authored" || next === undefined) {
         return;
@@ -1446,11 +1480,11 @@ export const useStore = create<Store>((set, get) => {
       lastParamEdit = null;
       set({
         paramHistory: {
-          past: [...paramHistory.past, { params, scenarioName: ui.currentScenarioName }].slice(-PARAM_HISTORY_LIMIT),
+          past: [...paramHistory.past, entryOnScreen(next)].slice(-PARAM_HISTORY_LIMIT),
           future: paramHistory.future.slice(1)
         }
       });
-      showAuthoredCase(next.params, next.scenarioName);
+      showEntry(next);
     },
 
     resetParam: (key) => {
@@ -1500,7 +1534,8 @@ export const useStore = create<Store>((set, get) => {
 
     swapCompare: () => {
       if (recordsAuthoredHistory() && !sameParams(get().compareParams, get().params)) {
-        rememberAuthoredCase();
+        // a swap changes both sides, so its step keeps the comparison too
+        rememberAuthoredCase(null, true);
       }
       const { params, result, compareParams, compareResult, time, ui } = get();
       const nextTimeseries = simulateTimeseries(compareParams, { cycles: 1, samplesPerCycle: 96 });
