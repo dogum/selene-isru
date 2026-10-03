@@ -13,12 +13,22 @@ export function reducesIlmenite(params: Pick<SimParams, "site" | "equatorialProc
 }
 
 /**
+ * True when magnetic separation enriches the feed. A concentrate no richer
+ * than the soil is no separation at all: the whole sized stream goes to the
+ * reactor with all its ilmenite, and no recovery loss applies.
+ */
+export function ilmeniteSeparates(params: Pick<SimParams, "ilmConcentrateGrade" | "fIlmenite">): boolean {
+  return params.ilmConcentrateGrade > params.fIlmenite;
+}
+
+/**
  * Soil mined per kg of oxygen [kg/kg]. Only soil inside the reactor's size
- * window is fed, the separator recovers part of its ilmenite, and the
- * reactor reduces part of what it is fed.
+ * window is fed, the separator (when there is one) recovers part of its
+ * ilmenite, and the reactor reduces part of what it is fed.
  */
 export function ilmeniteSoilPerKgO2(params: SimParams): number {
-  return 1 / (params.fIlmenite * params.fIlmSized * params.etaIlmRecovery * params.fIlmConversion * ilmeniteOxygenFraction());
+  const recovery = ilmeniteSeparates(params) ? params.etaIlmRecovery : 1;
+  return 1 / (params.fIlmenite * params.fIlmSized * recovery * params.fIlmConversion * ilmeniteOxygenFraction());
 }
 
 /**
@@ -32,8 +42,8 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
   const fedIlmenitePerKgO2 = reducedPerKgO2 / params.fIlmConversion;
   const soilPerKgO2 = ilmeniteSoilPerKgO2(params);
   const sizedSoilPerKgO2 = soilPerKgO2 * params.fIlmSized;
-  // The separator cannot return more than it is fed.
-  const concentratePerKgO2 = Math.min(fedIlmenitePerKgO2 / params.ilmConcentrateGrade, sizedSoilPerKgO2);
+  // Without enrichment the reactor takes the whole sized stream.
+  const concentratePerKgO2 = ilmeniteSeparates(params) ? fedIlmenitePerKgO2 / params.ilmConcentrateGrade : sizedSoilPerKgO2;
   const waterPerKgO2 = PHYSICAL_CONSTANTS.M_H2O.value / (PHYSICAL_CONSTANTS.M_O2.value / 2);
   const ironPerKgO2 =
     reducedPerKgO2 * (PHYSICAL_CONSTANTS.M_FeO.value - PHYSICAL_CONSTANTS.M_O2.value / 2) /

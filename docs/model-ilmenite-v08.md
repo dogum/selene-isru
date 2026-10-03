@@ -37,9 +37,10 @@ soil = 1 / (fIlmenite × fIlmSized × etaIlmRecovery × fIlmConversion × xO)
 xO   = M_O / (M_FeO + M_TiO2) = 0.1055
 ```
 
-The concentrate carries the fed ilmenite at `ilmConcentrateGrade`. A
-separator cannot return more than it is fed, so a grade no better than the
-sized soil's sends the whole sized feed to the reactor.
+The concentrate carries the fed ilmenite at `ilmConcentrateGrade`. A grade
+no richer than the soil's is no separation at all. The whole sized stream
+then goes to the reactor with all its ilmenite, and `etaIlmRecovery` drops
+out of the soil chain.
 
 **Energy per kg of oxygen.**
 - Mining: `eIlmMining × soil`.
@@ -217,7 +218,7 @@ What the table shows:
   - each energy line is its stated term
   - the Eagle calibration holds
   - grade scales the soil handled but not the reactor
-  - the separator cannot return more than its feed
+  - a concentrate no richer than the soil skips separation and loses no ilmenite
   - each process ignores the other's inputs
 - **Parity:**
   - The Latin hypercube now also samples `equatorialProcess`.

@@ -16015,7 +16015,7 @@
         "site": "equatorial",
         "production": {
           "targetKgPerDay": 14656.602644074,
-          "regolithKgPerDay": 5353900.0791256,
+          "regolithKgPerDay": 2786438.3675658,
           "slagKgPerDay": 0,
           "o2KgPerDay": 14656.602644074,
           "waterKgPerDay": 0,
@@ -16028,27 +16028,27 @@
           "excessO2KgPerDay": 0
         },
         "energy": {
-          "secTotal_kWhPerKg": 62.248560880887,
+          "secTotal_kWhPerKg": 48.968639609063,
           "flows": [
             {
               "from": "mine",
               "to": "beneficiation",
-              "kWhPerKg": 15.083003880472
+              "kWhPerKg": 7.8499523878962
             },
             {
               "from": "beneficiation",
               "to": "reduction",
-              "kWhPerKg": 8.4504635571596
+              "kWhPerKg": 4.3980454493711
             },
             {
               "from": "reduction",
               "to": "electrolysis",
-              "kWhPerKg": 19.57040649517
+              "kWhPerKg": 18.211379992363
             },
             {
               "from": "reduction",
               "to": "parasitic",
-              "kWhPerKg": 9.1503210733027
+              "kWhPerKg": 8.5148959046492
             },
             {
               "from": "electrolysis",
@@ -16061,45 +16061,45 @@
               "kWhPerKg": 1.3632920942314
             }
           ],
-          "gridPowerW": 38014684.249858,
+          "gridPowerW": 29904745.53212,
           "balances": [
             {
               "id": "excavation-energy",
               "label": "Excavation drive",
-              "electricalInputW": 9211066.4397956,
+              "electricalInputW": 4793901.3718455,
               "coupledInputW": 0,
               "usefulOutputW": 33318.245157768,
-              "rejectedHeatW": 9177748.1946378,
+              "rejectedHeatW": 4760583.1266877,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-beneficiation-energy",
               "label": "Soil sizing and separation",
-              "electricalInputW": 5160628.604813,
+              "electricalInputW": 2685850.1900837,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 5160628.604813,
+              "rejectedHeatW": 2685850.1900837,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-reactor-energy",
               "label": "Ilmenite feed heat and reduction",
-              "electricalInputW": 11951486.315946,
+              "electricalInputW": 11121540.006179,
               "coupledInputW": 0,
               "usefulOutputW": 472891.08580507,
-              "rejectedHeatW": 11478595.230141,
+              "rejectedHeatW": 10648648.920374,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-aux-energy",
               "label": "Reactor heat loss and gas recycle",
-              "electricalInputW": 5588025.8348787,
+              "electricalInputW": 5199976.9095872,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 5588025.8348787,
+              "rejectedHeatW": 5199976.9095872,
               "accumulationW": 0,
               "residualW": 0
             },
@@ -16140,7 +16140,7 @@
         "excavation": {
           "cuttingForceN": 67958.104047531,
           "mechPowerW": 33318.245157768,
-          "fleetMassKg": 101757.85071881
+          "fleetMassKg": 52959.893769668
         },
         "electrolysis": {
           "secElec_JPerKg": 0,
@@ -16243,15 +16243,15 @@
         },
         "power": {
           "architecture": "nuclear",
-          "solarMassKg": 71691576.136315,
-          "nuclearMassKg": 1481615.7823045,
-          "solarArrayM2": 978200.96449794,
-          "radiatorM2": 52548.425912209,
+          "solarMassKg": 56397110.313,
+          "nuclearMassKg": 1166500.5186779,
+          "solarArrayM2": 769514.50471917,
+          "radiatorM2": 41337.902340302,
           "pCritW": 2457.1124427343,
           "pCritDynamicW": 173.78104609997,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
-          "solarDeliveredCapacityW": 122448700.17416,
+          "solarDeliveredCapacityW": 96325861.748039,
           "siteDayHours": 354.0,
           "siteNightHours": 354.0,
           "siteProfile": {
@@ -16296,14 +16296,14 @@
         "logistics": {
           "payloadPerMissionKg": 41865.644436745,
           "productKgPerDay": 14656.602644074,
-          "totalInfraMassKg": 3023602.9252086,
-          "nMissions": 109,
-          "leverageL": 172.76127628135,
-          "plantMassThroughputDays": 206.29630198996,
+          "totalInfraMassKg": 2461506.2250238,
+          "nMissions": 89,
+          "leverageL": 212.21213865588,
+          "plantMassThroughputDays": 167.945211097,
           "manifest": [
             {
               "subsystem": "excavation fleet",
-              "massKg": 101757.85071881
+              "massKg": 52959.893769668
             },
             {
               "subsystem": "reactor/plant",
@@ -16311,11 +16311,11 @@
             },
             {
               "subsystem": "beneficiation plant",
-              "massKg": 413269.86197391
+              "massKg": 215086.38236498
             },
             {
               "subsystem": "power system",
-              "massKg": 1481615.7823045
+              "massKg": 1166500.5186779
             },
             {
               "subsystem": "cryo block",
@@ -16325,21 +16325,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 35.233014607473,
-          "deploymentDays": 6088.7836083542,
-          "firstProductDay": 6223.8778660846,
-          "campaignEndDay": 11994.004382599,
+          "deploymentDays": 4961.2310882886,
+          "firstProductDay": 5096.325346019,
+          "campaignEndDay": 10866.451862534,
           "deliveredKgPerDay": 14037.983222965,
           "usedKgPerDay": 5924.5071763375,
           "sortieIntervalDays": 7.2146806586367,
-          "resupplyKgPerYear": 727168.91713847,
+          "resupplyKgPerYear": 591986.07107337,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 81000939.233216,
           "cumulativeUsedKg": 34151998.442324,
-          "landedMassKg": 14519100.59854,
-          "leoMassSpentKg": 512431423.44394,
+          "landedMassKg": 11819956.981483,
+          "leoMassSpentKg": 417428490.49866,
           "leoMassSavedKg": 210944707.24378,
-          "netLeoMassKg": -301486716.20017,
-          "returnRatio": 0.41165451139991,
+          "netLeoMassKg": -206483783.25488,
+          "returnRatio": 0.50534333914723,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -16364,25 +16364,25 @@
           "sortieIntervalDays": 7.2146806586367
         },
         "ilmenite": {
-          "soilPerKgO2": 365.28929719538,
-          "soilKgPerDay": 5353900.0791256,
-          "sizedSoilKgPerDay": 1415351.590981,
-          "concentrateKgPerDay": 794031.5336666,
-          "concentrateGrade": 0.18281645712782,
-          "tailingsKgPerDay": 4559868.545459,
+          "soilPerKgO2": 190.11488782446,
+          "soilKgPerDay": 2786438.3675658,
+          "sizedSoilKgPerDay": 736620.01875625,
+          "concentrateKgPerDay": 736620.01875625,
+          "concentrateGrade": 0.19706501063846,
+          "tailingsKgPerDay": 2049818.3488095,
           "ilmeniteReducedKgPerDay": 138972.07419577,
           "waterKgPerDay": 16488.677974583,
           "hydrogenRecycleKgPerDay": 1832.0753305092,
-          "spentSolidsKgPerDay": 779374.93102253,
+          "spentSolidsKgPerDay": 721963.41611217,
           "ironKgPerDay": 51155.207378478,
-          "secMining_JPerKg": 54298813.969698,
-          "secBeneficiation_JPerKg": 30421668.805775,
-          "secSensible_JPerKg": 67665792.132613,
+          "secMining_JPerKg": 28259828.596426,
+          "secBeneficiation_JPerKg": 15832963.617736,
+          "secSensible_JPerKg": 62773296.722508,
           "secReaction_JPerKg": 2787671.25,
-          "secReactorLoss_JPerKg": 32941155.86389,
+          "secReactorLoss_JPerKg": 30653625.256737,
           "secWaterElectrolysis_JPerKg": 31071865.609984,
-          "miningMassKg": 101757.85071881,
-          "beneficiationMassKg": 413269.86197391,
+          "miningMassKg": 52959.893769668,
+          "beneficiationMassKg": 215086.38236498,
           "reactorMassKg": 400590.09670264,
           "electrolyzerMassKg": 70968.634476029
         },
@@ -16392,19 +16392,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 5353900.0791256
+              "kgPerDay": 2786438.3675658
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 4559868.545459
+              "kgPerDay": 2049818.3488095
             },
             {
               "material": "ilmenite-concentrate",
               "from": "beneficiation",
               "to": "reduction",
-              "kgPerDay": 794031.5336666
+              "kgPerDay": 736620.01875625
             },
             {
               "material": "hydrogen",
@@ -16422,7 +16422,7 @@
               "material": "spent-solids",
               "from": "reduction",
               "to": "tailings",
-              "kgPerDay": 779374.93102253
+              "kgPerDay": 721963.41611217
             },
             {
               "material": "oxygen",
@@ -16435,15 +16435,15 @@
             {
               "id": "ilmenite-beneficiation",
               "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 5353900.0791256,
-              "massOutKgPerDay": 5353900.0791256,
+              "massInKgPerDay": 2786438.3675658,
+              "massOutKgPerDay": 2786438.3675658,
               "residualKgPerDay": 0
             },
             {
               "id": "ilmenite-reduction",
               "label": "Hydrogen reduction of ilmenite",
-              "massInKgPerDay": 795863.60899711,
-              "massOutKgPerDay": 795863.60899711,
+              "massInKgPerDay": 738452.09408676,
+              "massOutKgPerDay": 738452.09408676,
               "residualKgPerDay": 0
             },
             {
@@ -37808,7 +37808,7 @@
         "site": "equatorial",
         "production": {
           "targetKgPerDay": 3769.9710492488,
-          "regolithKgPerDay": 1309314.666782,
+          "regolithKgPerDay": 1172832.7515068,
           "slagKgPerDay": 0,
           "o2KgPerDay": 3769.9710492488,
           "waterKgPerDay": 0,
@@ -37821,27 +37821,27 @@
           "excessO2KgPerDay": 0
         },
         "energy": {
-          "secTotal_kWhPerKg": 48.113674990125,
+          "secTotal_kWhPerKg": 44.063823877105,
           "flows": [
             {
               "from": "mine",
               "to": "beneficiation",
-              "kWhPerKg": 10.394276506383
+              "kWhPerKg": 9.3107854239999
             },
             {
               "from": "beneficiation",
               "to": "reduction",
-              "kWhPerKg": 5.8458538586442
+              "kWhPerKg": 5.2364867207903
             },
             {
               "from": "reduction",
               "to": "electrolysis",
-              "kWhPerKg": 15.835067985847
+              "kWhPerKg": 14.26515109591
             },
             {
               "from": "reduction",
               "to": "parasitic",
-              "kWhPerKg": 7.9388928770562
+              "kWhPerKg": 7.1518168742106
             },
             {
               "from": "electrolysis",
@@ -37854,45 +37854,45 @@
               "kWhPerKg": 0.68692088653461
             }
           ],
-          "gridPowerW": 7557798.407739,
+          "gridPowerW": 6921639.1806619,
           "balances": [
             {
               "id": "excavation-energy",
               "label": "Excavation drive",
-              "electricalInputW": 1632755.0627896,
+              "electricalInputW": 1462557.978927,
               "coupledInputW": 0,
               "usefulOutputW": 378.1716735589,
-              "rejectedHeatW": 1632376.8911161,
+              "rejectedHeatW": 1462179.8072534,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-beneficiation-energy",
               "label": "Soil sizing and separation",
-              "electricalInputW": 918279.15855116,
+              "electricalInputW": 822558.47238147,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 918279.15855116,
+              "rejectedHeatW": 822558.47238147,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-reactor-energy",
               "label": "Ilmenite feed heat and reduction",
-              "electricalInputW": 2487406.1612304,
+              "electricalInputW": 2240800.2768643,
               "coupledInputW": 0,
               "usefulOutputW": 121637.03596439,
-              "rejectedHeatW": 2365769.125266,
+              "rejectedHeatW": 2119163.2408999,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-aux-energy",
               "label": "Reactor heat loss and gas recycle",
-              "electricalInputW": 1247058.1795662,
+              "electricalInputW": 1123422.6068876,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 1247058.1795662,
+              "rejectedHeatW": 1123422.6068876,
               "accumulationW": 0,
               "residualW": 0
             },
@@ -37933,7 +37933,7 @@
         "excavation": {
           "cuttingForceN": 3775.9950713523,
           "mechPowerW": 378.1716735589,
-          "fleetMassKg": 210948.09131089
+          "fleetMassKg": 188959.03073118
         },
         "electrolysis": {
           "secElec_JPerKg": 0,
@@ -38036,15 +38036,15 @@
         },
         "power": {
           "architecture": "nuclear",
-          "solarMassKg": 25434657.083183,
-          "nuclearMassKg": 438186.72361134,
-          "solarArrayM2": 128717.61799705,
-          "radiatorM2": 17048.291436626,
+          "solarMassKg": 23293756.927068,
+          "nuclearMassKg": 401867.26653825,
+          "solarArrayM2": 117883.12679226,
+          "radiatorM2": 15613.293131802,
           "pCritW": 2024.8178523558,
           "pCritDynamicW": 714.40460914295,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
-          "solarDeliveredCapacityW": 17890567.329659,
+          "solarDeliveredCapacityW": 16384672.508126,
           "siteDayHours": 354.0,
           "siteNightHours": 354.0,
           "siteProfile": {
@@ -38089,14 +38089,14 @@
         "logistics": {
           "payloadPerMissionKg": 167030.17307265,
           "productKgPerDay": 3769.9710492488,
-          "totalInfraMassKg": 1022637.9598472,
-          "nMissions": 10,
-          "leverageL": 155.05791548383,
-          "plantMassThroughputDays": 271.25883633801,
+          "totalInfraMassKg": 948204.96920397,
+          "nMissions": 9,
+          "leverageL": 167.22978206038,
+          "plantMassThroughputDays": 251.51518587733,
           "manifest": [
             {
               "subsystem": "excavation fleet",
-              "massKg": 210948.09131089
+              "massKg": 188959.03073118
             },
             {
               "subsystem": "reactor/plant",
@@ -38104,11 +38104,11 @@
             },
             {
               "subsystem": "beneficiation plant",
-              "massKg": 154687.22678732
+              "massKg": 138562.75379685
             },
             {
               "subsystem": "power system",
-              "massKg": 438186.72361134
+              "massKg": 401867.26653825
             },
             {
               "subsystem": "cryo block",
@@ -38118,45 +38118,45 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 8.4083226198993,
-          "deploymentDays": 2726.5336040779,
-          "firstProductDay": 2999.6952519382,
-          "campaignEndDay": 5922.9619795429,
+          "deploymentDays": 2423.585425847,
+          "firstProductDay": 2696.7470737073,
+          "campaignEndDay": 5620.013801312,
           "deliveredKgPerDay": 2719.0307695908,
           "usedKgPerDay": 2719.0307695908,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 282276.30001483,
+          "resupplyKgPerYear": 261730.74037126,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 7948452.1800781,
           "cumulativeUsedKg": 7948452.1800781,
-          "landedMassKg": 3283374.7155313,
-          "leoMassSpentKg": 28461989.389619,
+          "landedMassKg": 3044393.3662413,
+          "leoMassSpentKg": 26133115.164626,
           "leoMassSavedKg": 114364690.20087,
-          "netLeoMassKg": 85902700.811248,
-          "returnRatio": 4.0181551835789,
-          "paybackDays": 3289.4902160958,
+          "netLeoMassKg": 88231575.036241,
+          "returnRatio": 4.3762364142362,
+          "paybackDays": 2953.8323296129,
           "paysBackInCampaign": true
         },
         "refuel": null,
         "ilmenite": {
-          "soilPerKgO2": 347.30098711047,
-          "soilKgPerDay": 1309314.666782,
-          "sizedSoilKgPerDay": 395641.93455924,
-          "concentrateKgPerDay": 395641.93455924,
-          "concentrateGrade": 0.18702833843499,
-          "tailingsKgPerDay": 913672.73222277,
+          "soilPerKgO2": 311.09860956106,
+          "soilKgPerDay": 1172832.7515068,
+          "sizedSoilKgPerDay": 354400.53525179,
+          "concentrateKgPerDay": 354400.53525179,
+          "concentrateGrade": 0.20879272539261,
+          "tailingsKgPerDay": 818432.21625496,
           "ilmeniteReducedKgPerDay": 35746.394242596,
           "waterKgPerDay": 4241.2174304049,
           "hydrogenRecycleKgPerDay": 471.2463811561,
-          "spentSolidsKgPerDay": 391871.96350999,
+          "spentSolidsKgPerDay": 350630.56420255,
           "ironKgPerDay": 13158.141454641,
-          "secMining_JPerKg": 37419395.422979,
-          "secBeneficiation_JPerKg": 21045073.891119,
-          "secSensible_JPerKg": 54218573.49905,
+          "secMining_JPerKg": 33518827.5264,
+          "secBeneficiation_JPerKg": 18851352.194845,
+          "secSensible_JPerKg": 48566872.695277,
           "secReaction_JPerKg": 2787671.25,
-          "secReactorLoss_JPerKg": 28580014.357402,
+          "secReactorLoss_JPerKg": 25746540.747158,
           "secWaterElectrolysis_JPerKg": 26685586.352374,
-          "miningMassKg": 210948.09131089,
-          "beneficiationMassKg": 154687.22678732,
+          "miningMassKg": 188959.03073118,
+          "beneficiationMassKg": 138562.75379685,
           "reactorMassKg": 136222.45348214,
           "electrolyzerMassKg": 38816.335276176
         },
@@ -38166,19 +38166,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 1309314.666782
+              "kgPerDay": 1172832.7515068
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 913672.73222277
+              "kgPerDay": 818432.21625496
             },
             {
               "material": "ilmenite-concentrate",
               "from": "beneficiation",
               "to": "reduction",
-              "kgPerDay": 395641.93455924
+              "kgPerDay": 354400.53525179
             },
             {
               "material": "hydrogen",
@@ -38196,7 +38196,7 @@
               "material": "spent-solids",
               "from": "reduction",
               "to": "tailings",
-              "kgPerDay": 391871.96350999
+              "kgPerDay": 350630.56420255
             },
             {
               "material": "oxygen",
@@ -38209,15 +38209,15 @@
             {
               "id": "ilmenite-beneficiation",
               "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 1309314.666782,
-              "massOutKgPerDay": 1309314.666782,
+              "massInKgPerDay": 1172832.7515068,
+              "massOutKgPerDay": 1172832.7515068,
               "residualKgPerDay": 0
             },
             {
               "id": "ilmenite-reduction",
               "label": "Hydrogen reduction of ilmenite",
-              "massInKgPerDay": 396113.1809404,
-              "massOutKgPerDay": 396113.1809404,
+              "massInKgPerDay": 354871.78163295,
+              "massOutKgPerDay": 354871.78163295,
               "residualKgPerDay": 0
             },
             {
@@ -81468,7 +81468,7 @@
         "site": "equatorial",
         "production": {
           "targetKgPerDay": 11768.013002012,
-          "regolithKgPerDay": 2381713.2164788,
+          "regolithKgPerDay": 1395747.1766192,
           "slagKgPerDay": 0,
           "o2KgPerDay": 11768.013002012,
           "waterKgPerDay": 0,
@@ -81481,27 +81481,27 @@
           "excessO2KgPerDay": 0
         },
         "energy": {
-          "secTotal_kWhPerKg": 23.641576039993,
+          "secTotal_kWhPerKg": 19.84839601314,
           "flows": [
             {
               "from": "mine",
               "to": "beneficiation",
-              "kWhPerKg": 3.3818608870395
+              "kWhPerKg": 1.9818602643448
             },
             {
               "from": "beneficiation",
               "to": "reduction",
-              "kWhPerKg": 5.4447946412042
+              "kWhPerKg": 3.1907942128177
             },
             {
               "from": "reduction",
               "to": "electrolysis",
-              "kWhPerKg": 3.0006317933537
+              "kWhPerKg": 2.8994533570821
             },
             {
               "from": "reduction",
               "to": "parasitic",
-              "kWhPerKg": 1.1269755808583
+              "kWhPerKg": 1.0889750413586
             },
             {
               "from": "electrolysis",
@@ -81514,45 +81514,45 @@
               "kWhPerKg": 2.450719551721
             }
           ],
-          "gridPowerW": 11592265.592779,
+          "gridPowerW": 9732340.9313214,
           "balances": [
             {
               "id": "excavation-energy",
               "label": "Excavation drive",
-              "electricalInputW": 1658240.9537365,
+              "electricalInputW": 971773.22329085,
               "coupledInputW": 0,
               "usefulOutputW": 39038.756348056,
-              "rejectedHeatW": 1619202.1973885,
+              "rejectedHeatW": 932734.4669428,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-beneficiation-energy",
               "label": "Soil sizing and separation",
-              "electricalInputW": 2669767.2554573,
+              "electricalInputW": 1564554.4909659,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 2669767.2554573,
+              "rejectedHeatW": 1564554.4909659,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-reactor-energy",
               "label": "Ilmenite feed heat and reduction",
-              "electricalInputW": 1471311.4149348,
+              "electricalInputW": 1421700.2002029,
               "coupledInputW": 0,
               "usefulOutputW": 379691.56846452,
-              "rejectedHeatW": 1091619.8464703,
+              "rejectedHeatW": 1042008.6317383,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-aux-energy",
               "label": "Reactor heat loss and gas recycle",
-              "electricalInputW": 552594.30368712,
+              "electricalInputW": 533961.35189893,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 552594.30368712,
+              "rejectedHeatW": 533961.35189893,
               "accumulationW": 0,
               "residualW": 0
             },
@@ -81593,7 +81593,7 @@
         "excavation": {
           "cuttingForceN": 38195.308741806,
           "mechPowerW": 39038.756348056,
-          "fleetMassKg": 81263.869034159
+          "fleetMassKg": 47622.784716821
         },
         "electrolysis": {
           "secElec_JPerKg": 0,
@@ -81696,15 +81696,15 @@
         },
         "power": {
           "architecture": "nuclear",
-          "solarMassKg": 14645550.282577,
-          "nuclearMassKg": 790226.19725041,
-          "solarArrayM2": 86583.160998075,
-          "radiatorM2": 2789.8777821784,
+          "solarMassKg": 12295740.408643,
+          "nuclearMassKg": 663602.19668861,
+          "solarArrayM2": 72691.298780257,
+          "radiatorM2": 2342.2549729876,
           "pCritW": 855.59533544087,
           "pCritDynamicW": 233.20547653316,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
-          "solarDeliveredCapacityW": 25208291.432932,
+          "solarDeliveredCapacityW": 21163739.267174,
           "siteDayHours": 354.0,
           "siteNightHours": 354.0,
           "siteProfile": {
@@ -81749,14 +81749,14 @@
         "logistics": {
           "payloadPerMissionKg": 142390.08211421,
           "productKgPerDay": 11768.013002012,
-          "totalInfraMassKg": 2704891.0933415,
-          "nMissions": 27,
-          "leverageL": 204.85094852453,
-          "plantMassThroughputDays": 229.85113059265,
+          "totalInfraMassKg": 2090366.3421161,
+          "nMissions": 21,
+          "leverageL": 265.07291806356,
+          "plantMassThroughputDays": 177.63120602932,
           "manifest": [
             {
               "subsystem": "excavation fleet",
-              "massKg": 81263.869034159
+              "massKg": 47622.784716821
             },
             {
               "subsystem": "reactor/plant",
@@ -81764,11 +81764,11 @@
             },
             {
               "subsystem": "beneficiation plant",
-              "massKg": 1097315.9392022
+              "massKg": 643056.27285599
             },
             {
               "subsystem": "power system",
-              "massKg": 790226.19725041
+              "massKg": 663602.19668861
             },
             {
               "subsystem": "cryo block",
@@ -81778,45 +81778,45 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 18.715388926648,
-          "deploymentDays": 1140.9898133629,
-          "firstProductDay": 1384.4428924391,
-          "campaignEndDay": 5718.5488176578,
+          "deploymentDays": 877.68447181763,
+          "firstProductDay": 1121.1375508938,
+          "campaignEndDay": 5455.2434761125,
           "deliveredKgPerDay": 5901.5788449045,
           "usedKgPerDay": 5901.5788449045,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 381337.87999401,
+          "resupplyKgPerYear": 294701.65038277,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 25578067.839846,
           "cumulativeUsedKg": 25578067.839846,
-          "landedMassKg": 7232997.299348,
-          "leoMassSpentKg": 136645706.63139,
+          "landedMassKg": 5589731.1889537,
+          "leoMassSpentKg": 105858981.34854,
           "leoMassSavedKg": 277877150.77894,
-          "netLeoMassKg": 141231444.14755,
-          "returnRatio": 2.0335593238106,
-          "paybackDays": 2549.1495840059,
+          "netLeoMassKg": 172018169.4304,
+          "returnRatio": 2.624974728068,
+          "paybackDays": 1944.8997739366,
           "paysBackInCampaign": true
         },
         "refuel": null,
         "ilmenite": {
-          "soilPerKgO2": 202.3887308819,
-          "soilKgPerDay": 2381713.2164788,
-          "sizedSoilKgPerDay": 1068818.342116,
-          "concentrateKgPerDay": 656177.44151706,
-          "concentrateGrade": 0.22281293651901,
-          "tailingsKgPerDay": 1725535.7749618,
+          "soilPerKgO2": 118.60516948618,
+          "soilKgPerDay": 1395747.1766192,
+          "sizedSoilKgPerDay": 626355.92438485,
+          "concentrateKgPerDay": 626355.92438485,
+          "concentrateGrade": 0.23342131355353,
+          "tailingsKgPerDay": 769391.25223433,
           "ilmeniteReducedKgPerDay": 111582.82828345,
           "waterKgPerDay": 13239.014627263,
           "hydrogenRecycleKgPerDay": 1471.0016252515,
-          "spentSolidsKgPerDay": 644409.42851505,
+          "spentSolidsKgPerDay": 614587.91138284,
           "ironKgPerDay": 41073.307380272,
-          "secMining_JPerKg": 12174699.193342,
-          "secBeneficiation_JPerKg": 19601260.708335,
-          "secSensible_JPerKg": 8014603.2060732,
+          "secMining_JPerKg": 7134696.9516413,
+          "secBeneficiation_JPerKg": 11486859.166144,
+          "secSensible_JPerKg": 7650360.8354955,
           "secReaction_JPerKg": 2787671.25,
-          "secReactorLoss_JPerKg": 4057112.09109,
+          "secReactorLoss_JPerKg": 3920310.148891,
           "secWaterElectrolysis_JPerKg": 29651736.908937,
-          "miningMassKg": 81263.869034159,
-          "beneficiationMassKg": 1097315.9392022,
+          "miningMassKg": 47622.784716821,
+          "beneficiationMassKg": 643056.27285599,
           "reactorMassKg": 283299.25185765,
           "electrolyzerMassKg": 55787.216174763
         },
@@ -81826,19 +81826,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 2381713.2164788
+              "kgPerDay": 1395747.1766192
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 1725535.7749618
+              "kgPerDay": 769391.25223433
             },
             {
               "material": "ilmenite-concentrate",
               "from": "beneficiation",
               "to": "reduction",
-              "kgPerDay": 656177.44151706
+              "kgPerDay": 626355.92438485
             },
             {
               "material": "hydrogen",
@@ -81856,7 +81856,7 @@
               "material": "spent-solids",
               "from": "reduction",
               "to": "tailings",
-              "kgPerDay": 644409.42851505
+              "kgPerDay": 614587.91138284
             },
             {
               "material": "oxygen",
@@ -81869,15 +81869,15 @@
             {
               "id": "ilmenite-beneficiation",
               "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 2381713.2164788,
-              "massOutKgPerDay": 2381713.2164788,
+              "massInKgPerDay": 1395747.1766192,
+              "massOutKgPerDay": 1395747.1766192,
               "residualKgPerDay": 0
             },
             {
               "id": "ilmenite-reduction",
               "label": "Hydrogen reduction of ilmenite",
-              "massInKgPerDay": 657648.44314232,
-              "massOutKgPerDay": 657648.44314232,
+              "massInKgPerDay": 627826.92601011,
+              "massOutKgPerDay": 627826.92601011,
               "residualKgPerDay": 0
             },
             {
@@ -101008,7 +101008,7 @@
         "site": "equatorial",
         "production": {
           "targetKgPerDay": 14933.706043316,
-          "regolithKgPerDay": 3090909.1610542,
+          "regolithKgPerDay": 2061999.1989469,
           "slagKgPerDay": 0,
           "o2KgPerDay": 14933.706043316,
           "waterKgPerDay": 0,
@@ -101021,27 +101021,27 @@
           "excessO2KgPerDay": 0
         },
         "energy": {
-          "secTotal_kWhPerKg": 23.999349176552,
+          "secTotal_kWhPerKg": 21.660165070447,
           "flows": [
             {
               "from": "mine",
               "to": "beneficiation",
-              "kWhPerKg": 3.1721222923933
+              "kWhPerKg": 2.116177889759
             },
             {
               "from": "beneficiation",
               "to": "reduction",
-              "kWhPerKg": 2.929018164552
+              "kWhPerKg": 1.9539989026876
             },
             {
               "from": "reduction",
               "to": "electrolysis",
-              "kWhPerKg": 4.0796582719205
+              "kWhPerKg": 3.8313276832358
             },
             {
               "from": "reduction",
               "to": "parasitic",
-              "kWhPerKg": 0.98389060794723
+              "kWhPerKg": 0.92400075502633
             },
             {
               "from": "electrolysis",
@@ -101054,45 +101054,45 @@
               "kWhPerKg": 4.5338973631671
             }
           ],
-          "gridPowerW": 14933301.076396,
+          "gridPowerW": 13477772.417156,
           "balances": [
             {
               "id": "excavation-energy",
               "label": "Excavation drive",
-              "electricalInputW": 1973814.2436687,
+              "electricalInputW": 1316765.7725427,
               "coupledInputW": 0,
               "usefulOutputW": 4362.3978855318,
-              "rejectedHeatW": 1969451.8457832,
+              "rejectedHeatW": 1312403.3746572,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-beneficiation-energy",
               "label": "Soil sizing and separation",
-              "electricalInputW": 1822545.6777063,
+              "electricalInputW": 1215851.8842374,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 1822545.6777063,
+              "rejectedHeatW": 1215851.8842374,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-reactor-energy",
               "label": "Ilmenite feed heat and reduction",
-              "electricalInputW": 2538517.3912517,
+              "electricalInputW": 2383996.7240442,
               "coupledInputW": 0,
               "usefulOutputW": 481831.74760303,
-              "rejectedHeatW": 2056685.6436487,
+              "rejectedHeatW": 1902164.9764412,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-aux-energy",
               "label": "Reactor heat loss and gas recycle",
-              "electricalInputW": 612213.87991096,
+              "electricalInputW": 574948.15247354,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 612213.87991096,
+              "rejectedHeatW": 574948.15247354,
               "accumulationW": 0,
               "residualW": 0
             },
@@ -101133,7 +101133,7 @@
         "excavation": {
           "cuttingForceN": 10901.218756656,
           "mechPowerW": 4362.3978855318,
-          "fleetMassKg": 192531.14292651
+          "fleetMassKg": 128440.87024265
         },
         "electrolysis": {
           "secElec_JPerKg": 0,
@@ -101236,15 +101236,15 @@
         },
         "power": {
           "architecture": "nuclear",
-          "solarMassKg": 10626838.482412,
-          "nuclearMassKg": 728531.25594772,
-          "solarArrayM2": 309907.02172706,
-          "radiatorM2": 8459.2209814577,
+          "solarMassKg": 9591054.9078942,
+          "nuclearMassKg": 658011.93543895,
+          "solarArrayM2": 279700.80345585,
+          "radiatorM2": 7634.712153144,
           "pCritW": 7575.0006210076,
           "pCritDynamicW": 2377.001926434,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
-          "solarDeliveredCapacityW": 61165395.160628,
+          "solarDeliveredCapacityW": 55203686.818007,
           "siteDayHours": 354.0,
           "siteNightHours": 354.0,
           "siteProfile": {
@@ -101289,14 +101289,14 @@
         "logistics": {
           "payloadPerMissionKg": 236105.03930295,
           "productKgPerDay": 14933.706043316,
-          "totalInfraMassKg": 2579807.3232851,
-          "nMissions": 15,
-          "leverageL": 206.78153889774,
-          "plantMassThroughputDays": 172.75064312919,
+          "totalInfraMassKg": 2212978.2436681,
+          "nMissions": 13,
+          "leverageL": 241.05818929531,
+          "plantMassThroughputDays": 148.18680890392,
           "manifest": [
             {
               "subsystem": "excavation fleet",
-              "massKg": 192531.14292651
+              "massKg": 128440.87024265
             },
             {
               "subsystem": "reactor/plant",
@@ -101304,11 +101304,11 @@
             },
             {
               "subsystem": "beneficiation plant",
-              "massKg": 697601.69927251
+              "massKg": 465382.21284811
             },
             {
               "subsystem": "power system",
-              "massKg": 728531.25594772
+              "massKg": 658011.93543895
             },
             {
               "subsystem": "cryo block",
@@ -101318,22 +101318,22 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 9.2692577700014,
-          "deploymentDays": 4076.2964869319,
-          "firstProductDay": 4208.6010650036,
-          "campaignEndDay": 6739.2426206422,
+          "deploymentDays": 3493.9684173702,
+          "firstProductDay": 3626.2729954419,
+          "campaignEndDay": 6156.9145510805,
           "deliveredKgPerDay": 10002.392474517,
           "usedKgPerDay": 6451.882321458,
           "sortieIntervalDays": 8.871044780947,
-          "resupplyKgPerYear": 665508.07402197,
+          "resupplyKgPerYear": 570877.86188647,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 25312470.051819,
           "cumulativeUsedKg": 16311957.04359,
-          "landedMassKg": 7193950.8513207,
-          "leoMassSpentKg": 66721295.955769,
+          "landedMassKg": 6171025.4778708,
+          "leoMassSpentKg": 57446222.25874,
           "leoMassSavedKg": 230253833.62291,
-          "netLeoMassKg": 163532537.66714,
-          "returnRatio": 3.4509796358804,
-          "paybackDays": 4536.8297218986,
+          "netLeoMassKg": 172807611.36417,
+          "returnRatio": 4.0081631928003,
+          "paybackDays": 3901.2753836513,
           "paysBackInCampaign": true
         },
         "refuel": {
@@ -101357,25 +101357,25 @@
           "sortieIntervalDays": 8.871044780947
         },
         "ilmenite": {
-          "soilPerKgO2": 206.9753584334,
-          "soilKgPerDay": 3090909.1610542,
-          "sizedSoilKgPerDay": 1212385.6844833,
-          "concentrateKgPerDay": 874505.98437215,
-          "concentrateGrade": 0.19219954815844,
-          "tailingsKgPerDay": 2216403.1766821,
+          "soilPerKgO2": 138.07685734311,
+          "soilKgPerDay": 2061999.1989469,
+          "sizedSoilKgPerDay": 808803.55259826,
+          "concentrateKgPerDay": 808803.55259826,
+          "concentrateGrade": 0.20781270621058,
+          "tailingsKgPerDay": 1253195.6463486,
           "ilmeniteReducedKgPerDay": 141599.53398946,
           "waterKgPerDay": 16800.41929873,
           "hydrogenRecycleKgPerDay": 1866.7132554144,
-          "spentSolidsKgPerDay": 859572.27832883,
+          "spentSolidsKgPerDay": 793869.84655495,
           "ironKgPerDay": 52122.367517682,
-          "secMining_JPerKg": 11419640.252616,
-          "secBeneficiation_JPerKg": 10544465.392387,
-          "secSensible_JPerKg": 11899098.528914,
+          "secMining_JPerKg": 7618240.4031325,
+          "secBeneficiation_JPerKg": 7034396.0496754,
+          "secSensible_JPerKg": 11005108.409649,
           "secReaction_JPerKg": 2787671.25,
-          "secReactorLoss_JPerKg": 3542006.18861,
+          "secReactorLoss_JPerKg": 3326402.7180948,
           "secWaterElectrolysis_JPerKg": 29882744.915658,
-          "miningMassKg": 192531.14292651,
-          "beneficiationMassKg": 697601.69927251,
+          "miningMassKg": 128440.87024265,
+          "beneficiationMassKg": 465382.21284811,
           "reactorMassKg": 498010.00353893,
           "electrolyzerMassKg": 21205.769282434
         },
@@ -101385,19 +101385,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 3090909.1610542
+              "kgPerDay": 2061999.1989469
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 2216403.1766821
+              "kgPerDay": 1253195.6463486
             },
             {
               "material": "ilmenite-concentrate",
               "from": "beneficiation",
               "to": "reduction",
-              "kgPerDay": 874505.98437215
+              "kgPerDay": 808803.55259826
             },
             {
               "material": "hydrogen",
@@ -101415,7 +101415,7 @@
               "material": "spent-solids",
               "from": "reduction",
               "to": "tailings",
-              "kgPerDay": 859572.27832883
+              "kgPerDay": 793869.84655495
             },
             {
               "material": "oxygen",
@@ -101428,15 +101428,15 @@
             {
               "id": "ilmenite-beneficiation",
               "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 3090909.1610542,
-              "massOutKgPerDay": 3090909.1610542,
+              "massInKgPerDay": 2061999.1989469,
+              "massOutKgPerDay": 2061999.1989469,
               "residualKgPerDay": 0
             },
             {
               "id": "ilmenite-reduction",
               "label": "Hydrogen reduction of ilmenite",
-              "massInKgPerDay": 876372.69762756,
-              "massOutKgPerDay": 876372.69762756,
+              "massInKgPerDay": 810670.26585368,
+              "massOutKgPerDay": 810670.26585368,
               "residualKgPerDay": 0
             },
             {
@@ -129092,7 +129092,7 @@
         "site": "equatorial",
         "production": {
           "targetKgPerDay": 1000,
-          "regolithKgPerDay": 122721.74851676,
+          "regolithKgPerDay": 120267.31354642,
           "slagKgPerDay": 0,
           "o2KgPerDay": 1000,
           "waterKgPerDay": 0,
@@ -129105,27 +129105,27 @@
           "excessO2KgPerDay": 0
         },
         "energy": {
-          "secTotal_kWhPerKg": 22.368476969405,
+          "secTotal_kWhPerKg": 22.096068811162,
           "flows": [
             {
               "from": "mine",
               "to": "beneficiation",
-              "kWhPerKg": 0.34430268333868
+              "kWhPerKg": 0.33741662967191
             },
             {
               "from": "beneficiation",
               "to": "reduction",
-              "kWhPerKg": 2.965775589155
+              "kWhPerKg": 2.9064600773719
             },
             {
               "from": "reduction",
               "to": "electrolysis",
-              "kWhPerKg": 9.0226168367347
+              "kWhPerKg": 8.8576515625
             },
             {
               "from": "reduction",
               "to": "parasitic",
-              "kWhPerKg": 2.2556542091837
+              "kWhPerKg": 2.214412890625
             },
             {
               "from": "electrolysis",
@@ -129138,45 +129138,45 @@
               "kWhPerKg": 1.4324085720458
             }
           ],
-          "gridPowerW": 932019.87372522,
+          "gridPowerW": 920669.53379842,
           "balances": [
             {
               "id": "excavation-energy",
               "label": "Excavation drive",
-              "electricalInputW": 14345.945139112,
+              "electricalInputW": 14059.02623633,
               "coupledInputW": 0,
               "usefulOutputW": 151.13194583333,
-              "rejectedHeatW": 14194.813193278,
+              "rejectedHeatW": 13907.894290496,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-beneficiation-energy",
               "label": "Soil sizing and separation",
-              "electricalInputW": 123573.98288146,
+              "electricalInputW": 121102.50322383,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 123573.98288146,
+              "rejectedHeatW": 121102.50322383,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-reactor-energy",
               "label": "Ilmenite feed heat and reduction",
-              "electricalInputW": 375942.36819728,
+              "electricalInputW": 369068.81510417,
               "coupledInputW": 0,
               "usefulOutputW": 32264.713541667,
-              "rejectedHeatW": 343677.65465561,
+              "rejectedHeatW": 336804.1015625,
               "accumulationW": 0,
               "residualW": 0
             },
             {
               "id": "ilmenite-aux-energy",
               "label": "Reactor heat loss and gas recycle",
-              "electricalInputW": 93985.59204932,
+              "electricalInputW": 92267.203776042,
               "coupledInputW": 0,
               "usefulOutputW": 0,
-              "rejectedHeatW": 93985.59204932,
+              "rejectedHeatW": 92267.203776042,
               "accumulationW": 0,
               "residualW": 0
             },
@@ -129217,7 +129217,7 @@
         "excavation": {
           "cuttingForceN": 1813.58335,
           "mechPowerW": 151.13194583333,
-          "fleetMassKg": 2994.4106638089
+          "fleetMassKg": 2934.5224505327
         },
         "electrolysis": {
           "secElec_JPerKg": 0,
@@ -129320,15 +129320,15 @@
         },
         "power": {
           "architecture": "nuclear",
-          "solarMassKg": 775865.66681161,
-          "nuclearMassKg": 29460.596211757,
-          "solarArrayM2": 7804.6165524603,
-          "radiatorM2": 477.16353404679,
+          "solarMassKg": 766417.00664447,
+          "nuclearMassKg": 29120.086013952,
+          "solarArrayM2": 7709.570241361,
+          "radiatorM2": 471.35253316066,
           "pCritW": 1869.2610406646,
           "pCritDynamicW": 1436.3286740945,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
-          "solarDeliveredCapacityW": 2485386.3299339,
+          "solarDeliveredCapacityW": 2455118.7567958,
           "siteDayHours": 354.0,
           "siteNightHours": 354.0,
           "siteProfile": {
@@ -129373,14 +129373,14 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 74035.428903792,
+          "totalInfraMassKg": 73404.3136055,
           "nMissions": 1,
-          "leverageL": 147.90216200718,
-          "plantMassThroughputDays": 74.035428903792,
+          "leverageL": 149.17379459263,
+          "plantMassThroughputDays": 73.4043136055,
           "manifest": [
             {
               "subsystem": "excavation fleet",
-              "massKg": 2994.4106638089
+              "massKg": 2934.5224505327
             },
             {
               "subsystem": "reactor/plant",
@@ -129388,11 +129388,11 @@
             },
             {
               "subsystem": "beneficiation plant",
-              "massKg": 11535.844360575
+              "massKg": 11305.127473364
             },
             {
               "subsystem": "power system",
-              "massKg": 29460.596211757
+              "massKg": 29120.086013952
             },
             {
               "subsystem": "cryo block",
@@ -129408,15 +129408,15 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 100.0284612007,
           "sortieIntervalDays": 365.0,
-          "resupplyKgPerYear": 7403.5428903792,
+          "resupplyKgPerYear": 7340.43136055,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 182551.94169127,
-          "landedMassKg": 111053.14335569,
-          "leoMassSpentKg": 1574492.7858624,
+          "landedMassKg": 110106.47040825,
+          "leoMassSpentKg": 1570447.9702853,
           "leoMassSavedKg": 1095311.6501476,
-          "netLeoMassKg": -479181.13571474,
-          "returnRatio": 0.69565999919633,
+          "netLeoMassKg": -475136.32013764,
+          "returnRatio": 0.69745172770587,
           "paybackDays": 3315.0,
           "paysBackInCampaign": false
         },
@@ -129441,25 +129441,25 @@
           "sortieIntervalDays": 365.0
         },
         "ilmenite": {
-          "soilPerKgO2": 122.72174851676,
-          "soilKgPerDay": 122721.74851676,
-          "sizedSoilKgPerDay": 53752.12585034,
-          "concentrateKgPerDay": 53752.12585034,
-          "concentrateGrade": 0.196,
-          "tailingsKgPerDay": 68969.622666418,
+          "soilPerKgO2": 120.26731354642,
+          "soilKgPerDay": 120267.31354642,
+          "sizedSoilKgPerDay": 52677.083333333,
+          "concentrateKgPerDay": 52677.083333333,
+          "concentrateGrade": 0.2,
+          "tailingsKgPerDay": 67590.23021309,
           "ilmeniteReducedKgPerDay": 9481.875,
           "waterKgPerDay": 1125.0,
           "hydrogenRecycleKgPerDay": 125.0,
-          "spentSolidsKgPerDay": 52752.12585034,
+          "spentSolidsKgPerDay": 51677.083333333,
           "ironKgPerDay": 3490.25,
-          "secMining_JPerKg": 1239489.6600193,
-          "secBeneficiation_JPerKg": 10676792.120958,
-          "secSensible_JPerKg": 29693749.362245,
+          "secMining_JPerKg": 1214699.8668189,
+          "secBeneficiation_JPerKg": 10463256.278539,
+          "secSensible_JPerKg": 29099874.375,
           "secReaction_JPerKg": 2787671.25,
-          "secReactorLoss_JPerKg": 8120355.1530612,
+          "secReactorLoss_JPerKg": 7971886.40625,
           "secWaterElectrolysis_JPerKg": 22851788.684211,
-          "miningMassKg": 2994.4106638089,
-          "beneficiationMassKg": 11535.844360575,
+          "miningMassKg": 2934.5224505327,
+          "beneficiationMassKg": 11305.127473364,
           "reactorMassKg": 18600.0,
           "electrolyzerMassKg": 1642.5
         },
@@ -129469,19 +129469,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 122721.74851676
+              "kgPerDay": 120267.31354642
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 68969.622666418
+              "kgPerDay": 67590.23021309
             },
             {
               "material": "ilmenite-concentrate",
               "from": "beneficiation",
               "to": "reduction",
-              "kgPerDay": 53752.12585034
+              "kgPerDay": 52677.083333333
             },
             {
               "material": "hydrogen",
@@ -129499,7 +129499,7 @@
               "material": "spent-solids",
               "from": "reduction",
               "to": "tailings",
-              "kgPerDay": 52752.12585034
+              "kgPerDay": 51677.083333333
             },
             {
               "material": "oxygen",
@@ -129512,15 +129512,15 @@
             {
               "id": "ilmenite-beneficiation",
               "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 122721.74851676,
-              "massOutKgPerDay": 122721.74851676,
+              "massInKgPerDay": 120267.31354642,
+              "massOutKgPerDay": 120267.31354642,
               "residualKgPerDay": 0
             },
             {
               "id": "ilmenite-reduction",
               "label": "Hydrogen reduction of ilmenite",
-              "massInKgPerDay": 53877.12585034,
-              "massOutKgPerDay": 53877.12585034,
+              "massInKgPerDay": 52802.083333333,
+              "massOutKgPerDay": 52802.083333333,
               "residualKgPerDay": 0
             },
             {

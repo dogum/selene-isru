@@ -92,16 +92,31 @@ describe("ilmenite reduction", () => {
     expect(rich.reactorMassKg).toBe(base.reactorMassKg);
   });
 
-  test("a leaner concentrate costs reactor heat, and the separator cannot return more than its feed", () => {
+  test("a leaner concentrate costs reactor heat", () => {
     const base = simulate(ILMENITE).ilmenite!;
     const lean = simulate({ ...ILMENITE, ilmConcentrateGrade: 0.225 }).ilmenite!;
     expectRel(lean.concentrateKgPerDay, base.concentrateKgPerDay * 4, 1e-12);
     expectRel(lean.secSensible_JPerKg, base.secSensible_JPerKg * 4, 1e-12);
-    // A grade below the feed's is not reachable: the whole sized feed goes in.
-    const params = normalizeParams({ ...ILMENITE, fIlmenite: 0.2, ilmConcentrateGrade: 0.15 }).params;
-    const capped = simulate(params).ilmenite!;
-    expect(capped.concentrateKgPerDay).toBe(capped.sizedSoilKgPerDay);
-    expectRel(capped.concentrateGrade, params.fIlmenite * params.etaIlmRecovery, 1e-12);
+    expect(lean.soilKgPerDay).toBe(base.soilKgPerDay);
+  });
+
+  test("a concentrate no richer than the soil is no separation, and loses no ilmenite", () => {
+    // Asking for a grade at or below the soil's sends the whole sized stream
+    // to the reactor, with all its ilmenite: recovery loss does not apply.
+    const params = normalizeParams({ ...ILMENITE, fIlmenite: 0.25, etaIlmRecovery: 0.5, ilmConcentrateGrade: 0.1 }).params;
+    const bypass = simulate(params).ilmenite!;
+    expect(bypass.concentrateKgPerDay).toBe(bypass.sizedSoilKgPerDay);
+    expectRel(bypass.concentrateGrade, params.fIlmenite, 1e-12);
+    expectRel(
+      bypass.soilPerKgO2,
+      1 / (params.fIlmenite * params.fIlmSized * params.fIlmConversion * ilmeniteOxygenFraction()),
+      1e-12
+    );
+    expect(simulate({ ...params, etaIlmRecovery: 1 }).ilmenite).toEqual(bypass);
+    // Just above the soil's grade the separator runs, and its losses count.
+    const separated = simulate({ ...params, ilmConcentrateGrade: 0.26 }).ilmenite!;
+    expectRel(separated.soilPerKgO2, bypass.soilPerKgO2 / params.etaIlmRecovery, 1e-12);
+    expect(separated.concentrateKgPerDay).toBeLessThan(separated.sizedSoilKgPerDay);
   });
 
   test("the plant lists its parts and leaves no castable slag", () => {

@@ -15,15 +15,15 @@ def reduces_ilmenite(params: dict[str, Any]) -> bool:
     return params["site"] == "equatorial" and params["equatorialProcess"] == "ilmenite"
 
 
+def ilmenite_separates(params: dict[str, Any]) -> bool:
+    """True when magnetic separation enriches the feed; mirrors `ilmeniteSeparates`."""
+    return params["ilmConcentrateGrade"] > params["fIlmenite"]
+
+
 def ilmenite_soil_per_kg_o2(params: dict[str, Any]) -> float:
     """Soil mined per kg of oxygen; mirrors `ilmeniteSoilPerKgO2`."""
-    return 1 / (
-        params["fIlmenite"]
-        * params["fIlmSized"]
-        * params["etaIlmRecovery"]
-        * params["fIlmConversion"]
-        * ilmenite_oxygen_fraction()
-    )
+    recovery = params["etaIlmRecovery"] if ilmenite_separates(params) else 1
+    return 1 / (params["fIlmenite"] * params["fIlmSized"] * recovery * params["fIlmConversion"] * ilmenite_oxygen_fraction())
 
 
 def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str, float]:
@@ -32,8 +32,10 @@ def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str,
     fed_ilmenite_per_kg_o2 = reduced_per_kg_o2 / params["fIlmConversion"]
     soil_per_kg_o2 = ilmenite_soil_per_kg_o2(params)
     sized_soil_per_kg_o2 = soil_per_kg_o2 * params["fIlmSized"]
-    # The separator cannot return more than it is fed.
-    concentrate_per_kg_o2 = min(fed_ilmenite_per_kg_o2 / params["ilmConcentrateGrade"], sized_soil_per_kg_o2)
+    # Without enrichment the reactor takes the whole sized stream.
+    concentrate_per_kg_o2 = (
+        fed_ilmenite_per_kg_o2 / params["ilmConcentrateGrade"] if ilmenite_separates(params) else sized_soil_per_kg_o2
+    )
     water_per_kg_o2 = c("M_H2O") / (c("M_O2") / 2)
     iron_per_kg_o2 = reduced_per_kg_o2 * (c("M_FeO") - c("M_O2") / 2) / (c("M_FeO") + c("M_TiO2"))
 

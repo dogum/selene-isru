@@ -58,11 +58,15 @@ def test_grade_scales_soil_not_reactor() -> None:
     assert rich["reactorMassKg"] == base["reactorMassKg"]
 
 
-def test_separator_cannot_return_more_than_its_feed() -> None:
-    params, _ = normalize_params({**ILMENITE, "fIlmenite": 0.2, "ilmConcentrateGrade": 0.15})
-    capped = simulate(params)["ilmenite"]
-    assert capped["concentrateKgPerDay"] == capped["sizedSoilKgPerDay"]
-    assert_rel(capped["concentrateGrade"], params["fIlmenite"] * params["etaIlmRecovery"], 1e-12)
+def test_concentrate_no_richer_than_soil_is_no_separation() -> None:
+    params, _ = normalize_params({**ILMENITE, "fIlmenite": 0.25, "etaIlmRecovery": 0.5, "ilmConcentrateGrade": 0.1})
+    bypass = simulate(params)["ilmenite"]
+    assert bypass["concentrateKgPerDay"] == bypass["sizedSoilKgPerDay"]
+    assert_rel(bypass["concentrateGrade"], params["fIlmenite"], 1e-12)
+    expected = 1 / (params["fIlmenite"] * params["fIlmSized"] * params["fIlmConversion"] * ilmenite_oxygen_fraction())
+    assert_rel(bypass["soilPerKgO2"], expected, 1e-12)
+    separated = simulate({**params, "ilmConcentrateGrade": 0.26})["ilmenite"]
+    assert_rel(separated["soilPerKgO2"], bypass["soilPerKgO2"] / params["etaIlmRecovery"], 1e-12)
 
 
 def test_each_process_ignores_the_others_inputs() -> None:

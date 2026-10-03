@@ -145,7 +145,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   ilmConcentrateGrade: {
     rangeRationale: "From an enrichment factor near 3, measured on simulants (Berggren et al., used by Guerrero-Gonzalez & Zabel), to Eagle's assumed 90 wt% concentrate.",
-    validity: "Sets the solids the reactor heats. A grade no better than the sized feed's means no enrichment, and the whole sized feed is reduced. Reactor mass does not scale with feed here, so lean concentrates understate it: Eagle's no-separation trade added 46% to its process mass.",
+    validity: "Sets the solids the reactor heats. A grade no richer than the soil's means no separation: the whole sized stream goes to the reactor with all its ilmenite, so magnetic recovery no longer applies. Reactor mass does not scale with feed here, so lean concentrates understate it: Eagle's no-separation trade added 46% to its process mass.",
     defaultUncertainty: 0.3
   },
   fIlmConversion: {

@@ -56,7 +56,7 @@ export {
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
 export { campaignAt, campaignTimeline } from "./modules/campaign";
-export { ilmeniteOxygenFraction, ilmeniteSoilPerKgO2, reducesIlmenite } from "./modules/ilmenite";
+export { ilmeniteOxygenFraction, ilmeniteSeparates, ilmeniteSoilPerKgO2, reducesIlmenite } from "./modules/ilmenite";
 export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
 export { payloadPerMissionKg } from "./modules/logistics";
 export { refuelTimeline, sortiePropellantKg } from "./modules/refuel";
