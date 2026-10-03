@@ -100,6 +100,23 @@ describe("control rail search, changed filter, and reset", () => {
     useStore.getState().applyPatch({ ...DEFAULTS });
   });
 
+  it("offers the refuelling demand only to plants that make lander propellant", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, refuelDemand: "lander" });
+    render(<ControlGroups />);
+    expect(screen.getByRole("button", { name: "CHANGED · 1" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Refuelling demand/ }));
+    expect(screen.getByDisplayValue("REFUELLED LANDER")).toBeTruthy();
+    expect(screen.getByText(/its hydrogen comes from Earth/)).toBeTruthy();
+    cleanup();
+
+    // A polar water plant makes nothing a lander burns: no group, nothing counted.
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", refuelDemand: "lander" });
+    render(<ControlGroups />);
+    expect(screen.queryByRole("button", { name: /Refuelling demand/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "CHANGED · 0" })).toBeTruthy();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
   it("shows the Sabatier switch under a filter only when the filter counts it", () => {
     useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", enableSabatier: true });
     render(<ControlGroups />);

@@ -96,13 +96,22 @@ export function caseSummary(params: SimParams, result: SimResult): string {
   ];
   const alarms = result.warnings.filter((warning) => warning.severity === "alarm").length;
   const { campaign } = result;
+  // With a demand, only the propellant the lander burns repays anything.
+  const credited = result.refuel === null ? "Its product" : "The propellant burned";
   const payback =
     campaign.leoMassSpentKg === 0
       ? ""
       : campaign.paysBackInCampaign && campaign.paybackDays !== null
-        ? ` Its product repays the launch mass by day ${Math.round(campaign.paybackDays).toLocaleString("en-US")}.`
-        : " Its product does not repay the launch mass within the campaign.";
-  const sentence = `${parts[0]} ${parts.slice(1).join(" ")}.${payback}`;
+        ? ` ${credited} repays the launch mass by day ${Math.round(campaign.paybackDays).toLocaleString("en-US")}.`
+        : ` ${credited} does not repay the launch mass within the campaign.`;
+  const refuel =
+    result.refuel === null
+      ? ""
+      : ` A reusable lander flying ${params.sortiesPerYear} sortie${params.sortiesPerYear === 1 ? "" : "s"} a year burns ${formatQtyProse(
+          result.refuel.usedKgPerDay,
+          "kg/day"
+        )} of it, ${Math.round(result.refuel.isruShare * 100)}% of the propellant it needs.`;
+  const sentence = `${parts[0]} ${parts.slice(1).join(" ")}.${refuel}${payback}`;
   return alarms > 0
     ? `${sentence} ${alarms} implemented constraint${alarms === 1 ? " is" : "s are"} violated.`
     : sentence;

@@ -1,5 +1,5 @@
 import { PARAM_META } from "@selene-isru/engine";
-import type { CampaignTimelinePoint, SimParams, SimResult, TimeseriesResult, UncertaintyBand, UncertaintyResult } from "@selene-isru/engine";
+import type { CampaignTimelinePoint, RefuelTimelinePoint, SimParams, SimResult, TimeseriesResult, UncertaintyBand, UncertaintyResult } from "@selene-isru/engine";
 import type { Candidate } from "./brief";
 import { toCsv, type CsvColumn } from "./csv";
 import type { SensitivityRow } from "./sensitivity";
@@ -60,8 +60,22 @@ export function campaignCsv(timeline: readonly CampaignTimelinePoint[]): string 
       { header: "landers", value: (point) => point.landers },
       { header: "landedMassKg [kg]", value: (point) => point.landedMassKg },
       { header: "productKg [kg]", value: (point) => point.productKg },
+      { header: "usedKg [kg]", value: (point) => point.usedKg },
       { header: "leoMassSpentKg [kg in LEO]", value: (point) => point.leoMassSpentKg },
       { header: "leoMassSavedKg [kg in LEO]", value: (point) => point.leoMassSavedKg }
+    ],
+    timeline
+  );
+}
+
+/** Refuelling tank drawdown from production start: LOX and LH2 in store at each event. */
+export function refuelCsv(timeline: readonly RefuelTimelinePoint[]): string {
+  return toCsv<RefuelTimelinePoint>(
+    [
+      { header: "tDays [day from first landing]", value: (point) => point.tDays },
+      { header: "event", value: (point) => point.event },
+      { header: "o2Kg [kg in store]", value: (point) => point.o2Kg },
+      { header: "h2Kg [kg in store]", value: (point) => point.h2Kg }
     ],
     timeline
   );

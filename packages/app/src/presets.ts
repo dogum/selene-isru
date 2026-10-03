@@ -42,6 +42,19 @@ export const PRESETS: Preset[] = [
     label: "Polar Propellant (NASA baseline)",
     patch: { site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26, plantAvailability: 0.611, commissioningDays: 2 }
   },
+  {
+    // Chen et al. 2021's yearly crewed sortie flown by their LH2/LOX stage
+    // from LLO, refuelled with the default plant's oxygen.
+    id: "crew-refuelling",
+    label: "Crew Lander Refuelling",
+    patch: { refuelDemand: "lander" }
+  },
+  {
+    // The same vehicle as a polar tanker: 8 sorties a year landing 5 t.
+    id: "polar-tanker",
+    label: "Polar Propellant Tanker",
+    patch: { site: "polar", polarProduct: "propellant", refuelDemand: "lander", sortiesPerYear: 8, McargoDown: 5000 }
+  },
   { id: "industrial", label: "Industrial 10 t/day", patch: { targetKgPerDay: 10000 } },
   {
     id: "minimal",
