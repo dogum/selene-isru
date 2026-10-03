@@ -2,6 +2,7 @@ export type SiteMode = "equatorial" | "polar";
 export type PowerArchitecture = "solar" | "nuclear";
 export type PowerStrategy = "auto" | PowerArchitecture;
 export type DeploymentManifest = "dedicated" | "shared";
+export type PolarProduct = "water" | "propellant";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -61,6 +62,8 @@ export interface StorageInventory {
   volumeM3: number;
   /** [kg] */
   storageMassKg: number;
+  /** liquefaction hardware for a liquefied product [kg] */
+  liquefierMassKg: number;
   /** [kg/m^3] */
   densityKgPerM3: number;
   /** [K] */
@@ -245,6 +248,11 @@ export interface SimParams {
   /** [V] */
   Vel: number;
   etaFaradayEl: number;
+  polarProduct: PolarProduct;
+  /** vehicle O/F by mass [kg/kg] */
+  mixtureRatio: number;
+  /** [kg/(kg/day)] per water processed */
+  kElectrolyzerMass: number;
   fConversion: number;
   /** [K] */
   Tsabatier: number;
@@ -292,6 +300,10 @@ export interface SimParams {
   secCondCo2: number;
   /** [kg/(kg/day)] */
   kCryoMass: number;
+  /** [kg/(kg/day)] per LOX product */
+  kLiquefierLox: number;
+  /** [kg/(kg/day)] per LH2 product */
+  kLiquefierLh2: number;
   polarIlluminationFraction: number;
   /** [h] */
   polarLongestShadowHours: number;
@@ -440,6 +452,10 @@ export interface SimResult {
     co2ImportedKgPerDay: number;
     ch4KgPerDay: number;
     waterRecycleKgPerDay: number;
+    /** LOX + LH2 usable at the vehicle mixture ratio [kg/day]; 0 outside propellant mode */
+    propellantKgPerDay: number;
+    /** oxygen beyond the mixture ratio [kg/day] */
+    excessO2KgPerDay: number;
   };
   energy: {
     secTotal_kWhPerKg: number;

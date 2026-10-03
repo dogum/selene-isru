@@ -93,6 +93,9 @@ def named_scenarios() -> list[tuple[str, dict[str, Any]]]:
     # Campaign ledger: multi-lander deployment, and a pilot charged by mass share.
     scenarios.append(("equatorial-campaign-multi-lander", {"targetKgPerDay": 10000, "landingsPerYear": 2}))
     scenarios.append(("polar-campaign-shared-pilot", {"site": "polar", "targetKgPerDay": 10, "deploymentManifest": "shared"}))
+    # Propellant mode: the NASA baseline rate and a richer mixture ratio.
+    scenarios.append(("polar-propellant-baseline", {"site": "polar", "polarProduct": "propellant", "targetKgPerDay": 67.26}))
+    scenarios.append(("polar-propellant-of55", {"site": "polar", "polarProduct": "propellant", "mixtureRatio": 5.5, "chiIce": 0.02}))
     return scenarios
 
 

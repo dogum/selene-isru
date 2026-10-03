@@ -24,7 +24,7 @@ def energy_ledger(
     excavation_mech_power_w: float,
     electrolysis: dict[str, Any],
     cryo: dict[str, Any],
-    sabatier: dict[str, Any] | None,
+    water_electrolysis: dict[str, Any] | None,
 ) -> dict[str, Any]:
     mass_flow = params["targetKgPerDay"] / 86400
 
@@ -49,7 +49,7 @@ def energy_ledger(
         balances.append(_balance("sublimation-energy", "Polar heating and sublimation", sublimation_input, 0, 0, 0, sublimation_input))
         distillation = power_for("sublimation", "parasitic")
         balances.append(_balance("polar-aux-energy", "Heater loss, vapor handling, and process allowance", distillation, 0, 0, distillation, 0))
-        if sabatier is not None:
+        if water_electrolysis is not None:
             electrolysis_input = power_for("electrolysis", "product")
             fraction = min(1, c("VthermoneutralWater") * params["etaFaradayEl"] / params["Vel"])
             chemical = electrolysis_input * fraction

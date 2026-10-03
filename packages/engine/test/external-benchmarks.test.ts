@@ -74,6 +74,25 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expect(Math.abs(heaterPowerKW - expected.heaterPowerKW!)).toBeLessThanOrEqual(expected.heaterPowerKW! * tolerance);
   });
 
+  test("polar propellant calibration reproduces the NASA baseline", () => {
+    const item = benchmark("kleinhenz-paz-2020-polar-propellant");
+    const expected = item.expected as Record<string, number>;
+    const result = simulate({ site: "polar", polarProduct: "propellant", ...item.inputs });
+    const stream = (name: string) => result.cryo.inventories.find((inventory) => inventory.stream === name)!;
+    const plant = result.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
+    const actual: Record<string, number> = {
+      electrolysisPowerKW: result.energy.balances.find((row) => row.id === "water-electrolysis-energy")!.electricalInputW / 1000,
+      h2LiquefactionPowerKW: stream("lh2").conditioningPowerW / 1000,
+      o2LiquefactionPowerKW: stream("lox").conditioningPowerW / 1000,
+      electrolyzerMassKg: plant - result.thermal.extractorMassKg,
+      h2LiquefierMassKg: stream("lh2").liquefierMassKg,
+      o2LiquefierMassKg: stream("lox").liquefierMassKg
+    };
+    for (const [key, value] of Object.entries(expected)) {
+      expect(Math.abs(actual[key]! - value), key).toBeLessThanOrEqual(value * item.relativeTolerance!);
+    }
+  });
+
   test("open benchmarks remain visibly unresolved", () => {
     expect(benchmark("mli-layer-density-units").kind).toBe("open");
   });

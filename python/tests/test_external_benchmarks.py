@@ -56,3 +56,21 @@ def test_polar_extraction_calibration_reproduces_nasa_baseline() -> None:
     heater_power_kw = (thermal["secSub_JPerKg"] + thermal["heaterLoss_JPerKg"]) * row["inputs"]["targetKgPerDay"] / 86_400 / 1000
     assert thermal["extractorMassKg"] == pytest.approx(row["expected"]["extractorMassKg"], rel=row["relativeTolerance"])
     assert heater_power_kw == pytest.approx(row["expected"]["heaterPowerKW"], rel=row["relativeTolerance"])
+
+
+def test_polar_propellant_calibration_reproduces_nasa_baseline() -> None:
+    row = item("kleinhenz-paz-2020-polar-propellant")
+    result = simulate({"site": "polar", "polarProduct": "propellant", **row["inputs"]})
+    streams = {inventory["stream"]: inventory for inventory in result["cryo"]["inventories"]}
+    plant = next(entry["massKg"] for entry in result["logistics"]["manifest"] if entry["subsystem"] == "reactor/plant")
+    electrolysis = next(entry for entry in result["energy"]["balances"] if entry["id"] == "water-electrolysis-energy")
+    actual = {
+        "electrolysisPowerKW": electrolysis["electricalInputW"] / 1000,
+        "h2LiquefactionPowerKW": streams["lh2"]["conditioningPowerW"] / 1000,
+        "o2LiquefactionPowerKW": streams["lox"]["conditioningPowerW"] / 1000,
+        "electrolyzerMassKg": plant - result["thermal"]["extractorMassKg"],
+        "h2LiquefierMassKg": streams["lh2"]["liquefierMassKg"],
+        "o2LiquefierMassKg": streams["lox"]["liquefierMassKg"],
+    }
+    for key, value in row["expected"].items():
+        assert actual[key] == pytest.approx(value, rel=row["relativeTolerance"]), key

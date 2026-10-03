@@ -9,7 +9,7 @@ import { simulateCampaign } from "./modules/campaign";
 import { simulateLogistics } from "./modules/logistics";
 import { materialLedger } from "./modules/materials";
 import { simulatePower } from "./modules/power";
-import { simulateSabatier } from "./modules/sabatier";
+import { simulateSabatier, simulateWaterElectrolysis, type WaterElectrolysisOutput } from "./modules/sabatier";
 import { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 import { simulateThermal } from "./modules/thermal";
 import {
@@ -71,6 +71,7 @@ export type {
   CampaignResult,
   DeploymentManifest,
   FlowEdge,
+  PolarProduct,
   ManifestRow,
   MaterialFlow,
   OxideYield,
@@ -114,8 +115,15 @@ export function simulate(
     params.site === "polar" && params.enableSabatier
       ? simulateSabatier(params, params.targetKgPerDay)
       : null;
+  // Propellant mode splits all the water into O2 and H2 without the Sabatier
+  // loop; with the loop on, its own electrolysis step does that job.
+  const propellant =
+    params.site === "polar" && !params.enableSabatier && params.polarProduct === "propellant"
+      ? simulateWaterElectrolysis(params, params.targetKgPerDay)
+      : null;
+  const waterElectrolysis = sabatier ?? propellant;
 
-  const production = productionState(params, excavation.regolithPerKgProduct, sabatier);
+  const production = productionState(params, excavation.regolithPerKgProduct, sabatier, propellant);
   const cryo = simulateCryo(params, storageDemands(params, production), siteProfile.profile);
   const processEnergyLines = energyLineItems(
     params,
@@ -125,7 +133,7 @@ export function simulate(
     thermal.heaterLoss_JPerKg,
     cryo.conditioningSecKWhPerKg,
     cryo.cryocoolerPowerW,
-    sabatier
+    waterElectrolysis
   );
   const supplementalLoads = (options.supplementalLoads ?? [])
     .filter((load) => Number.isFinite(load.powerW) && load.powerW > 0);
@@ -153,7 +161,7 @@ export function simulate(
     excavation.mechPowerW,
     electrolysis,
     cryo,
-    sabatier,
+    waterElectrolysis,
     supplementalLoads
   );
   const power = simulatePower(
@@ -163,11 +171,14 @@ export function simulate(
     options.powerStrategy ?? "auto"
   );
   // Polar plants always carry the water extractor; the Sabatier loop adds its
-  // reactor on top. Equatorial plants are the MRE reactor.
+  // reactor on top, and propellant mode its electrolyzer. Equatorial plants
+  // are the MRE reactor. Liquefiers are part of the cryo block.
   const reactorMassKg =
     (params.site === "equatorial" || params.enableSabatier
       ? params.kReactorMass * params.targetKgPerDay
-      : 0) + thermal.extractorMassKg;
+      : 0) +
+    (propellant !== null ? params.kElectrolyzerMass * params.targetKgPerDay : 0) +
+    thermal.extractorMassKg;
   const logistics = simulateLogistics(
     params,
     excavation.fleetMassKg,
@@ -176,23 +187,26 @@ export function simulate(
     cryo.cryoMassKg,
     options.supplementalMasses
   );
-  // What the plant delivers: O2 at the equator, water at the pole, or the
-  // Sabatier products, whose imported CO2 feed must be landed. Storage losses
-  // (passive or capacity-limited control) are product never delivered, and
-  // feed lost in storage must be landed again.
-  // While the Sabatier loop runs, CO2 is its process feed and water its buffer
-  // whatever role a one-stream storage what-if gives them; without the loop
-  // there is no feed. Water lost from the buffer never reaches electrolysis,
-  // so the loop runs that much slower: its products and its CO2 draw scale
-  // down together.
+  // What the plant delivers: O2 at the equator, water at the pole, propellant
+  // usable at the vehicle mixture ratio, or the Sabatier products, whose
+  // imported CO2 feed must be landed. Storage losses (passive or
+  // capacity-limited control) are product never delivered, and feed lost in
+  // storage must be landed again.
+  // While water is being split it is the electrolyser's buffer, and while the
+  // Sabatier loop runs CO2 is its process feed, whatever role a one-stream
+  // storage what-if gives them; without the loop there is no feed. Water lost
+  // from the buffer never reaches electrolysis, so the products and the
+  // loop's CO2 draw scale down with it.
   const isFeed = (inventory: StorageInventory): boolean =>
     inventory.role === "feed" || (sabatier !== null && inventory.stream === "co2-feed");
   const isWaterBuffer = (inventory: StorageInventory): boolean =>
-    inventory.role === "buffer" || (sabatier !== null && inventory.stream === "water-ice");
+    inventory.role === "buffer" || (waterElectrolysis !== null && inventory.stream === "water-ice");
   const isProduct = (inventory: StorageInventory): boolean =>
     !isFeed(inventory) && !isWaterBuffer(inventory) && (inventory.role === "product" || inventory.role === "custom");
   const storageLossKgPerDay = (matches: (inventory: StorageInventory) => boolean): number =>
     cryo.inventories.filter(matches).reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
+  const productLossKgPerDay = (stream: string): number =>
+    storageLossKgPerDay((inventory) => isProduct(inventory) && inventory.stream === stream);
   const bufferLossKgPerDay = storageLossKgPerDay(isWaterBuffer);
   const loopThroughput =
     bufferLossKgPerDay > 0 && production.waterKgPerDay > 0
@@ -205,7 +219,14 @@ export function simulate(
         ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
         : production.waterKgPerDay;
   const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
-    productKgPerDay: Math.max(0, grossProductKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
+    productKgPerDay:
+      propellant !== null
+        ? usablePropellantKgPerDay(
+            Math.max(0, production.o2KgPerDay * loopThroughput - productLossKgPerDay("lox")),
+            Math.max(0, production.h2KgPerDay * loopThroughput - productLossKgPerDay("lh2")),
+            params.mixtureRatio
+          )
+        : Math.max(0, grossProductKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
     importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed)
   });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
@@ -354,6 +375,8 @@ interface ProductionState {
   co2ImportedKgPerDay: number;
   ch4KgPerDay: number;
   waterRecycleKgPerDay: number;
+  propellantKgPerDay: number;
+  excessO2KgPerDay: number;
 }
 
 interface ActiveElectrolysis {
@@ -372,10 +395,16 @@ interface ActiveSabatier {
   waterRecycleKgPerDay: number;
 }
 
+/** LOX + LH2 burnable at mixture ratio O/F; the scarcer side sets it. */
+function usablePropellantKgPerDay(o2KgPerDay: number, h2KgPerDay: number, mixtureRatio: number): number {
+  return Math.min(o2KgPerDay, mixtureRatio * h2KgPerDay) + Math.min(h2KgPerDay, o2KgPerDay / mixtureRatio);
+}
+
 function productionState(
   params: SimParams,
   regolithPerKgProduct: number,
-  sabatier: ActiveSabatier | null
+  sabatier: ActiveSabatier | null,
+  propellant: WaterElectrolysisOutput | null
 ): ProductionState {
   const regolithKgPerDay = params.targetKgPerDay * regolithPerKgProduct;
   if (params.site === "equatorial") {
@@ -389,7 +418,30 @@ function productionState(
       h2KgPerDay: 0,
       co2ImportedKgPerDay: 0,
       ch4KgPerDay: 0,
-      waterRecycleKgPerDay: 0
+      waterRecycleKgPerDay: 0,
+      propellantKgPerDay: 0,
+      excessO2KgPerDay: 0
+    };
+  }
+
+  if (propellant !== null) {
+    // Electrolysis gives O/F 7.94 by mass, richer than any vehicle mixture
+    // ratio in range, so hydrogen sets the usable propellant and the rest of
+    // the oxygen is surplus.
+    const oxidizerKgPerDay = Math.min(propellant.o2KgPerDay, params.mixtureRatio * propellant.grossH2KgPerDay);
+    return {
+      targetKgPerDay: params.targetKgPerDay,
+      regolithKgPerDay,
+      slagKgPerDay: 0,
+      o2KgPerDay: propellant.o2KgPerDay,
+      waterKgPerDay: params.targetKgPerDay,
+      grossH2KgPerDay: propellant.grossH2KgPerDay,
+      h2KgPerDay: propellant.grossH2KgPerDay,
+      co2ImportedKgPerDay: 0,
+      ch4KgPerDay: 0,
+      waterRecycleKgPerDay: 0,
+      propellantKgPerDay: usablePropellantKgPerDay(propellant.o2KgPerDay, propellant.grossH2KgPerDay, params.mixtureRatio),
+      excessO2KgPerDay: propellant.o2KgPerDay - oxidizerKgPerDay
     };
   }
 
@@ -403,7 +455,9 @@ function productionState(
     h2KgPerDay: sabatier === null ? 0 : sabatier.h2UnreactedKgPerDay,
     co2ImportedKgPerDay: sabatier === null ? 0 : sabatier.co2ImportedKgPerDay,
     ch4KgPerDay: sabatier === null ? 0 : sabatier.ch4KgPerDay,
-    waterRecycleKgPerDay: sabatier === null ? 0 : sabatier.waterRecycleKgPerDay
+    waterRecycleKgPerDay: sabatier === null ? 0 : sabatier.waterRecycleKgPerDay,
+    propellantKgPerDay: 0,
+    excessO2KgPerDay: 0
   };
 }
 
@@ -418,6 +472,13 @@ function storageDemands(params: SimParams, production: ProductionState): Storage
   }
   if (params.site === "equatorial") {
     return [{ id: "oxygen-product", stream: "lox", role: "product", rateKgPerDay: production.o2KgPerDay }];
+  }
+  if (!params.enableSabatier && params.polarProduct === "propellant") {
+    return [
+      { id: "water-feed-buffer", stream: "water-ice", role: "buffer", rateKgPerDay: production.waterKgPerDay },
+      { id: "oxygen-product", stream: "lox", role: "product", rateKgPerDay: production.o2KgPerDay },
+      { id: "hydrogen-product", stream: "lh2", role: "product", rateKgPerDay: production.h2KgPerDay }
+    ];
   }
   if (!params.enableSabatier) {
     return [{ id: "water-product", stream: "water-ice", role: "product", rateKgPerDay: production.waterKgPerDay }];
@@ -439,7 +500,7 @@ function energyLineItems(
   heaterLoss_JPerKg: number | null,
   conditioningSecKWhPerKg: number,
   cryocoolerPowerW: number,
-  sabatier: ActiveSabatier | null
+  waterElectrolysis: Pick<WaterElectrolysisOutput, "secWaterElectrolysis_JPerKg"> | null
 ): EnergyLine[] {
   const mdotProduct_kgPerS = params.targetKgPerDay / SECONDS_PER_DAY;
   const cryoJPerKg =
@@ -468,11 +529,11 @@ function energyLineItems(
     { from: "cryo", to: "product", jPerKg: cryoJPerKg }
   ];
 
-  if (sabatier !== null) {
+  if (waterElectrolysis !== null) {
     lines.push({
       from: "electrolysis",
       to: "product",
-      jPerKg: sabatier.secWaterElectrolysis_JPerKg
+      jPerKg: waterElectrolysis.secWaterElectrolysis_JPerKg
     });
   }
 

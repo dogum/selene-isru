@@ -34,8 +34,9 @@ def test_regression_anchors() -> None:
     )
     assert all(row["decomposed"] for row in result["electrolysis"]["oxideYield"])
     assert_rel(melt_heat_j_per_kg(DEFAULTS), 2_099_805, 1e-9)
-    assert_rel(result["energy"]["secTotal_kWhPerKg"], 24.7, 0.03)
-    assert_rel(result["energy"]["gridPowerW"] / 1000, 1030, 0.03)
+    # v0.6 moved these from 24.78 kWh/kg and 1,032 kW (LOX conditioning 2.2 -> 1.32 kWh/kg).
+    assert_rel(result["energy"]["secTotal_kWhPerKg"], 23.9, 0.03)
+    assert_rel(result["energy"]["gridPowerW"] / 1000, 996, 0.03)
     assert_rel(p_crit_kw(1500, 250, 30), 6.818, 0.001)
     assert_rel(sec_sub_j_per_kg(0.005, 800, 40, 263) / J_PER_KWH, 10.7, 0.01)
     assert_rel(sec_sub_j_per_kg(0.05, 800, 40, 263) / J_PER_KWH, 1.78, 0.01)
@@ -69,12 +70,23 @@ def test_campaign_ledger_equatorial_payback_v05() -> None:
         - leo_per_kg * DEFAULTS["sparesFracPerYear"] * logistics["totalInfraMassKg"] / 365
     )
     assert_rel(campaign["paybackDays"], DEFAULTS["commissioningDays"] + DEFAULTS["M0leo"] / net_per_day, 1e-12)
-    assert_rel(campaign["paybackDays"], 241.8, 0.001)
-    assert_rel(campaign["returnRatio"], 6.67, 0.001)
+    assert_rel(campaign["paybackDays"], 242.0, 0.001)
+    assert_rel(campaign["returnRatio"], 6.63, 0.001)
     assert campaign["paysBackInCampaign"] is True
     sabatier = simulate({"site": "polar", "enableSabatier": True})["campaign"]
     assert sabatier["paybackDays"] is None
-    assert_rel(sabatier["returnRatio"], 0.794, 0.001)
+    assert_rel(sabatier["returnRatio"], 0.793, 0.001)
+
+
+def test_polar_propellant_mode_v06() -> None:
+    result = simulate({"site": "polar", "polarProduct": "propellant"})
+    production = result["production"]
+    assert_rel(production["propellantKgPerDay"], 7 * production["h2KgPerDay"], 1e-12)
+    assert_rel(production["excessO2KgPerDay"], production["o2KgPerDay"] - 6 * production["h2KgPerDay"], 1e-12)
+    assert [item["stream"] for item in result["cryo"]["inventories"]] == ["water-ice", "lox", "lh2"]
+    assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.78, 0.001)
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 82.35, 0.001)
+    assert_rel(result["campaign"]["paybackDays"], 311.3, 0.001)
 
 
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
@@ -109,8 +121,8 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     )
     assert result["plantMassThroughputDays"]["p10"] <= result["plantMassThroughputDays"]["p50"] <= result["plantMassThroughputDays"]["p90"]
     assert result["secTotal"]["p10"] <= result["secTotal"]["p50"] <= result["secTotal"]["p90"]
-    assert_rel(result["plantMassThroughputDays"]["p50"], 58.93253207974891, 1e-12)
-    assert_rel(result["secTotal"]["p50"], 24.777402251765626, 1e-12)
+    assert_rel(result["plantMassThroughputDays"]["p50"], 60.3325320797489, 1e-12)
+    assert_rel(result["secTotal"]["p50"], 23.897402251765627, 1e-12)
 
 
 def test_public_warning_paths() -> None:

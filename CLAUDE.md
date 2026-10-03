@@ -153,7 +153,7 @@ camelCase result keys preserved on both sides.
 
 `python/tools/generate_golden.py` Latin-hypercube samples the full parameter
 box (200 points, seed 42, plus named corner scenarios) and writes
-`packages/engine/test/golden_vectors.json` (211 vectors) plus
+`packages/engine/test/golden_vectors.json` (213 vectors) plus
 `dynamics_vectors.json`. `packages/engine/test/parity.test.ts` asserts the TS
 engine reproduces **every numeric leaf to 1e-9 relative / 1e-12 absolute
 tolerance**. CI regenerates from Python and runs `git diff --exit-code` on the

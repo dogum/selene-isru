@@ -21,12 +21,26 @@ export function sabatierKp(T: number): number {
   return Math.exp(-(dH - T * dS) / (R * T));
 }
 
+export interface WaterElectrolysisOutput {
+  /** electrical energy per kg of water split [J/kg] */
+  secWaterElectrolysis_JPerKg: number;
+  grossH2KgPerDay: number;
+  o2KgPerDay: number;
+}
+
+/** 2 H2O → 2 H2 + O2 at cell voltage Vel and Faradaic efficiency etaFaradayEl. */
+export function simulateWaterElectrolysis(params: SimParams, waterKgPerDay: number): WaterElectrolysisOutput {
+  return {
+    secWaterElectrolysis_JPerKg:
+      (params.Vel * 2 * PHYSICAL_CONSTANTS.F.value) /
+      (PHYSICAL_CONSTANTS.M_H2O.value * params.etaFaradayEl),
+    grossH2KgPerDay: waterKgPerDay * (PHYSICAL_CONSTANTS.M_H2.value / PHYSICAL_CONSTANTS.M_H2O.value),
+    o2KgPerDay: waterKgPerDay * ((PHYSICAL_CONSTANTS.M_O2.value / 2) / PHYSICAL_CONSTANTS.M_H2O.value)
+  };
+}
+
 export function simulateSabatier(params: SimParams, waterKgPerDay: number): SabatierOutput {
-  const secWaterElectrolysis_JPerKg =
-    (params.Vel * 2 * PHYSICAL_CONSTANTS.F.value) /
-    (PHYSICAL_CONSTANTS.M_H2O.value * params.etaFaradayEl);
-  const grossH2KgPerDay = waterKgPerDay * (PHYSICAL_CONSTANTS.M_H2.value / PHYSICAL_CONSTANTS.M_H2O.value);
-  const o2KgPerDay = waterKgPerDay * ((PHYSICAL_CONSTANTS.M_O2.value / 2) / PHYSICAL_CONSTANTS.M_H2O.value);
+  const { secWaterElectrolysis_JPerKg, grossH2KgPerDay, o2KgPerDay } = simulateWaterElectrolysis(params, waterKgPerDay);
   const h2ConsumedKgPerDay = grossH2KgPerDay * params.fConversion;
   const h2UnreactedKgPerDay = grossH2KgPerDay - h2ConsumedKgPerDay;
   const co2ImportedKgPerDay =

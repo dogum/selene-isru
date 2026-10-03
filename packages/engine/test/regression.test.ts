@@ -38,8 +38,10 @@ describe("regression anchors", () => {
     );
     expect(result.electrolysis.oxideYield.every((row) => row.decomposed)).toBe(true);
     expectRel(meltHeatJPerKg(DEFAULTS), 2_099_805, 1e-9);
-    expectRel(result.energy.secTotal_kWhPerKg, 24.7, 0.03);
-    expectRel(result.energy.gridPowerW / 1000, 1030, 0.03);
+    // v0.6 moved these from 24.78 kWh/kg and 1,032 kW: LOX conditioning is now
+    // 1.32 kWh/kg, derived from NASA's polar propellant case, not 2.2 (uncited).
+    expectRel(result.energy.secTotal_kWhPerKg, 23.9, 0.03);
+    expectRel(result.energy.gridPowerW / 1000, 996, 0.03);
     expectRel(pCritKw(1500, 250, 30) ?? 0, 6.818, 0.001);
     expectRel(secSubJPerKg(0.005, 800, 40, 263) / J_PER_KWH, 10.7, 0.01);
     expectRel(secSubJPerKg(0.05, 800, 40, 263) / J_PER_KWH, 1.78, 0.01);
@@ -78,14 +80,32 @@ describe("regression anchors", () => {
       (leoPerKg * DEFAULTS.sparesFracPerYear * logistics.totalInfraMassKg) / 365;
     expectRel(campaign.leoMassPerLandedKg, leoPerKg, 1e-12);
     expectRel(campaign.paybackDays!, DEFAULTS.commissioningDays + DEFAULTS.M0leo / netPerDay, 1e-12);
-    expectRel(campaign.paybackDays!, 241.8, 0.001);
-    expectRel(campaign.returnRatio, 6.67, 0.001);
+    expectRel(campaign.paybackDays!, 242.0, 0.001);
+    expectRel(campaign.returnRatio, 6.63, 0.001);
     expectRel(campaign.leoMassPerLandedKg, 12.82, 0.001);
     expect(campaign.paysBackInCampaign).toBe(true);
     // The Sabatier loop's CO2 is landed from Earth and outweighs its products' saving.
     const sabatier = simulate({ site: "polar", enableSabatier: true }).campaign;
     expect(sabatier.paybackDays).toBeNull();
-    expectRel(sabatier.returnRatio, 0.794, 0.001);
+    expectRel(sabatier.returnRatio, 0.793, 0.001);
+  });
+
+  test("polar propellant mode splits water into LOX and LH2 (v0.6)", () => {
+    const propellant = simulate({ site: "polar", polarProduct: "propellant" });
+    const { production, cryo, energy, logistics, campaign } = propellant;
+    // 1,000 kg/day of water gives 888.9 kg O2 and 111.1 kg H2; at O/F 6 the
+    // hydrogen sets 777.8 kg/day of propellant and 222.2 kg/day of O2 is surplus.
+    expectRel(production.o2KgPerDay, 888.9, 0.001);
+    expectRel(production.h2KgPerDay, 111.1, 0.001);
+    expectRel(production.propellantKgPerDay, 7 * production.h2KgPerDay, 1e-12);
+    expectRel(production.excessO2KgPerDay, production.o2KgPerDay - 6 * production.h2KgPerDay, 1e-12);
+    expect(cryo.inventories.map((item) => item.stream)).toEqual(["water-ice", "lox", "lh2"]);
+    expectRel(cryo.inventories[2]!.liquefierMassKg, 233 * production.h2KgPerDay, 1e-12);
+    expectRel(energy.secTotal_kWhPerKg, 20.78, 0.001);
+    expectRel(logistics.totalInfraMassKg / 1000, 82.35, 0.001);
+    expectRel(campaign.paybackDays!, 311.3, 0.001);
+    expect(propellant.materials.maxAbsResidualKgPerDay).toBe(0);
+    expect(energy.maxAbsResidualW).toBe(0);
   });
 
   test("keeps the v1 aggregate electrolysis path reachable", () => {

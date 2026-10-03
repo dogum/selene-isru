@@ -22,7 +22,7 @@ def test_multi_stream_sabatier_storage() -> None:
     result = simulate({"site": "polar", "enableSabatier": True})
     inventories = result["cryo"]["inventories"]
     assert [item["stream"] for item in inventories] == ["water-ice", "lox", "lh2", "lch4", "co2-feed"]
-    assert result["cryo"]["totalStorageMassKg"] == pytest.approx(sum(item["storageMassKg"] for item in inventories))
+    assert result["cryo"]["totalStorageMassKg"] == pytest.approx(sum(item["storageMassKg"] + item["liquefierMassKg"] for item in inventories))
     assert result["cryo"]["totalReserveVolumeM3"] == pytest.approx(sum(item["volumeM3"] for item in inventories))
     assert result["cryo"]["totalConditioningPowerW"] == pytest.approx(sum(item["conditioningPowerW"] for item in inventories))
 

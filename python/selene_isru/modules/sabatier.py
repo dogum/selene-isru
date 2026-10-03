@@ -12,10 +12,20 @@ def sabatier_kp(temp: float) -> float:
     return math.exp(-(d_h - temp * d_s) / (c("R") * temp))
 
 
+def simulate_water_electrolysis(params: dict[str, Any], water_kg_per_day: float) -> dict[str, float]:
+    """2 H2O -> 2 H2 + O2 at cell voltage Vel and Faradaic efficiency etaFaradayEl."""
+    return {
+        "secWaterElectrolysis_JPerKg": params["Vel"] * 2 * c("F") / (c("M_H2O") * params["etaFaradayEl"]),
+        "grossH2KgPerDay": water_kg_per_day * (c("M_H2") / c("M_H2O")),
+        "o2KgPerDay": water_kg_per_day * ((c("M_O2") / 2) / c("M_H2O")),
+    }
+
+
 def simulate_sabatier(params: dict[str, Any], water_kg_per_day: float) -> dict[str, float]:
-    sec_water_electrolysis_j_per_kg = params["Vel"] * 2 * c("F") / (c("M_H2O") * params["etaFaradayEl"])
-    gross_h2_kg_per_day = water_kg_per_day * (c("M_H2") / c("M_H2O"))
-    o2_kg_per_day = water_kg_per_day * ((c("M_O2") / 2) / c("M_H2O"))
+    split = simulate_water_electrolysis(params, water_kg_per_day)
+    sec_water_electrolysis_j_per_kg = split["secWaterElectrolysis_JPerKg"]
+    gross_h2_kg_per_day = split["grossH2KgPerDay"]
+    o2_kg_per_day = split["o2KgPerDay"]
     h2_consumed_kg_per_day = gross_h2_kg_per_day * params["fConversion"]
     h2_unreacted_kg_per_day = gross_h2_kg_per_day - h2_consumed_kg_per_day
     co2_imported_kg_per_day = h2_consumed_kg_per_day * c("M_CO2") / (4 * c("M_H2"))
