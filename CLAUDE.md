@@ -314,7 +314,14 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   the edit becomes silent.
 
   `simulateStoreParams` does both for the authored path (`setParam`,
-  `applyPatch`, URL load). The custom workspace takes the same warnings through
+  `applyPatch`, URL load).
+
+  The authored path also keeps an undo history (`paramHistory`): every change
+  to the case on screen is pushed before it lands, except a tour's scripted
+  beats (a tour restores the case it interrupted instead) and the return
+  from Custom Site (leaving it records the authored case). A new action that
+  replaces the authored case should go through `applyPatch` or `setParam` so
+  it is undoable, or say why not. The custom workspace takes the same warnings through
   `commitCustomDesign`'s `inputWarnings` argument, since
   `evaluateCustomRuntime` also receives an already-normalized design. Scenario
   **import deliberately does not normalize** — the library stores what was
@@ -350,7 +357,9 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   no precision editing UI that the touch target cannot honor.
 - **localStorage keys use two different compatibility strategies** — don't
   assume the versioned one:
-  - *Versioned, migrate on a schema change*: `selene-isru.study-scenarios.v2`,
+  - *Versioned, migrate on a schema change*: `selene-isru.study-scenarios.v2`
+    (a case's optional `notes` is an additive field: older builds drop it,
+    nothing changes meaning),
     `selene-isru.custom-site-draft.v1`, and
     `selene-isru.custom-site-draft-backup.v1` (a separate key, *not* a
     `.backup` suffix — see `CUSTOM_SITE_DRAFT_BACKUP_KEY`), and the
@@ -380,6 +389,8 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   unformatted; name output columns by engine field path and inputs as
   `param.<key> [unit]`. The case file (`selene-isru-case` v1) is importable:
   changing its shape needs a version bump and a branch in `previewCaseFile`.
+  (`case.notes` is an optional field within v1; adding an optional field that
+  older readers can ignore is not a shape change, renaming or retyping one is.)
 
 ### 7. Explainability is a product requirement
 
@@ -447,6 +458,9 @@ in `assets/ASSET_LICENSES.md`.
 | Input activity tags, hidden-input guard | `input-activity.test.ts` |
 | Analysis grids inside engine bounds, sensitivity clamping, delta tone | `analysis-tools.test.ts` |
 | Rail search/filter/reset, KPI summary, intro | `control-rail.test.tsx`, `case-summary.test.ts`, `intro-card.test.tsx` |
+| Undo/redo of authored cases, tour restore and keep, history shortcuts | `param-history.test.tsx` |
+| Library notes, update from live, input diff, capacity, Brief picks | `scenario-library.test.tsx` |
+| General sweep inputs/outputs/grid/CSV, sweep and frontier panels | `general-sweep.test.tsx` |
 | Dialog/menu keyboard contract, CSS variables | `keyboard-a11y.test.tsx`, `css-tokens.test.ts` |
 | Case file round trip and drift, wide CSV, report inputs, panel CSVs | `case-export.test.ts`, `panel-exports.test.ts` |
 

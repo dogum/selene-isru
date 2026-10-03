@@ -119,7 +119,9 @@
 }
 
 .undo-controls .topbar-btn {
-  padding: 6px 8px;
+  padding: 3px 8px;
+  font-size: var(--fs-14);
+  line-height: 1.15;
   letter-spacing: 0;
 }
 
@@ -3003,6 +3005,10 @@ body.selene-photo-mode .custom-scene-label-overlay {
 .sweep-live circle { fill: none; stroke: var(--text-hi); stroke-width: 2; }
 .sweep-focus line { stroke: var(--text-mid); }
 .sweep-focus circle { fill: var(--cryo); stroke: var(--bg-inset); stroke-width: 2; }
+
+.sweep-key-alarm {
+  fill: var(--alarm);
+}
 
 .sweep-live-ring {
   fill: none;

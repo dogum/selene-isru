@@ -277,6 +277,15 @@ export function SweepPanel(): React.JSX.Element {
   );
 }
 
+/** Key for the two point markers: the live case (text ink) and alarms (alarm status colour, with its label). */
+function MarkerKey(): React.JSX.Element {
+  return (
+    <>
+      ◯ LIVE CASE · <tspan className="sweep-key-alarm">○</tspan> ALARM
+    </>
+  );
+}
+
 function InputOptions({ inputs }: { inputs: SweepInput[] }): React.JSX.Element {
   const groups = [...new Set(inputs.map((input) => input.group))];
   return (
@@ -346,10 +355,14 @@ function LineSweep(props: ChartProps & { liveValue: number | null }): React.JSX.
           <text className="axis-label" x={plot.left - 6} y={yScale(value) + 4} textAnchor="end">{tick(value)}</text>
         </g>
       ))}
-      {xTicks.map((value) => (
-        <text key={`x${value}`} className="axis-label" x={xScale(value)} y={plot.bottom + 16} textAnchor="middle">{tick(value)}</text>
-      ))}
+      {xTicks.map((value) => {
+        // labels at the plot's edges grow inward so they are not clipped
+        const at = xScale(value);
+        const anchor = at > plot.right - 24 ? "end" : at < plot.left + 24 ? "start" : "middle";
+        return <text key={`x${value}`} className="axis-label" x={at} y={plot.bottom + 16} textAnchor={anchor}>{tick(value)}</text>;
+      })}
       <text className="axis-label" x={plot.left} y={plot.top - 10}>{outputLabel}{logOutput ? " · LOG" : ""}</text>
+      <text className="axis-label" x={plot.right} y={plot.top - 10} textAnchor="end"><MarkerKey /></text>
       <path className="sweep-line" d={path} />
       {run.points.map((point, index) =>
         point.alarms > 0 ? (
@@ -422,7 +435,7 @@ function HeatSweep(
         <text className="axis-label" x={plot.left} y={plot.top + 21}>{tick(extent[0])}</text>
         <text className="axis-label" x={plot.left + RAMP.length * swatch - 2} y={plot.top + 21} textAnchor="end">{tick(extent[1])}</text>
         <text className="axis-label" x={plot.left + RAMP.length * swatch + 8} y={plot.top + 9}>
-          {logOutput ? "LOG STEPS" : "EQUAL STEPS"} · ○ ALARM
+          {logOutput ? "LOG STEPS" : "EQUAL STEPS"} · <MarkerKey />
         </text>
       </g>
       {run.points.map((point, index) => {
