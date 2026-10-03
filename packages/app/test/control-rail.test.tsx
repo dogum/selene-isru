@@ -93,6 +93,9 @@ describe("control rail search, changed filter, and reset", () => {
     // The groups that hold the changed selects stay on screen with the selects in them.
     expect(screen.getByDisplayValue("CUSTOM CRYOGEN")).toBeTruthy();
     expect(screen.getByDisplayValue("SHARED (MASS SHARE)")).toBeTruthy();
+    // Only the controls it counted: the unchanged heat-control select stays hidden.
+    expect(screen.queryByDisplayValue("ZERO BOIL-OFF")).toBeNull();
+    expect(document.querySelectorAll(".rail-mode-grid select")).toHaveLength(2);
     expect(document.querySelectorAll(".param-row")).toHaveLength(0);
     useStore.getState().applyPatch({ ...DEFAULTS });
   });
