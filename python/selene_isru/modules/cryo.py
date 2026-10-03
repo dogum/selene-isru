@@ -47,9 +47,20 @@ def _pending_inventory(params: dict[str, Any], demand: dict[str, Any], profile: 
     )
     q_leak = max(0, mli_flux * area) + params["qStrutW"]
     conditioning_power = demand["rateKgPerDay"] / 86400 * properties["conditioningSecKWhPerKg"] * 3_600_000
+    # Liquefaction hardware scales with the liquefied product rate; storage
+    # buffers and feeds are not liquefied here.
+    if demand["role"] != "product":
+        liquefier_kg_per_kg_day = 0
+    elif demand["stream"] == "lox":
+        liquefier_kg_per_kg_day = params["kLiquefierLox"]
+    elif demand["stream"] == "lh2":
+        liquefier_kg_per_kg_day = params["kLiquefierLh2"]
+    else:
+        liquefier_kg_per_kg_day = 0
     return {
         "id": demand["id"], "stream": demand["stream"], "role": demand["role"], "rateKgPerDay": demand["rateKgPerDay"],
         "reserveInventoryKg": reserve_inventory, "volumeM3": volume, "storageMassKg": params["kCryoMass"] * demand["rateKgPerDay"],
+        "liquefierMassKg": liquefier_kg_per_kg_day * demand["rateKgPerDay"],
         "densityKgPerM3": properties["densityKgPerM3"], "storageTemperatureK": cold,
         "conditioningSecKWhPerKg": properties["conditioningSecKWhPerKg"], "conditioningPowerW": conditioning_power,
         "qLeakW": q_leak, "qRemovedW": 0, "qResidualW": q_leak, "unmitigatedLossKgPerDay": 0, "actualLossKgPerDay": 0,
@@ -78,14 +89,14 @@ def simulate_cryo(params: dict[str, Any], demands: list[dict[str, Any]], profile
         item["actualLossKgPerDay"] = item["qResidualW"] * loss_factor
         if item["qRemovedW"] > 0 and item["hotSideTemperatureK"] > item["storageTemperatureK"]:
             cryocooler_power += item["qRemovedW"] * (item["hotSideTemperatureK"] - item["storageTemperatureK"]) / (params["eta2ndLaw"] * item["storageTemperatureK"])
-    public_keys = ("id", "stream", "role", "rateKgPerDay", "reserveInventoryKg", "volumeM3", "storageMassKg", "densityKgPerM3", "storageTemperatureK", "conditioningSecKWhPerKg", "conditioningPowerW", "qLeakW", "qRemovedW", "qResidualW", "unmitigatedLossKgPerDay", "actualLossKgPerDay")
+    public_keys = ("id", "stream", "role", "rateKgPerDay", "reserveInventoryKg", "volumeM3", "storageMassKg", "liquefierMassKg", "densityKgPerM3", "storageTemperatureK", "conditioningSecKWhPerKg", "conditioningPowerW", "qLeakW", "qRemovedW", "qResidualW", "unmitigatedLossKgPerDay", "actualLossKgPerDay")
     inventories = [{key: item[key] for key in public_keys} for item in pending]
     primary = pending[0]
     q_removed = sum(item["qRemovedW"] for item in pending)
     q_residual = sum(item["qResidualW"] for item in pending)
     unmitigated_loss = sum(item["unmitigatedLossKgPerDay"] for item in pending)
     actual_loss = sum(item["actualLossKgPerDay"] for item in pending)
-    cryo_mass = sum(item["storageMassKg"] for item in pending)
+    cryo_mass = sum(item["storageMassKg"] + item["liquefierMassKg"] for item in pending)
     total_volume = sum(item["volumeM3"] for item in pending)
     total_conditioning_power = sum(item["conditioningPowerW"] for item in pending)
     total_area = sum(item["areaM2"] for item in pending)

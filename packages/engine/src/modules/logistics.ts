@@ -7,6 +7,8 @@ import type {
 
 export interface LogisticsOutput {
   payloadPerMissionKg: number;
+  /** product each landed kilogram is measured against [kg/day] */
+  productKgPerDay: number;
   totalInfraMassKg: number;
   nMissions: number;
   leverageL: number;
@@ -28,6 +30,7 @@ export function simulateLogistics(
   reactorMassKg: number,
   powerMassKg: number,
   cryoMassKg: number,
+  productKgPerDay: number,
   supplementalMasses: readonly SimulationSupplementalMass[] = []
 ): LogisticsOutput {
   const payload = payloadPerMissionKg(params);
@@ -43,8 +46,10 @@ export function simulateLogistics(
     supplementalMassKg;
   const capacity = params.etaPack * payload;
   const nMissions = capacity > 0 ? Math.max(0, Math.ceil(totalInfraMassKg / capacity)) : 0;
-  const plantMassThroughputDays = totalInfraMassKg / params.targetKgPerDay;
-  const annualProductKg = params.targetKgPerDay * 365;
+  // Measured against the product, not the target: in propellant mode and the
+  // Sabatier loop the target is water processed.
+  const plantMassThroughputDays = productKgPerDay > 0 ? totalInfraMassKg / productKgPerDay : 0;
+  const annualProductKg = productKgPerDay * 365;
   const leverageL = totalInfraMassKg !== 0 ? (annualProductKg * params.missionYears * params.gearRatio) / totalInfraMassKg : 0;
   const manifest: ManifestRow[] = [
     { subsystem: "excavation fleet", massKg: fleetMassKg },
@@ -61,6 +66,7 @@ export function simulateLogistics(
 
   return {
     payloadPerMissionKg: payload,
+    productKgPerDay,
     totalInfraMassKg,
     nMissions,
     leverageL,

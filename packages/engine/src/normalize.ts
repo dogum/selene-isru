@@ -104,6 +104,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "polarProduct") {
+      if (raw === "water" || raw === "propellant") {
+        assign("polarProduct", raw);
+      } else {
+        assign("polarProduct", DEFAULTS.polarProduct);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "deploymentManifest") {
       if (raw === "dedicated" || raw === "shared") {
         assign("deploymentManifest", raw);

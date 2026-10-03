@@ -100,6 +100,11 @@ suit product used in orbit.
 
 ## Reference results
 
+> *v0.6 note: the liquefaction recalibration in
+> [`model-propellant-v06.md`](model-propellant-v06.md) moves the equatorial
+> return from 6.67× to 6.63× (payback stays on day 242). Polar + Sabatier still
+> never pays back. The table below is the v0.5 record.*
+
 Default inputs except as named.
 
 | Case | Landed (t) | Landers | Leverage L | First product (day) | Payback (day) | Return | Net LEO mass (t) |
@@ -112,6 +117,10 @@ Default inputs except as named.
 | Equatorial, 10 t/day, 2 landings/yr | 575.5 | 7 | 190× | 1,125 | 1,273 | 8.65× | 87,162 |
 | Polar pilot, 10 kg/day | 1.4 | 1 | 76× | 30 | 22,501 (after the campaign) | 0.09× | −1,011 |
 | Polar pilot, 10 kg/day, shared lander | 1.4 | 1 | 76× | 30 | 406 | 3.57× | 71 |
+
+*(v0.6 measures Leverage L against the product rather than the target; the
+Sabatier row's L becomes 186× there. See
+[`model-propellant-v06.md`](model-propellant-v06.md).)*
 
 What the table shows:
 

@@ -14,7 +14,7 @@ from .modules.excavation import simulate_excavation
 from .modules.logistics import simulate_logistics
 from .modules.materials import material_ledger
 from .modules.power import simulate_power
-from .modules.sabatier import simulate_sabatier
+from .modules.sabatier import simulate_sabatier, simulate_water_electrolysis
 from .modules.site_profile import resolve_polar_profile, sample_polar_profile
 from .modules.thermal import simulate_thermal
 from .normalize import normalize_params
@@ -32,8 +32,16 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     thermal = simulate_thermal(params)
     site_profile = resolve_polar_profile(params)
     sabatier = simulate_sabatier(params, params["targetKgPerDay"]) if params["site"] == "polar" and params["enableSabatier"] else None
+    # Propellant mode splits all the water into O2 and H2 without the Sabatier
+    # loop; with the loop on, its own electrolysis step does that job.
+    propellant = (
+        simulate_water_electrolysis(params, params["targetKgPerDay"])
+        if params["site"] == "polar" and not params["enableSabatier"] and params["polarProduct"] == "propellant"
+        else None
+    )
+    water_electrolysis = sabatier if sabatier is not None else propellant
 
-    production = _production_state(params, excavation["regolithPerKgProduct"], sabatier)
+    production = _production_state(params, excavation["regolithPerKgProduct"], sabatier, propellant)
     cryo = simulate_cryo(params, _storage_demands(params, production), site_profile["profile"])
     energy_lines = _energy_line_items(
         params,
@@ -43,38 +51,53 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         thermal["heaterLoss_JPerKg"],
         cryo["conditioningSecKWhPerKg"],
         cryo["cryocoolerPowerW"],
-        sabatier,
+        water_electrolysis,
     )
     flows = [{"from": line["from"], "to": line["to"], "kWhPerKg": line["jPerKg"] / J_PER_KWH} for line in energy_lines]
     sec_total_j_per_kg = sum(line["jPerKg"] for line in energy_lines)
     sec_total_kwh_per_kg = sec_total_j_per_kg / J_PER_KWH
     grid_power_w = params["targetKgPerDay"] / SECONDS_PER_DAY * sec_total_j_per_kg
-    energy_accounting = energy_ledger(params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, sabatier)
+    energy_accounting = energy_ledger(params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, water_electrolysis)
     power = simulate_power(params, grid_power_w, site_profile["profile"])
     reactor_mass_kg = (
-        params["kReactorMass"] * params["targetKgPerDay"] if params["site"] == "equatorial" or params["enableSabatier"] else 0
-    ) + thermal["extractorMassKg"]
+        (params["kReactorMass"] * params["targetKgPerDay"] if params["site"] == "equatorial" or params["enableSabatier"] else 0)
+        + (params["kElectrolyzerMass"] * params["targetKgPerDay"] if propellant is not None else 0)
+        + thermal["extractorMassKg"]
+    )
+    # The product each landed kilogram is measured against, before storage
+    # losses and downtime: O2 at the equator, water at the pole, propellant
+    # usable at the vehicle mixture ratio, or the Sabatier products.
+    if propellant is not None:
+        product_kg_per_day = production["propellantKgPerDay"]
+    elif params["site"] == "equatorial":
+        product_kg_per_day = production["o2KgPerDay"]
+    elif params["enableSabatier"]:
+        product_kg_per_day = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    else:
+        product_kg_per_day = production["waterKgPerDay"]
     logistics = simulate_logistics(
         params,
         excavation["fleetMassKg"],
         reactor_mass_kg,
         power["selectedPowerMassKg"],
         cryo["cryoMassKg"],
+        product_kg_per_day,
     )
-    # What the plant delivers: O2 at the equator, water at the pole, or the
-    # Sabatier products, whose imported CO2 feed must be landed. Storage losses
-    # (passive or capacity-limited control) are product never delivered, and
-    # feed lost in storage must be landed again.
-    # While the Sabatier loop runs, CO2 is its process feed and water its buffer
-    # whatever role a one-stream storage what-if gives them; without the loop
-    # there is no feed. Water lost from the buffer never reaches electrolysis,
-    # so the loop runs that much slower: its products and its CO2 draw scale
-    # down together.
+    # What the plant delivers: O2 at the equator, water at the pole, propellant
+    # usable at the vehicle mixture ratio, or the Sabatier products, whose
+    # imported CO2 feed must be landed. Storage losses (passive or
+    # capacity-limited control) are product never delivered, and feed lost in
+    # storage must be landed again.
+    # While water is being split it is the electrolyser's buffer, and while the
+    # Sabatier loop runs CO2 is its process feed, whatever role a one-stream
+    # storage what-if gives them; without the loop there is no feed. Water lost
+    # from the buffer never reaches electrolysis, so the products and the
+    # loop's CO2 draw scale down with it.
     def is_feed(inventory: dict[str, Any]) -> bool:
         return inventory["role"] == "feed" or (sabatier is not None and inventory["stream"] == "co2-feed")
 
     def is_water_buffer(inventory: dict[str, Any]) -> bool:
-        return inventory["role"] == "buffer" or (sabatier is not None and inventory["stream"] == "water-ice")
+        return inventory["role"] == "buffer" or (water_electrolysis is not None and inventory["stream"] == "water-ice")
 
     def is_product(inventory: dict[str, Any]) -> bool:
         return (
@@ -90,23 +113,41 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
                 total += inventory["actualLossKgPerDay"]
         return total
 
+    def product_loss_kg_per_day(stream: str) -> float:
+        return storage_loss_kg_per_day(lambda inventory: is_product(inventory) and inventory["stream"] == stream)
+
     buffer_loss_kg_per_day = storage_loss_kg_per_day(is_water_buffer)
     loop_throughput = (
         max(0, 1 - buffer_loss_kg_per_day / production["waterKgPerDay"])
         if buffer_loss_kg_per_day > 0 and production["waterKgPerDay"] > 0
         else 1
     )
-    if params["site"] == "equatorial":
-        product_kg_per_day = production["o2KgPerDay"]
-    elif params["enableSabatier"]:
-        product_kg_per_day = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    # Oxygen and hydrogen that reach the vehicle in propellant mode. A
+    # one-stream storage what-if holding some other stream still stores the
+    # product, so its loss takes both gases down in proportion.
+    other_product_loss_kg_per_day = storage_loss_kg_per_day(
+        lambda inventory: is_product(inventory) and inventory["stream"] not in ("lox", "lh2")
+    )
+    stored_o2_kg_per_day = max(0, production["o2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lox"))
+    stored_h2_kg_per_day = max(0, production["h2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lh2"))
+    kept_share = (
+        max(0, 1 - other_product_loss_kg_per_day / (stored_o2_kg_per_day + stored_h2_kg_per_day))
+        if other_product_loss_kg_per_day > 0 and stored_o2_kg_per_day + stored_h2_kg_per_day > 0
+        else 1
+    )
+    net_o2_kg_per_day = stored_o2_kg_per_day * kept_share
+    net_h2_kg_per_day = stored_h2_kg_per_day * kept_share
+    if propellant is not None:
+        net_product_kg_per_day = _usable_propellant_kg_per_day(
+            net_o2_kg_per_day, net_h2_kg_per_day, params["mixtureRatio"]
+        )
     else:
-        product_kg_per_day = production["waterKgPerDay"]
+        net_product_kg_per_day = max(0, product_kg_per_day * loop_throughput - storage_loss_kg_per_day(is_product))
     campaign = simulate_campaign(
         params,
         logistics,
         {
-            "productKgPerDay": max(0, product_kg_per_day * loop_throughput - storage_loss_kg_per_day(is_product)),
+            "productKgPerDay": net_product_kg_per_day,
             "importedFeedKgPerDay": production["co2ImportedKgPerDay"] * loop_throughput
             + storage_loss_kg_per_day(is_feed),
         },
@@ -213,7 +254,17 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     }
 
 
-def _production_state(params: dict[str, Any], regolith_per_kg_product: float, sabatier: dict[str, float] | None) -> dict[str, float]:
+def _usable_propellant_kg_per_day(o2_kg_per_day: float, h2_kg_per_day: float, mixture_ratio: float) -> float:
+    """LOX + LH2 burnable at mixture ratio O/F; the scarcer side sets it."""
+    return min(o2_kg_per_day, mixture_ratio * h2_kg_per_day) + min(h2_kg_per_day, o2_kg_per_day / mixture_ratio)
+
+
+def _production_state(
+    params: dict[str, Any],
+    regolith_per_kg_product: float,
+    sabatier: dict[str, float] | None,
+    propellant: dict[str, float] | None,
+) -> dict[str, float]:
     regolith_kg_per_day = params["targetKgPerDay"] * regolith_per_kg_product
     if params["site"] == "equatorial":
         return {
@@ -227,6 +278,28 @@ def _production_state(params: dict[str, Any], regolith_per_kg_product: float, sa
             "co2ImportedKgPerDay": 0,
             "ch4KgPerDay": 0,
             "waterRecycleKgPerDay": 0,
+            "propellantKgPerDay": 0,
+            "excessO2KgPerDay": 0,
+        }
+
+    if propellant is not None:
+        # Electrolysis gives O/F 7.94 by mass, richer than any vehicle mixture
+        # ratio in range, so hydrogen sets the usable propellant and the rest of
+        # the oxygen is surplus.
+        oxidizer = min(propellant["o2KgPerDay"], params["mixtureRatio"] * propellant["grossH2KgPerDay"])
+        return {
+            "targetKgPerDay": params["targetKgPerDay"],
+            "regolithKgPerDay": regolith_kg_per_day,
+            "slagKgPerDay": 0,
+            "o2KgPerDay": propellant["o2KgPerDay"],
+            "waterKgPerDay": params["targetKgPerDay"],
+            "grossH2KgPerDay": propellant["grossH2KgPerDay"],
+            "h2KgPerDay": propellant["grossH2KgPerDay"],
+            "co2ImportedKgPerDay": 0,
+            "ch4KgPerDay": 0,
+            "waterRecycleKgPerDay": 0,
+            "propellantKgPerDay": _usable_propellant_kg_per_day(propellant["o2KgPerDay"], propellant["grossH2KgPerDay"], params["mixtureRatio"]),
+            "excessO2KgPerDay": propellant["o2KgPerDay"] - oxidizer,
         }
 
     return {
@@ -240,6 +313,8 @@ def _production_state(params: dict[str, Any], regolith_per_kg_product: float, sa
         "co2ImportedKgPerDay": 0 if sabatier is None else sabatier["co2ImportedKgPerDay"],
         "ch4KgPerDay": 0 if sabatier is None else sabatier["ch4KgPerDay"],
         "waterRecycleKgPerDay": 0 if sabatier is None else sabatier["waterRecycleKgPerDay"],
+        "propellantKgPerDay": 0,
+        "excessO2KgPerDay": 0,
     }
 
 
@@ -248,6 +323,12 @@ def _storage_demands(params: dict[str, Any], production: dict[str, float]) -> li
         return [{"id": "selected-primary", "stream": params["storageStream"], "role": "custom" if params["storageStream"] == "custom" else "product", "rateKgPerDay": params["targetKgPerDay"]}]
     if params["site"] == "equatorial":
         return [{"id": "oxygen-product", "stream": "lox", "role": "product", "rateKgPerDay": production["o2KgPerDay"]}]
+    if not params["enableSabatier"] and params["polarProduct"] == "propellant":
+        return [
+            {"id": "water-feed-buffer", "stream": "water-ice", "role": "buffer", "rateKgPerDay": production["waterKgPerDay"]},
+            {"id": "oxygen-product", "stream": "lox", "role": "product", "rateKgPerDay": production["o2KgPerDay"]},
+            {"id": "hydrogen-product", "stream": "lh2", "role": "product", "rateKgPerDay": production["h2KgPerDay"]},
+        ]
     if not params["enableSabatier"]:
         return [{"id": "water-product", "stream": "water-ice", "role": "product", "rateKgPerDay": production["waterKgPerDay"]}]
     return [
@@ -267,7 +348,7 @@ def _energy_line_items(
     heater_loss_j_per_kg: float | None,
     conditioning_sec_kwh_per_kg: float,
     cryocooler_power_w: float,
-    sabatier: dict[str, float] | None,
+    water_electrolysis: dict[str, float] | None,
 ) -> list[dict[str, float | str]]:
     mdot_product_kg_per_s = params["targetKgPerDay"] / SECONDS_PER_DAY
     cryo_j_per_kg = conditioning_sec_kwh_per_kg * J_PER_KWH + (
@@ -295,12 +376,12 @@ def _energy_line_items(
         {"from": "cryo", "to": "product", "jPerKg": cryo_j_per_kg},
     ]
 
-    if sabatier is not None:
+    if water_electrolysis is not None:
         lines.append(
             {
                 "from": "electrolysis",
                 "to": "product",
-                "jPerKg": sabatier["secWaterElectrolysis_JPerKg"],
+                "jPerKg": water_electrolysis["secWaterElectrolysis_JPerKg"],
             }
         )
 

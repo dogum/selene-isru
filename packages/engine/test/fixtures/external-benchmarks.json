@@ -85,6 +85,18 @@
       "modelSimplification": "Calibration anchor, not independent validation: the kIceExtractorMass and etaSubHeater defaults were derived from this case, so agreement confirms the derivation. Linear scaling with regolith throughput is conservative at larger plants (the study's Fig. 9A is sub-linear)."
     },
     {
+      "id": "kleinhenz-paz-2020-polar-propellant",
+      "kind": "calibration",
+      "quantity": "electrolysis power, LOX/LH2 liquefaction power, and liquefier and electrolyzer mass for the NASA baseline propellant case",
+      "inputs": { "targetKgPerDay": 67.26, "chiIce": 0.05, "etaIceCapture": 0.75 },
+      "expected": { "electrolysisPowerKW": 17.5, "h2LiquefactionPowerKW": 16.9, "o2LiquefactionPowerKW": 3.28, "electrolyzerMassKg": 98, "h2LiquefierMassKg": 1753, "o2LiquefierMassKg": 150 },
+      "relativeTolerance": 0.12,
+      "source": "Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water, AIAA 2020-4042",
+      "sourceUrl": "https://ntrs.nasa.gov/api/citations/20205007966/downloads/PolarWaterISRUstudy_Kleinhenz_final.pdf",
+      "sourceLocator": "Table 3 (15 t water to 13 t O2 + 1.7 t H2 over 225 days less 48 h commissioning, i.e. 67.26 kg/day water); Fig. 8 subsystem mass and ridge power, measured on the log axes and checked against the stated totals (ridge 2.6 t and 46 kW, mine 0.49 t and 22 kW, tankers 1.8 t). Electrolyzer 21.0 kW, H2 liquefaction 20.3 kW, and O2 liquefaction 3.94 kW include a 20% power margin, removed here; masses (electrolyzer 47 + dryers 51 kg, H2 liquefaction 1,753 kg, O2 liquefaction 150 kg) include the study's growth and structure margins.",
+      "modelSimplification": "Calibration anchor, not independent validation: secCondLh2, secCondLox, kLiquefierLh2, kLiquefierLox, and kElectrolyzerMass were derived from this case, so their agreement confirms the derivation. Electrolysis power is the independent check (cell voltage 1.8 V at 95% Faradaic efficiency) and runs about 10% low; the study's figure includes pumps and balance of plant. Linear scaling with product rate is conservative for larger plants, most of all for H2 liquefaction."
+    },
+    {
       "id": "mli-layer-density-units",
       "kind": "open",
       "quantity": "MLI layer-density coefficient/unit pairing",

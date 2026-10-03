@@ -55,7 +55,7 @@ export function materialLedger(params: SimParams, production: ProductionLedger):
     const dryTailingsKgPerDay = production.regolithKgPerDay - mobilizedWaterKgPerDay;
     flows.push(
       { material: "icy-regolith", from: "terrain", to: "sublimation", kgPerDay: production.regolithKgPerDay },
-      { material: "water", from: "sublimation", to: params.enableSabatier ? "electrolysis" : "product-storage", kgPerDay: production.waterKgPerDay },
+      { material: "water", from: "sublimation", to: production.grossH2KgPerDay > 0 ? "electrolysis" : "product-storage", kgPerDay: production.waterKgPerDay },
       { material: "water-vapor", from: "sublimation", to: "uncaptured-loss", kgPerDay: vaporLossKgPerDay },
       { material: "dry-tailings", from: "sublimation", to: "tailings", kgPerDay: dryTailingsKgPerDay }
     );
@@ -67,6 +67,17 @@ export function materialLedger(params: SimParams, production: ProductionLedger):
         production.waterKgPerDay + vaporLossKgPerDay + dryTailingsKgPerDay
       )
     );
+
+    if (!params.enableSabatier && production.grossH2KgPerDay > 0) {
+      // Propellant mode: every kilogram of water becomes stored O2 and H2.
+      flows.push(
+        { material: "oxygen", from: "electrolysis", to: "product-storage", kgPerDay: production.o2KgPerDay },
+        { material: "hydrogen", from: "electrolysis", to: "product-storage", kgPerDay: production.h2KgPerDay }
+      );
+      balances.push(
+        balance("water-electrolysis", "Water electrolysis", production.waterKgPerDay, production.o2KgPerDay + production.h2KgPerDay)
+      );
+    }
 
     if (params.enableSabatier) {
       const h2ConsumedKgPerDay = production.grossH2KgPerDay - production.h2KgPerDay;

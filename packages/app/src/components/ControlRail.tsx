@@ -50,14 +50,14 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [query, setQuery] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
 
-  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode } = params;
+  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier } = params;
   // Engine-reported streams, joined so the memo only reruns when the set changes.
   const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
-    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode };
+    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier };
     const activeStreams = new Set(streamKey.split(",").filter(Boolean));
     return groupsForSite(site).map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, streamKey]);
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   // A gated-off group's sliders cannot be shown, so they do not count either.
@@ -139,7 +139,11 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
         </p>
       )}
       {shown.map(({ group, defs, modes }) =>
-        filtering && defs.length === 0 && modes.length === 0 ? null : (
+        // A group with nothing to adjust in this configuration (the propellant
+        // plant while the pole stores water) is left out, not shown empty.
+        (filtering
+          ? defs.length === 0 && modes.length === 0
+          : defs.length === 0 && group.gatedBy === undefined && railModeParamsForGroup(group, site).length === 0) ? null : (
           <RailGroup
             key={group.id}
             group={group}
@@ -240,6 +244,7 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
       </div>
       {open && !gatedOff && (
         <div className="rail-group-body">
+          {group.id === "extraction-sub" && showMode("polarProduct") && <PolarProductControls />}
           {group.id === "cryo" && (showMode("storageStream") || showMode("cryoControlMode")) && (
             <StorageModeControls stream={showMode("storageStream")} heat={showMode("cryoControlMode")} />
           )}
@@ -290,6 +295,25 @@ function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: b
           <option value="capacity-limited">CAPACITY LIMITED</option>
         </select>
       </label>}
+    </div>
+  );
+}
+
+function PolarProductControls(): React.JSX.Element {
+  const product = useStore((s) => s.params.polarProduct);
+  const sabatier = useStore((s) => s.params.enableSabatier);
+  const setParam = useStore((s) => s.setParam);
+
+  return (
+    <div className="rail-mode-grid">
+      <label>
+        <span>POLAR PRODUCT</span>
+        <select value={product} onChange={(event) => setParam("polarProduct", event.target.value as typeof product)}>
+          <option value="water">STORED WATER</option>
+          <option value="propellant">LOX + LH₂ PROPELLANT</option>
+        </select>
+      </label>
+      {sabatier && <p className="rail-mode-note">The Sabatier loop is on, so it sets the products: LOX, methane, and leftover LH₂.</p>}
     </div>
   );
 }

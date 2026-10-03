@@ -67,6 +67,7 @@ def normalize_params(input_params: dict[str, Any] | None = None) -> tuple[dict[s
             "cryoControlMode": {"zero-boiloff", "passive", "capacity-limited"},
             "polarProfileMode": {"scalar", "profile"},
             "deploymentManifest": {"dedicated", "shared"},
+            "polarProduct": {"water", "propellant"},
         }
         if key in string_options:
             if isinstance(raw, str) and raw in string_options[key]:

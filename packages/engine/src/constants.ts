@@ -931,7 +931,7 @@ export const PARAM_META = {
     "max": 2.5,
     "unit": "V",
     "kind": "parameter",
-    "group": "sabatier",
+    "group": "propellant",
     "description": "Water electrolysis cell voltage",
     "source": "spec"
   },
@@ -941,9 +941,37 @@ export const PARAM_META = {
     "max": 1,
     "unit": "1",
     "kind": "parameter",
-    "group": "sabatier",
+    "group": "propellant",
     "description": "Faradaic efficiency for water electrolysis",
     "source": "spec"
+  },
+  "polarProduct": {
+    "value": "water",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "propellant",
+    "description": "Polar product: stored water, or LOX/LH2 propellant by electrolysis",
+    "source": "model switch"
+  },
+  "mixtureRatio": {
+    "value": 6,
+    "min": 4,
+    "max": 7.9,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "propellant",
+    "description": "Vehicle mixture ratio (O/F)",
+    "source": "Kleinhenz & Paz 2020, AIAA 2020-4042, Table 1 mixture ratio"
+  },
+  "kElectrolyzerMass": {
+    "value": 1.46,
+    "min": 0.5,
+    "max": 10,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "propellant",
+    "description": "Electrolyzer and dryer mass",
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, electrolyzer and dryer mass (Fig. 8)"
   },
   "fConversion": {
     "value": 0.95,
@@ -1162,14 +1190,14 @@ export const PARAM_META = {
     "source": "custom stream design assumption"
   },
   "secCondLox": {
-    "value": 2.2,
+    "value": 1.32,
     "min": 0.5,
     "max": 6,
     "unit": "kWh/kg",
     "kind": "parameter",
     "group": "cryo",
     "description": "Liquid-oxygen conditioning energy (liquefaction and conditioning)",
-    "source": "spec (v0.3 conditioning estimate, uncited)"
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, O2 liquefaction power (Fig. 8)"
   },
   "secCondWaterIce": {
     "value": 0.15,
@@ -1192,14 +1220,14 @@ export const PARAM_META = {
     "source": "spec (v0.3 conditioning estimate, uncited)"
   },
   "secCondLh2": {
-    "value": 12,
+    "value": 54,
     "min": 4,
-    "max": 30,
+    "max": 80,
     "unit": "kWh/kg",
     "kind": "parameter",
     "group": "cryo",
     "description": "Liquid-hydrogen conditioning energy (liquefaction and conditioning)",
-    "source": "spec (v0.3 conditioning estimate, uncited)"
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, H2 liquefaction power (Fig. 8)"
   },
   "secCondLch4": {
     "value": 1.2,
@@ -1230,6 +1258,26 @@ export const PARAM_META = {
     "group": "cryo",
     "description": "Cryogenic block mass coefficient",
     "source": "spec"
+  },
+  "kLiquefierLox": {
+    "value": 2.5,
+    "min": 0,
+    "max": 20,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "LOX liquefier mass",
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, O2 liquefaction mass (Fig. 8)"
+  },
+  "kLiquefierLh2": {
+    "value": 233,
+    "min": 0,
+    "max": 600,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "cryo",
+    "description": "LH2 liquefier mass",
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, H2 liquefaction mass (Fig. 8)"
   },
   "polarIlluminationFraction": {
     "value": 0.71,
@@ -1882,6 +1930,9 @@ export const DEFAULTS = {
   "kReactorMass": 12,
   "Vel": 1.8,
   "etaFaradayEl": 0.95,
+  "polarProduct": "water",
+  "mixtureRatio": 6,
+  "kElectrolyzerMass": 1.46,
   "fConversion": 0.95,
   "Tsabatier": 623,
   "reserveDays": 30,
@@ -1904,13 +1955,15 @@ export const DEFAULTS = {
   "qStrutW": 5,
   "eta2ndLaw": 0.2,
   "secLiquefaction": 2.2,
-  "secCondLox": 2.2,
+  "secCondLox": 1.32,
   "secCondWaterIce": 0.15,
   "secCondLiquidWater": 0.08,
-  "secCondLh2": 12,
+  "secCondLh2": 54,
   "secCondLch4": 1.2,
   "secCondCo2": 0.15,
   "kCryoMass": 6,
+  "kLiquefierLox": 2.5,
+  "kLiquefierLh2": 233,
   "polarIlluminationFraction": 0.71,
   "polarLongestShadowHours": 117,
   "polarProfileMode": "scalar",

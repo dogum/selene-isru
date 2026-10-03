@@ -33,17 +33,33 @@ function deliveredInventories(result: SimResult): SimResult["cryo"]["inventories
   return products.length > 0 ? products : result.cryo.inventories.filter((inventory) => inventory.role === "custom");
 }
 
+/** Whether the plant splits its water into other products (Sabatier loop or propellant mode). */
+function convertsWater(params: SimParams): boolean {
+  return params.site === "polar" && (params.enableSabatier || params.polarProduct === "propellant");
+}
+
 /**
  * Plain label for the OUTPUT KPI, which is the engine's target throughput.
- * With one product that is the product itself; when the target stream is
- * converted into several products (polar + Sabatier) it is what was processed.
+ * With one product that is the product itself; when the plant converts its
+ * water into other products it is the water processed, however many of them
+ * a storage what-if keeps.
  */
 export function outputLabel(params: SimParams, result: SimResult): string {
+  if (convertsWater(params)) return "WATER PROCESSED";
   const products = productInventories(result);
   if (products.length === 1) {
     return `${STREAM_SHORT[products[0]!.stream]} OUTPUT`;
   }
   return params.site === "polar" ? "WATER PROCESSED" : "TARGET THROUGHPUT";
+}
+
+/**
+ * What "per kg" means in per-kg results such as energy per kg: the engine's
+ * target throughput, which is water processed when water is converted.
+ */
+export function perKgBasis(params: SimParams, result: SimResult): string {
+  const label = outputLabel(params, result);
+  return label === "WATER PROCESSED" ? "water processed" : label === "TARGET THROUGHPUT" ? "target throughput" : "product";
 }
 
 /**
@@ -56,7 +72,9 @@ export function caseSummary(params: SimParams, result: SimResult): string {
     params.site === "polar"
       ? params.enableSabatier
         ? "Polar ice plant with Sabatier loop"
-        : "Polar ice plant"
+        : params.polarProduct === "propellant"
+          ? "Polar ice-to-propellant plant"
+          : "Polar ice plant"
       : "Equatorial molten-regolith plant";
   const named = [...deliveredInventories(result)]
     .sort((a, b) => b.rateKgPerDay - a.rateKgPerDay)
@@ -66,9 +84,13 @@ export function caseSummary(params: SimParams, result: SimResult): string {
       ? `${named.slice(0, -1).join(", ")} and ${named[named.length - 1]}`
       : (named[0] ?? `${formatQtyProse(result.production.targetKgPerDay, "kg/day")} of product`);
   const landings = result.logistics.nMissions;
+  const usable =
+    result.production.propellantKgPerDay > 0
+      ? ` (${formatQtyProse(result.production.propellantKgPerDay, "kg/day")} usable at O/F ${params.mixtureRatio})`
+      : "";
   const parts = [
     plant,
-    `makes ${products}`,
+    `makes ${products}${usable}`,
     `from ${formatQtyProse(result.logistics.totalInfraMassKg, "kg")} landed in ${landings} landing${landings === 1 ? "" : "s"}`,
     `on ${formatQtyProse(result.energy.gridPowerW, "W")} of ${result.power.architecture} power`
   ];

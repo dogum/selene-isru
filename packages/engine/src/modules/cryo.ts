@@ -104,6 +104,10 @@ function pendingInventory(
     (params.C2mli * params.epsLayer * (hotK ** 4.67 - coldK ** 4.67)) / params.Nmli;
   const qLeakW = Math.max(0, mliFluxWPerM2 * areaM2) + params.qStrutW;
   const conditioningPowerW = demand.rateKgPerDay / 86_400 * properties.conditioningSecKWhPerKg * 3_600_000;
+  // Liquefaction hardware scales with the liquefied product rate; storage
+  // buffers and feeds are not liquefied here.
+  const liquefierKgPerKgDay =
+    demand.role !== "product" ? 0 : demand.stream === "lox" ? params.kLiquefierLox : demand.stream === "lh2" ? params.kLiquefierLh2 : 0;
 
   return {
     id: demand.id,
@@ -113,6 +117,7 @@ function pendingInventory(
     reserveInventoryKg,
     volumeM3,
     storageMassKg: params.kCryoMass * demand.rateKgPerDay,
+    liquefierMassKg: liquefierKgPerKgDay * demand.rateKgPerDay,
     densityKgPerM3: properties.densityKgPerM3,
     storageTemperatureK: properties.storageTemperatureK,
     conditioningSecKWhPerKg: properties.conditioningSecKWhPerKg,
@@ -169,7 +174,7 @@ export function simulateCryo(
   const qResidualW = pending.reduce((total, item) => total + item.qResidualW, 0);
   const unmitigatedBoiloffKgPerDay = pending.reduce((total, item) => total + item.unmitigatedLossKgPerDay, 0);
   const boiloffKgPerDay = pending.reduce((total, item) => total + item.actualLossKgPerDay, 0);
-  const cryoMassKg = pending.reduce((total, item) => total + item.storageMassKg, 0);
+  const cryoMassKg = pending.reduce((total, item) => total + item.storageMassKg + item.liquefierMassKg, 0);
   const totalReserveVolumeM3 = pending.reduce((total, item) => total + item.volumeM3, 0);
   const totalConditioningPowerW = pending.reduce((total, item) => total + item.conditioningPowerW, 0);
   const totalAreaM2 = pending.reduce((total, item) => total + item.areaM2, 0);

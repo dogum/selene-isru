@@ -13,7 +13,8 @@ interface EnergyLine {
   jPerKg: number;
 }
 
-interface SabatierEnergy {
+/** Water electrolysis, in propellant mode or inside the Sabatier loop. */
+interface WaterElectrolysisEnergy {
   secWaterElectrolysis_JPerKg: number;
 }
 
@@ -61,7 +62,7 @@ export function energyLedger(
   excavationMechPowerW: number,
   electrolysis: ElectrolysisOutput,
   cryo: CryoOutput,
-  sabatier: SabatierEnergy | null,
+  waterElectrolysis: WaterElectrolysisEnergy | null,
   supplementalLoads: readonly SimulationSupplementalLoad[] = []
 ): EnergyLedger {
   const productMassFlowKgPerS = params.targetKgPerDay / 86_400;
@@ -89,7 +90,7 @@ export function energyLedger(
     const distillationW = powerFor("sublimation", "parasitic");
     balances.push(balance("polar-aux-energy", "Heater loss, vapor handling, and process allowance", distillationW, 0, 0, distillationW, 0));
 
-    if (sabatier !== null) {
+    if (waterElectrolysis !== null) {
       const waterElectrolysisW = powerFor("electrolysis", "product");
       const thermoneutralFraction = Math.min(
         1,

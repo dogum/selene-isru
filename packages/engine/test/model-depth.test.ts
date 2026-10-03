@@ -16,7 +16,7 @@ describe("v0.3 model-depth ledgers", () => {
   test("sizes every active Sabatier stream independently", () => {
     const result = simulate({ site: "polar", enableSabatier: true });
     expect(result.cryo.inventories.map((item) => item.stream)).toEqual(["water-ice", "lox", "lh2", "lch4", "co2-feed"]);
-    expect(result.cryo.totalStorageMassKg).toBeCloseTo(result.cryo.inventories.reduce((total, item) => total + item.storageMassKg, 0), 8);
+    expect(result.cryo.totalStorageMassKg).toBeCloseTo(result.cryo.inventories.reduce((total, item) => total + item.storageMassKg + item.liquefierMassKg, 0), 8);
     expect(result.cryo.totalReserveVolumeM3).toBeCloseTo(result.cryo.inventories.reduce((total, item) => total + item.volumeM3, 0), 8);
     expect(result.cryo.totalConditioningPowerW).toBeCloseTo(result.cryo.inventories.reduce((total, item) => total + item.conditioningPowerW, 0), 8);
     expect(result.cryo.inventories.every((item) => item.reserveInventoryKg === item.rateKgPerDay * 30)).toBe(true);

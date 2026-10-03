@@ -16,6 +16,7 @@ import {
   snapSiteCoordinate,
   snapSiteHeading,
   siteAssetsForEnvironment,
+  simulate,
   validateSiteAssetPlacement,
   validateSiteDesign
 } from "../src/index";
@@ -382,5 +383,26 @@ describe("site connection geometry and compatibility", () => {
       xM: -25,
       zM: 3
     });
+  });
+});
+
+describe("polar product ports", () => {
+  // Cryo inventory streams the polar plant stores as product, by port stream name.
+  const PORT_STREAM: Record<string, string> = { "water-ice": "water", lox: "oxygen", lh2: "hydrogen", lch4: "methane" };
+  const port = (kind: string, id: string) =>
+    SITE_ASSET_CATALOG.find((definition) => definition.kind === kind)!.ports.find((item) => item.id === id)!;
+
+  test.each([
+    ["water", {}],
+    ["propellant", { polarProduct: "propellant" as const }],
+    ["Sabatier", { enableSabatier: true }]
+  ])("carry every product the %s plant stores, hydrogen included", (_name, patch) => {
+    const products = simulate({ site: "polar", ...patch }).cryo.inventories
+      .filter((inventory) => inventory.role === "product")
+      .map((inventory) => PORT_STREAM[inventory.stream]!);
+    for (const stream of products) {
+      expect(port("polar.receiver-sabatier", "product-out").streams).toContain(stream);
+      expect(port("polar.cryo-farm", "product-in").streams).toContain(stream);
+    }
   });
 });

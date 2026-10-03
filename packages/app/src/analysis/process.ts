@@ -233,9 +233,13 @@ export function processEdges(result: SimResult, params: SimParams): ProcessEdgeV
   }
 
   const powerSource = result.power.architecture === "solar" ? "towers" : "station";
+  // With the Sabatier loop off, propellant mode stores LOX and LH2, not water.
+  const propellant = !params.enableSabatier && params.polarProduct === "propellant";
   const productLabel = params.enableSabatier
     ? `O₂ ${q(result.production.o2KgPerDay, "kg/day")} · CH₄ ${q(result.production.ch4KgPerDay, "kg/day")}`
-    : `H₂O · ${q(result.production.waterKgPerDay, "kg/day")}`;
+    : propellant
+      ? `LOX ${q(result.production.o2KgPerDay, "kg/day")} · LH₂ ${q(result.production.h2KgPerDay, "kg/day")}`
+      : `H₂O · ${q(result.production.waterKgPerDay, "kg/day")}`;
   return [
     {
       from: "excavator",
@@ -261,7 +265,7 @@ export function processEdges(result: SimResult, params: SimParams): ProcessEdgeV
     {
       from: "receiver",
       to: "tanks",
-      shortLabel: params.enableSabatier ? "O₂ + CH₄" : "WATER PRODUCT",
+      shortLabel: params.enableSabatier ? "O₂ + CH₄" : propellant ? "LOX + LH₂" : "WATER PRODUCT",
       label: productLabel,
       kind: "material"
     },

@@ -25,13 +25,22 @@ def material_ledger(params: dict[str, Any], production: dict[str, float]) -> dic
         dry_tailings = production["regolithKgPerDay"] - mobilized_water
         flows.extend([
             {"material": "icy-regolith", "from": "terrain", "to": "sublimation", "kgPerDay": production["regolithKgPerDay"]},
-            {"material": "water", "from": "sublimation", "to": "electrolysis" if params["enableSabatier"] else "product-storage", "kgPerDay": production["waterKgPerDay"]},
+            {"material": "water", "from": "sublimation", "to": "electrolysis" if production["grossH2KgPerDay"] > 0 else "product-storage", "kgPerDay": production["waterKgPerDay"]},
             {"material": "water-vapor", "from": "sublimation", "to": "uncaptured-loss", "kgPerDay": vapor_loss},
             {"material": "dry-tailings", "from": "sublimation", "to": "tailings", "kgPerDay": dry_tailings},
         ])
         balances.append(
             _balance("polar-extraction", "Polar water extraction", production["regolithKgPerDay"], production["waterKgPerDay"] + vapor_loss + dry_tailings)
         )
+        if not params["enableSabatier"] and production["grossH2KgPerDay"] > 0:
+            # Propellant mode: every kilogram of water becomes stored O2 and H2.
+            flows.extend([
+                {"material": "oxygen", "from": "electrolysis", "to": "product-storage", "kgPerDay": production["o2KgPerDay"]},
+                {"material": "hydrogen", "from": "electrolysis", "to": "product-storage", "kgPerDay": production["h2KgPerDay"]},
+            ])
+            balances.append(
+                _balance("water-electrolysis", "Water electrolysis", production["waterKgPerDay"], production["o2KgPerDay"] + production["h2KgPerDay"])
+            )
         if params["enableSabatier"]:
             h2_consumed = production["grossH2KgPerDay"] - production["h2KgPerDay"]
             flows.extend([

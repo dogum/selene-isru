@@ -119,3 +119,30 @@ def test_sabatier_buffer_loss_slows_the_loop() -> None:
     assert_rel(result["campaign"]["deliveredKgPerDay"], (gross * throughput - product_lost) * params["plantAvailability"], 1e-12)
     expected_feed = (production["co2ImportedKgPerDay"] * throughput + feed_lost) * params["plantAvailability"] * 365
     assert_rel(result["campaign"]["feedKgPerYear"], expected_feed, 1e-12)
+
+
+def test_propellant_losses_reduce_usable_propellant() -> None:
+    params, result = run({"site": "polar", "polarProduct": "propellant", "cryoControlMode": "passive"})
+    production = result["production"]
+
+    def lost(stream: str) -> float:
+        return next(i["actualLossKgPerDay"] for i in result["cryo"]["inventories"] if i["stream"] == stream)
+
+    assert lost("water-ice") > 0
+    throughput = 1 - lost("water-ice") / production["waterKgPerDay"]
+    o2 = production["o2KgPerDay"] * throughput - lost("lox")
+    h2 = production["h2KgPerDay"] * throughput - lost("lh2")
+    ratio = params["mixtureRatio"]
+    usable = min(o2, ratio * h2) + min(h2, o2 / ratio)
+    assert_rel(result["campaign"]["deliveredKgPerDay"], usable * params["plantAvailability"], 1e-12)
+
+
+def test_propellant_what_if_of_another_stream_still_loses_propellant() -> None:
+    params, result = run({"site": "polar", "polarProduct": "propellant", "cryoControlMode": "passive", "storageStream": "custom"})
+    (selected,) = result["cryo"]["inventories"]
+    assert selected["actualLossKgPerDay"] > 1
+    o2, h2 = result["production"]["o2KgPerDay"], result["production"]["h2KgPerDay"]
+    kept = 1 - selected["actualLossKgPerDay"] / (o2 + h2)
+    ratio = params["mixtureRatio"]
+    usable = min(o2, ratio * h2) + min(h2, o2 / ratio)
+    assert_rel(result["campaign"]["deliveredKgPerDay"], usable * kept * params["plantAvailability"], 1e-12)

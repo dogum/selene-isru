@@ -392,7 +392,7 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
         label: "Mission product",
         kind: "material",
         direction: "output",
-        streams: ["water", "oxygen", "methane"]
+        streams: ["water", "oxygen", "methane", "hydrogen"]
       }
     ]
   }),
@@ -416,7 +416,7 @@ export const SITE_ASSET_CATALOG: readonly SiteAssetDefinition[] = [
         label: "Stored product",
         kind: "material",
         direction: "input",
-        streams: ["water", "oxygen", "methane"],
+        streams: ["water", "oxygen", "methane", "hydrogen"],
         maxConnections: 1
       },
       {

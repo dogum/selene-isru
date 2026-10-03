@@ -16,13 +16,16 @@ def simulate_logistics(
     reactor_mass_kg: float,
     power_mass_kg: float,
     cryo_mass_kg: float,
+    product_kg_per_day: float,
 ) -> dict[str, Any]:
     payload = payload_per_mission_kg(params)
     total_infra_mass_kg = fleet_mass_kg + reactor_mass_kg + power_mass_kg + cryo_mass_kg
     capacity = params["etaPack"] * payload
     n_missions = max(0, math.ceil(total_infra_mass_kg / capacity)) if capacity > 0 else 0
-    plant_mass_throughput_days = total_infra_mass_kg / params["targetKgPerDay"]
-    annual_product_kg = params["targetKgPerDay"] * 365
+    # Measured against the product, not the target: in propellant mode and the
+    # Sabatier loop the target is water processed.
+    plant_mass_throughput_days = total_infra_mass_kg / product_kg_per_day if product_kg_per_day > 0 else 0
+    annual_product_kg = product_kg_per_day * 365
     leverage_l = annual_product_kg * params["missionYears"] * params["gearRatio"] / total_infra_mass_kg if total_infra_mass_kg != 0 else 0
     manifest = [
         {"subsystem": "excavation fleet", "massKg": fleet_mass_kg},
@@ -33,6 +36,7 @@ def simulate_logistics(
 
     return {
         "payloadPerMissionKg": payload,
+        "productKgPerDay": product_kg_per_day,
         "totalInfraMassKg": total_infra_mass_kg,
         "nMissions": n_missions,
         "leverageL": leverage_l,

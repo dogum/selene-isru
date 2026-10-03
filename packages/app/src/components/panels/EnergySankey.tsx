@@ -5,6 +5,7 @@ import { useSize } from "../../lib/hooks";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
 import { flowsCsv } from "../../analysis/panelExports";
+import { perKgBasis } from "../../analysis/summary";
 import { Qty } from "../Qty";
 import { ExportButton } from "./ExportButton";
 
@@ -53,6 +54,8 @@ interface Tooltip {
 
 export function EnergySankey({ vertical = false }: { vertical?: boolean }): React.JSX.Element {
   const result = useStore((s) => s.result);
+  const params = useStore((s) => s.params);
+  const basis = perKgBasis(params, result);
   const history = useStore((s) => s.secHistory);
   const nameMode = useStore((s) => s.ui.parameterNames);
   const [ref, size] = useSize<HTMLDivElement>();
@@ -129,7 +132,7 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
     <div className="panel-section">
       <div className="sankey-head">
         <div>
-          <div className="panel-header">{nameMode === "code" ? "SEC TOTAL" : "ENERGY PER KG OF PRODUCT"}</div>
+          <div className="panel-header">{nameMode === "code" ? "SEC TOTAL" : `ENERGY PER KG OF ${basis.toUpperCase()}`}</div>
           <div className="sankey-hero">
             <Qty value={total} unit="kWh/kg" sig={4} animate />
           </div>
@@ -218,7 +221,7 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
       </div>
 
       <table className="sankey-ledger mono" id="sankey-ledger">
-        <caption>Energy flows per kg of product</caption>
+        <caption>Energy flows per kg of {basis}</caption>
         <thead>
           <tr>
             <th scope="col">FLOW</th>

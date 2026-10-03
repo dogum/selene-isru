@@ -93,6 +93,42 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Read as low-Earth-orbit mass saved per kg of product, the unit of M0leo, so the campaign ledger compares like with like. For product used on the surface, the lander model itself implies about 12.8 kg/kg at defaults; lower values suit product used in orbit.",
     applicability: "Both sites · leverage and campaign ledger"
   },
+  mixtureRatio: {
+    rangeRationale: "Fuel-rich to near-stoichiometric LOX/LH2 engines; NASA's polar case uses 6, and RL10-class engines run about 5.5–5.9.",
+    validity: "Sets usable propellant only. Electrolysis gives O/F 7.94, so hydrogen limits it and the surplus oxygen is reported but not credited.",
+    applicability: "Polar site · propellant mode",
+    defaultUncertainty: 0.05
+  },
+  kElectrolyzerMass: {
+    rangeRationale: "Bounded around the NASA case's PEM electrolyzer and gas dryers.",
+    validity: "Derived from one small (67 kg/day) design and scaled linearly with water processed; storage tanks are sized separately in the cryo block.",
+    applicability: "Polar site · propellant mode",
+    defaultUncertainty: 0.3
+  },
+  kLiquefierLox: {
+    rangeRationale: "No liquefaction hardware up to several times the NASA case's cryocooler-based O2 liquefier.",
+    validity: "Derived from one small design (60 kg/day O2) and scaled linearly; applies to stored liquid-oxygen product only.",
+    applicability: "Both sites · liquid-oxygen product",
+    defaultUncertainty: 0.3
+  },
+  kLiquefierLh2: {
+    rangeRationale: "No liquefaction hardware up to about 2.5× the NASA case's cryocooler-based H2 liquefier, its largest single mass item.",
+    validity: "Derived from one small design (7.5 kg/day H2) and scaled linearly, which is conservative for large plants; applies to stored liquid-hydrogen product only.",
+    applicability: "Both sites · liquid-hydrogen product",
+    defaultUncertainty: 0.4
+  },
+  secCondLox: {
+    rangeRationale: "From an efficient large liquefier to a small, poorly integrated one.",
+    validity: "Derived from NASA's cryocooler-based O2 liquefier with its 20% power margin removed; earlier versions used an uncited 2.2 kWh/kg.",
+    applicability: "Both sites · liquid-oxygen product",
+    defaultUncertainty: 0.2
+  },
+  secCondLh2: {
+    rangeRationale: "From large terrestrial liquefiers (about 10–12 kWh/kg) to small cryocooler-based units like NASA's polar design (about 54 kWh/kg).",
+    validity: "Derived from a 7.5 kg/day design, so it is pessimistic for large plants. Earlier versions used an uncited 12 kWh/kg, a large-terrestrial-plant figure.",
+    applicability: "Both sites · liquid-hydrogen product",
+    defaultUncertainty: 0.3
+  },
   landingsPerYear: {
     rangeRationale: "From one landing every two years to monthly cargo service; the source assumes a launch every 120 days.",
     validity: "Landings arrive evenly from day 0, each carrying up to one lander capacity of plant. Matters only when the plant needs more than one lander. No launch failures or schedule slips.",
@@ -298,6 +334,7 @@ function applicabilityFor(group: string): string {
     power: "Both sites · surface power",
     logistics: "Both sites · landing and logistics",
     campaign: "Both sites · deployment and operations campaign",
+    propellant: "Polar site · water electrolysis (propellant mode or Sabatier loop)",
     construction: "Equatorial site · slag construction"
   };
   return labels[group] ?? `Model group · ${group}`;
