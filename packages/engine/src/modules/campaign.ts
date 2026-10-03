@@ -3,6 +3,8 @@ import type { CampaignResult, SimParams, Warning } from "../types";
 const DAYS_PER_YEAR = 365;
 /** Landings marked one by one; beyond this the grid samples show the staircase. */
 const MAX_LANDING_EVENTS = 100;
+/** Sorties marked one by one; beyond this the grid samples show the staircase. */
+const MAX_SORTIE_EVENTS = 100;
 /** Regular samples per timeline, whatever step was asked for. */
 const MAX_SAMPLES = 2000;
 
@@ -22,8 +24,10 @@ const MAX_SAMPLES = 2000;
  * (`sparesFracPerYear` of the landed plant per year) and any imported process
  * feed (the Sabatier loop's CO2, which has no lunar source in this model)
  * ride as a mass share of other cargo. Without a demand, every kilogram
- * delivered counts as used; a refuelling demand uses only what it needs.
- * Times are days from the first landing.
+ * delivered counts as used; a refuelling demand uses only what it needs, and
+ * only when a sortie burns it: every `sortieIntervalDays` from production
+ * start, each sortie drawing that interval's use. Times are days from the
+ * first landing.
  */
 export interface CampaignOutput extends CampaignResult {
   warnings: Warning[];
@@ -62,10 +66,17 @@ export interface CampaignFlows {
   importedFeedKgPerDay: number;
   /** product a demand uses, after downtime; null when every kg delivered is used [kg/day] */
   usedKgPerDay: number | null;
+  /** days between the demand's sorties; null without a demand [day] */
+  sortieIntervalDays: number | null;
 }
 
 function capacityKg(params: SimParams, basis: CampaignBasis): number {
   return params.etaPack * basis.payloadPerMissionKg;
+}
+
+/** Sorties flown in `operatingDays`; tolerance so a sortie at its own time counts. */
+function sortiesBy(operatingDays: number, intervalDays: number): number {
+  return Math.floor(operatingDays / intervalDays + 1e-9);
 }
 
 /** Days between infrastructure landings. */
@@ -85,6 +96,7 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
   const deliveredKgPerDay = deployable ? flows.productKgPerDay * params.plantAvailability : 0;
   // Only product something uses saves launch mass.
   const usedKgPerDay = deployable ? (flows.usedKgPerDay ?? deliveredKgPerDay) : 0;
+  const sortieIntervalDays = flows.usedKgPerDay === null ? null : flows.sortieIntervalDays;
   const resupplyKgPerYear = deployable ? params.sparesFracPerYear * basis.totalInfraMassKg : 0;
   // Feed is consumed with production, so downtime reduces it too.
   const feedKgPerYear = deployable ? flows.importedFeedKgPerDay * params.plantAvailability * DAYS_PER_YEAR : 0;
@@ -97,12 +109,27 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
   const resupplyLeoPerDay = (leoMassPerLandedKg * (resupplyKgPerYear + feedKgPerYear)) / DAYS_PER_YEAR;
 
   const cumulativeProductKg = deliveredKgPerDay * operatingDays;
-  const cumulativeUsedKg = usedKgPerDay * operatingDays;
   const landedMassKg = deployable ? basis.totalInfraMassKg + (resupplyKgPerYear + feedKgPerYear) * params.missionYears : 0;
   const leoMassSpentKg = infraLeoKg + resupplyLeoPerDay * operatingDays;
-  const leoMassSavedKg = savedPerDay * operatingDays;
-  const paybackDays =
-    savedPerDay > resupplyLeoPerDay ? firstProductDay + infraLeoKg / (savedPerDay - resupplyLeoPerDay) : null;
+  let cumulativeUsedKg: number;
+  let leoMassSavedKg: number;
+  let paybackDays: number | null;
+  if (sortieIntervalDays === null) {
+    cumulativeUsedKg = usedKgPerDay * operatingDays;
+    leoMassSavedKg = savedPerDay * operatingDays;
+    paybackDays = savedPerDay > resupplyLeoPerDay ? firstProductDay + infraLeoKg / (savedPerDay - resupplyLeoPerDay) : null;
+  } else {
+    // Saved launch mass arrives a sortie at a time, while spares accrue
+    // daily, so payback falls on the first sortie that clears the spend.
+    const usedPerSortieKg = usedKgPerDay * sortieIntervalDays;
+    cumulativeUsedKg = sortiesBy(operatingDays, sortieIntervalDays) * usedPerSortieKg;
+    leoMassSavedKg = params.gearRatio * cumulativeUsedKg;
+    const netPerSortieKg = params.gearRatio * usedPerSortieKg - resupplyLeoPerDay * sortieIntervalDays;
+    paybackDays =
+      netPerSortieKg > 0
+        ? firstProductDay + Math.max(1, Math.ceil(infraLeoKg / netPerSortieKg - 1e-9)) * sortieIntervalDays
+        : null;
+  }
 
   const warnings: Warning[] = [];
   if (!deployable) {
@@ -123,6 +150,7 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
     campaignEndDay,
     deliveredKgPerDay,
     usedKgPerDay,
+    sortieIntervalDays,
     resupplyKgPerYear,
     feedKgPerYear,
     cumulativeProductKg,
@@ -150,7 +178,13 @@ export interface CampaignSource {
   campaign: CampaignResult;
 }
 
-function ledgerAt(params: SimParams, { logistics: basis, campaign }: CampaignSource, tDays: number, landers: number): CampaignPoint {
+function ledgerAt(
+  params: SimParams,
+  { logistics: basis, campaign }: CampaignSource,
+  tDays: number,
+  landers: number,
+  sortieOffset = 0
+): CampaignPoint {
   const capacity = capacityKg(params, basis);
   const plantLandedKg = capacity > 0 ? Math.min(basis.totalInfraMassKg, landers * capacity) : 0;
   const operatingDays = Math.min(
@@ -159,7 +193,10 @@ function ledgerAt(params: SimParams, { logistics: basis, campaign }: CampaignSou
   );
   const suppliesKg = ((campaign.resupplyKgPerYear + campaign.feedKgPerYear) * operatingDays) / DAYS_PER_YEAR;
   const productKg = campaign.deliveredKgPerDay * operatingDays;
-  const usedKg = campaign.usedKgPerDay * operatingDays;
+  const usedKg =
+    campaign.sortieIntervalDays === null
+      ? campaign.usedKgPerDay * operatingDays
+      : (sortiesBy(operatingDays, campaign.sortieIntervalDays) + sortieOffset) * (campaign.usedKgPerDay * campaign.sortieIntervalDays);
   return {
     tDays,
     landers,
@@ -174,9 +211,10 @@ function ledgerAt(params: SimParams, { logistics: basis, campaign }: CampaignSou
 }
 
 /**
- * The ledger at `tDays`, counting landings at exactly `tDays`. Uses the same
- * terms as `simulateCampaign`, so at `campaignEndDay` it reproduces the totals
- * and at `paybackDays` saved equals spent.
+ * The ledger at `tDays`, counting landings and sorties at exactly `tDays`.
+ * Uses the same terms as `simulateCampaign`, so at `campaignEndDay` it
+ * reproduces the totals and at `paybackDays` saved reaches spent: exactly
+ * without a demand, at the sortie that clears it with one.
  */
 export function campaignAt(params: SimParams, source: CampaignSource, tDays: number): CampaignPoint {
   return ledgerAt(params, source, tDays, landersBy(params, source.logistics, tDays));
@@ -189,8 +227,8 @@ export interface CampaignTimelinePoint extends CampaignPoint {
 
 /**
  * Ledger samples for plotting and export: every `stepDays`, plus each landing
- * (just before and at it, so the step draws vertically), production start,
- * payback, and campaign end.
+ * and each sortie (just before and at it, so the step draws vertically),
+ * production start, payback, and campaign end.
  */
 export function campaignTimeline(params: SimParams, source: CampaignSource, stepDays = 30): CampaignTimelinePoint[] {
   const { logistics: basis, campaign } = source;
@@ -210,6 +248,18 @@ export function campaignTimeline(params: SimParams, source: CampaignSource, step
     add(i * interval, `landing ${i + 1}`, i + 1);
   }
   add(campaign.firstProductDay, "production start");
+  if (campaign.sortieIntervalDays !== null) {
+    const operatingDays = campaign.campaignEndDay - campaign.firstProductDay;
+    const sorties = sortiesBy(operatingDays, campaign.sortieIntervalDays);
+    // As with landings, mark each sortie only when few enough to draw.
+    if (sorties <= MAX_SORTIE_EVENTS) {
+      for (let k = 1; k <= sorties; k += 1) {
+        const t = campaign.firstProductDay + k * campaign.sortieIntervalDays;
+        points.push({ ...ledgerAt(params, source, t, landersBy(params, basis, t), -1), event: `before sortie ${k}` });
+        add(t, `sortie ${k}`);
+      }
+    }
+  }
   if (campaign.paysBackInCampaign && campaign.paybackDays !== null) add(campaign.paybackDays, "payback");
   add(campaign.campaignEndDay, "campaign end");
 

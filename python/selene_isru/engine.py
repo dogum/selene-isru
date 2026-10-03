@@ -191,6 +191,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "importedFeedKgPerDay": production["co2ImportedKgPerDay"] * loop_throughput
             + storage_loss_kg_per_day(is_feed),
             "usedKgPerDay": None if refuel is None else refuel["usedKgPerDay"],
+            "sortieIntervalDays": None if refuel is None else refuel["sortieIntervalDays"],
         },
     )
     campaign_warnings = campaign.pop("warnings")

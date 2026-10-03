@@ -64,6 +64,14 @@ discard that oxygen.
 
 **Ledger.** `saved = gearRatio × used`. Earth-supplied propellant is not
 charged to the plant: without the plant it would be launched anyway.
+Propellant saves launch mass only when a sortie burns it, so the ledger
+credits it a sortie at a time:
+- Every 365 / `sortiesPerYear` days from production start, a sortie adds
+  that interval's use.
+- Only sorties flown within the campaign count. Two sorties fly in five
+  years at one every two years, not 2.5.
+- Spares still accrue daily, so payback falls on the first sortie whose
+  credit clears the spend.
 
 **Stores.** A lander loads a whole sortie at once, so the LOX and LH₂ stores
 must hold at least one sortie's oxidizer and hydrogen. A store larger than
@@ -76,8 +84,9 @@ capacity. Every 365 / `sortiesPerYear` days a sortie draws its load, or
 whatever is in the store.
 
 `simulate()` returns the demand as `result.refuel`, which is null without a
-demand. The campaign gains `usedKgPerDay` and `cumulativeUsedKg`, and timeline
-points gain `usedKg`.
+demand. The campaign gains `usedKgPerDay`, `sortieIntervalDays` and
+`cumulativeUsedKg`. Timeline points gain `usedKg` and are marked before and at
+each sortie.
 
 ## Inputs
 
@@ -99,24 +108,26 @@ caution says so.
 
 ## Reference results
 
-Default inputs except as named. "Used" is after 90% availability.
+Default inputs except as named. "Used" is after 90% availability. With a
+demand, payback falls on a sortie day.
 
 | Case | Per sortie (t) | Demand (kg/day) | Plant share | Used / delivered (kg/day) | Landed (t) | Payback (day) | Return |
 |---|---|---|---|---|---|---|---|
 | Equatorial, no demand | — | — | — | 900 / 900 | 60.4 | 242 | 6.63× |
-| Equatorial, 1 crewed sortie/yr | 42.6 | 117 | 86% | 100 / 900 | 61.7 | 2,898 (after the campaign) | 0.73× |
-| Equatorial, 9 crewed sorties/yr | 42.6 | 1,050 | 86% | 900 / 900 | 61.7 | 242 | 6.59× |
-| Equatorial, crewed sortie from NRHO | 74.1 (over the tanks) | 203 | 86% | 174 / 900 | 67.2 | 1,390 | 1.25× |
-| Equatorial, tanker: 8/yr, 5 t down | 17.3 | 379 | 86% | 325 / 900 | 60.4 | 664 | 2.39× |
+| Equatorial, 1 crewed sortie/yr | 42.6 | 117 | 86% | 100 / 900 | 61.7 | 2,950 (after the campaign) | 0.73× |
+| Equatorial, 9 crewed sorties/yr | 42.6 | 1,050 | 86% | 900 / 900 | 61.7 | 273 | 6.59× |
+| Equatorial, crewed sortie from NRHO | 74.1 (over the tanks) | 203 | 86% | 174 / 900 | 67.2 | 1,490 | 1.25× |
+| Equatorial, tanker: 8/yr, 5 t down | 17.3 | 379 | 86% | 325 / 900 | 60.4 | 669 | 2.39× |
 | Polar propellant, no demand | — | — | — | 700 / 700 | 82.3 | 311 | 4.71× |
-| Polar propellant, 1 crewed sortie/yr | 42.6 | 117 | 100% | 117 / 900 | 85.3 | 2,775 (after the campaign) | 0.78× |
-| Polar propellant, tanker: 8/yr, 5 t down | 17.3 | 379 | 100% | 379 / 900 | 82.3 | 585 | 2.55× |
-| Polar propellant, 20 crewed sorties/yr | 42.6 | 2,334 | 39% | 900 / 900 | 85.3 | 246 | 5.99× |
+| Polar propellant, 1 crewed sortie/yr | 42.6 | 117 | 100% | 117 / 900 | 85.3 | 2,950 (after the campaign) | 0.78× |
+| Polar propellant, tanker: 8/yr, 5 t down | 17.3 | 379 | 100% | 379 / 900 | 82.3 | 623 | 2.55× |
+| Polar propellant, 20 crewed sorties/yr | 42.6 | 2,334 | 39% | 900 / 900 | 85.3 | 249 | 5.99× |
 
 What the table shows:
 - **Demand decides the return.** One crewed sortie a year uses a ninth of a
   1 t/day plant, and neither site pays back within the campaign. About nine
-  sorties a year use all of it, and payback returns to day 242.
+  sorties a year use all of it. Payback then comes with the sixth sortie, on
+  day 273, against day 242 without a demand.
 - **LOX-only plants supply at most 6/7 of the propellant.** At O/F 6 the
   hydrogen is a seventh of the load and comes from Earth.
 - **A demand makes the surplus oxygen useful.** At 20 sorties a year the polar
@@ -180,8 +191,8 @@ Screenshots: [campaign ledger](screenshots/refuel/refuel-crew-campaign.png),
     with passive storage).
   - The dynamics fixture adds two drawdown timelines.
 - **Regression anchors** (new and deliberate): one crewed sortie a year burns
-  42.6 t, uses 100 kg/day, and returns 0.73×. Nine a year restore payback on
-  day 242.
+  42.6 t, uses 100 kg/day, and returns 0.73×. At nine a year, payback comes
+  on day 273, with the sixth sortie.
 - **Size budget:** the engine ratchet goes from 160 to 176 KiB for the v0.6
   and v0.7 models and their cited parameters.
 

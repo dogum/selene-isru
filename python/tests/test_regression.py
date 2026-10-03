@@ -101,7 +101,7 @@ def test_refuelling_demand_v07() -> None:
     assert crew["campaign"]["paysBackInCampaign"] is False
     assert_rel(crew["campaign"]["returnRatio"], 0.732, 0.001)
     matched = simulate({"refuelDemand": "lander", "sortiesPerYear": 9})
-    assert_rel(matched["campaign"]["paybackDays"], 242.2, 0.001)
+    assert_rel(matched["campaign"]["paybackDays"], 273.3, 0.001)
 
 
 def test_ilmenite_reduction_v08() -> None:

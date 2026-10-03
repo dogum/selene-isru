@@ -6,12 +6,19 @@ from typing import Any
 DAYS_PER_YEAR = 365
 # Landings marked one by one; beyond this the grid samples show the staircase.
 MAX_LANDING_EVENTS = 100
+# Sorties marked one by one; beyond this the grid samples show the staircase.
+MAX_SORTIE_EVENTS = 100
 # Regular samples per timeline, whatever step was asked for.
 MAX_SAMPLES = 2000
 
 
 def _capacity_kg(params: dict[str, Any], basis: dict[str, Any]) -> float:
     return params["etaPack"] * basis["payloadPerMissionKg"]
+
+
+def _sorties_by(operating_days: float, interval_days: float) -> int:
+    """Sorties flown in `operating_days`; tolerance so a sortie at its own time counts."""
+    return math.floor(operating_days / interval_days + 1e-9)
 
 
 def _landing_interval_days(params: dict[str, Any]) -> float:
@@ -35,6 +42,7 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
         used_kg_per_day = delivered_kg_per_day
     else:
         used_kg_per_day = flows["usedKgPerDay"]
+    sortie_interval_days = None if flows["usedKgPerDay"] is None else flows["sortieIntervalDays"]
     resupply_kg_per_year = params["sparesFracPerYear"] * basis["totalInfraMassKg"] if deployable else 0
     # Feed is consumed with production, so downtime reduces it too.
     feed_kg_per_year = flows["importedFeedKgPerDay"] * params["plantAvailability"] * DAYS_PER_YEAR if deployable else 0
@@ -47,13 +55,26 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
     resupply_leo_per_day = leo_mass_per_landed_kg * (resupply_kg_per_year + feed_kg_per_year) / DAYS_PER_YEAR
 
     cumulative_product_kg = delivered_kg_per_day * operating_days
-    cumulative_used_kg = used_kg_per_day * operating_days
     landed_mass_kg = basis["totalInfraMassKg"] + (resupply_kg_per_year + feed_kg_per_year) * params["missionYears"] if deployable else 0
     leo_mass_spent_kg = infra_leo_kg + resupply_leo_per_day * operating_days
-    leo_mass_saved_kg = saved_per_day * operating_days
-    payback_days = (
-        first_product_day + infra_leo_kg / (saved_per_day - resupply_leo_per_day) if saved_per_day > resupply_leo_per_day else None
-    )
+    if sortie_interval_days is None:
+        cumulative_used_kg = used_kg_per_day * operating_days
+        leo_mass_saved_kg = saved_per_day * operating_days
+        payback_days = (
+            first_product_day + infra_leo_kg / (saved_per_day - resupply_leo_per_day) if saved_per_day > resupply_leo_per_day else None
+        )
+    else:
+        # Saved launch mass arrives a sortie at a time, while spares accrue
+        # daily, so payback falls on the first sortie that clears the spend.
+        used_per_sortie_kg = used_kg_per_day * sortie_interval_days
+        cumulative_used_kg = _sorties_by(operating_days, sortie_interval_days) * used_per_sortie_kg
+        leo_mass_saved_kg = params["gearRatio"] * cumulative_used_kg
+        net_per_sortie_kg = params["gearRatio"] * used_per_sortie_kg - resupply_leo_per_day * sortie_interval_days
+        payback_days = (
+            first_product_day + max(1, math.ceil(infra_leo_kg / net_per_sortie_kg - 1e-9)) * sortie_interval_days
+            if net_per_sortie_kg > 0
+            else None
+        )
 
     warnings: list[dict[str, Any]] = []
     if not deployable:
@@ -75,6 +96,7 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
         "campaignEndDay": campaign_end_day,
         "deliveredKgPerDay": delivered_kg_per_day,
         "usedKgPerDay": used_kg_per_day,
+        "sortieIntervalDays": sortie_interval_days,
         "resupplyKgPerYear": resupply_kg_per_year,
         "feedKgPerYear": feed_kg_per_year,
         "cumulativeProductKg": cumulative_product_kg,
@@ -96,7 +118,9 @@ def _landers_by(params: dict[str, Any], basis: dict[str, Any], t_days: float) ->
     return min(basis["nMissions"], math.floor(t_days / _landing_interval_days(params) + 1e-9) + 1)
 
 
-def _ledger_at(params: dict[str, Any], result: dict[str, Any], t_days: float, landers: int) -> dict[str, Any]:
+def _ledger_at(
+    params: dict[str, Any], result: dict[str, Any], t_days: float, landers: int, sortie_offset: int = 0
+) -> dict[str, Any]:
     basis = result["logistics"]
     campaign = result["campaign"]
     capacity = _capacity_kg(params, basis)
@@ -107,7 +131,12 @@ def _ledger_at(params: dict[str, Any], result: dict[str, Any], t_days: float, la
     )
     supplies_kg = (campaign["resupplyKgPerYear"] + campaign["feedKgPerYear"]) * operating_days / DAYS_PER_YEAR
     product_kg = campaign["deliveredKgPerDay"] * operating_days
-    used_kg = campaign["usedKgPerDay"] * operating_days
+    if campaign["sortieIntervalDays"] is None:
+        used_kg = campaign["usedKgPerDay"] * operating_days
+    else:
+        used_kg = (_sorties_by(operating_days, campaign["sortieIntervalDays"]) + sortie_offset) * (
+            campaign["usedKgPerDay"] * campaign["sortieIntervalDays"]
+        )
     if params["deploymentManifest"] == "shared":
         plant_leo_kg = campaign["leoMassPerLandedKg"] * plant_landed_kg
     else:
@@ -145,6 +174,16 @@ def campaign_timeline(params: dict[str, Any], result: dict[str, Any], step_days:
             add(i * interval, f"before landing {i + 1}", i)
         add(i * interval, f"landing {i + 1}", i + 1)
     add(campaign["firstProductDay"], "production start")
+    if campaign["sortieIntervalDays"] is not None:
+        sortie_interval = campaign["sortieIntervalDays"]
+        sorties = _sorties_by(campaign["campaignEndDay"] - campaign["firstProductDay"], sortie_interval)
+        # As with landings, mark each sortie only when few enough to draw.
+        if sorties <= MAX_SORTIE_EVENTS:
+            for k in range(1, sorties + 1):
+                t = campaign["firstProductDay"] + k * sortie_interval
+                landers = _landers_by(params, basis, t)
+                points.append({**_ledger_at(params, result, t, landers, -1), "event": f"before sortie {k}"})
+                add(t, f"sortie {k}")
     if campaign["paysBackInCampaign"] and campaign["paybackDays"] is not None:
         add(campaign["paybackDays"], "payback")
     add(campaign["campaignEndDay"], "campaign end")

@@ -91,7 +91,8 @@ export function simulateRefuel(
       surplusKgPerDay: availableO2 + availableH2 - usedKgPerDay,
       oxidizerSortiesPerYear: sortie.oxidizerKg > 0 ? (availableO2 * DAYS_PER_YEAR) / sortie.oxidizerKg : 0,
       fuelSortiesPerYear: sortie.fuelKg > 0 ? (availableH2 * DAYS_PER_YEAR) / sortie.fuelKg : 0,
-      usedKgPerDay
+      usedKgPerDay,
+      sortieIntervalDays: DAYS_PER_YEAR / params.sortiesPerYear
     },
     warnings
   };
@@ -132,7 +133,7 @@ export function refuelTimeline(params: SimParams, source: RefuelSource): RefuelT
   const loads = [refuel.oxidizerPerSortieKg, refuel.fuelPerSortieKg];
   const rates = [refuel.supplyO2KgPerDay, refuel.supplyH2KgPerDay];
   const capacities = storeCapacitiesKg(params, source, loads, rates);
-  const interval = DAYS_PER_YEAR / params.sortiesPerYear;
+  const interval = refuel.sortieIntervalDays;
   const operatingDays = campaign.campaignEndDay - campaign.firstProductDay;
   const horizon = Math.min(operatingDays, Math.max(MIN_HORIZON_DAYS, HORIZON_SORTIES * interval));
   const sorties = Math.floor(horizon / interval + 1e-9);
