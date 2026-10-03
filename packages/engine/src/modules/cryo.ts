@@ -23,6 +23,8 @@ export interface StorageDemand {
   stream: ResolvedStorageStream;
   role: StorageInventory["role"];
   rateKgPerDay: number;
+  /** smallest store this stream needs, such as one refuelling sortie's load [kg] */
+  minInventoryKg?: number;
 }
 
 interface PendingInventory extends StorageInventory {
@@ -77,7 +79,8 @@ function pendingInventory(
   profile: PolarProfileSummary
 ): PendingInventory {
   const properties = propertiesFor(demand.stream, params);
-  const reserveInventoryKg = params.reserveDays * demand.rateKgPerDay;
+  const baseInventoryKg = params.reserveDays * demand.rateKgPerDay;
+  const reserveInventoryKg = Math.max(baseInventoryKg, demand.minInventoryKg ?? 0);
   const volumeM3 = reserveInventoryKg / properties.densityKgPerM3;
   const radiusM = (3 * volumeM3 / (4 * Math.PI)) ** (1 / 3);
   const areaM2 = 4 * Math.PI * radiusM ** 2;
@@ -116,7 +119,11 @@ function pendingInventory(
     rateKgPerDay: demand.rateKgPerDay,
     reserveInventoryKg,
     volumeM3,
-    storageMassKg: params.kCryoMass * demand.rateKgPerDay,
+    // kCryoMass sizes a store of reserveDays of output; a larger store scales with its inventory.
+    storageMassKg:
+      reserveInventoryKg > baseInventoryKg
+        ? (params.kCryoMass * reserveInventoryKg) / params.reserveDays
+        : params.kCryoMass * demand.rateKgPerDay,
     liquefierMassKg: liquefierKgPerKgDay * demand.rateKgPerDay,
     densityKgPerM3: properties.densityKgPerM3,
     storageTemperatureK: properties.storageTemperatureK,

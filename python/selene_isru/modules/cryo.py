@@ -24,7 +24,14 @@ def _properties(stream: str, params: dict[str, Any]) -> dict[str, Any]:
 
 def _pending_inventory(params: dict[str, Any], demand: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
     properties = _properties(demand["stream"], params)
-    reserve_inventory = params["reserveDays"] * demand["rateKgPerDay"]
+    base_inventory = params["reserveDays"] * demand["rateKgPerDay"]
+    reserve_inventory = max(base_inventory, demand.get("minInventoryKg", 0))
+    # kCryoMass sizes a store of reserveDays of output; a larger store scales with its inventory.
+    storage_mass = (
+        params["kCryoMass"] * reserve_inventory / params["reserveDays"]
+        if reserve_inventory > base_inventory
+        else params["kCryoMass"] * demand["rateKgPerDay"]
+    )
     volume = reserve_inventory / properties["densityKgPerM3"]
     radius = (3 * volume / (4 * math.pi)) ** (1 / 3)
     area = 4 * math.pi * radius**2
@@ -59,7 +66,7 @@ def _pending_inventory(params: dict[str, Any], demand: dict[str, Any], profile: 
         liquefier_kg_per_kg_day = 0
     return {
         "id": demand["id"], "stream": demand["stream"], "role": demand["role"], "rateKgPerDay": demand["rateKgPerDay"],
-        "reserveInventoryKg": reserve_inventory, "volumeM3": volume, "storageMassKg": params["kCryoMass"] * demand["rateKgPerDay"],
+        "reserveInventoryKg": reserve_inventory, "volumeM3": volume, "storageMassKg": storage_mass,
         "liquefierMassKg": liquefier_kg_per_kg_day * demand["rateKgPerDay"],
         "densityKgPerM3": properties["densityKgPerM3"], "storageTemperatureK": cold,
         "conditioningSecKWhPerKg": properties["conditioningSecKWhPerKg"], "conditioningPowerW": conditioning_power,

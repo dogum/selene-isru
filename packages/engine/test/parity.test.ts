@@ -23,7 +23,7 @@ describe("python golden parity", () => {
   test("fixture shape is the expected deterministic harness", () => {
     expect(golden.schemaVersion).toBe(1);
     expect(golden.seed).toBe(42);
-    expect(golden.vectors).toHaveLength(213);
+    expect(golden.vectors).toHaveLength(215);
   });
 
   test.each(golden.vectors)("$name", (vector) => {

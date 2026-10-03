@@ -114,6 +114,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "refuelDemand") {
+      if (raw === "none" || raw === "lander") {
+        assign("refuelDemand", raw);
+      } else {
+        assign("refuelDemand", DEFAULTS.refuelDemand);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "deploymentManifest") {
       if (raw === "dedicated" || raw === "shared") {
         assign("deploymentManifest", raw);

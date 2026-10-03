@@ -1683,6 +1683,94 @@ export const PARAM_META = {
     "description": "Deployment lander charging",
     "source": "model switch"
   },
+  "refuelDemand": {
+    "value": "none",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Product demand",
+    "source": "model switch"
+  },
+  "sortiesPerYear": {
+    "value": 1,
+    "min": 0.5,
+    "max": 52,
+    "unit": "1/yr",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Refuelled sorties per year",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), Table 1 one crewed lunar mission a year"
+  },
+  "MdryReusable": {
+    "value": 5917,
+    "min": 2000,
+    "max": 40000,
+    "unit": "kg",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Reusable lander dry mass",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), Table 2 ACES-based LH2/LOX spacecraft structure mass"
+  },
+  "MtankReusable": {
+    "value": 68040,
+    "min": 10000,
+    "max": 150000,
+    "unit": "kg",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Reusable lander propellant capacity",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), Table 2 ACES-based LH2/LOX spacecraft propellant capacity"
+  },
+  "IspReusable": {
+    "value": 420,
+    "min": 350,
+    "max": 465,
+    "unit": "s",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Reusable lander specific impulse",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), Table 2 LH2/LOX propellant Isp"
+  },
+  "McargoDown": {
+    "value": 30000,
+    "min": 0,
+    "max": 60000,
+    "unit": "kg",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Cargo landed per sortie",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), Table 1 crew cabin and equipment to the Moon"
+  },
+  "McargoUp": {
+    "value": 5000,
+    "min": 0,
+    "max": 30000,
+    "unit": "kg",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Cargo lifted per sortie",
+    "source": "Chen, Sarton du Jonchay, Hou & Ho 2021 (arXiv:1910.04265), Table 1 crew cabin and lunar samples back"
+  },
+  "dvDescent": {
+    "value": 2050,
+    "min": 1800,
+    "max": 3200,
+    "unit": "m/s",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Staging orbit to surface delta-v",
+    "source": "Merancy 2023, NRHO: The Artemis Orbit, NASA Architecture Workshop, LLO descent ~2,050 m/s (NRHO ~2,700 m/s)"
+  },
+  "dvAscent": {
+    "value": 1860,
+    "min": 1700,
+    "max": 3000,
+    "unit": "m/s",
+    "kind": "parameter",
+    "group": "refuel",
+    "description": "Surface to staging orbit delta-v",
+    "source": "Merancy 2023, NRHO: The Artemis Orbit, NASA Architecture Workshop, LLO ascent ~1,860 m/s (NRHO ~2,700 m/s)"
+  },
   "Pinternal": {
     "value": 101325,
     "min": 50000,
@@ -2005,6 +2093,15 @@ export const DEFAULTS = {
   "plantAvailability": 0.9,
   "sparesFracPerYear": 0.1,
   "deploymentManifest": "dedicated",
+  "refuelDemand": "none",
+  "sortiesPerYear": 1,
+  "MdryReusable": 5917,
+  "MtankReusable": 68040,
+  "IspReusable": 420,
+  "McargoDown": 30000,
+  "McargoUp": 5000,
+  "dvDescent": 2050,
+  "dvAscent": 1860,
   "Pinternal": 101325,
   "Eslag": 80000000000,
   "alphaCte": 0.000007,

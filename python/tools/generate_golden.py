@@ -9,7 +9,15 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "python"))
 
-from selene_isru import DEFAULTS, PARAM_META, campaign_timeline, sample_uncertainty, simulate, simulate_timeseries  # noqa: E402
+from selene_isru import (  # noqa: E402
+    DEFAULTS,
+    PARAM_META,
+    campaign_timeline,
+    refuel_timeline,
+    sample_uncertainty,
+    simulate,
+    simulate_timeseries,
+)
 from selene_isru.normalize import normalize_params  # noqa: E402
 
 OUT_PATH = ROOT / "packages" / "engine" / "test" / "golden_vectors.json"
@@ -63,6 +71,8 @@ def latin_hypercube_samples() -> list[dict[str, Any]]:
         params = {key: columns[key][i] for key in keys}
         params["site"] = "equatorial" if i % 2 == 0 else "polar"
         params["enableSabatier"] = i % 3 == 0
+        params["polarProduct"] = "propellant" if i % 4 == 1 else "water"
+        params["refuelDemand"] = "lander" if i % 5 < 2 else "none"
         samples.append(params)
 
     return samples
@@ -96,6 +106,24 @@ def named_scenarios() -> list[tuple[str, dict[str, Any]]]:
     # Propellant mode: the NASA baseline rate and a richer mixture ratio.
     scenarios.append(("polar-propellant-baseline", {"site": "polar", "polarProduct": "propellant", "targetKgPerDay": 67.26}))
     scenarios.append(("polar-propellant-of55", {"site": "polar", "polarProduct": "propellant", "mixtureRatio": 5.5, "chiIce": 0.02}))
+    # Refuelling demand: Chen et al.'s crewed sortie from LLO at the equator,
+    # and an NRHO tanker cadence on polar propellant with passive storage.
+    scenarios.append(("equatorial-refuel-crew-sortie", {"refuelDemand": "lander"}))
+    scenarios.append(
+        (
+            "polar-propellant-refuel-nrho",
+            {
+                "site": "polar",
+                "polarProduct": "propellant",
+                "refuelDemand": "lander",
+                "sortiesPerYear": 8,
+                "dvDescent": 2700,
+                "dvAscent": 2700,
+                "McargoDown": 5000,
+                "cryoControlMode": "passive",
+            },
+        )
+    )
     return scenarios
 
 
@@ -108,6 +136,20 @@ CAMPAIGN_VECTORS: list[tuple[str, dict[str, Any], float]] = [
 def _campaign_vector(name: str, params: dict[str, Any], step_days: float) -> dict[str, Any]:
     normalized, _ = normalize_params(params)
     return {"name": name, "params": params, "stepDays": step_days, "result": campaign_timeline(normalized, simulate(normalized), step_days)}
+
+
+REFUEL_VECTORS: list[tuple[str, dict[str, Any]]] = [
+    ("equatorial-crew-sortie-drawdown", {"refuelDemand": "lander"}),
+    (
+        "polar-propellant-tanker-drawdown",
+        {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander", "sortiesPerYear": 8, "McargoDown": 5000},
+    ),
+]
+
+
+def _refuel_vector(name: str, params: dict[str, Any]) -> dict[str, Any]:
+    normalized, _ = normalize_params(params)
+    return {"name": name, "params": params, "result": refuel_timeline(normalized, simulate(normalized))}
 
 
 def _profile_default(site: str) -> dict[str, Any]:
@@ -207,6 +249,7 @@ def main() -> None:
             },
         ],
         "campaign": [_campaign_vector(name, params, step) for name, params, step in CAMPAIGN_VECTORS],
+        "refuel": [_refuel_vector(name, params) for name, params in REFUEL_VECTORS],
     }
     with DYNAMICS_OUT_PATH.open("w", encoding="utf-8") as handle:
         json.dump(canonicalize_numbers(dynamics), handle, indent=2, allow_nan=False)

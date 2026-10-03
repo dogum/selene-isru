@@ -118,6 +118,23 @@ describe("regression anchors", () => {
     expect(energy.maxAbsResidualW).toBe(0);
   });
 
+  test("refuelling demand: one crewed sortie a year leaves the default plant idle (v0.7)", () => {
+    // Chen et al. 2021's LH2/LOX vehicle flying their crewed sortie (30 t down,
+    // 5 t up) from LLO burns 42.6 t, of which 36.5 t is oxygen: 100 kg/day at
+    // one sortie a year, a ninth of the plant's 900 kg/day after downtime.
+    const crew = simulate({ refuelDemand: "lander" });
+    expectRel(crew.refuel!.propellantPerSortieKg, 42_595, 0.001);
+    expectRel(crew.refuel!.demandO2KgPerDay, 100.0, 0.001);
+    expectRel(crew.refuel!.isruShare, 6 / 7, 1e-12);
+    expectRel(crew.logistics.totalInfraMassKg / 1000, 61.69, 0.001);
+    expect(crew.campaign.paysBackInCampaign).toBe(false);
+    expectRel(crew.campaign.returnRatio, 0.732, 0.001);
+    // Nine sorties a year use the whole plant and restore the v0.5 payback.
+    const matched = simulate({ refuelDemand: "lander", sortiesPerYear: 9 });
+    expectRel(matched.campaign.paybackDays!, 242.2, 0.001);
+    expectRel(matched.campaign.returnRatio, 6.59, 0.001);
+  });
+
   test("keeps the v1 aggregate electrolysis path reachable", () => {
     const fallback = simulate({ oxideModel: false });
     const direct = oxideModelYield({ ...DEFAULTS, oxideModel: false });

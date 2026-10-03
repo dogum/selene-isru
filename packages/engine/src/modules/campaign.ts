@@ -13,7 +13,7 @@ const MAX_SAMPLES = 2000;
  *   spent(t) = M0leo × (infrastructure landers arrived by t)       [dedicated]
  *            or (M0leo / lander capacity) × plant mass landed by t  [shared]
  *            + (M0leo / lander capacity) × (spares + imported feed) landed by t
- *   saved(t) = gearRatio × product delivered by t
+ *   saved(t) = gearRatio × product used by t
  *
  * Landers arrive at the cadence `landingsPerYear` from day 0, each carrying up
  * to one lander capacity of plant. Production starts once the last one has
@@ -21,7 +21,9 @@ const MAX_SAMPLES = 2000;
  * `missionYears` at the plant's product rate × `plantAvailability`. Spares
  * (`sparesFracPerYear` of the landed plant per year) and any imported process
  * feed (the Sabatier loop's CO2, which has no lunar source in this model)
- * ride as a mass share of other cargo. Times are days from the first landing.
+ * ride as a mass share of other cargo. Without a demand, every kilogram
+ * delivered counts as used; a refuelling demand uses only what it needs.
+ * Times are days from the first landing.
  */
 export interface CampaignOutput extends CampaignResult {
   warnings: Warning[];
@@ -35,8 +37,10 @@ export interface CampaignPoint {
   landers: number;
   /** [kg] */
   landedMassKg: number;
-  /** [kg] */
+  /** product delivered [kg] */
   productKg: number;
+  /** product used, which the ledger credits [kg] */
+  usedKg: number;
   /** [kg in LEO] */
   leoMassSpentKg: number;
   /** [kg in LEO] */
@@ -56,6 +60,8 @@ export interface CampaignFlows {
   productKgPerDay: number;
   /** process feed that must be landed [kg/day] */
   importedFeedKgPerDay: number;
+  /** product a demand uses, after downtime; null when every kg delivered is used [kg/day] */
+  usedKgPerDay: number | null;
 }
 
 function capacityKg(params: SimParams, basis: CampaignBasis): number {
@@ -77,6 +83,8 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
   const operatingDays = params.missionYears * DAYS_PER_YEAR;
   const campaignEndDay = firstProductDay + operatingDays;
   const deliveredKgPerDay = deployable ? flows.productKgPerDay * params.plantAvailability : 0;
+  // Only product something uses saves launch mass.
+  const usedKgPerDay = deployable ? (flows.usedKgPerDay ?? deliveredKgPerDay) : 0;
   const resupplyKgPerYear = deployable ? params.sparesFracPerYear * basis.totalInfraMassKg : 0;
   // Feed is consumed with production, so downtime reduces it too.
   const feedKgPerYear = deployable ? flows.importedFeedKgPerDay * params.plantAvailability * DAYS_PER_YEAR : 0;
@@ -85,10 +93,11 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
     params.deploymentManifest === "shared"
       ? leoMassPerLandedKg * basis.totalInfraMassKg
       : basis.nMissions * params.M0leo;
-  const savedPerDay = params.gearRatio * deliveredKgPerDay;
+  const savedPerDay = params.gearRatio * usedKgPerDay;
   const resupplyLeoPerDay = (leoMassPerLandedKg * (resupplyKgPerYear + feedKgPerYear)) / DAYS_PER_YEAR;
 
   const cumulativeProductKg = deliveredKgPerDay * operatingDays;
+  const cumulativeUsedKg = usedKgPerDay * operatingDays;
   const landedMassKg = deployable ? basis.totalInfraMassKg + (resupplyKgPerYear + feedKgPerYear) * params.missionYears : 0;
   const leoMassSpentKg = infraLeoKg + resupplyLeoPerDay * operatingDays;
   const leoMassSavedKg = savedPerDay * operatingDays;
@@ -113,9 +122,11 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
     firstProductDay,
     campaignEndDay,
     deliveredKgPerDay,
+    usedKgPerDay,
     resupplyKgPerYear,
     feedKgPerYear,
     cumulativeProductKg,
+    cumulativeUsedKg,
     landedMassKg,
     leoMassSpentKg,
     leoMassSavedKg,
@@ -148,15 +159,17 @@ function ledgerAt(params: SimParams, { logistics: basis, campaign }: CampaignSou
   );
   const suppliesKg = ((campaign.resupplyKgPerYear + campaign.feedKgPerYear) * operatingDays) / DAYS_PER_YEAR;
   const productKg = campaign.deliveredKgPerDay * operatingDays;
+  const usedKg = campaign.usedKgPerDay * operatingDays;
   return {
     tDays,
     landers,
     landedMassKg: plantLandedKg + suppliesKg,
     productKg,
+    usedKg,
     leoMassSpentKg:
       (params.deploymentManifest === "shared" ? campaign.leoMassPerLandedKg * plantLandedKg : landers * params.M0leo) +
       campaign.leoMassPerLandedKg * suppliesKg,
-    leoMassSavedKg: params.gearRatio * productKg
+    leoMassSavedKg: params.gearRatio * usedKg
   };
 }
 

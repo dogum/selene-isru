@@ -3,6 +3,7 @@ export type PowerArchitecture = "solar" | "nuclear";
 export type PowerStrategy = "auto" | PowerArchitecture;
 export type DeploymentManifest = "dedicated" | "shared";
 export type PolarProduct = "water" | "propellant";
+export type RefuelDemand = "none" | "lander";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -371,6 +372,23 @@ export interface SimParams {
   /** [1/yr] */
   sparesFracPerYear: number;
   deploymentManifest: DeploymentManifest;
+  refuelDemand: RefuelDemand;
+  /** [1/yr] */
+  sortiesPerYear: number;
+  /** [kg] */
+  MdryReusable: number;
+  /** [kg] */
+  MtankReusable: number;
+  /** [s] */
+  IspReusable: number;
+  /** [kg] */
+  McargoDown: number;
+  /** [kg] */
+  McargoUp: number;
+  /** [m/s] */
+  dvDescent: number;
+  /** [m/s] */
+  dvAscent: number;
   /** [Pa] */
   Pinternal: number;
   /** [Pa] */
@@ -416,14 +434,18 @@ export interface CampaignResult {
   firstProductDay: number;
   /** end of `missionYears` of production [day] */
   campaignEndDay: number;
-  /** average product delivered after downtime: O2, water, or the Sabatier products [kg/day] */
+  /** average product delivered after downtime: O2, water, propellant, or the Sabatier products [kg/day] */
   deliveredKgPerDay: number;
+  /** delivered product that a demand uses, which the ledger credits; all of it when there is no demand [kg/day] */
+  usedKgPerDay: number;
   /** spares landed per year of operation [kg/yr] */
   resupplyKgPerYear: number;
   /** imported process feed (Sabatier CO2) landed per year of operation [kg/yr] */
   feedKgPerYear: number;
   /** product delivered over the campaign [kg] */
   cumulativeProductKg: number;
+  /** product used over the campaign [kg] */
+  cumulativeUsedKg: number;
   /** plant, spares, and imported feed landed over the campaign [kg] */
   landedMassKg: number;
   /** [kg in LEO] */
@@ -437,6 +459,44 @@ export interface CampaignResult {
   /** when cumulative saved first equals spent [day]; null if output never outpaces spares and feed */
   paybackDays: number | null;
   paysBackInCampaign: boolean;
+}
+
+/** A surface-based reusable lander refuelled with the plant's product. */
+export interface RefuelResult {
+  /** propellant burned landing from the staging orbit with the down cargo [kg] */
+  descentPropellantKg: number;
+  /** propellant burned climbing to the staging orbit with the up cargo and the descent load [kg] */
+  ascentPropellantKg: number;
+  /** propellant loaded on the surface per sortie [kg] */
+  propellantPerSortieKg: number;
+  /** [kg] */
+  oxidizerPerSortieKg: number;
+  /** hydrogen per sortie [kg] */
+  fuelPerSortieKg: number;
+  /** [kg/day] */
+  demandO2KgPerDay: number;
+  /** [kg/day] */
+  demandFuelKgPerDay: number;
+  /** oxygen the plant makes, after storage losses and downtime [kg/day] */
+  supplyO2KgPerDay: number;
+  /** hydrogen the plant makes, after storage losses and downtime; 0 at the equator [kg/day] */
+  supplyH2KgPerDay: number;
+  /** oxygen the plant supplies to the demand, after downtime [kg/day] */
+  isruO2KgPerDay: number;
+  /** hydrogen the plant supplies to the demand, after downtime [kg/day] */
+  isruFuelKgPerDay: number;
+  /** share of the propellant burned that the plant supplies [1] */
+  isruShare: number;
+  /** propellant the demand still needs from Earth [kg/yr] */
+  earthPropellantKgPerYear: number;
+  /** product made but not needed by the demand [kg/day] */
+  surplusKgPerDay: number;
+  /** sorties a year whose oxidizer the plant could supply [1/yr] */
+  oxidizerSortiesPerYear: number;
+  /** sorties a year whose hydrogen the plant could supply; 0 if it makes none [1/yr] */
+  fuelSortiesPerYear: number;
+  /** product the demand uses, after downtime [kg/day] */
+  usedKgPerDay: number;
 }
 
 export interface SimResult {
@@ -604,6 +664,8 @@ export interface SimResult {
   };
   /** deployment-to-end mass ledger in kg of LEO mass; see modules/campaign.ts */
   campaign: CampaignResult;
+  /** null unless a refuelling demand is set and the plant makes oxygen or LOX/LH2 */
+  refuel: RefuelResult | null;
   materials: {
     flows: MaterialFlow[];
     balances: ProcessBalance[];

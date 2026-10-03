@@ -18,7 +18,7 @@ def _landing_interval_days(params: dict[str, Any]) -> float:
     return DAYS_PER_YEAR / params["landingsPerYear"]
 
 
-def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict[str, float]) -> dict[str, Any]:
+def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict[str, Any]) -> dict[str, Any]:
     capacity = _capacity_kg(params, basis)
     # A lander that lands nothing deploys no plant: the ledger stays empty.
     deployable = capacity > 0
@@ -28,6 +28,13 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
     operating_days = params["missionYears"] * DAYS_PER_YEAR
     campaign_end_day = first_product_day + operating_days
     delivered_kg_per_day = flows["productKgPerDay"] * params["plantAvailability"] if deployable else 0
+    # Only product something uses saves launch mass.
+    if not deployable:
+        used_kg_per_day = 0
+    elif flows["usedKgPerDay"] is None:
+        used_kg_per_day = delivered_kg_per_day
+    else:
+        used_kg_per_day = flows["usedKgPerDay"]
     resupply_kg_per_year = params["sparesFracPerYear"] * basis["totalInfraMassKg"] if deployable else 0
     # Feed is consumed with production, so downtime reduces it too.
     feed_kg_per_year = flows["importedFeedKgPerDay"] * params["plantAvailability"] * DAYS_PER_YEAR if deployable else 0
@@ -36,10 +43,11 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
         infra_leo_kg = leo_mass_per_landed_kg * basis["totalInfraMassKg"]
     else:
         infra_leo_kg = basis["nMissions"] * params["M0leo"]
-    saved_per_day = params["gearRatio"] * delivered_kg_per_day
+    saved_per_day = params["gearRatio"] * used_kg_per_day
     resupply_leo_per_day = leo_mass_per_landed_kg * (resupply_kg_per_year + feed_kg_per_year) / DAYS_PER_YEAR
 
     cumulative_product_kg = delivered_kg_per_day * operating_days
+    cumulative_used_kg = used_kg_per_day * operating_days
     landed_mass_kg = basis["totalInfraMassKg"] + (resupply_kg_per_year + feed_kg_per_year) * params["missionYears"] if deployable else 0
     leo_mass_spent_kg = infra_leo_kg + resupply_leo_per_day * operating_days
     leo_mass_saved_kg = saved_per_day * operating_days
@@ -66,9 +74,11 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
         "firstProductDay": first_product_day,
         "campaignEndDay": campaign_end_day,
         "deliveredKgPerDay": delivered_kg_per_day,
+        "usedKgPerDay": used_kg_per_day,
         "resupplyKgPerYear": resupply_kg_per_year,
         "feedKgPerYear": feed_kg_per_year,
         "cumulativeProductKg": cumulative_product_kg,
+        "cumulativeUsedKg": cumulative_used_kg,
         "landedMassKg": landed_mass_kg,
         "leoMassSpentKg": leo_mass_spent_kg,
         "leoMassSavedKg": leo_mass_saved_kg,
@@ -97,6 +107,7 @@ def _ledger_at(params: dict[str, Any], result: dict[str, Any], t_days: float, la
     )
     supplies_kg = (campaign["resupplyKgPerYear"] + campaign["feedKgPerYear"]) * operating_days / DAYS_PER_YEAR
     product_kg = campaign["deliveredKgPerDay"] * operating_days
+    used_kg = campaign["usedKgPerDay"] * operating_days
     if params["deploymentManifest"] == "shared":
         plant_leo_kg = campaign["leoMassPerLandedKg"] * plant_landed_kg
     else:
@@ -106,8 +117,9 @@ def _ledger_at(params: dict[str, Any], result: dict[str, Any], t_days: float, la
         "landers": landers,
         "landedMassKg": plant_landed_kg + supplies_kg,
         "productKg": product_kg,
+        "usedKg": used_kg,
         "leoMassSpentKg": plant_leo_kg + campaign["leoMassPerLandedKg"] * supplies_kg,
-        "leoMassSavedKg": params["gearRatio"] * product_kg,
+        "leoMassSavedKg": params["gearRatio"] * used_kg,
     }
 
 

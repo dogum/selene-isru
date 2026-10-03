@@ -93,6 +93,17 @@ def test_polar_propellant_mode_v06() -> None:
     assert_rel(sabatier["logistics"]["leverageL"], 186.0, 0.001)
 
 
+def test_refuelling_demand_v07() -> None:
+    crew = simulate({"refuelDemand": "lander"})
+    assert_rel(crew["refuel"]["propellantPerSortieKg"], 42_595, 0.001)
+    assert_rel(crew["refuel"]["demandO2KgPerDay"], 100.0, 0.001)
+    assert_rel(crew["logistics"]["totalInfraMassKg"] / 1000, 61.69, 0.001)
+    assert crew["campaign"]["paysBackInCampaign"] is False
+    assert_rel(crew["campaign"]["returnRatio"], 0.732, 0.001)
+    matched = simulate({"refuelDemand": "lander", "sortiesPerYear": 9})
+    assert_rel(matched["campaign"]["paybackDays"], 242.2, 0.001)
+
+
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
     fallback = simulate({"oxideModel": False})
     direct = oxide_model_yield({**DEFAULTS, "oxideModel": False})
