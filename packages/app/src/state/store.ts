@@ -158,7 +158,7 @@ const SEC_HISTORY_LENGTH = 60;
 const SCENARIO_STORAGE_KEY = "selene-isru.study-scenarios.v2";
 export const MAX_STUDY_SCENARIOS = 24;
 export const PARAM_HISTORY_LIMIT = 100;
-/** Edits to one input closer together than this are one undo step: a slider drag. */
+/** Slider-gesture edits to one input closer together than this are one undo step. */
 export const PARAM_EDIT_COALESCE_MS = 800;
 let lastParamEdit: { key: string; at: number } | null = null;
 export const MAX_PINNED_SCENARIOS = 4;
@@ -266,7 +266,14 @@ interface Store {
   ) => void;
   undoCustomEdit: () => void;
   redoCustomEdit: () => void;
-  setParam: <K extends keyof SimParams>(key: K, value: SimParams[K]) => void;
+  /**
+   * `coalesce` marks an edit from a slider gesture: edits to the same input
+   * in quick succession then share one undo step. Everything else (typed
+   * values, resets, toggles) is its own step.
+   */
+  setParam: <K extends keyof SimParams>(key: K, value: SimParams[K], options?: { coalesce?: boolean }) => void;
+  /** A new slider gesture begins: its edits never fold into the previous one's. */
+  startParamGesture: () => void;
   applyPatch: (patch: Partial<SimParams>) => void;
   undoParams: () => void;
   redoParams: () => void;
@@ -1398,7 +1405,7 @@ export const useStore = create<Store>((set, get) => {
       });
     },
 
-    setParam: (key, value) => {
+    setParam: (key, value, options) => {
       if (get().workspaceMode === "custom" && key === "site") {
         get().setCustomEnvironment(value as SiteEnvironment);
         return;
@@ -1424,8 +1431,8 @@ export const useStore = create<Store>((set, get) => {
       const switchesSite = key === "site" && nextParams.site !== get().params.site;
       const nextName = switchesSite ? workingCaseName(nextParams) : get().ui.currentScenarioName;
       if (recordsAuthoredHistory() && changesCase(nextParams, nextName)) {
-        // A site switch is always its own step.
-        rememberAuthoredCase(key === "site" ? null : String(key));
+        // Only a slider gesture coalesces; a site switch is always its own step.
+        rememberAuthoredCase(options?.coalesce === true && key !== "site" ? String(key) : null);
       }
       const nextResult = simulateStoreParams(nextInput).result;
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
@@ -1496,6 +1503,10 @@ export const useStore = create<Store>((set, get) => {
         }
       });
       showEntry(next);
+    },
+
+    startParamGesture: () => {
+      lastParamEdit = null;
     },
 
     resetParam: (key) => {

@@ -64,21 +64,43 @@ describe("undo and redo of authored edits", () => {
   });
 
   it("treats one slider drag as one step, but not a second drag or another input", () => {
+    const slide = { coalesce: true } as const;
     for (const value of [1100, 1200, 1300, 1400]) {
       now += 50;
-      store().setParam("targetKgPerDay", value);
+      store().setParam("targetKgPerDay", value, slide);
     }
     expect(store().paramHistory.past).toHaveLength(1);
     later();
-    store().setParam("targetKgPerDay", 1600);
+    store().setParam("targetKgPerDay", 1600, slide);
     now += 50;
-    store().setParam("reserveDays", 20);
+    store().setParam("reserveDays", 20, slide);
     expect(store().paramHistory.past).toHaveLength(3);
     store().undoParams();
     store().undoParams();
     expect(store().params.targetKgPerDay).toBe(1400);
     store().undoParams();
     expect(store().params.targetKgPerDay).toBe(DEFAULTS.targetKgPerDay);
+  });
+
+  it("never folds a reset, a typed value, or a new drag into the drag before it", () => {
+    const slide = { coalesce: true } as const;
+    store().setParam("targetKgPerDay", 1400, slide);
+    now += 50;
+    // reset right after the drag is its own step
+    store().resetParam("targetKgPerDay");
+    store().undoParams();
+    expect(store().params.targetKgPerDay).toBe(1400);
+    // so is a typed value
+    now += 50;
+    store().setParam("targetKgPerDay", 1700);
+    store().undoParams();
+    expect(store().params.targetKgPerDay).toBe(1400);
+    // and a second drag begun moments after the first
+    now += 50;
+    store().startParamGesture();
+    store().setParam("targetKgPerDay", 1900, slide);
+    store().undoParams();
+    expect(store().params.targetKgPerDay).toBe(1400);
   });
 
   it("ignores edits that change nothing", () => {
