@@ -129,7 +129,10 @@ when they are useful:
   has repaid the launch mass. The model covers deployment cadence,
   commissioning, downtime, spares, and dedicated versus shared landers. It is a
   mass account only, not cost or schedule risk
-  ([`docs/model-campaign-v05.md`](docs/model-campaign-v05.md)).
+  ([`docs/model-campaign-v05.md`](docs/model-campaign-v05.md)). An optional
+  refuelling demand, a reusable lander flying sorties from the plant, credits
+  only the propellant it burns and charts how its stores draw down
+  ([`docs/model-refuel-v07.md`](docs/model-refuel-v07.md)).
 - **Conserve** opens the executed material and energy ledgers beside independently
   sized product/feed inventories. Polar studies can import a time-resolved JSON
   or CSV illumination, receiver-visibility, and temperature profile. Numeric
@@ -161,7 +164,7 @@ which carries its unit (`energy.secTotal_kWhPerKg`, `logistics.totalInfraMassKg`
 Every core process equation used by the authored simulation lives twice:
 
 - **TypeScript** (`packages/engine`) — the runtime engine the app calls on
-  every input event. Zero dependencies, pure ESM, with a 160 KiB CI budget
+  every input event. Zero dependencies, pure ESM, with a 176 KiB CI budget
   including the versioned custom-site schema, graph validator, installed
   capacity evaluator, and disclosed cable/haul screening models.
 - **Python** (`python/selene_isru`) — an independent mirror used for
@@ -191,7 +194,10 @@ ledger (launch-mass payback with deployment, commissioning, downtime, and
 spares) is in [`docs/model-campaign-v05.md`](docs/model-campaign-v05.md). The
 v0.6 polar propellant chain (water split into LOX/LH₂, with liquefaction energy
 and hardware derived from NASA's polar propellant design) is in
-[`docs/model-propellant-v06.md`](docs/model-propellant-v06.md).
+[`docs/model-propellant-v06.md`](docs/model-propellant-v06.md). The v0.7
+refuelling demand (a reusable lander's propellant per sortie, with the ledger
+crediting only what it burns) is in
+[`docs/model-refuel-v07.md`](docs/model-refuel-v07.md).
 
 ## Architecture
 

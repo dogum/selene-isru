@@ -13,6 +13,7 @@ from .modules.electrolysis import (
 )
 from .modules.logistics import payload_per_mission_kg
 from .modules.power import p_crit_dynamic_kw, p_crit_kw
+from .modules.refuel import refuel_timeline, sortie_propellant_kg
 from .modules.sabatier import sabatier_kp
 from .modules.thermal import sec_sub_delivered_j_per_kg, sec_sub_j_per_kg
 
@@ -30,6 +31,7 @@ __all__ = [
     "payload_per_mission_kg",
     "p_crit_dynamic_kw",
     "p_crit_kw",
+    "refuel_timeline",
     "sabatier_kp",
     "sec_elec_j_per_kg",
     "sec_sub_delivered_j_per_kg",
@@ -39,4 +41,5 @@ __all__ = [
     "shield_full_balance_m",
     "simulate",
     "simulate_timeseries",
+    "sortie_propellant_kg",
 ]

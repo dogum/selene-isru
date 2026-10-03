@@ -7,7 +7,7 @@ import {
   sampleUncertainty,
   simulate
 } from "@selene-isru/engine";
-import type { CampaignResult, ParamMeta, SimParams, UncertaintySpec } from "@selene-isru/engine";
+import type { CampaignResult, ParamMeta, RefuelResult, SimParams, UncertaintySpec } from "@selene-isru/engine";
 import { evidenceForParam } from "../controls/evidence";
 import type { StudyScenario } from "../state/store";
 import { formatQtyText } from "../lib/format";
@@ -317,8 +317,21 @@ const CAMPAIGN_COLUMNS: Array<keyof CampaignResult> = [
   "deploymentDays",
   "firstProductDay",
   "deliveredKgPerDay",
+  "usedKgPerDay",
   "resupplyKgPerYear",
   "cumulativeProductKg"
+];
+
+/** Refuelling demand fields; empty for cases without a demand. */
+const REFUEL_COLUMNS: Array<keyof RefuelResult> = [
+  "propellantPerSortieKg",
+  "demandO2KgPerDay",
+  "demandFuelKgPerDay",
+  "isruShare",
+  "oxidizerSortiesPerYear",
+  "fuelSortiesPerYear",
+  "surplusKgPerDay",
+  "earthPropellantKgPerYear"
 ];
 
 const STANDARD_MANIFEST = ["excavation fleet", "reactor/plant", "power system", "cryo block"];
@@ -370,6 +383,10 @@ export function scenariosCsv(scenarios: StudyScenario[], exportedAt: Date = new 
     ...CAMPAIGN_COLUMNS.map((key) => ({
       header: `campaign.${key}`,
       value: (row: CsvCaseRow) => row.result.campaign[key]
+    })),
+    ...REFUEL_COLUMNS.map((key) => ({
+      header: `refuel.${key}`,
+      value: (row: CsvCaseRow) => row.result.refuel?.[key] ?? ""
     })),
     ...STANDARD_MANIFEST.map((subsystem) => ({
       header: `manifest.${subsystem} [kg]`,

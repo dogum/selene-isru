@@ -11,7 +11,11 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 // terms and per-stream storage provenance moved hard-coded property tables
 // into constants.json, so their values, units, bounds, and sources now ship
 // with the generated metadata. Still zero runtime dependencies.
-const limitBytes = 160 * 1024;
+// 160 -> 176 KiB (v0.6-v0.7 demand and propellant): the polar propellant
+// chain, the refuelling-demand model and its tank-drawdown timeline, and the
+// cited vehicle, delta-v, and liquefier parameters that ship with them. Still
+// zero runtime dependencies.
+const limitBytes = 176 * 1024;
 
 function jsSize(dir) {
   let total = 0;

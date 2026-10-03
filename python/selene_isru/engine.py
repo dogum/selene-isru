@@ -14,6 +14,7 @@ from .modules.excavation import simulate_excavation
 from .modules.logistics import simulate_logistics
 from .modules.materials import material_ledger
 from .modules.power import simulate_power
+from .modules.refuel import simulate_refuel, sortie_propellant_kg
 from .modules.sabatier import simulate_sabatier, simulate_water_electrolysis
 from .modules.site_profile import resolve_polar_profile, sample_polar_profile
 from .modules.thermal import simulate_thermal
@@ -40,9 +41,16 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         else None
     )
     water_electrolysis = sabatier if sabatier is not None else propellant
+    # A refuelling demand applies to plants that make lander propellant: oxygen
+    # at the equator, LOX and LH2 in polar propellant mode.
+    refuel_sortie = (
+        sortie_propellant_kg(params)
+        if params["refuelDemand"] == "lander" and (params["site"] == "equatorial" or propellant is not None)
+        else None
+    )
 
     production = _production_state(params, excavation["regolithPerKgProduct"], sabatier, propellant)
-    cryo = simulate_cryo(params, _storage_demands(params, production), site_profile["profile"])
+    cryo = simulate_cryo(params, _storage_demands(params, production, refuel_sortie), site_profile["profile"])
     energy_lines = _energy_line_items(
         params,
         excavation["secExcavation_JPerKg"],
@@ -113,23 +121,30 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
                 total += inventory["actualLossKgPerDay"]
         return total
 
-    def product_loss_kg_per_day(stream: str) -> float:
-        return storage_loss_kg_per_day(lambda inventory: is_product(inventory) and inventory["stream"] == stream)
-
     buffer_loss_kg_per_day = storage_loss_kg_per_day(is_water_buffer)
     loop_throughput = (
         max(0, 1 - buffer_loss_kg_per_day / production["waterKgPerDay"])
         if buffer_loss_kg_per_day > 0 and production["waterKgPerDay"] > 0
         else 1
     )
-    # Oxygen and hydrogen that reach the vehicle in propellant mode. A
-    # one-stream storage what-if holding some other stream still stores the
-    # product, so its loss takes both gases down in proportion.
+    # Oxygen and hydrogen that reach the vehicle in propellant mode. Only auto
+    # storage keeps LOX and LH2 in stores of their own; a one-stream what-if
+    # store holds the whole product whatever its stream is called, so its loss
+    # takes both gases down in proportion.
+    def own_store(inventory: dict[str, Any]) -> bool:
+        return params["storageStream"] == "auto" and inventory["stream"] in ("lox", "lh2")
+
     other_product_loss_kg_per_day = storage_loss_kg_per_day(
-        lambda inventory: is_product(inventory) and inventory["stream"] not in ("lox", "lh2")
+        lambda inventory: is_product(inventory) and not own_store(inventory)
     )
-    stored_o2_kg_per_day = max(0, production["o2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lox"))
-    stored_h2_kg_per_day = max(0, production["h2KgPerDay"] * loop_throughput - product_loss_kg_per_day("lh2"))
+
+    def own_store_loss_kg_per_day(stream: str) -> float:
+        return storage_loss_kg_per_day(
+            lambda inventory: is_product(inventory) and own_store(inventory) and inventory["stream"] == stream
+        )
+
+    stored_o2_kg_per_day = max(0, production["o2KgPerDay"] * loop_throughput - own_store_loss_kg_per_day("lox"))
+    stored_h2_kg_per_day = max(0, production["h2KgPerDay"] * loop_throughput - own_store_loss_kg_per_day("lh2"))
     kept_share = (
         max(0, 1 - other_product_loss_kg_per_day / (stored_o2_kg_per_day + stored_h2_kg_per_day))
         if other_product_loss_kg_per_day > 0 and stored_o2_kg_per_day + stored_h2_kg_per_day > 0
@@ -137,19 +152,35 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     net_o2_kg_per_day = stored_o2_kg_per_day * kept_share
     net_h2_kg_per_day = stored_h2_kg_per_day * kept_share
-    if propellant is not None:
-        net_product_kg_per_day = _usable_propellant_kg_per_day(
+    net_product_kg_per_day = max(0, product_kg_per_day * loop_throughput - storage_loss_kg_per_day(is_product))
+    # With a demand, each component is used against its own need and Earth
+    # tops up the other, so all the oxygen and hydrogen made can be useful.
+    refuel: dict[str, Any] | None = None
+    refuel_warnings: list[dict[str, Any]] = []
+    if refuel_sortie is not None:
+        supply = (
+            {"o2KgPerDay": net_o2_kg_per_day, "h2KgPerDay": net_h2_kg_per_day}
+            if propellant is not None
+            else {"o2KgPerDay": net_product_kg_per_day, "h2KgPerDay": 0}
+        )
+        refuel, refuel_warnings = simulate_refuel(params, refuel_sortie, supply)
+    if propellant is None:
+        campaign_product_kg_per_day = net_product_kg_per_day
+    elif refuel is not None:
+        campaign_product_kg_per_day = net_o2_kg_per_day + net_h2_kg_per_day
+    else:
+        campaign_product_kg_per_day = _usable_propellant_kg_per_day(
             net_o2_kg_per_day, net_h2_kg_per_day, params["mixtureRatio"]
         )
-    else:
-        net_product_kg_per_day = max(0, product_kg_per_day * loop_throughput - storage_loss_kg_per_day(is_product))
     campaign = simulate_campaign(
         params,
         logistics,
         {
-            "productKgPerDay": net_product_kg_per_day,
+            "productKgPerDay": campaign_product_kg_per_day,
             "importedFeedKgPerDay": production["co2ImportedKgPerDay"] * loop_throughput
             + storage_loss_kg_per_day(is_feed),
+            "usedKgPerDay": None if refuel is None else refuel["usedKgPerDay"],
+            "sortieIntervalDays": None if refuel is None else refuel["sortieIntervalDays"],
         },
     )
     campaign_warnings = campaign.pop("warnings")
@@ -163,6 +194,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         *power["warnings"],
         *construction["warnings"],
         *campaign_warnings,
+        *refuel_warnings,
     ]
     if materials["maxAbsResidualKgPerDay"] > 1e-6:
         warnings.append({"id": "material-balance", "severity": "alarm", "module": "materials", "message": "A process-node material balance exceeds the conservation tolerance.", "value": materials["maxAbsResidualKgPerDay"], "limit": 1e-6})
@@ -248,6 +280,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         },
         "logistics": logistics,
         "campaign": campaign,
+        "refuel": refuel,
         "materials": materials,
         "construction": construction,
         "warnings": warnings,
@@ -318,7 +351,30 @@ def _production_state(
     }
 
 
-def _storage_demands(params: dict[str, Any], production: dict[str, float]) -> list[dict[str, Any]]:
+def _storage_demands(
+    params: dict[str, Any], production: dict[str, float], sortie: dict[str, float] | None
+) -> list[dict[str, Any]]:
+    """A refuelled lander loads a whole sortie at once, so the LOX and LH2
+    stores must hold at least one sortie's oxidizer and hydrogen. A one-stream
+    storage what-if holds the plant's whole product, whatever its stream: the
+    sortie's oxygen at the equator, its oxygen and hydrogen in propellant mode."""
+    demands = _base_storage_demands(params, production)
+    if sortie is None:
+        return demands
+    if params["storageStream"] != "auto":
+        product_load_kg = (
+            sortie["oxidizerKg"] if params["site"] == "equatorial" else sortie["oxidizerKg"] + sortie["fuelKg"]
+        )
+        return [{**demand, "minInventoryKg": product_load_kg} for demand in demands]
+    return [
+        {**demand, "minInventoryKg": sortie["oxidizerKg"] if demand["stream"] == "lox" else sortie["fuelKg"]}
+        if demand["role"] == "product" and demand["stream"] in ("lox", "lh2")
+        else demand
+        for demand in demands
+    ]
+
+
+def _base_storage_demands(params: dict[str, Any], production: dict[str, float]) -> list[dict[str, Any]]:
     if params["storageStream"] != "auto":
         return [{"id": "selected-primary", "stream": params["storageStream"], "role": "custom" if params["storageStream"] == "custom" else "product", "rateKgPerDay": params["targetKgPerDay"]}]
     if params["site"] == "equatorial":

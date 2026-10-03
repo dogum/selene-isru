@@ -137,8 +137,9 @@ def test_propellant_losses_reduce_usable_propellant() -> None:
     assert_rel(result["campaign"]["deliveredKgPerDay"], usable * params["plantAvailability"], 1e-12)
 
 
-def test_propellant_what_if_of_another_stream_still_loses_propellant() -> None:
-    params, result = run({"site": "polar", "polarProduct": "propellant", "cryoControlMode": "passive", "storageStream": "custom"})
+@pytest.mark.parametrize("stream", ["custom", "lox", "lh2"])
+def test_propellant_what_if_loses_both_gases_in_proportion(stream: str) -> None:
+    params, result = run({"site": "polar", "polarProduct": "propellant", "cryoControlMode": "passive", "storageStream": stream})
     (selected,) = result["cryo"]["inventories"]
     assert selected["actualLossKgPerDay"] > 1
     o2, h2 = result["production"]["o2KgPerDay"], result["production"]["h2KgPerDay"]

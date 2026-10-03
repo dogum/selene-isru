@@ -89,6 +89,38 @@ describe("input activity", () => {
     }
   });
 
+  it("only hides refuelling inputs where the demand cannot act", () => {
+    const group = GROUPS.find((item) => item.id === "refuel")!;
+    const keys = ["sortiesPerYear", "MdryReusable", "MtankReusable", "IspReusable", "McargoDown", "McargoUp", "dvDescent", "dvAscent"] as const;
+    const shown = (params: SimParams) => railParamsForGroup(group, params).map((def) => String(def.key));
+    const cases: Array<[string, SimParams]> = [
+      ["equatorial, no demand", equatorial],
+      ["equatorial lander", { ...equatorial, refuelDemand: "lander" }],
+      ["polar water lander", { ...polar, refuelDemand: "lander" }],
+      ["polar Sabatier lander", { ...polar, enableSabatier: true, refuelDemand: "lander" }],
+      ["polar propellant lander", { ...polar, polarProduct: "propellant", refuelDemand: "lander" }]
+    ];
+    for (const [name, params] of cases) {
+      const visible = shown(params);
+      for (const key of keys) {
+        const activity = inputActivity(params, key).activity;
+        if (visible.includes(key)) {
+          // Tank capacity only raises or clears its caution.
+          expect(activity, `${key} ${name}`).toBe(key === "MtankReusable" ? "checks-only" : "drives-results");
+        } else {
+          expect(activity, `${key} ${name}`).toBe("no-effect");
+        }
+      }
+    }
+    expect(shown({ ...equatorial, refuelDemand: "lander" })).toEqual([...keys, "mixtureRatio"]);
+    // At the pole the mixture ratio stays in the propellant plant group.
+    expect(shown({ ...polar, polarProduct: "propellant", refuelDemand: "lander" })).toEqual([...keys]);
+    expect(shown({ ...polar, refuelDemand: "lander" })).toEqual([]);
+    // The equatorial mixture ratio splits the demand only while there is one.
+    expect(inputActivity({ ...equatorial, refuelDemand: "lander" }, "mixtureRatio").activity).toBe("drives-results");
+    expect(inputActivity(equatorial, "mixtureRatio").activity).toBe("no-effect");
+  });
+
   it("only hides liquefier inputs for streams the engine is not liquefying", () => {
     const propellant = { ...polar, enableSabatier: false, polarProduct: "propellant" as const };
     for (const params of [equatorial, polar, propellant]) {

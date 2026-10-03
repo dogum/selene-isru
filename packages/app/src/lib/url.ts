@@ -69,6 +69,10 @@ export function parseParams(query: string): Partial<SimParams> {
       if (raw === "water" || raw === "propellant") {
         patch[key] = raw;
       }
+    } else if (key === "refuelDemand") {
+      if (raw === "none" || raw === "lander") {
+        patch[key] = raw;
+      }
     } else if (key === "deploymentManifest") {
       if (raw === "dedicated" || raw === "shared") {
         patch[key] = raw;

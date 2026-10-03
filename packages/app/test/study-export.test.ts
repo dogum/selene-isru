@@ -183,4 +183,19 @@ describe("engineering report export", () => {
     expect(scenariosCsv(cases).split("\n")).toHaveLength(3);
     expect(reportScenarios("  ", live, [], 1)[0]!.name).toBe("Untitled lunar ISRU case");
   });
+
+  it("writes refuelling columns, empty for a case without a demand", () => {
+    const cases: StudyScenario[] = [
+      { id: "free", name: "Free", kind: "authored", params: { ...DEFAULTS }, createdAt: 1, updatedAt: 1, pinned: false },
+      { id: "crew", name: "Crew", kind: "authored", params: { ...DEFAULTS, refuelDemand: "lander" }, createdAt: 1, updatedAt: 1, pinned: false }
+    ];
+    const [header, free, crew] = scenariosCsv(cases).split("\n").map((line) => line.split(","));
+    const column = (name: string) => header!.indexOf(name);
+    expect(column("refuel.isruShare")).toBeGreaterThan(0);
+    expect(free![column("refuel.isruShare")]).toBe("");
+    expect(Number(crew![column("refuel.isruShare")])).toBeCloseTo(6 / 7, 12);
+    // Without a demand everything delivered is used; with one, only what the lander burns.
+    expect(free![column("campaign.usedKgPerDay")]).toBe(free![column("campaign.deliveredKgPerDay")]);
+    expect(Number(crew![column("campaign.usedKgPerDay")])).toBeLessThan(Number(crew![column("campaign.deliveredKgPerDay")]));
+  });
 });

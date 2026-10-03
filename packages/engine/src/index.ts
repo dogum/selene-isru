@@ -2,6 +2,7 @@ import { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS } from "./constants";
 import { normalizeParams } from "./normalize";
 import { simulateConstruction } from "./modules/construction";
 import { simulateCryo, type StorageDemand } from "./modules/cryo";
+import { simulateRefuel, sortiePropellantKg, type SortiePropellant } from "./modules/refuel";
 import { energyLedger } from "./modules/energyLedger";
 import { simulateElectrolysis } from "./modules/electrolysis";
 import { simulateExcavation } from "./modules/excavation";
@@ -55,6 +56,8 @@ export {
 export { campaignAt, campaignTimeline } from "./modules/campaign";
 export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
 export { payloadPerMissionKg } from "./modules/logistics";
+export { refuelTimeline, sortiePropellantKg } from "./modules/refuel";
+export type { RefuelSource, RefuelTimelinePoint, SortiePropellant } from "./modules/refuel";
 export {
   beamedPowerW,
   beamEfficiency,
@@ -72,6 +75,8 @@ export type {
   DeploymentManifest,
   FlowEdge,
   PolarProduct,
+  RefuelDemand,
+  RefuelResult,
   ManifestRow,
   MaterialFlow,
   OxideYield,
@@ -122,9 +127,15 @@ export function simulate(
       ? simulateWaterElectrolysis(params, params.targetKgPerDay)
       : null;
   const waterElectrolysis = sabatier ?? propellant;
+  // A refuelling demand applies to plants that make lander propellant: oxygen
+  // at the equator, LOX and LH2 in polar propellant mode.
+  const refuelSortie =
+    params.refuelDemand === "lander" && (params.site === "equatorial" || propellant !== null)
+      ? sortiePropellantKg(params)
+      : null;
 
   const production = productionState(params, excavation.regolithPerKgProduct, sabatier, propellant);
-  const cryo = simulateCryo(params, storageDemands(params, production), siteProfile.profile);
+  const cryo = simulateCryo(params, storageDemands(params, production, refuelSortie), siteProfile.profile);
   const processEnergyLines = energyLineItems(
     params,
     excavation.secExcavation_JPerKg,
@@ -217,33 +228,51 @@ export function simulate(
     !isFeed(inventory) && !isWaterBuffer(inventory) && (inventory.role === "product" || inventory.role === "custom");
   const storageLossKgPerDay = (matches: (inventory: StorageInventory) => boolean): number =>
     cryo.inventories.filter(matches).reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
-  const productLossKgPerDay = (stream: string): number =>
-    storageLossKgPerDay((inventory) => isProduct(inventory) && inventory.stream === stream);
   const bufferLossKgPerDay = storageLossKgPerDay(isWaterBuffer);
   const loopThroughput =
     bufferLossKgPerDay > 0 && production.waterKgPerDay > 0
       ? Math.max(0, 1 - bufferLossKgPerDay / production.waterKgPerDay)
       : 1;
-  // Oxygen and hydrogen that reach the vehicle in propellant mode. A
-  // one-stream storage what-if holding some other stream still stores the
-  // product, so its loss takes both gases down in proportion.
-  const otherProductLossKgPerDay = storageLossKgPerDay(
-    (inventory) => isProduct(inventory) && inventory.stream !== "lox" && inventory.stream !== "lh2"
-  );
-  const storedO2KgPerDay = Math.max(0, production.o2KgPerDay * loopThroughput - productLossKgPerDay("lox"));
-  const storedH2KgPerDay = Math.max(0, production.h2KgPerDay * loopThroughput - productLossKgPerDay("lh2"));
+  // Oxygen and hydrogen that reach the vehicle in propellant mode. Only auto
+  // storage keeps LOX and LH2 in stores of their own; a one-stream what-if
+  // store holds the whole product whatever its stream is called, so its loss
+  // takes both gases down in proportion.
+  const ownStore = (inventory: StorageInventory): boolean =>
+    params.storageStream === "auto" && (inventory.stream === "lox" || inventory.stream === "lh2");
+  const otherProductLossKgPerDay = storageLossKgPerDay((inventory) => isProduct(inventory) && !ownStore(inventory));
+  const ownStoreLossKgPerDay = (stream: string): number =>
+    storageLossKgPerDay((inventory) => isProduct(inventory) && ownStore(inventory) && inventory.stream === stream);
+  const storedO2KgPerDay = Math.max(0, production.o2KgPerDay * loopThroughput - ownStoreLossKgPerDay("lox"));
+  const storedH2KgPerDay = Math.max(0, production.h2KgPerDay * loopThroughput - ownStoreLossKgPerDay("lh2"));
   const keptShare =
     otherProductLossKgPerDay > 0 && storedO2KgPerDay + storedH2KgPerDay > 0
       ? Math.max(0, 1 - otherProductLossKgPerDay / (storedO2KgPerDay + storedH2KgPerDay))
       : 1;
   const netO2KgPerDay = storedO2KgPerDay * keptShare;
   const netH2KgPerDay = storedH2KgPerDay * keptShare;
+  const netProductKgPerDay = Math.max(0, productKgPerDay * loopThroughput - storageLossKgPerDay(isProduct));
+  // With a demand, each component is used against its own need and Earth
+  // tops up the other, so all the oxygen and hydrogen made can be useful.
+  const refuelOutput =
+    refuelSortie === null
+      ? null
+      : simulateRefuel(
+          params,
+          refuelSortie,
+          propellant !== null
+            ? { o2KgPerDay: netO2KgPerDay, h2KgPerDay: netH2KgPerDay }
+            : { o2KgPerDay: netProductKgPerDay, h2KgPerDay: 0 }
+        );
   const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
     productKgPerDay:
-      propellant !== null
-        ? usablePropellantKgPerDay(netO2KgPerDay, netH2KgPerDay, params.mixtureRatio)
-        : Math.max(0, productKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
-    importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed)
+      propellant === null
+        ? netProductKgPerDay
+        : refuelOutput !== null
+          ? netO2KgPerDay + netH2KgPerDay
+          : usablePropellantKgPerDay(netO2KgPerDay, netH2KgPerDay, params.mixtureRatio),
+    importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed),
+    usedKgPerDay: refuelOutput === null ? null : refuelOutput.refuel.usedKgPerDay,
+    sortieIntervalDays: refuelOutput === null ? null : refuelOutput.refuel.sortieIntervalDays
   });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);
@@ -254,7 +283,8 @@ export function simulate(
     ...cryo.warnings,
     ...power.warnings,
     ...construction.warnings,
-    ...campaignWarnings
+    ...campaignWarnings,
+    ...(refuelOutput === null ? [] : refuelOutput.warnings)
   ];
 
   if (materials.maxAbsResidualKgPerDay > 1e-6) {
@@ -368,6 +398,7 @@ export function simulate(
     },
     logistics,
     campaign,
+    refuel: refuelOutput === null ? null : refuelOutput.refuel,
     materials,
     construction,
     warnings
@@ -477,7 +508,25 @@ function productionState(
   };
 }
 
-function storageDemands(params: SimParams, production: ProductionState): StorageDemand[] {
+// A refuelled lander loads a whole sortie at once, so the LOX and LH2 stores
+// must hold at least one sortie's oxidizer and hydrogen. A one-stream
+// storage what-if holds the plant's whole product, whatever its stream:
+// the sortie's oxygen at the equator, its oxygen and hydrogen in propellant mode.
+function storageDemands(params: SimParams, production: ProductionState, sortie: SortiePropellant | null): StorageDemand[] {
+  const demands = baseStorageDemands(params, production);
+  if (sortie === null) return demands;
+  if (params.storageStream !== "auto") {
+    const productLoadKg = params.site === "equatorial" ? sortie.oxidizerKg : sortie.oxidizerKg + sortie.fuelKg;
+    return demands.map((demand) => ({ ...demand, minInventoryKg: productLoadKg }));
+  }
+  return demands.map((demand) =>
+    demand.role === "product" && (demand.stream === "lox" || demand.stream === "lh2")
+      ? { ...demand, minInventoryKg: demand.stream === "lox" ? sortie.oxidizerKg : sortie.fuelKg }
+      : demand
+  );
+}
+
+function baseStorageDemands(params: SimParams, production: ProductionState): StorageDemand[] {
   if (params.storageStream !== "auto") {
     return [{
       id: "selected-primary",

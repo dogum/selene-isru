@@ -50,14 +50,14 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [query, setQuery] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
 
-  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier } = params;
+  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand } = params;
   // Engine-reported streams, joined so the memo only reruns when the set changes.
   const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
-    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier };
+    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand };
     const activeStreams = new Set(streamKey.split(",").filter(Boolean));
     return groupsForSite(site).map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, streamKey]);
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   // A gated-off group's sliders cannot be shown, so they do not count either.
@@ -66,7 +66,7 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
     (count, { group, defs }) =>
       count +
       (gatedOff(group) ? [] : defs).filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length +
-      railModeParamsForGroup(group, site).filter((key) => isModeChanged(params, key)).length,
+      railModeParamsForGroup(group, params).filter((key) => isModeChanged(params, key)).length,
     0
   );
   const filtering = query.trim().length > 0 || changedOnly;
@@ -82,7 +82,7 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
       : defs,
     // Selects and switches stay reachable through search and CHANGED too.
     modes: filtering
-      ? railModeParamsForGroup(group, site).filter((key) =>
+      ? railModeParamsForGroup(group, params).filter((key) =>
           matchesModeQuery(key, group.label, query) && (!changedOnly || isModeChanged(params, key))
         )
       : []
@@ -143,7 +143,7 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
         // plant while the pole stores water) is left out, not shown empty.
         (filtering
           ? defs.length === 0 && modes.length === 0
-          : defs.length === 0 && group.gatedBy === undefined && railModeParamsForGroup(group, site).length === 0) ? null : (
+          : defs.length === 0 && group.gatedBy === undefined && railModeParamsForGroup(group, params).length === 0) ? null : (
           <RailGroup
             key={group.id}
             group={group}
@@ -249,6 +249,7 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
             <StorageModeControls stream={showMode("storageStream")} heat={showMode("cryoControlMode")} />
           )}
           {group.id === "campaign" && showMode("deploymentManifest") && <CampaignModeControls />}
+          {group.id === "refuel" && showMode("refuelDemand") && <RefuelModeControls />}
           {group.id === "power" && site === "polar" && showMode("polarProfileMode") && <PolarSiteProfileControls />}
           {defs.map((def) => {
             const w = warned.get(def.key);
@@ -331,6 +332,30 @@ function CampaignModeControls(): React.JSX.Element {
           <option value="shared">SHARED (MASS SHARE)</option>
         </select>
       </label>
+    </div>
+  );
+}
+
+function RefuelModeControls(): React.JSX.Element {
+  const demand = useStore((s) => s.params.refuelDemand);
+  const site = useStore((s) => s.params.site);
+  const setParam = useStore((s) => s.setParam);
+
+  return (
+    <div className="rail-mode-grid">
+      <label>
+        <span>PRODUCT DEMAND</span>
+        <select value={demand} onChange={(event) => setParam("refuelDemand", event.target.value as typeof demand)}>
+          <option value="none">EVERY KG USEFUL</option>
+          <option value="lander">REFUELLED LANDER</option>
+        </select>
+      </label>
+      {demand === "lander" && (
+        <p className="rail-mode-note">
+          A reusable LOX/LH₂ lander based at the plant flies round trips to a staging orbit. The campaign credits only
+          the propellant it burns{site === "equatorial" ? "; its hydrogen comes from Earth" : ""}.
+        </p>
+      )}
     </div>
   );
 }

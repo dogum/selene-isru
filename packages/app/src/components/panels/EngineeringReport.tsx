@@ -94,6 +94,9 @@ export function EngineeringReport(): React.JSX.Element {
         <div><span>PLANT-MASS THROUGHPUT EQUIV.</span><strong>{formatQtyText(result.logistics.plantMassThroughputDays, "days")}</strong></div>
         <div><span>LAUNCH-MASS PAYBACK</span><strong>{campaignStatus(result.campaign).payback}</strong></div>
         <div><span>CAMPAIGN RETURN (LEO MASS)</span><strong>{result.campaign.returnRatio.toFixed(2)}×</strong></div>
+        {result.refuel !== null && (
+          <div><span>LANDER PROPELLANT FROM THE PLANT</span><strong>{Math.round(result.refuel.isruShare * 100)}%</strong></div>
+        )}
       </div>
 
       <section className="report-section">
@@ -269,7 +272,7 @@ export function EngineeringReport(): React.JSX.Element {
           <p>No engine warning is active at the current operating point.</p>
         )}
         <ul>
-          <li>Plant sizing is steady-state and analytical. The campaign ledger adds landing cadence, commissioning, average availability, spares, and imported feed as mass flows; reliability, launch or landing failure, crew, and schedule risk are outside the present boundary.</li>
+          <li>Plant sizing is steady-state and analytical. The campaign ledger adds landing cadence, commissioning, average availability, spares, imported feed, and an optional refuelling demand as mass flows; reliability, launch or landing failure, crew, and schedule risk are outside the present boundary.</li>
           <li>Input evidence and validity limits are available from each control's information disclosure.</li>
           <li>{MODEL_BOUNDARY}</li>
         </ul>

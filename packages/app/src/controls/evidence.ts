@@ -32,7 +32,12 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
   {
     match: /arXiv:1910\.04265/,
     url: "https://arxiv.org/abs/1910.04265",
-    section: "Chen, Sarton du Jonchay, Hou & Ho 2021, Multifidelity Space Mission Planning and Infrastructure Design Framework for Space Resource Logistics (J. Spacecraft & Rockets; arXiv:1910.04265), Table 4"
+    section: "Chen, Sarton du Jonchay, Hou & Ho 2021, Multifidelity Space Mission Planning and Infrastructure Design Framework for Space Resource Logistics (J. Spacecraft & Rockets; arXiv:1910.04265), Tables 1, 2 and 4"
+  },
+  {
+    match: /Merancy/,
+    url: "https://www.nasa.gov/wp-content/uploads/2023/10/nrho-artemis-orbit.pdf",
+    section: "NASA Architecture Workshop 2023 · Merancy, How: NRHO, The Artemis Orbit (cis-lunar delta-v, slides 6 and 9)"
   },
   {
     match: /Kleinhenz/i,
@@ -95,8 +100,8 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   mixtureRatio: {
     rangeRationale: "Fuel-rich to near-stoichiometric LOX/LH2 engines; NASA's polar case uses 6, and RL10-class engines run about 5.5–5.9.",
-    validity: "Sets usable propellant only. Electrolysis gives O/F 7.94, so hydrogen limits it and the surplus oxygen is reported but not credited.",
-    applicability: "Polar site · propellant mode",
+    validity: "Sets usable propellant and splits a refuelling demand into oxygen and hydrogen. Electrolysis gives O/F 7.94, so without a demand hydrogen limits usable propellant and the surplus oxygen is reported but not credited.",
+    applicability: "Polar propellant mode, and the refuelling demand at either site",
     defaultUncertainty: 0.05
   },
   kElectrolyzerMass: {
@@ -152,6 +157,54 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Spares ride as a mass share of other cargo at the lander's LEO cost per landed kg. They do not add capacity or wear out on a schedule.",
     applicability: "Both sites · operations campaign",
     defaultUncertainty: 0.5
+  },
+  sortiesPerYear: {
+    rangeRationale: "From a sortie every two years to weekly service; the source campaign flies one crewed mission a year.",
+    validity: "Sorties are evenly spaced and each loads its whole propellant on the surface. No missed sorties, vehicle boil-off, or reserves.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.5
+  },
+  MdryReusable: {
+    rangeRationale: "From a small cargo hopper to a large crewed lander; the default is the source's ACES-based stage, and Lockheed Martin's 2018 crewed concept is about 22 t.",
+    validity: "Constant over the campaign; the same vehicle flies every sortie.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.2
+  },
+  MtankReusable: {
+    rangeRationale: "Small hopper to large tanker capacity around the source's 68 t ACES-based stage.",
+    validity: "Only checked: a sortie that needs more raises a caution, and the demand is computed as if it fit.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.1
+  },
+  IspReusable: {
+    rangeRationale: "Down to 350 s for degraded or heavily throttled engines, up to RL10B-2-class hydrogen engines (about 465 s); the source uses 420 s.",
+    validity: "Ideal rocket equation on both legs at this Isp. The demand always splits at the LOX/LH2 mixture ratio.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.03
+  },
+  McargoDown: {
+    rangeRationale: "Empty return up to 60 t; the source's crewed mission lands 30 t of cabin and equipment.",
+    validity: "Cargo is picked up in the staging orbit; delivering it there from Earth is outside this ledger.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.3
+  },
+  McargoUp: {
+    rangeRationale: "Empty climb up to 30 t; the source's crew returns 5 t of cabin and samples.",
+    validity: "Carried from the surface to the staging orbit and handed over there.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.3
+  },
+  dvDescent: {
+    rangeRationale: "From low lunar orbit (about 2,050 m/s) through NRHO (about 2,700 m/s) to Constellation's global-access LLO (3,160 m/s).",
+    validity: "Covers any orbit transfer and the landing; no losses beyond those already in the figure.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.05
+  },
+  dvAscent: {
+    rangeRationale: "From low lunar orbit (about 1,860 m/s) to NRHO (about 2,700 m/s).",
+    validity: "Covers the climb and any orbit transfer; the lander carries the propellant for its return.",
+    applicability: "Oxygen or propellant plants · refuelling demand",
+    defaultUncertainty: 0.05
   },
   rhoReg: {
     rangeRationale: "Loose-to-compacted lunar bulk-regolith engineering envelope.",
@@ -334,6 +387,7 @@ function applicabilityFor(group: string): string {
     power: "Both sites · surface power",
     logistics: "Both sites · landing and logistics",
     campaign: "Both sites · deployment and operations campaign",
+    refuel: "Oxygen or propellant plants · refuelling demand",
     propellant: "Polar site · water electrolysis (propellant mode or Sabatier loop)",
     construction: "Equatorial site · slag construction"
   };

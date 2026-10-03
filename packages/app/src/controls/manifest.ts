@@ -96,6 +96,13 @@ export const GROUPS: GroupDef[] = [
     readout: (r) => ({ value: r.campaign.paysBackInCampaign ? (r.campaign.paybackDays ?? Number.NaN) : Number.NaN, unit: "days" })
   },
   {
+    id: "refuel",
+    label: "Refuelling demand",
+    engineGroup: "refuel",
+    // Share of the lander's propellant the plant supplies; a dash without a demand.
+    readout: (r) => ({ value: r.refuel === null ? Number.NaN : r.refuel.isruShare * 100, unit: "%" })
+  },
+  {
     id: "construction",
     label: "Construction",
     engineGroup: "construction",
@@ -187,8 +194,23 @@ const CONDITIONING_KEYS = new Set<string>(Object.values(CONDITIONING_PARAM));
 /** The rail state that decides which inputs a group shows. */
 export type RailVisibilityParams = Pick<
   SimParams,
-  "site" | "oxideModel" | "storageStream" | "cryoControlMode" | "polarProfileMode" | "polarProduct" | "enableSabatier"
+  | "site"
+  | "oxideModel"
+  | "storageStream"
+  | "cryoControlMode"
+  | "polarProfileMode"
+  | "polarProduct"
+  | "enableSabatier"
+  | "refuelDemand"
 >;
+
+/**
+ * Plants whose product a refuelled lander burns: oxygen at the equator, LOX
+ * and LH2 in polar propellant mode. Elsewhere the engine ignores the demand.
+ */
+export function makesLanderPropellant(params: Pick<SimParams, "site" | "enableSabatier" | "polarProduct">): boolean {
+  return params.site === "equatorial" || (!params.enableSabatier && params.polarProduct === "propellant");
+}
 
 /** Liquefier mass input for each liquefied product stream. */
 export const LIQUEFIER_PARAM: Record<string, keyof SimParams> = {
@@ -220,6 +242,13 @@ export function railParamsForGroup(
     // mixture ratio and electrolyzer mass belong to propellant mode alone.
     if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio" && def.key !== "kElectrolyzerMass");
     return params.polarProduct === "propellant" ? all : [];
+  }
+  if (group.id === "refuel") {
+    if (params.refuelDemand !== "lander" || !makesLanderPropellant(params)) return [];
+    // The demand splits at the vehicle mixture ratio, which the propellant
+    // group shows at the pole; at the equator it lives here.
+    const mixture = params.site === "equatorial" ? paramsForGroup("propellant").filter((def) => def.key === "mixtureRatio") : [];
+    return [...all, ...mixture];
   }
   if (group.id === "power" && params.site === "polar" && params.polarProfileMode === "profile") {
     return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
@@ -259,12 +288,20 @@ const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
   cryo: ["storageStream", "cryoControlMode"],
   power: ["polarProfileMode"],
   sabatier: ["enableSabatier"],
-  campaign: ["deploymentManifest"]
+  campaign: ["deploymentManifest"],
+  refuel: ["refuelDemand"]
 };
 
-/** The mode inputs a group shows for this configuration (polar profile controls only at the pole). */
-export function railModeParamsForGroup(group: GroupDef, site: SiteMode): Array<keyof SimParams> {
-  if (group.id === "power" && site !== "polar") return [];
+/**
+ * The mode inputs a group shows for this configuration: polar profile controls
+ * only at the pole, the demand switch only for plants that make lander propellant.
+ */
+export function railModeParamsForGroup(
+  group: GroupDef,
+  params: Pick<SimParams, "site" | "enableSabatier" | "polarProduct">
+): Array<keyof SimParams> {
+  if (group.id === "power" && params.site !== "polar") return [];
+  if (group.id === "refuel" && !makesLanderPropellant(params)) return [];
   return GROUP_MODE_PARAMS[group.id] ?? [];
 }
 
