@@ -507,10 +507,18 @@ function productionState(
 }
 
 // A refuelled lander loads a whole sortie at once, so the LOX and LH2 stores
-// must hold at least one sortie's oxidizer and hydrogen.
+// must hold at least one sortie's oxidizer and hydrogen. A one-stream
+// storage what-if holds the plant's whole product, whatever its stream:
+// the sortie's oxygen at the equator, its oxygen and hydrogen in propellant mode.
 function storageDemands(params: SimParams, production: ProductionState, sortie: SortiePropellant | null): StorageDemand[] {
-  return baseStorageDemands(params, production).map((demand) =>
-    sortie !== null && demand.role === "product" && (demand.stream === "lox" || demand.stream === "lh2")
+  const demands = baseStorageDemands(params, production);
+  if (sortie === null) return demands;
+  if (params.storageStream !== "auto") {
+    const productLoadKg = params.site === "equatorial" ? sortie.oxidizerKg : sortie.oxidizerKg + sortie.fuelKg;
+    return demands.map((demand) => ({ ...demand, minInventoryKg: productLoadKg }));
+  }
+  return demands.map((demand) =>
+    demand.role === "product" && (demand.stream === "lox" || demand.stream === "lh2")
       ? { ...demand, minInventoryKg: demand.stream === "lox" ? sortie.oxidizerKg : sortie.fuelKg }
       : demand
   );

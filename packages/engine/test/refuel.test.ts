@@ -87,6 +87,18 @@ describe("refuelling demand", () => {
     expect(result.logistics.totalInfraMassKg).toBeGreaterThan(base.logistics.totalInfraMassKg);
   });
 
+  test("a one-stream storage what-if holds the whole sortie load of the plant's product", () => {
+    for (const storageStream of ["custom", "lh2", "lox"] as const) {
+      const equatorial = run({ ...EQUATORIAL, storageStream }).result;
+      const [store] = equatorial.cryo.inventories;
+      // At the equator the product is oxygen, whatever the stored stream is called.
+      expect(store!.reserveInventoryKg, storageStream).toBe(equatorial.refuel!.oxidizerPerSortieKg);
+      const propellant = run({ ...PROPELLANT, storageStream }).result;
+      const [tank] = propellant.cryo.inventories;
+      expectRel(tank!.reserveInventoryKg, propellant.refuel!.oxidizerPerSortieKg + propellant.refuel!.fuelPerSortieKg, 1e-12);
+    }
+  });
+
   test("a demand changes nothing where the plant makes no lander propellant", () => {
     for (const site of [{ site: "polar" as const }, { site: "polar" as const, enableSabatier: true }]) {
       const without = run(site).result;

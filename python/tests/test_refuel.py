@@ -75,3 +75,12 @@ def test_drawdown_draws_the_demand_use() -> None:
     for before, after in list(zip(befores, afters))[1:]:
         assert_rel(before["o2Kg"] - after["o2Kg"], refuel["isruO2KgPerDay"] * interval, 1e-9)
         assert_rel(before["h2Kg"] - after["h2Kg"], refuel["isruFuelKgPerDay"] * interval, 1e-9)
+
+
+@pytest.mark.parametrize("stream", ["custom", "lh2", "lox"])
+def test_what_if_store_holds_the_whole_product_load(stream: str) -> None:
+    _, equatorial = run({**EQUATORIAL, "storageStream": stream})
+    assert equatorial["cryo"]["inventories"][0]["reserveInventoryKg"] == equatorial["refuel"]["oxidizerPerSortieKg"]
+    _, propellant = run({**PROPELLANT, "storageStream": stream})
+    load = propellant["refuel"]["oxidizerPerSortieKg"] + propellant["refuel"]["fuelPerSortieKg"]
+    assert_rel(propellant["cryo"]["inventories"][0]["reserveInventoryKg"], load, 1e-12)

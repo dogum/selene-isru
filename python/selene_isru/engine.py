@@ -347,10 +347,17 @@ def _storage_demands(
     params: dict[str, Any], production: dict[str, float], sortie: dict[str, float] | None
 ) -> list[dict[str, Any]]:
     """A refuelled lander loads a whole sortie at once, so the LOX and LH2
-    stores must hold at least one sortie's oxidizer and hydrogen."""
+    stores must hold at least one sortie's oxidizer and hydrogen. A one-stream
+    storage what-if holds the plant's whole product, whatever its stream: the
+    sortie's oxygen at the equator, its oxygen and hydrogen in propellant mode."""
     demands = _base_storage_demands(params, production)
     if sortie is None:
         return demands
+    if params["storageStream"] != "auto":
+        product_load_kg = (
+            sortie["oxidizerKg"] if params["site"] == "equatorial" else sortie["oxidizerKg"] + sortie["fuelKg"]
+        )
+        return [{**demand, "minInventoryKg": product_load_kg} for demand in demands]
     return [
         {**demand, "minInventoryKg": sortie["oxidizerKg"] if demand["stream"] == "lox" else sortie["fuelKg"]}
         if demand["role"] == "product" and demand["stream"] in ("lox", "lh2")
