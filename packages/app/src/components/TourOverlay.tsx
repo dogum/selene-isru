@@ -10,6 +10,7 @@ export function TourOverlay(): React.JSX.Element | null {
   const params = useStore((s) => s.params);
   const stopTour = useStore((s) => s.stopTour);
   const advanceTour = useStore((s) => s.advanceTour);
+  const keepTourCase = useStore((s) => s.keepTourCase);
 
   const tour = tourState.activeId !== null ? TOUR_BY_ID.get(tourState.activeId) : undefined;
   const beat = tour?.beats[tourState.beatIndex];
@@ -52,7 +53,7 @@ export function TourOverlay(): React.JSX.Element | null {
       return;
     }
     const shouldIgnore = (target: EventTarget | null): boolean =>
-      target instanceof Element && target.closest(".tour-overlay, .presets") !== null;
+      target instanceof Element && target.closest(".tour-overlay, .presets, .undo-controls") !== null;
     const onPointer = (event: PointerEvent): void => {
       if (!shouldIgnore(event.target)) {
         useStore.getState().stopTour();
@@ -101,8 +102,11 @@ export function TourOverlay(): React.JSX.Element | null {
         ))}
       </div>
       <div className="tour-actions">
-        <button className="topbar-btn" onClick={stopTour}>
+        <button className="topbar-btn" onClick={() => stopTour()} title="End the tour and return to your case">
           STOP
+        </button>
+        <button className="topbar-btn" onClick={() => keepTourCase()} title="End the tour and keep this case; undo returns to yours">
+          KEEP THIS CASE
         </button>
         <button className="topbar-btn" onClick={next}>
           NEXT

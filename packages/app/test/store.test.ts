@@ -126,11 +126,11 @@ describe("store wiring (§5)", () => {
 
   it("tracks guided tour state", () => {
     useStore.getState().startTour("polar-water");
-    expect(useStore.getState().tour).toEqual({ activeId: "polar-water", beatIndex: 0 });
+    expect(useStore.getState().tour).toMatchObject({ activeId: "polar-water", beatIndex: 0 });
     useStore.getState().advanceTour();
-    expect(useStore.getState().tour).toEqual({ activeId: "polar-water", beatIndex: 1 });
+    expect(useStore.getState().tour).toMatchObject({ activeId: "polar-water", beatIndex: 1 });
     useStore.getState().stopTour();
-    expect(useStore.getState().tour).toEqual({ activeId: null, beatIndex: 0 });
+    expect(useStore.getState().tour).toEqual({ activeId: null, beatIndex: 0, restore: null });
   });
 
   it("manages the compare case separately from current params", () => {

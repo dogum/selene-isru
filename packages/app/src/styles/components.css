@@ -113,6 +113,25 @@
   border: 1px solid var(--line);
 }
 
+/* undo / redo: two glyph buttons joined into one control */
+.undo-controls {
+  display: flex;
+}
+
+.undo-controls .topbar-btn {
+  padding: 6px 8px;
+  letter-spacing: 0;
+}
+
+.undo-controls .topbar-btn + .topbar-btn {
+  border-left: 0;
+}
+
+.topbar-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* keep every top-bar control on one line; between 1100px (the mobile
    breakpoint) and ~1400px there is not room for the subtitle and the
    default spacing, so give those up before any label wraps */

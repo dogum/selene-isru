@@ -1,3 +1,4 @@
+import type { SimParams } from "@selene-isru/engine";
 import { useEffect, useRef, useState } from "react";
 import { PRESETS } from "../presets";
 import { TOURS } from "../tours";
@@ -50,6 +51,7 @@ export function TopBar(): React.JSX.Element {
   const enterAuthoredSite = useStore((s) => s.enterAuthoredSite);
   const enterCustomSite = useStore((s) => s.enterCustomSite);
   const isMobile = useIsMobile();
+  useParamHistoryShortcuts();
 
   return (
     <header className="topbar">
@@ -110,6 +112,7 @@ function DesktopActions(): React.JSX.Element {
 
   return (
     <>
+      <HistoryButtons />
       <LearnButton />
       <BriefButton />
       <EquipmentDropdown />
@@ -343,10 +346,81 @@ function TourDropdown(): React.JSX.Element {
   );
 }
 
+/**
+ * A preset picked mid-tour ends the tour first, so the user's own case comes
+ * back and the preset lands one undo step after it.
+ */
+function applyPreset(patch: Partial<SimParams>): void {
+  const store = useStore.getState();
+  if (store.tour.activeId !== null) {
+    store.stopTour();
+  }
+  useStore.getState().applyPatch(patch);
+}
+
+function isTextEntry(target: EventTarget | null): boolean {
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  if (target instanceof HTMLElement && target.isContentEditable) return true;
+  // Sliders and checkboxes have no undo of their own; typed fields do.
+  return target instanceof HTMLInputElement && !["range", "checkbox", "radio", "button"].includes(target.type);
+}
+
+/** Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, and Ctrl+Y step through authored cases. */
+function useParamHistoryShortcuts(): void {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const store = useStore.getState();
+      // Custom Site binds the same keys to its own design history.
+      if (store.workspaceMode !== "authored" || isTextEntry(event.target) || !(event.metaKey || event.ctrlKey)) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "z") {
+        event.preventDefault();
+        if (event.shiftKey) store.redoParams();
+        else store.undoParams();
+      } else if (key === "y" && event.ctrlKey) {
+        event.preventDefault();
+        store.redoParams();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+}
+
+function HistoryButtons(): React.JSX.Element {
+  const canUndo = useStore((s) => s.paramHistory.past.length > 0 || s.tour.activeId !== null);
+  const canRedo = useStore((s) => s.paramHistory.future.length > 0);
+  return (
+    <div className="undo-controls" role="group" aria-label="Case history">
+      <button
+        type="button"
+        className="topbar-btn"
+        disabled={!canUndo}
+        onClick={() => useStore.getState().undoParams()}
+        aria-label="Undo last change"
+        title="Undo last change (Ctrl+Z)"
+      >
+        ↶
+      </button>
+      <button
+        type="button"
+        className="topbar-btn"
+        disabled={!canRedo}
+        onClick={() => useStore.getState().redoParams()}
+        aria-label="Redo"
+        title="Redo (Ctrl+Shift+Z)"
+      >
+        ↷
+      </button>
+    </div>
+  );
+}
+
 function PresetsDropdown(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
-  const applyPatch = useStore((s) => s.applyPatch);
 
   useMenu(ref, open, setOpen);
 
@@ -363,7 +437,7 @@ function PresetsDropdown(): React.JSX.Element {
               role="menuitem"
               className="presets-item"
               onClick={() => {
-                applyPatch(p.patch);
+                applyPreset(p.patch);
                 setOpen(false);
               }}
             >
@@ -398,12 +472,13 @@ function MobileMenu(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [prefs, setPrefs] = useState<GraphicsPrefs>(() => loadGraphicsPrefs());
   const ref = useRef<HTMLDivElement | null>(null);
-  const applyPatch = useStore((s) => s.applyPatch);
   const site = useStore((s) => s.params.site);
   const reducesIlmenite = useStore((s) => s.result.ilmenite !== null);
   const workspaceMode = useStore((s) => s.workspaceMode);
   const viewMode = useStore((s) => s.customSite.viewMode);
   const learningMode = useStore((s) => s.ui.learningMode);
+  const canUndo = useStore((s) => s.paramHistory.past.length > 0 || s.tour.activeId !== null);
+  const canRedo = useStore((s) => s.paramHistory.future.length > 0);
 
   useEffect(() => {
     document.body.classList.toggle("selene-photo-mode", prefs.photoMode);
@@ -491,7 +566,7 @@ function MobileMenu(): React.JSX.Element {
                   role="menuitem"
                   className="presets-item"
                   onClick={() => {
-                    applyPatch(p.patch);
+                    applyPreset(p.patch);
                     setOpen(false);
                   }}
                 >
@@ -503,6 +578,28 @@ function MobileMenu(): React.JSX.Element {
           <div className="presets-section">APP</div>
           {workspaceMode === "authored" && (
             <>
+              <button
+                role="menuitem"
+                className="presets-item"
+                disabled={!canUndo}
+                onClick={() => {
+                  useStore.getState().undoParams();
+                  setOpen(false);
+                }}
+              >
+                Undo last change
+              </button>
+              <button
+                role="menuitem"
+                className="presets-item"
+                disabled={!canRedo}
+                onClick={() => {
+                  useStore.getState().redoParams();
+                  setOpen(false);
+                }}
+              >
+                Redo
+              </button>
               <button
                 role="menuitem"
                 className="presets-item"
