@@ -31,7 +31,7 @@ packages/engine              TypeScript physics engine (zero runtime deps, pure 
   src/site-design/             Custom Site: schema, catalog, connections, placement,
                                validate, evaluate (TS-only screening layer)
   scripts/gen-constants.ts     codegen + `--check` mode used by CI
-  scripts/check-size.mjs       176 KiB ratchet on built JS output (see below)
+  scripts/check-size.mjs       192 KiB ratchet on built JS output (see below)
   test/                        parity, conservation, regression, benchmarks, site-design
 packages/app                 React 18 + Three.js frontend (Vite)
   src/state/store.ts           zustand store: setParam → simulate() → render + URL sync
@@ -153,7 +153,7 @@ camelCase result keys preserved on both sides.
 
 `python/tools/generate_golden.py` Latin-hypercube samples the full parameter
 box (200 points, seed 42, plus named corner scenarios) and writes
-`packages/engine/test/golden_vectors.json` (215 vectors) plus
+`packages/engine/test/golden_vectors.json` (217 vectors) plus
 `dynamics_vectors.json`. `packages/engine/test/parity.test.ts` asserts the TS
 engine reproduces **every numeric leaf to 1e-9 relative / 1e-12 absolute
 tolerance**. CI regenerates from Python and runs `git diff --exit-code` on the
@@ -179,7 +179,7 @@ from parity vectors — parity agreeing does not mean the physics is right.
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `campaignTimeline`, `refuelTimeline`, `DEFAULTS`,
 `PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
 helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
-`beamEfficiency`, `payloadPerMissionKg`, `sortiePropellantKg`, `oxideModelYield`). If a UI
+`beamEfficiency`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
@@ -217,7 +217,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 
 - Zero runtime dependencies, pure ESM, strict TS (`exactOptionalPropertyTypes`,
   `noUncheckedIndexedAccess`).
-- `scripts/check-size.mjs` enforces a **176 KiB** comment/whitespace-stripped JS
+- `scripts/check-size.mjs` enforces a **192 KiB** comment/whitespace-stripped JS
   budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
   a tripwire against accidental bulk, not a load-time target.
 - **Units are mixed and explicitly annotated — there is no SI invariant, not
@@ -246,7 +246,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 #### The size budget is a ratchet, not a ceiling
 
 `limitBytes` in `check-size.mjs` is not derived from a load-time target or any
-measurement. It has been raised six times — 50 → 96 → 112 → 128 → 144 → 160 → 176 KiB —
+measurement. It has been raised seven times — 50 → 96 → 112 → 128 → 144 → 160 → 176 → 192 KiB —
 each time to a round number just above what the engine then weighed, with a
 comment naming the feature that caused the growth. Nothing breaks one KiB over;
 `three.js` alone is roughly 9× the whole engine, so the engine has never been
@@ -257,7 +257,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~171 KB of ~180.2 KB. A ratchet normally reads nearly
+The current build sits at ~187 KB of ~196.6 KB. A ratchet normally reads nearly
 full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -295,6 +295,10 @@ When changing it:
 - Run `pnpm smoke:custom` against a production preview.
 - Design Check must keep incomplete, dangling, or incompatible topology from
   reporting nominal output — planned vs. achievable output stays distinct.
+- The equatorial catalog is the MRE plant. `canonicalSiteDesign` pins
+  `equatorialProcess` to `mre`, and `compileSiteDesign` raises an info finding
+  when a design asks for ilmenite; the rail hides the switch in this workspace.
+  Planning an ilmenite plant needs its own catalog kinds, not a param change.
 
 Spec: [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md).
 Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
@@ -434,6 +438,8 @@ in `assets/ASSET_LICENSES.md`.
 | Aging slopes ↔ crossover | `packages/engine/test/power-slopes.test.ts` |
 | Campaign ledger self-agreement, timeline parity | `campaign.test.ts`, `test_campaign.py`, campaign vectors in `dynamics_vectors.json` |
 | Refuelling demand, store sizing, tank drawdown | `refuel.test.ts`, `test_refuel.py`, refuel vectors in `dynamics_vectors.json` |
+| Ilmenite reduction chain, Eagle calibration check | `ilmenite.test.ts`, `test_ilmenite.py`, v0.8 anchors in `regression.test.ts` |
+| Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
 | Polar propellant mode, liquefaction calibration | v0.6 anchors in `regression.test.ts`, `kleinhenz-paz-2020-polar-propellant` in `external-benchmarks.test.ts` |
 | Store clamping invariant, URL round-trip, export | `store.test.ts`, `url.test.ts`, `study-export.test.ts` |
@@ -474,7 +480,8 @@ script run on a clean checkout at all.
   `.gitignore` already covers it. Golden vectors and GLB assets *are* tracked.
 - Prefer editing existing docs in `docs/` over adding new ones; the audit trail
   (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
-  `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md`) is
+  `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md` →
+  `model-ilmenite-v08.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -496,6 +503,9 @@ script run on a clean checkout at all.
 - [`docs/model-refuel-v07.md`](docs/model-refuel-v07.md) — the refuelling
   demand: a reusable lander's propellant per sortie, what the plant supplies,
   sortie-sized stores, tank drawdown, and a ledger that credits only what is used.
+- [`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md) — hydrogen
+  reduction of ilmenite as the second equatorial process: the soil chain, the
+  Eagle 1988 calibration, and why it mines on a soil basis.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),
