@@ -216,6 +216,15 @@ function previewCaseFile(file: Record<string, unknown>, blocked: StudyImportPrev
     return blocked;
   }
   const name = typeof meta.name === "string" && meta.name.trim().length > 0 ? meta.name.slice(0, 80) : "Imported case";
+  // Version 1 always writes the kind; anything else would lose design data.
+  if (meta.kind !== "authored" && meta.kind !== "custom") {
+    return {
+      ...blocked,
+      sourceKind: "case",
+      rejectedCount: 1,
+      findings: [{ severity: "error", scenarioName: name, message: "The case kind is missing or unsupported; expected \"authored\" or \"custom\"." }]
+    };
+  }
   const timestamp = Number.isFinite(exportedAt) ? exportedAt : Date.now();
   const id = `case-${timestamp.toString(36)}-${fileStem(name)}`.slice(0, 64);
   const findings: StudyImportFinding[] = [];

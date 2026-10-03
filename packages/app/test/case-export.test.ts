@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { DEFAULTS, PARAM_META, SEEDED_SITE_DESIGN_FIXTURES, simulate } from "@selene-isru/engine";
+import { DEFAULTS, PARAM_META, SEEDED_SITE_DESIGN_FIXTURES, simulate, simulateSiteDesignTimeseries } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
 import { CASE_SCHEMA, caseExport, resultDrift } from "../src/analysis/caseExport";
 import { changedInputRows, previewStudyExport, reportSnapshot, scenariosCsv } from "../src/analysis/studyExport";
@@ -60,9 +60,34 @@ describe("full-fidelity case export", () => {
     expect(preview.findings.filter((finding) => finding.severity === "caution" && /current model/.test(finding.message))).toEqual([]);
   });
 
+  it("exports a custom design's gated timeseries, not the authored-site profile", () => {
+    const valid = SEEDED_SITE_DESIGN_FIXTURES.equatorial;
+    const broken = { ...valid, connections: [] };
+    for (const design of [valid, broken]) {
+      const exported = caseExport({ name: "Yard", kind: "custom", params: design.params, design }, NOW, BUILD);
+      const { points, summary } = simulateSiteDesignTimeseries(design, exported.timeseries.options);
+      expect(exported.timeseries.points).toEqual(points);
+      expect(exported.timeseries.summary).toEqual(summary);
+    }
+    const brokenExport = caseExport({ name: "Broken", kind: "custom", params: broken.params, design: broken }, NOW, BUILD);
+    expect(brokenExport.customSite?.topologyValid).toBe(false);
+    expect(brokenExport.timeseries.points.every((point) => point.netProductionKgPerDay === 0)).toBe(true);
+  });
+
   it("rejects malformed case files", () => {
     expect(previewStudyExport({ schema: CASE_SCHEMA, version: 99 }).scenarios).toEqual([]);
     expect(previewStudyExport({ schema: CASE_SCHEMA, version: 1, case: { kind: "custom" }, params: {} }).rejectedCount).toBe(1);
+  });
+
+  it("rejects a case file whose kind is missing or unknown instead of importing it as authored", () => {
+    for (const kind of [undefined, "campaign", 3]) {
+      const odd = JSON.parse(JSON.stringify(file));
+      odd.case.kind = kind;
+      const preview = previewStudyExport(odd);
+      expect(preview.scenarios).toEqual([]);
+      expect(preview.rejectedCount).toBe(1);
+      expect(preview.findings[0]).toMatchObject({ severity: "error" });
+    }
   });
 });
 

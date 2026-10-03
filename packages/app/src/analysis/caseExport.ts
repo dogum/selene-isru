@@ -3,6 +3,7 @@ import {
   evaluateSiteDesign,
   PARAM_META,
   simulate,
+  simulateSiteDesignTimeseries,
   simulateTimeseries
 } from "@selene-isru/engine";
 import type {
@@ -74,15 +75,29 @@ function paramUnits(): Record<string, string> {
   return Object.fromEntries(Object.entries(PARAM_META).map(([key, meta]) => [key, meta.unit]));
 }
 
-/** Result the case reports: the topology-gated achieved result for a custom design. */
-function evaluateCase(source: CaseSource): { params: SimParams; result: SimResult; customSite?: CustomSiteExport } {
+/**
+ * Result and timeseries the case reports. A custom design reports what the
+ * live workspace shows: the topology-gated result and the site-design
+ * timeseries, which carries no production through an invalid topology.
+ */
+function evaluateCase(source: CaseSource): {
+  params: SimParams;
+  result: SimResult;
+  timeseries: TimeseriesResult;
+  customSite?: CustomSiteExport;
+} {
   if (source.kind !== "custom" || source.design === undefined) {
-    return { params: source.params, result: simulate(source.params) };
+    return {
+      params: source.params,
+      result: simulate(source.params),
+      timeseries: simulateTimeseries(source.params, CASE_TIMESERIES)
+    };
   }
   const evaluation = evaluateSiteDesign(source.design);
   return {
     params: evaluation.normalizedDesign.params,
     result: evaluation.topologyValid ? evaluation.achievedResult : evaluation.baseResult,
+    timeseries: simulateSiteDesignTimeseries(source.design, CASE_TIMESERIES),
     customSite: {
       design: canonicalSiteDesign(evaluation.normalizedDesign),
       plannedTargetKgPerDay: evaluation.plannedTargetKgPerDay,
@@ -95,7 +110,7 @@ function evaluateCase(source: CaseSource): { params: SimParams; result: SimResul
 }
 
 export function caseExport(source: CaseSource, now: Date = new Date(), build: BuildInfo = BUILD_INFO): CaseExport {
-  const { params, result, customSite } = evaluateCase(source);
+  const { params, result, timeseries, customSite } = evaluateCase(source);
   return {
     schema: CASE_SCHEMA,
     version: CASE_VERSION,
@@ -111,7 +126,7 @@ export function caseExport(source: CaseSource, now: Date = new Date(), build: Bu
     units: { params: paramUnits(), results: RESULT_UNITS_NOTE },
     params: { ...params },
     result,
-    timeseries: { options: CASE_TIMESERIES, ...simulateTimeseries(params, CASE_TIMESERIES) },
+    timeseries: { options: CASE_TIMESERIES, ...timeseries },
     ...(customSite === undefined ? {} : { customSite })
   };
 }
