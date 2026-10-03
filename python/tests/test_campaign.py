@@ -105,3 +105,17 @@ def test_co2_storage_what_if_is_feed_only_with_sabatier() -> None:
     assert_rel(result["campaign"]["feedKgPerYear"], expected_feed, 1e-12)
     _, equatorial = run({"cryoControlMode": "passive", "storageStream": "co2-feed"})
     assert equatorial["campaign"]["feedKgPerYear"] == 0
+
+
+def test_sabatier_buffer_loss_slows_the_loop() -> None:
+    params, result = run({"site": "polar", "enableSabatier": True, "cryoControlMode": "passive"})
+    production, inventories = result["production"], result["cryo"]["inventories"]
+    buffer_lost = next(i["actualLossKgPerDay"] for i in inventories if i["role"] == "buffer")
+    product_lost = sum(i["actualLossKgPerDay"] for i in inventories if i["role"] == "product")
+    feed_lost = next(i["actualLossKgPerDay"] for i in inventories if i["role"] == "feed")
+    assert buffer_lost > 1
+    throughput = 1 - buffer_lost / production["waterKgPerDay"]
+    gross = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    assert_rel(result["campaign"]["deliveredKgPerDay"], (gross * throughput - product_lost) * params["plantAvailability"], 1e-12)
+    expected_feed = (production["co2ImportedKgPerDay"] * throughput + feed_lost) * params["plantAvailability"] * 365
+    assert_rel(result["campaign"]["feedKgPerYear"], expected_feed, 1e-12)

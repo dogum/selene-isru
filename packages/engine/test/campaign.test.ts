@@ -158,10 +158,12 @@ describe("campaign ledger behaviour", () => {
 
     const sabatier = run({ site: "polar", enableSabatier: true, cryoControlMode: "passive" });
     const feedLost = sabatier.result.cryo.inventories.find((inventory) => inventory.role === "feed")!.actualLossKgPerDay;
+    const bufferLost = sabatier.result.cryo.inventories.find((inventory) => inventory.role === "buffer")!.actualLossKgPerDay;
     expect(feedLost).toBeGreaterThan(0);
     expectRel(
       sabatier.result.campaign.feedKgPerYear,
-      (sabatier.result.production.co2ImportedKgPerDay + feedLost) * sabatier.params.plantAvailability * 365,
+      (sabatier.result.production.co2ImportedKgPerDay * (1 - bufferLost / sabatier.result.production.waterKgPerDay) + feedLost) *
+        sabatier.params.plantAvailability * 365,
       1e-12
     );
   });
@@ -187,6 +189,46 @@ describe("campaign ledger behaviour", () => {
     expectRel(
       equatorial.result.campaign.deliveredKgPerDay,
       (equatorial.result.production.o2KgPerDay - tank!.actualLossKgPerDay) * equatorial.params.plantAvailability,
+      1e-12
+    );
+  });
+
+  test("water lost from the Sabatier buffer slows the loop's products and CO2 draw", () => {
+    const { params, result } = run({ site: "polar", enableSabatier: true, cryoControlMode: "passive" });
+    const { production, campaign, cryo } = result;
+    const bufferLost = cryo.inventories.find((inventory) => inventory.role === "buffer")!.actualLossKgPerDay;
+    const productLost = cryo.inventories
+      .filter((inventory) => inventory.role === "product")
+      .reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
+    const feedLost = cryo.inventories.find((inventory) => inventory.role === "feed")!.actualLossKgPerDay;
+    expect(bufferLost).toBeGreaterThan(1);
+    const throughput = 1 - bufferLost / production.waterKgPerDay;
+    expectRel(
+      campaign.deliveredKgPerDay,
+      ((production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay) * throughput - productLost) * params.plantAvailability,
+      1e-12
+    );
+    expectRel(campaign.feedKgPerYear, (production.co2ImportedKgPerDay * throughput + feedLost) * params.plantAvailability * 365, 1e-12);
+
+    // A water-only storage what-if is the same buffer, not a product.
+    const whatIf = run({ site: "polar", enableSabatier: true, cryoControlMode: "passive", storageStream: "water-ice" });
+    const [tank] = whatIf.result.cryo.inventories;
+    expect(tank!.stream).toBe("water-ice");
+    expect(tank!.actualLossKgPerDay).toBeGreaterThan(0);
+    const whatIfThroughput = 1 - tank!.actualLossKgPerDay / whatIf.result.production.waterKgPerDay;
+    const p = whatIf.result.production;
+    expectRel(
+      whatIf.result.campaign.deliveredKgPerDay,
+      (p.o2KgPerDay + p.ch4KgPerDay + p.h2KgPerDay) * whatIfThroughput * whatIf.params.plantAvailability,
+      1e-12
+    );
+
+    // Without the loop, stored water is the product and its loss is lost product.
+    const water = run({ site: "polar", cryoControlMode: "passive" });
+    const [waterTank] = water.result.cryo.inventories;
+    expectRel(
+      water.result.campaign.deliveredKgPerDay,
+      (water.result.production.waterKgPerDay - waterTank!.actualLossKgPerDay) * water.params.plantAvailability,
       1e-12
     );
   });

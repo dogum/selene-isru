@@ -59,6 +59,11 @@ It is not the water processed.
   year as a mass share of other cargo.
 - **Imported feed:** the Sabatier loop's CO₂ has no lunar source in this model.
   It is landed as it is consumed (× availability) and charged like spares.
+- **Storage losses:** with passive or capacity-limited storage control, product
+  lost in storage is not delivered, and imported feed lost in storage is landed
+  again. Water lost from the Sabatier loop's buffer never reaches electrolysis,
+  so the loop's products and its CO₂ draw fall in proportion. The default
+  zero-boil-off control has no losses, so no reference result below moves.
 - **Payback** is the day saved first equals spent:
   `firstProductDay + plantLeoMass / (daily saving − daily spares cost)`. It is
   null when spares and feed cost at least as much LEO mass per day as the
@@ -172,6 +177,8 @@ and [shared](screenshots/campaign/campaign-pilot-shared.png),
   - a dedicated landing steps spend by exactly one `M0leo`
   - a shared manifest charges every landed kg at the same LEO cost
   - a no-payload lander leaves the ledger empty
+  - storage losses come off delivered product, lost feed is landed again, and
+    water lost from the Sabatier buffer slows the loop
 - **Golden vectors** cover the ledger at all 211 points (two new named
   scenarios: a multi-lander deployment and a shared pilot). The dynamics
   fixture adds two `campaignTimeline` vectors, so the time history is
