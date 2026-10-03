@@ -106,11 +106,15 @@ describe("undo and redo of authored edits", () => {
   it("ignores edits that change nothing", () => {
     store().setParam("targetKgPerDay", DEFAULTS.targetKgPerDay);
     store().applyPatch({});
-    // swapping two identical cases, names included, changes nothing on screen either
     store().setCompareFromCurrent();
-    store().setUi({ compareScenarioName: store().ui.currentScenarioName });
+    const before = store().paramHistory.past.length;
+    // taking the same comparison snapshot again changes nothing
+    store().setCompareFromCurrent();
+    expect(store().paramHistory.past).toHaveLength(before);
+    // nor does swapping two identical cases, names included
+    useStore.setState({ ui: { ...store().ui, compareScenarioName: store().ui.currentScenarioName } });
     store().swapCompare();
-    expect(store().paramHistory.past).toHaveLength(0);
+    expect(store().paramHistory.past).toHaveLength(before);
   });
 
   it("undoes a preset, an applied point, a loaded case, a swap, and a site switch", () => {
@@ -169,12 +173,44 @@ describe("undo and redo of authored edits", () => {
     expect(store().compareParams.site).toBe("polar");
     expect(store().ui.compareScenarioName).toBe("Case B");
 
-    // an ordinary step leaves a comparison snapshot taken since alone
+    // a comparison snapshot is a step of its own: undo takes it back, not the edit before it
     later();
     store().setParam("reserveDays", 45);
+    const comparisonBefore = store().compareParams;
     store().setCompareFromCurrent();
-    store().undoParams();
     expect(store().compareParams.reserveDays).toBe(45);
+    store().undoParams();
+    expect(store().compareParams).toEqual(comparisonBefore);
+    expect(store().params.reserveDays).toBe(45);
+    store().redoParams();
+    expect(store().compareParams.reserveDays).toBe(45);
+  });
+
+  it("never lets an older step overwrite a newer comparison", () => {
+    // swap A/B, edit the live case into C, take C as the comparison, then undo all three
+    store().setUi({ currentScenarioName: "A" });
+    store().setCompareFromCurrent();
+    store().applyPatch({ site: "polar" });
+    store().setUi({ currentScenarioName: "B" });
+    store().swapCompare(); // live A, comparison B
+    later();
+    store().setParam("targetKgPerDay", 3000); // live C
+    store().setCompareFromCurrent(); // comparison C
+    const c = store().compareParams;
+    store().undoParams(); // the snapshot
+    expect(store().compareParams.site).toBe("polar");
+    store().undoParams(); // the edit
+    expect(store().params.targetKgPerDay).toBe(DEFAULTS.targetKgPerDay);
+    expect(store().compareParams.site).toBe("polar");
+    store().undoParams(); // the swap
+    expect(store().params.site).toBe("polar");
+    expect(store().compareParams.site).toBe("equatorial");
+    // and C is still there to redo back to
+    store().redoParams();
+    store().redoParams();
+    store().redoParams();
+    expect(store().compareParams).toEqual(c);
+    expect(store().params.targetKgPerDay).toBe(3000);
   });
 
   it("records a swap of equal inputs under different names, and drops a stale swap redo", () => {

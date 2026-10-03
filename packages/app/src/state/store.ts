@@ -123,15 +123,15 @@ export interface TourState {
   restore: AuthoredCaseEntry | null;
 }
 
-/** An authored case as it was on screen: what undo, redo, and tours restore. */
+/**
+ * What was on screen before a step: the live authored case and the
+ * comparison case beside it. Undo and redo restore both, so no step can
+ * leave the two out of step; a tour restores only the live case.
+ */
 export interface AuthoredCaseEntry {
   params: SimParams;
   scenarioName: string;
-  /**
-   * The comparison case beside it, kept only for a swap, which changes both
-   * sides; undoing any other step leaves the comparison as it is.
-   */
-  compare?: { params: SimParams; scenarioName: string };
+  compare: { params: SimParams; scenarioName: string };
 }
 
 export interface ParamHistory {
@@ -645,8 +645,8 @@ export const useStore = create<Store>((set, get) => {
    * Push the case on screen onto the undo stack before it changes. Edits to
    * the same input in quick succession (one slider drag) are one step.
    */
-  const rememberAuthoredCase = (coalesceKey: string | null = null, withCompare = false): void => {
-    const { params, ui, paramHistory, compareParams } = get();
+  const rememberAuthoredCase = (coalesceKey: string | null = null): void => {
+    const { paramHistory } = get();
     const now = Date.now();
     const coalesce =
       coalesceKey !== null &&
@@ -658,39 +658,31 @@ export const useStore = create<Store>((set, get) => {
       paramHistory: {
         past: coalesce
           ? paramHistory.past
-          : [
-              ...paramHistory.past,
-              {
-                params,
-                scenarioName: ui.currentScenarioName,
-                ...(withCompare ? { compare: { params: compareParams, scenarioName: ui.compareScenarioName } } : {})
-              }
-            ].slice(-PARAM_HISTORY_LIMIT),
+          : [...paramHistory.past, entryOnScreen()].slice(-PARAM_HISTORY_LIMIT),
         future: []
       }
     });
   };
 
-  /** The case on screen as a history entry, with the comparison when `target` carries one. */
-  const entryOnScreen = (target: AuthoredCaseEntry): AuthoredCaseEntry => {
+  /** Both cases on screen, as a history entry. */
+  function entryOnScreen(): AuthoredCaseEntry {
     const { params, ui, compareParams } = get();
     return {
       params,
       scenarioName: ui.currentScenarioName,
-      ...(target.compare === undefined ? {} : { compare: { params: compareParams, scenarioName: ui.compareScenarioName } })
+      compare: { params: compareParams, scenarioName: ui.compareScenarioName }
     };
-  };
+  }
 
-  /** Show a history entry: the live case, and the comparison when the entry kept it. */
+  /** Show a history entry: the live case and the comparison beside it. */
   const showEntry = (entry: AuthoredCaseEntry): void => {
     showAuthoredCase(entry.params, entry.scenarioName);
-    if (entry.compare !== undefined) {
-      set({
-        compareParams: entry.compare.params,
-        compareResult: simulate(entry.compare.params),
-        ui: { ...get().ui, compareScenarioName: entry.compare.scenarioName }
-      });
-    }
+    set({
+      ...(sameParams(entry.compare.params, get().compareParams)
+        ? {}
+        : { compareParams: entry.compare.params, compareResult: simulate(entry.compare.params) }),
+      ui: { ...get().ui, compareScenarioName: entry.compare.scenarioName }
+    });
   };
 
   /** Whether showing `params` under `name` would change the case on screen. */
@@ -1479,7 +1471,7 @@ export const useStore = create<Store>((set, get) => {
       set({
         paramHistory: {
           past: paramHistory.past.slice(0, -1),
-          future: [entryOnScreen(previous), ...paramHistory.future].slice(0, PARAM_HISTORY_LIMIT)
+          future: [entryOnScreen(), ...paramHistory.future].slice(0, PARAM_HISTORY_LIMIT)
         }
       });
       showEntry(previous);
@@ -1498,7 +1490,7 @@ export const useStore = create<Store>((set, get) => {
       lastParamEdit = null;
       set({
         paramHistory: {
-          past: [...paramHistory.past, entryOnScreen(next)].slice(-PARAM_HISTORY_LIMIT),
+          past: [...paramHistory.past, entryOnScreen()].slice(-PARAM_HISTORY_LIMIT),
           future: paramHistory.future.slice(1)
         }
       });
@@ -1543,17 +1535,19 @@ export const useStore = create<Store>((set, get) => {
     },
 
     setCompareFromCurrent: () => {
-      const { params, result, paramHistory } = get();
-      // A redo step that restores a comparison (from an undone swap) would
-      // overwrite this one, so it and the steps after it go.
-      const stale = paramHistory.future.findIndex((entry) => entry.compare !== undefined);
+      const { params, result, compareParams, ui } = get();
+      // A new comparison is a step of its own, so undo can take it back and
+      // no older step can bring a superseded comparison back over it.
+      const nextName = `${ui.currentScenarioName} snapshot`;
+      if (recordsAuthoredHistory() && (!sameParams(params, compareParams) || nextName !== ui.compareScenarioName)) {
+        rememberAuthoredCase();
+      }
       set({
-        ...(stale === -1 ? {} : { paramHistory: { ...paramHistory, future: paramHistory.future.slice(0, stale) } }),
         compareParams: { ...params },
         compareResult: result,
         ui: {
           ...get().ui,
-          compareScenarioName: `${get().ui.currentScenarioName} snapshot`
+          compareScenarioName: nextName
         }
       });
     },
@@ -1563,8 +1557,7 @@ export const useStore = create<Store>((set, get) => {
       const changesSomething =
         !sameParams(get().compareParams, get().params) || before.compareScenarioName !== before.currentScenarioName;
       if (recordsAuthoredHistory() && changesSomething) {
-        // a swap changes both sides, so its step keeps the comparison too
-        rememberAuthoredCase(null, true);
+        rememberAuthoredCase();
       }
       const { params, result, compareParams, compareResult, time, ui } = get();
       const nextTimeseries = simulateTimeseries(compareParams, { cycles: 1, samplesPerCycle: 96 });
@@ -1868,7 +1861,9 @@ export const useStore = create<Store>((set, get) => {
       const { tour, params, ui, workspaceMode } = get();
       // A tour started from inside another one still returns to the user's case.
       const restore = tour.restore ??
-        (workspaceMode === "authored" ? { params, scenarioName: ui.currentScenarioName } : null);
+        (workspaceMode === "authored"
+          ? { params, scenarioName: ui.currentScenarioName, compare: { params: get().compareParams, scenarioName: ui.compareScenarioName } }
+          : null);
       set({ tour: { activeId: id, beatIndex: 0, restore }, time: { ...get().time, playing: false } });
     },
 
@@ -1893,8 +1888,10 @@ export const useStore = create<Store>((set, get) => {
         return;
       }
       lastParamEdit = null;
-      const { paramHistory } = get();
-      set({ paramHistory: { past: [...paramHistory.past, restore].slice(-PARAM_HISTORY_LIMIT), future: [] } });
+      const { paramHistory, compareParams, ui } = get();
+      // the tour replaced only the live case, so undo keeps today's comparison
+      const step: AuthoredCaseEntry = { ...restore, compare: { params: compareParams, scenarioName: ui.compareScenarioName } };
+      set({ paramHistory: { past: [...paramHistory.past, step].slice(-PARAM_HISTORY_LIMIT), future: [] } });
     },
 
     advanceTour: () => {

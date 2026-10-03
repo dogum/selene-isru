@@ -111,9 +111,10 @@ when they are useful:
   adds a reset-camera control and readability lock, and can overlay live,
   directional material and power paths between equipment. Selecting one asset
   isolates its connected subsystem even when Learn is off.
-- **Undo and redo** step back through every change to the case on screen:
-  slider drags (one step each), presets, applied Brief and frontier points,
-  loaded cases, swaps, and site switches (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, or the
+- **Undo and redo** step back through every change to the case on screen and
+  the comparison beside it: slider drags (one step each), typed values and
+  resets, presets, applied Brief, frontier and sweep points, loaded cases,
+  comparison snapshots, swaps, and site switches (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, or the
   arrows in the top bar). **Tours** put your case back when they end, or keep
   theirs with KEEP THIS CASE, one undo away from yours.
 - **Trade Study** is the scenario workspace:

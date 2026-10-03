@@ -317,11 +317,13 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
   `applyPatch`, URL load).
 
   The authored path also keeps an undo history (`paramHistory`): every change
-  to the case on screen is pushed before it lands, except a tour's scripted
-  beats (a tour restores the case it interrupted instead) and the return
-  from Custom Site (leaving it records the authored case). A new action that
-  replaces the authored case should go through `applyPatch` or `setParam` so
-  it is undoable, or say why not. The custom workspace takes the same warnings through
+  to the live case or the comparison case (inputs or name) is pushed before
+  it lands, and each entry holds both, so undo and redo always restore the
+  pair together. The exceptions are a tour's scripted beats (a tour restores
+  the case it interrupted instead) and the return from Custom Site (leaving
+  it records the authored case). Only slider gestures coalesce. A new action
+  that replaces the authored case should go through `applyPatch` or
+  `setParam` so it is undoable, or say why not. The custom workspace takes the same warnings through
   `commitCustomDesign`'s `inputWarnings` argument, since
   `evaluateCustomRuntime` also receives an already-normalized design. Scenario
   **import deliberately does not normalize** — the library stores what was
