@@ -6,8 +6,6 @@ from typing import Any
 DAYS_PER_YEAR = 365
 # Landings marked one by one; beyond this the grid samples show the staircase.
 MAX_LANDING_EVENTS = 100
-# Sorties marked one by one; beyond this the grid samples show the staircase.
-MAX_SORTIE_EVENTS = 100
 # Regular samples per timeline, whatever step was asked for.
 MAX_SAMPLES = 2000
 
@@ -177,13 +175,13 @@ def campaign_timeline(params: dict[str, Any], result: dict[str, Any], step_days:
     if campaign["sortieIntervalDays"] is not None:
         sortie_interval = campaign["sortieIntervalDays"]
         sorties = _sorties_by(campaign["campaignEndDay"] - campaign["firstProductDay"], sortie_interval)
-        # As with landings, mark each sortie only when few enough to draw.
-        if sorties <= MAX_SORTIE_EVENTS:
-            for k in range(1, sorties + 1):
-                t = campaign["firstProductDay"] + k * sortie_interval
-                landers = _landers_by(params, basis, t)
-                points.append({**_ledger_at(params, result, t, landers, -1), "event": f"before sortie {k}"})
-                add(t, f"sortie {k}")
+        # Every sortie is marked, so the ledger draws its credit as a staircase.
+        # Unlike landings the count is bounded: at most 52 a year for 20 years.
+        for k in range(1, sorties + 1):
+            t = campaign["firstProductDay"] + k * sortie_interval
+            landers = _landers_by(params, basis, t)
+            points.append({**_ledger_at(params, result, t, landers, -1), "event": f"before sortie {k}"})
+            add(t, f"sortie {k}")
     if campaign["paysBackInCampaign"] and campaign["paybackDays"] is not None:
         add(campaign["paybackDays"], "payback")
     add(campaign["campaignEndDay"], "campaign end")

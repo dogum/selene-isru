@@ -166,6 +166,15 @@ describe("the ledger credits a sortie when it flies", () => {
     expect(timeline.filter((point) => point.event.startsWith("sortie "))).toHaveLength(20);
   });
 
+  test("every sortie is marked, even at the highest cadence over the longest campaign", () => {
+    const { params, result } = run({ ...EQUATORIAL, sortiesPerYear: 52, missionYears: 20 });
+    const timeline = campaignTimeline(params, result);
+    const sorties = timeline.filter((point) => /^sortie \d+$/.test(point.event));
+    expect(sorties).toHaveLength(1040);
+    expect(timeline.filter((point) => point.event.startsWith("before sortie "))).toHaveLength(1040);
+    expectRel(sorties.at(-1)!.usedKg, result.campaign.cumulativeUsedKg, 1e-12);
+  });
+
   test("payback falls on the first sortie that clears the spend", () => {
     for (const input of [{ ...EQUATORIAL, sortiesPerYear: 9 }, { ...PROPELLANT, sortiesPerYear: 8, McargoDown: 5000 }]) {
       const { params, result } = run(input);
