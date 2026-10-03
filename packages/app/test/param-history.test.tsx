@@ -180,6 +180,33 @@ describe("undo and redo of authored edits", () => {
     expect(store().compareParams).toEqual(snapshot);
   });
 
+  it("records a step when only the case name changes, and none when nothing does", () => {
+    store().saveCurrentScenario("Same inputs");
+    const saved = store().scenarioLibrary.find((scenario) => scenario.name === "Same inputs")!;
+    store().setUi({ currentScenarioName: "Mine" });
+    // loading a case with the live inputs still renames the live case
+    store().loadScenario(saved.id);
+    expect(store().ui.currentScenarioName).toBe("Same inputs");
+    expect(store().paramHistory.past).toHaveLength(1);
+    store().undoParams();
+    expect(store().ui.currentScenarioName).toBe("Mine");
+    store().redoParams();
+    // loading it again changes nothing
+    store().loadScenario(saved.id);
+    expect(store().paramHistory.past).toHaveLength(1);
+    // a preset with the live inputs renames to the working case
+    store().applyPatch({});
+    expect(store().ui.currentScenarioName).toBe("Equatorial working case");
+    store().undoParams();
+    expect(store().ui.currentScenarioName).toBe("Same inputs");
+    // clicking the site already shown keeps the name and records nothing
+    const before = store().paramHistory.past.length;
+    store().enterAuthoredSite("equatorial");
+    expect(store().ui.currentScenarioName).toBe("Same inputs");
+    expect(store().paramHistory.past).toHaveLength(before);
+    store().deleteScenario(saved.id);
+  });
+
   it("keeps at most the history limit", () => {
     for (let i = 0; i < PARAM_HISTORY_LIMIT + 20; i += 1) {
       later();

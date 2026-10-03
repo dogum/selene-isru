@@ -412,6 +412,11 @@ function evaluateCustomRuntime(design: SiteDesignDocument): {
   };
 }
 
+/** The name a case gets when it is not a saved one. */
+function workingCaseName(params: Pick<SimParams, "site">): string {
+  return `${params.site === "polar" ? "Polar" : "Equatorial"} working case`;
+}
+
 function sameParams(a: SimParams, b: SimParams): boolean {
   return (Object.keys(a) as Array<keyof SimParams>).every((key) => a[key] === b[key]);
 }
@@ -681,6 +686,10 @@ export const useStore = create<Store>((set, get) => {
     }
   };
 
+  /** Whether showing `params` under `name` would change the case on screen. */
+  const changesCase = (params: SimParams, name: string): boolean =>
+    !sameParams(params, get().params) || name !== get().ui.currentScenarioName;
+
   /** Simulate an authored case and show it, without touching the undo stack. */
   const showAuthoredCase = (input: Partial<SimParams>, scenarioName?: string): void => {
     const { params: nextParams, result: nextResult } = simulateStoreParams(input);
@@ -696,7 +705,7 @@ export const useStore = create<Store>((set, get) => {
       ui: {
         ...get().ui,
         selectedAsset: null,
-        currentScenarioName: scenarioName ?? `${nextParams.site === "polar" ? "Polar" : "Equatorial"} working case`
+        currentScenarioName: scenarioName ?? workingCaseName(nextParams)
       }
     });
   };
@@ -778,7 +787,7 @@ export const useStore = create<Store>((set, get) => {
       parameterNames: "plain",
       missionBriefOpen: false,
       studyTab: "scenarios",
-      currentScenarioName: `${params.site === "polar" ? "Polar" : "Equatorial"} working case`,
+      currentScenarioName: workingCaseName(params),
       compareScenarioName: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
       selectedAsset: null,
       selectedKpi: null,
@@ -797,6 +806,7 @@ export const useStore = create<Store>((set, get) => {
       set({ workspaceMode: "authored" });
       if (fromCustom) {
         withoutHistory(() => get().setParam("site", site));
+        set({ ui: { ...get().ui, currentScenarioName: workingCaseName(get().params) } });
       } else {
         get().setParam("site", site);
       }
@@ -1411,7 +1421,9 @@ export const useStore = create<Store>((set, get) => {
         );
         return;
       }
-      if (recordsAuthoredHistory() && !sameParams(nextParams, get().params)) {
+      const switchesSite = key === "site" && nextParams.site !== get().params.site;
+      const nextName = switchesSite ? workingCaseName(nextParams) : get().ui.currentScenarioName;
+      if (recordsAuthoredHistory() && changesCase(nextParams, nextName)) {
         // A site switch is always its own step.
         rememberAuthoredCase(key === "site" ? null : String(key));
       }
@@ -1425,12 +1437,12 @@ export const useStore = create<Store>((set, get) => {
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
         secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
-        ...(key === "site"
+        ...(switchesSite
           ? {
               ui: {
                 ...get().ui,
                 selectedAsset: null,
-                currentScenarioName: `${nextParams.site === "polar" ? "Polar" : "Equatorial"} working case`
+                currentScenarioName: nextName
               }
             }
           : {})
@@ -1438,7 +1450,8 @@ export const useStore = create<Store>((set, get) => {
     },
 
     applyPatch: (patch) => {
-      if (recordsAuthoredHistory() && !sameParams(normalizeParams(patch).params, get().params)) {
+      const next = normalizeParams(patch).params;
+      if (recordsAuthoredHistory() && changesCase(next, workingCaseName(next))) {
         rememberAuthoredCase();
       }
       showAuthoredCase(patch);
@@ -1622,11 +1635,12 @@ export const useStore = create<Store>((set, get) => {
       }
       const fromCustom = get().workspaceMode === "custom";
       set({ workspaceMode: "authored" });
-      if (fromCustom) {
-        withoutHistory(() => get().applyPatch(scenario.params));
-      } else {
-        get().applyPatch(scenario.params);
+      // One step for the case as it lands, name included; coming back from
+      // Custom Site is not a step (leaving it was).
+      if (!fromCustom && recordsAuthoredHistory() && changesCase(normalizeParams(scenario.params).params, scenario.name)) {
+        rememberAuthoredCase();
       }
+      withoutHistory(() => get().applyPatch(scenario.params));
       set({ ui: { ...get().ui, currentScenarioName: scenario.name } });
     },
 
