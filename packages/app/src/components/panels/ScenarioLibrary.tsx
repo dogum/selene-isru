@@ -49,7 +49,7 @@ function simulateFor(id: string): ReturnType<typeof studyScenarioResult> {
 /** The card's line about the live case. */
 function liveText(comparison: LiveComparison, kind: "authored" | "custom"): string {
   if (!comparison.comparable) {
-    return kind === "custom" ? "OPEN CUSTOM SITE TO COMPARE" : "OPEN EQUATORIAL OR POLAR TO COMPARE";
+    return kind === "custom" ? "LOAD TO EDIT; UPDATE IT ON THE CUSTOM SITE" : "OPEN EQUATORIAL OR POLAR TO COMPARE";
   }
   const parts = [
     ...(comparison.inputs > 0 ? [plural(comparison.inputs, "input").toUpperCase()] : []),
@@ -268,7 +268,9 @@ export function ScenarioLibrary(): React.JSX.Element {
           const comparison = compareWithLive(scenario, { workspaceMode, params: liveParams, design: liveDesign });
           const matches = comparison.comparable && comparison.inputs === 0 && !comparison.layout;
           const updateReason = !comparison.comparable
-            ? `Open the ${scenario.kind === "custom" ? "Custom Site" : "Equatorial or Polar site"} to update this ${scenario.kind} case`
+            ? scenario.kind === "custom"
+              ? "Load this design, edit it on the Custom Site, and update it there"
+              : "Open the Equatorial or Polar site to update this authored case"
             : matches
               ? "This case already matches the live case"
               : `Replace this case with the live ${scenario.kind === "custom" ? "design" : "case"}; its name, notes, and pin stay`;

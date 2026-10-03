@@ -141,6 +141,12 @@ export interface CustomSiteState {
   findings: SiteDesignFinding[];
   editor: CustomEditorSession;
   history: CustomDesignHistory;
+  /**
+   * The saved library case this design was loaded from or last saved as, so
+   * the workspace can update it in place; null for a new, reset, seeded, or
+   * imported design (session-local).
+   */
+  sourceScenarioId: string | null;
 }
 
 const SEC_HISTORY_LENGTH = 60;
@@ -541,7 +547,8 @@ export const useStore = create<Store>((set, get) => {
     viewMode: "planner",
     findings: customRuntime.evaluation.findings,
     editor: customEditorSession(),
-    history: emptyCustomHistory()
+    history: emptyCustomHistory(),
+    sourceScenarioId: null
   };
 
   const commitCustomDesign = (
@@ -837,7 +844,8 @@ export const useStore = create<Store>((set, get) => {
         customSite: {
           ...get().customSite,
           viewMode: "planner",
-          editor: customEditorSession()
+          editor: customEditorSession(),
+          sourceScenarioId: null
         }
       });
       if (get().workspaceMode === "custom") {
@@ -862,7 +870,8 @@ export const useStore = create<Store>((set, get) => {
         customSite: {
           ...get().customSite,
           viewMode: "planner",
-          editor: customEditorSession()
+          editor: customEditorSession(),
+          sourceScenarioId: null
         },
         ui: {
           ...get().ui,
@@ -1535,10 +1544,11 @@ export const useStore = create<Store>((set, get) => {
       const design = workspaceMode === "custom"
         ? structuredClone(customSite.evaluation.normalizedDesign)
         : undefined;
+      const id = scenarioId();
       const next: StudyScenario[] = [
         ...current,
         {
-          id: scenarioId(),
+          id,
           name: scenarioName,
           kind: workspaceMode,
           params: design?.params ?? { ...params },
@@ -1549,7 +1559,11 @@ export const useStore = create<Store>((set, get) => {
         }
       ];
       persistScenarioLibrary(next);
-      set({ scenarioLibrary: next });
+      set({
+        scenarioLibrary: next,
+        // A custom design saved here can be updated in place from the workspace.
+        ...(workspaceMode === "custom" ? { customSite: { ...get().customSite, sourceScenarioId: id } } : {})
+      });
     },
 
     loadScenario: (id) => {
@@ -1563,6 +1577,7 @@ export const useStore = create<Store>((set, get) => {
           true,
           scenario.name
         );
+        set({ customSite: { ...get().customSite, sourceScenarioId: scenario.id } });
         return;
       }
       const fromCustom = get().workspaceMode === "custom";
@@ -1637,7 +1652,10 @@ export const useStore = create<Store>((set, get) => {
     deleteScenario: (id) => {
       const next = get().scenarioLibrary.filter((scenario) => scenario.id !== id);
       persistScenarioLibrary(next);
-      set({ scenarioLibrary: next });
+      set({
+        scenarioLibrary: next,
+        ...(get().customSite.sourceScenarioId === id ? { customSite: { ...get().customSite, sourceScenarioId: null } } : {})
+      });
     },
 
     toggleScenarioPin: (id) => {
@@ -1777,6 +1795,7 @@ export const useStore = create<Store>((set, get) => {
         return;
       }
       activateCustomDesign(parsed.document, true, parsed.document.name);
+      set({ customSite: { ...get().customSite, sourceScenarioId: null } });
     },
 
     startTour: (id) => {

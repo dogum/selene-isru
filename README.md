@@ -119,8 +119,9 @@ when they are useful:
 - **Trade Study** is the scenario workspace:
   - **Scenarios.** It stores up to 24 named browser-local cases, each with notes
     that travel with its exports. UPDATE overwrites a saved case with the live
-    one, keeping its name, notes, and pin. Each card says whether it matches the
-    live case. Up to four pinned cases are compared side by side, outputs and
+    one, keeping its name, notes, and pin; a Custom Site design is updated from
+    the planner, over the case it was opened from or saved as. Each card says
+    whether it matches the live case. Up to four pinned cases are compared side by side, outputs and
     every input that differs between them.
   - **Sweep.** It runs any input the rail shows across its full engine range
     against any numeric output, as a line or as a 2-D map, and exports every

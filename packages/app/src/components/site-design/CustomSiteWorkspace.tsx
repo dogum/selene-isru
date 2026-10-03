@@ -12,6 +12,7 @@ import type {
   SiteDesignFindingSeverity
 } from "@selene-isru/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { compareWithLive } from "../../analysis/caseDiff";
 import { downloadText } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
 import { useIsMobile } from "../../lib/hooks";
@@ -102,6 +103,13 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const importCustomDesign = useStore((state) => state.importCustomDesign);
   const saveCurrentScenario = useStore((state) => state.saveCurrentScenario);
   const studyLibraryFull = useStore((state) => state.scenarioLibrary.length >= MAX_STUDY_SCENARIOS);
+  const updateScenarioFromCurrent = useStore((state) => state.updateScenarioFromCurrent);
+  // The saved case this design was opened from or saved as, if it is still in the library.
+  const sourceCase = useStore((state) =>
+    state.scenarioLibrary.find((scenario) =>
+      scenario.id === state.customSite.sourceScenarioId && scenario.kind === "custom") ?? null);
+  const liveParams = useStore((state) => state.params);
+  const [confirmUpdate, setConfirmUpdate] = useState(false);
   const flyTo = useStore((state) => state.flyTo);
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const [importPreview, setImportPreview] =
@@ -1450,6 +1458,34 @@ export function CustomSiteWorkspace(): React.JSX.Element {
               >
                 {studyLibraryFull ? "STUDY LIBRARY FULL" : "SAVE TO STUDY"}
               </button>
+              {sourceCase !== null && (() => {
+                const comparison = compareWithLive(sourceCase, {
+                  workspaceMode: "custom",
+                  params: liveParams,
+                  design: evaluation.normalizedDesign
+                });
+                const saved = comparison.comparable && comparison.inputs === 0 && !comparison.layout;
+                const label = sourceCase.name.length > 22 ? `${sourceCase.name.slice(0, 21)}…` : sourceCase.name;
+                return (
+                  <button
+                    disabled={saved}
+                    title={saved
+                      ? `The study case "${sourceCase.name}" matches this design`
+                      : `Replace the study case "${sourceCase.name}" with this design; its name, notes, and pin stay`}
+                    onClick={() => {
+                      if (!confirmUpdate) {
+                        setConfirmUpdate(true);
+                        return;
+                      }
+                      updateScenarioFromCurrent(sourceCase.id);
+                      setConfirmUpdate(false);
+                    }}
+                    onBlur={() => setConfirmUpdate(false)}
+                  >
+                    {saved ? `SAVED AS “${label}”` : confirmUpdate ? "CONFIRM UPDATE" : `UPDATE “${label}”`}
+                  </button>
+                );
+              })()}
               <button onClick={() => downloadText(
                 `${design.name.replaceAll(/[^a-z0-9]+/gi, "-").toLowerCase() || "selene-custom-site"}.json`,
                 serializeSiteDesign(design),
