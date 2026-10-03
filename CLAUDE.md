@@ -153,7 +153,7 @@ camelCase result keys preserved on both sides.
 
 `python/tools/generate_golden.py` Latin-hypercube samples the full parameter
 box (200 points, seed 42, plus named corner scenarios) and writes
-`packages/engine/test/golden_vectors.json` (209 vectors) plus
+`packages/engine/test/golden_vectors.json` (211 vectors) plus
 `dynamics_vectors.json`. `packages/engine/test/parity.test.ts` asserts the TS
 engine reproduces **every numeric leaf to 1e-9 relative / 1e-12 absolute
 tolerance**. CI regenerates from Python and runs `git diff --exit-code` on the
@@ -176,7 +176,7 @@ from parity vectors — parity agreeing does not mean the physics is right.
 ### 3. The app must not re-derive physics
 
 `packages/app` consumes only the engine's public API: `simulate`,
-`simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `DEFAULTS`,
+`simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `campaignTimeline`, `DEFAULTS`,
 `PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
 helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
 `beamEfficiency`, `payloadPerMissionKg`, `oxideModelYield`). If a UI
@@ -257,7 +257,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~151 KB of ~163.8 KB. A ratchet normally reads nearly
+The current build sits at ~157 KB of ~163.8 KB. A ratchet normally reads nearly
 full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -432,6 +432,8 @@ in `assets/ASSET_LICENSES.md`.
 | Custom Site engine layer | `site-design*.test.ts` |
 | Scene contract | `packages/app/test/bindings.test.ts` |
 | Aging slopes ↔ crossover | `packages/engine/test/power-slopes.test.ts` |
+| Campaign ledger self-agreement, timeline parity | `campaign.test.ts`, `test_campaign.py`, campaign vectors in `dynamics_vectors.json` |
+| Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
 | Store clamping invariant, URL round-trip, export | `store.test.ts`, `url.test.ts`, `study-export.test.ts` |
 | Custom Site UI/editor/perf | `custom-site-*.test.*` |
 | Input activity tags, hidden-input guard | `input-activity.test.ts` |
@@ -469,7 +471,8 @@ script run on a clean checkout at all.
 - Don't commit generated build output (`dist/`, `node_modules/`, `.venv/`);
   `.gitignore` already covers it. Golden vectors and GLB assets *are* tracked.
 - Prefer editing existing docs in `docs/` over adding new ones; the audit trail
-  (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md`) is
+  (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
+  `model-campaign-v05.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -482,6 +485,9 @@ script run on a clean checkout at all.
 - [`docs/model-fidelity-v04.md`](docs/model-fidelity-v04.md) — input-activity
   audit, NASA-anchored polar capture/heater/extractor terms, storage provenance,
   and the candidates deliberately left for later.
+- [`docs/model-campaign-v05.md`](docs/model-campaign-v05.md) — the campaign
+  mass ledger: launch-mass payback with deployment cadence, commissioning,
+  downtime, spares, and dedicated vs shared landers.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

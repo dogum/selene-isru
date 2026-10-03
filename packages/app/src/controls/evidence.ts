@@ -89,6 +89,10 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · logistics and power lifecycle",
     defaultUncertainty: 0.05
   },
+  gearRatio: {
+    validity: "Read as low-Earth-orbit mass saved per kg of product, the unit of M0leo, so the campaign ledger compares like with like. For product used on the surface, the lander model itself implies about 12.8 kg/kg at defaults; lower values suit product used in orbit.",
+    applicability: "Both sites · leverage and campaign ledger"
+  },
   landingsPerYear: {
     rangeRationale: "From one landing every two years to monthly cargo service; the source assumes a launch every 120 days.",
     validity: "Landings arrive evenly from day 0, each carrying up to one lander capacity of plant. Matters only when the plant needs more than one lander. No launch failures or schedule slips.",
