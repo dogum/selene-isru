@@ -52,7 +52,7 @@ export {
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
 export { campaignAt, campaignTimeline } from "./modules/campaign";
-export type { CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
+export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
 export { payloadPerMissionKg } from "./modules/logistics";
 export {
   beamedPowerW,
@@ -175,7 +175,17 @@ export function simulate(
     cryo.cryoMassKg,
     options.supplementalMasses
   );
-  const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics);
+  // What the plant delivers: O2 at the equator, water at the pole, or the
+  // Sabatier products, whose imported CO2 feed must be landed.
+  const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
+    productKgPerDay:
+      params.site === "equatorial"
+        ? production.o2KgPerDay
+        : params.enableSabatier
+          ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
+          : production.waterKgPerDay,
+    importedFeedKgPerDay: production.co2ImportedKgPerDay
+  });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);
   const warnings: Warning[] = [

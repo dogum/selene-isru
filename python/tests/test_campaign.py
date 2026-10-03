@@ -67,3 +67,12 @@ def test_no_payload_lander_leaves_ledger_empty() -> None:
     campaign = result["campaign"]
     assert campaign["leoMassSpentKg"] == 0 and campaign["leoMassSavedKg"] == 0
     assert campaign["paybackDays"] is None
+
+
+def test_sabatier_lands_its_co2_feed() -> None:
+    params, result = run({"site": "polar", "enableSabatier": True})
+    production, campaign = result["production"], result["campaign"]
+    products = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    assert_rel(campaign["deliveredKgPerDay"], products * params["plantAvailability"], 1e-12)
+    assert_rel(campaign["feedKgPerYear"], production["co2ImportedKgPerDay"] * params["plantAvailability"] * 365, 1e-12)
+    assert campaign["paybackDays"] is None

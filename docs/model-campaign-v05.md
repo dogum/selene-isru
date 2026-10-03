@@ -38,21 +38,31 @@ Both sides are in kg of mass in LEO, the currency of the lander model's
 ```
 spent(t) = M0leo × landers arrived by t                      (dedicated)
          | (M0leo / lander capacity) × plant mass landed by t  (shared)
-         + (M0leo / lander capacity) × spares landed by t
+         + (M0leo / lander capacity) × (spares + imported feed) landed by t
 saved(t) = gearRatio × product delivered by t
 ```
+
+Product is what the plant delivers:
+- oxygen at the equator
+- water at the pole
+- with the Sabatier loop, its oxygen, methane, and leftover hydrogen
+
+It is not the water processed.
 
 - **Deployment:** landers arrive every `365 / landingsPerYear` days from day 0.
   Each carries up to one lander capacity (`etaPack × payload`) of plant.
 - **Start-up:** production starts once the last lander has arrived and
   `commissioningDays` have passed (all-up deployment).
-- **Operation:** the plant then runs for `missionYears` at
-  `targetKgPerDay × plantAvailability`.
+- **Operation:** the plant then runs for `missionYears` at its product rate ×
+  `plantAvailability`.
 - **Spares:** `sparesFracPerYear` of the landed plant mass is delivered each
   year as a mass share of other cargo.
+- **Imported feed:** the Sabatier loop's CO₂ has no lunar source in this model.
+  It is landed as it is consumed (× availability) and charged like spares.
 - **Payback** is the day saved first equals spent:
   `firstProductDay + plantLeoMass / (daily saving − daily spares cost)`. It is
-  null when spares cost at least as much LEO mass per day as the product saves.
+  null when spares and feed cost at least as much LEO mass per day as the
+  product saves.
 - **Return** is saved ÷ spent at campaign end.
 
 `deploymentManifest` sets how deployment landers are charged:
@@ -92,7 +102,7 @@ Default inputs except as named.
 | Equatorial | 59.0 | 1 | 186× | 30 | 242 | 6.67× | 8,377 |
 | Equatorial, shared lander | 59.0 | 1 | 186× | 30 | 176 | 8.69× | 8,721 |
 | Polar | 29.9 | 1 | 367× | 30 | 238 | 7.63× | 8,564 |
-| Polar + Sabatier | 62.3 | 1 | 176× | 30 | 242 | 6.57× | 8,356 |
+| Polar + Sabatier (CO₂ landed from Earth) | 62.3 | 1 | 176× | 30 | never | 0.79× | −2,827 |
 | Polar, 1 wt% ice | 70.7 | 1 | 155× | 30 | 244 | 6.35× | 8,302 |
 | Equatorial, 10 t/day, 2 landings/yr | 575.5 | 7 | 190× | 1,125 | 1,273 | 8.65× | 87,162 |
 | Polar pilot, 10 kg/day | 1.4 | 1 | 76× | 30 | 22,501 (after the campaign) | 0.09× | −1,011 |
@@ -101,8 +111,13 @@ Default inputs except as named.
 What the table shows:
 
 - **Production-scale plants.** Payback falls in the first year for every
-  reference plant, and the plants differ by days, not months. Within a
-  1,100 t lander, plant mass barely matters.
+  reference plant that imports nothing, and those plants differ by days, not
+  months. Within a 1,100 t lander, plant mass barely matters.
+- **Sabatier.** It never pays back. At defaults it lands about 191 t of CO₂ a
+  year, which costs about 6.7 t of LEO mass a day. Its products save 6.0 t a
+  day, so it loses ground every day it runs. Leverage L rates it 176× because
+  L ignores the feed. A lunar carbon source would change this answer; the
+  model has none.
 - **Large plants.** Time to land dominates. A 10 t/day plant on seven landers
   at two a year starts producing on day 1,125 and pays back on day 1,273.
 - **Pilot plants.** The charging question decides the answer. On a dedicated
@@ -178,3 +193,5 @@ and [shared](screenshots/campaign/campaign-pilot-shared.png),
   instead of a constant fraction.
 - **Probabilistic losses.** Launch failure, landing failure, and early plant
   loss.
+- **A lunar carbon source.** CO₂ from cold-trap volatiles would remove the
+  Sabatier feed charge. Nothing in the model sources carbon locally today.

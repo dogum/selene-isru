@@ -37,6 +37,9 @@ export function campaignStatus(campaign: CampaignResult): CampaignStatus {
   return {
     headline: "NEVER PAYS BACK",
     payback: "NEVER",
-    paybackDetail: "Spares cost more LEO mass than the product saves"
+    paybackDetail:
+      campaign.feedKgPerYear > 0
+        ? "Spares and imported feed cost more LEO mass than the product saves"
+        : "Spares cost more LEO mass than the product saves"
   };
 }

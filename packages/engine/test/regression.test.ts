@@ -82,6 +82,10 @@ describe("regression anchors", () => {
     expectRel(campaign.returnRatio, 6.67, 0.001);
     expectRel(campaign.leoMassPerLandedKg, 12.82, 0.001);
     expect(campaign.paysBackInCampaign).toBe(true);
+    // The Sabatier loop's CO2 is landed from Earth and outweighs its products' saving.
+    const sabatier = simulate({ site: "polar", enableSabatier: true }).campaign;
+    expect(sabatier.paybackDays).toBeNull();
+    expectRel(sabatier.returnRatio, 0.794, 0.001);
   });
 
   test("keeps the v1 aggregate electrolysis path reachable", () => {

@@ -60,7 +60,17 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         power["selectedPowerMassKg"],
         cryo["cryoMassKg"],
     )
-    campaign = simulate_campaign(params, logistics)
+    # What the plant delivers: O2 at the equator, water at the pole, or the
+    # Sabatier products, whose imported CO2 feed must be landed.
+    if params["site"] == "equatorial":
+        product_kg_per_day = production["o2KgPerDay"]
+    elif params["enableSabatier"]:
+        product_kg_per_day = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    else:
+        product_kg_per_day = production["waterKgPerDay"]
+    campaign = simulate_campaign(
+        params, logistics, {"productKgPerDay": product_kg_per_day, "importedFeedKgPerDay": production["co2ImportedKgPerDay"]}
+    )
     campaign_warnings = campaign.pop("warnings")
     construction = simulate_construction(params, production["slagKgPerDay"] if params["site"] == "equatorial" else 0)
     materials = material_ledger(params, production)

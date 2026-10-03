@@ -28,7 +28,12 @@ describe("campaign status wording", () => {
       paybackDetail: expect.stringMatching(/^Would need day 22,501 \(61\.6 yr\)$/)
     });
     const outpaced = run({ site: "polar", targetKgPerDay: 10, gearRatio: 2, plantAvailability: 0.5, sparesFracPerYear: 0.3, chiIce: 0.005 });
-    expect(campaignStatus(outpaced.result.campaign).payback).toBe("NEVER");
+    expect(campaignStatus(outpaced.result.campaign)).toMatchObject({
+      payback: "NEVER",
+      paybackDetail: "Spares cost more LEO mass than the product saves"
+    });
+    const sabatier = run({ site: "polar", enableSabatier: true });
+    expect(campaignStatus(sabatier.result.campaign).paybackDetail).toBe("Spares and imported feed cost more LEO mass than the product saves");
     const grounded = run({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 });
     expect(campaignStatus(grounded.result.campaign).headline).toBe("NOTHING CAN BE LANDED");
   });

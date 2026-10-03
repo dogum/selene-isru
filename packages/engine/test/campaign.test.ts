@@ -108,6 +108,28 @@ describe("campaign ledger behaviour", () => {
     expect(campaign.paysBackInCampaign).toBe(false);
   });
 
+  test("the Sabatier loop delivers its products and lands its CO2 feed", () => {
+    const { params, result } = run({ site: "polar", enableSabatier: true });
+    const { production, campaign, logistics } = result;
+    expectRel(
+      campaign.deliveredKgPerDay,
+      (production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay) * params.plantAvailability,
+      1e-12
+    );
+    expectRel(campaign.feedKgPerYear, production.co2ImportedKgPerDay * params.plantAvailability * 365, 1e-12);
+    expectRel(
+      campaign.landedMassKg,
+      logistics.totalInfraMassKg + (campaign.resupplyKgPerYear + campaign.feedKgPerYear) * params.missionYears,
+      1e-12
+    );
+    // Earth-supplied CO2 costs more LEO mass per day than the products save.
+    expect(params.gearRatio * campaign.deliveredKgPerDay).toBeLessThan((campaign.leoMassPerLandedKg * campaign.feedKgPerYear) / 365);
+    expect(campaign.paybackDays).toBeNull();
+    // Water-only and equatorial plants import nothing.
+    expect(run({ site: "polar" }).result.campaign.feedKgPerYear).toBe(0);
+    expect(run({}).result.campaign.feedKgPerYear).toBe(0);
+  });
+
   test("a lander with no payload deploys nothing and says so", () => {
     const { params, result } = run({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 });
     expect(result.logistics.payloadPerMissionKg).toBeLessThan(0);

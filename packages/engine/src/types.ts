@@ -404,13 +404,15 @@ export interface CampaignResult {
   firstProductDay: number;
   /** end of `missionYears` of production [day] */
   campaignEndDay: number;
-  /** average output after downtime [kg/day] */
+  /** average product delivered after downtime: O2, water, or the Sabatier products [kg/day] */
   deliveredKgPerDay: number;
   /** spares landed per year of operation [kg/yr] */
   resupplyKgPerYear: number;
+  /** imported process feed (Sabatier CO2) landed per year of operation [kg/yr] */
+  feedKgPerYear: number;
   /** product delivered over the campaign [kg] */
   cumulativeProductKg: number;
-  /** plant plus spares landed over the campaign [kg] */
+  /** plant, spares, and imported feed landed over the campaign [kg] */
   landedMassKg: number;
   /** [kg in LEO] */
   leoMassSpentKg: number;
@@ -420,7 +422,7 @@ export interface CampaignResult {
   netLeoMassKg: number;
   /** saved / spent over the campaign [kg/kg]; 0 when nothing is spent */
   returnRatio: number;
-  /** when cumulative saved first equals spent [day]; null if output never outpaces spares */
+  /** when cumulative saved first equals spent [day]; null if output never outpaces spares and feed */
   paybackDays: number | null;
   paysBackInCampaign: boolean;
 }

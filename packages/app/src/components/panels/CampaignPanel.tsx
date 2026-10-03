@@ -155,7 +155,7 @@ export function CampaignPanel(): React.JSX.Element {
           )}
         </svg>
         <div className="campaign-legend mono" aria-hidden="true">
-          <span className="campaign-key-spent">SPENT · LANDERS + SPARES</span>
+          <span className="campaign-key-spent">SPENT · LANDERS + SPARES{campaign.feedKgPerYear > 0 ? " + FEED" : ""}</span>
           <span className="campaign-key-saved">SAVED · PRODUCT × GEAR RATIO</span>
         </div>
       </div>
@@ -166,6 +166,8 @@ export function CampaignPanel(): React.JSX.Element {
         gear ratio {params.gearRatio}. Production starts on day {Math.round(campaign.firstProductDay)}, after the last landing and{" "}
         {params.commissioningDays} days of commissioning, and averages {formatQtyProse(campaign.deliveredKgPerDay, "kg/day")} at{" "}
         {Math.round(params.plantAvailability * 100)}% availability.
+        {campaign.feedKgPerYear > 0 &&
+          ` The Sabatier loop's CO₂ has no lunar source in this model, so its ${formatQtyProse(campaign.feedKgPerYear, "kg/yr")} is landed and charged like spares.`}
       </p>
 
       <div className="power-stats mono">
@@ -174,7 +176,10 @@ export function CampaignPanel(): React.JSX.Element {
         <div>FIRST PRODUCT <b className="num">DAY {Math.round(campaign.firstProductDay)}</b></div>
         <div>CAMPAIGN END <b className="num">DAY {Math.round(campaign.campaignEndDay)}</b></div>
         <div>SPARES <b className="num">{formatQtyText(campaign.resupplyKgPerYear, "kg/yr")}</b></div>
-        <div>LANDED INCL. SPARES <b className="num">{formatQtyText(campaign.landedMassKg, "kg")}</b></div>
+        {campaign.feedKgPerYear > 0 && (
+          <div>IMPORTED CO₂ FEED <b className="num">{formatQtyText(campaign.feedKgPerYear, "kg/yr")}</b></div>
+        )}
+        <div>LANDED IN TOTAL <b className="num">{formatQtyText(campaign.landedMassKg, "kg")}</b></div>
         <div>PRODUCT <b className="num">{formatQtyText(campaign.cumulativeProductKg, "kg")}</b></div>
         <div>LEO SPENT / SAVED <b className="num">{formatQtyText(campaign.leoMassSpentKg, "kg")} / {formatQtyText(campaign.leoMassSavedKg, "kg")}</b></div>
       </div>

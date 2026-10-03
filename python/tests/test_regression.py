@@ -72,6 +72,9 @@ def test_campaign_ledger_equatorial_payback_v05() -> None:
     assert_rel(campaign["paybackDays"], 241.8, 0.001)
     assert_rel(campaign["returnRatio"], 6.67, 0.001)
     assert campaign["paysBackInCampaign"] is True
+    sabatier = simulate({"site": "polar", "enableSabatier": True})["campaign"]
+    assert sabatier["paybackDays"] is None
+    assert_rel(sabatier["returnRatio"], 0.794, 0.001)
 
 
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
