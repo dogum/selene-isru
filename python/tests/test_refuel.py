@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from selene_isru import campaign_at, refuel_timeline, simulate, sortie_propellant_kg
+from selene_isru import campaign_at, campaign_timeline, refuel_timeline, simulate, sortie_propellant_kg
 from selene_isru.constants import c
 from selene_isru.normalize import normalize_params
 
@@ -125,4 +125,12 @@ def test_payback_falls_on_the_first_sortie_that_clears_the_spend(overrides: dict
     previous = campaign_at(params, result, campaign["paybackDays"] - campaign["sortieIntervalDays"])
     assert at["leoMassSavedKg"] >= at["leoMassSpentKg"] * (1 - 1e-12)
     assert previous["leoMassSavedKg"] < previous["leoMassSpentKg"]
+
+
+def test_every_sortie_is_marked_at_the_highest_cadence() -> None:
+    params, result = run({**EQUATORIAL, "sortiesPerYear": 52, "missionYears": 20})
+    timeline = campaign_timeline(params, result)
+    sorties = [p for p in timeline if p["event"].startswith("sortie ")]
+    assert len(sorties) == 1040
+    assert_rel(sorties[-1]["usedKg"], result["campaign"]["cumulativeUsedKg"], 1e-12)
 

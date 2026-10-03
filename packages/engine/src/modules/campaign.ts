@@ -3,8 +3,6 @@ import type { CampaignResult, SimParams, Warning } from "../types";
 const DAYS_PER_YEAR = 365;
 /** Landings marked one by one; beyond this the grid samples show the staircase. */
 const MAX_LANDING_EVENTS = 100;
-/** Sorties marked one by one; beyond this the grid samples show the staircase. */
-const MAX_SORTIE_EVENTS = 100;
 /** Regular samples per timeline, whatever step was asked for. */
 const MAX_SAMPLES = 2000;
 
@@ -250,14 +248,12 @@ export function campaignTimeline(params: SimParams, source: CampaignSource, step
   add(campaign.firstProductDay, "production start");
   if (campaign.sortieIntervalDays !== null) {
     const operatingDays = campaign.campaignEndDay - campaign.firstProductDay;
-    const sorties = sortiesBy(operatingDays, campaign.sortieIntervalDays);
-    // As with landings, mark each sortie only when few enough to draw.
-    if (sorties <= MAX_SORTIE_EVENTS) {
-      for (let k = 1; k <= sorties; k += 1) {
-        const t = campaign.firstProductDay + k * campaign.sortieIntervalDays;
-        points.push({ ...ledgerAt(params, source, t, landersBy(params, basis, t), -1), event: `before sortie ${k}` });
-        add(t, `sortie ${k}`);
-      }
+    // Every sortie is marked, so the ledger draws its credit as a staircase.
+    // Unlike landings the count is bounded: at most 52 a year for 20 years.
+    for (let k = 1; k <= sortiesBy(operatingDays, campaign.sortieIntervalDays); k += 1) {
+      const t = campaign.firstProductDay + k * campaign.sortieIntervalDays;
+      points.push({ ...ledgerAt(params, source, t, landersBy(params, basis, t), -1), event: `before sortie ${k}` });
+      add(t, `sortie ${k}`);
     }
   }
   if (campaign.paysBackInCampaign && campaign.paybackDays !== null) add(campaign.paybackDays, "payback");
