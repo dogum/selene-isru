@@ -7,6 +7,7 @@ import { ExportButton } from "./ExportButton";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
 import { appliesToCase } from "../../analysis/sweep";
+import { processScope, useScopedState } from "../../lib/hooks";
 
 /** Fixed so the bands are reproducible; the CSV export records both. */
 const BAND_SAMPLES = 256;
@@ -68,7 +69,8 @@ export function UncertaintyPanel(): React.JSX.Element {
     : params.equatorialProcess === "ilmenite"
       ? ["targetKgPerDay", "fIlmenite", "ilmConcentrateGrade"]
       : ["targetKgPerDay", "etaCurrent", "Vcell"];
-  const [keys, setKeys] = useState<Array<keyof SimParams>>(defaultKeys);
+  // A selection made for one site or process resets to the new one's defaults.
+  const [keys, setKeys] = useScopedState<Array<keyof SimParams>>(processScope(params), () => defaultKeys);
   const [sigma, setSigma] = useState(0.1);
   const [evidenceDefaults, setEvidenceDefaults] = useState(true);
   const [metric, setMetric] = useState<SensitivityMetric>("mass-throughput");

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { DEFAULTS, PARAM_META, simulate } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { inputActivity } from "../src/analysis/activity";
 import { energyDrivers } from "../src/analysis/brief";
@@ -12,6 +12,8 @@ import { scenariosCsv } from "../src/analysis/studyExport";
 import { appliesToCase, FRONTIER_PARAMS } from "../src/analysis/sweep";
 import { ControlGroups } from "../src/components/ControlRail";
 import { placeSankeyLabels } from "../src/components/panels/EnergySankey";
+import { FrontierExplorer } from "../src/components/panels/FrontierExplorer";
+import { UncertaintyPanel } from "../src/components/panels/UncertaintyPanel";
 import { GROUPS, railModeParamsForGroup, railParamsForGroup } from "../src/controls/manifest";
 import { evidenceForParam } from "../src/controls/evidence";
 import { parseParams, serializeParams } from "../src/lib/url";
@@ -221,3 +223,38 @@ describe("Sankey labels", () => {
     expect(y.get("c")).toBe(200);
   });
 });
+
+describe("analysis panels follow a process switch", () => {
+  afterEach(() => {
+    cleanup();
+    useStore.getState().applyPatch({});
+  });
+
+  it("resets the uncertainty inputs to the new process's defaults", () => {
+    useStore.getState().applyPatch({ site: "equatorial" });
+    render(<UncertaintyPanel />);
+    expect((screen.getByRole("checkbox", { name: /MRE cell voltage/ }) as HTMLInputElement).checked).toBe(true);
+    act(() => useStore.getState().applyPatch({ site: "equatorial", equatorialProcess: "ilmenite" }));
+    expect(screen.queryByRole("checkbox", { name: /MRE cell voltage/ })).toBeNull();
+    expect((screen.getByRole("checkbox", { name: /Ilmenite in soil/ }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("checkbox", { name: /Concentrate grade/ }) as HTMLInputElement).checked).toBe(true);
+    act(() => useStore.getState().applyPatch({ site: "equatorial" }));
+    expect((screen.getByRole("checkbox", { name: /MRE cell voltage/ }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("moves the frontier's second axis to a lever of the new process", () => {
+    // Panel charts size themselves with ResizeObserver, which jsdom lacks.
+    globalThis.ResizeObserver ??= class {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    };
+    useStore.getState().applyPatch({ site: "equatorial" });
+    render(<FrontierExplorer />);
+    const axisB = () => screen.getByRole("combobox", { name: "Frontier parameter B" }) as HTMLSelectElement;
+    expect(axisB().value).toBe("etaCurrent");
+    act(() => useStore.getState().applyPatch({ site: "equatorial", equatorialProcess: "ilmenite" }));
+    expect(axisB().value).toBe("fIlmenite");
+  });
+});
+
