@@ -100,6 +100,23 @@ describe("control rail search, changed filter, and reset", () => {
     useStore.getState().applyPatch({ ...DEFAULTS });
   });
 
+  it("shows the Sabatier switch under a filter only when the filter counts it", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", enableSabatier: true });
+    render(<ControlGroups />);
+    const search = screen.getByRole("searchbox", { name: /Search inputs/ });
+    fireEvent.change(search, { target: { value: "conversion fraction" } });
+    expect(screen.getByText("1 input shown")).toBeTruthy();
+    expect(screen.queryByRole("switch", { name: "Enable Sabatier loop" })).toBeNull();
+    fireEvent.change(search, { target: { value: "enable sabatier" } });
+    expect(screen.getByText("1 input shown")).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Enable Sabatier loop" })).toBeTruthy();
+    // With the loop off its sliders cannot act, so a search does not count them.
+    useStore.getState().applyPatch({ enableSabatier: false });
+    fireEvent.change(search, { target: { value: "conversion fraction" } });
+    expect(screen.getByText("No inputs match.")).toBeTruthy();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
   it("finds a select by searching its name", () => {
     useStore.getState().applyPatch({ ...DEFAULTS, site: "equatorial" });
     render(<ControlGroups />);

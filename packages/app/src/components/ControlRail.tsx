@@ -70,8 +70,10 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const filtering = query.trim().length > 0 || changedOnly;
   const shown = groups.map(({ group, defs }) => ({
     group,
+    // A gated-off group (the Sabatier loop switched off) cannot show or use its
+    // inputs, so a filter does not count them; its switch can still match.
     defs: filtering
-      ? defs.filter((def) =>
+      ? (group.gatedBy !== undefined && !params[group.gatedBy] ? [] : defs).filter((def) =>
           matchesParamQuery(def, group.label, query) &&
           (!changedOnly || isChangedFromDefault(params[def.key] as number, def.defaultValue))
         )
@@ -212,7 +214,7 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
         <span className="rail-group-readout num">
           {formatQtyText(readout.value, readout.unit)}
         </span>
-        {group.gatedBy !== undefined && (
+        {group.gatedBy !== undefined && showMode(group.gatedBy) && (
           <button
             className={`rail-gate ${enableSabatier ? "on" : ""}`}
             role="switch"
