@@ -10,7 +10,8 @@ import {
 import type { CampaignResult, IlmeniteResult, ParamMeta, RefuelResult, SimParams, UncertaintySpec } from "@selene-isru/engine";
 import { evidenceForParam } from "../controls/evidence";
 import type { StudyScenario } from "../state/store";
-import { formatQtyText } from "../lib/format";
+import { formatInputValue, formatQtyText } from "../lib/format";
+import { scenarioNotes } from "../lib/scenarioNotes";
 import { nonDefaultParams, paramsToUrl } from "../lib/url";
 import { BUILD_INFO, type BuildInfo } from "../lib/build";
 import { CASE_SCHEMA, CASE_VERSION, fileStem, resultDrift } from "./caseExport";
@@ -168,7 +169,8 @@ export function previewStudyExport(value: unknown): StudyImportPreview {
         design: evaluation.normalizedDesign,
         createdAt: candidate.createdAt,
         updatedAt: candidate.updatedAt,
-        pinned: candidate.pinned
+        pinned: candidate.pinned,
+        ...scenarioNotes(candidate.notes)
       });
       continue;
     }
@@ -183,7 +185,8 @@ export function previewStudyExport(value: unknown): StudyImportPreview {
       },
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
-      pinned: candidate.pinned
+      pinned: candidate.pinned,
+      ...scenarioNotes(candidate.notes)
     });
     if (payload.version === 1) {
       findings.push({
@@ -209,7 +212,7 @@ export function previewStudyExport(value: unknown): StudyImportPreview {
  * it means the model changed between export and import.
  */
 function previewCaseFile(file: Record<string, unknown>, blocked: StudyImportPreview): StudyImportPreview {
-  const meta = file.case as { name?: unknown; kind?: unknown } | undefined;
+  const meta = file.case as { name?: unknown; kind?: unknown; notes?: unknown } | undefined;
   const params = file.params;
   const exportedAt = typeof file.exportedAt === "string" ? Date.parse(file.exportedAt) : Number.NaN;
   if (file.version !== CASE_VERSION || typeof meta !== "object" || meta === null || typeof params !== "object" || params === null) {
@@ -249,7 +252,8 @@ function previewCaseFile(file: Record<string, unknown>, blocked: StudyImportPrev
       id, name, kind: "custom",
       params: evaluation.normalizedDesign.params,
       design: evaluation.normalizedDesign,
-      createdAt: timestamp, updatedAt: timestamp, pinned: false
+      createdAt: timestamp, updatedAt: timestamp, pinned: false,
+      ...scenarioNotes(meta.notes)
     };
   } else {
     // Deliberately not normalized: loading goes through applyPatch, which
@@ -257,7 +261,8 @@ function previewCaseFile(file: Record<string, unknown>, blocked: StudyImportPrev
     scenario = {
       id, name, kind: "authored",
       params: { ...DEFAULTS, ...(params as Partial<SimParams>) },
-      createdAt: timestamp, updatedAt: timestamp, pinned: false
+      createdAt: timestamp, updatedAt: timestamp, pinned: false,
+      ...scenarioNotes(meta.notes)
     };
   }
 
@@ -442,6 +447,7 @@ export function scenariosCsv(scenarios: StudyScenario[], exportedAt: Date = new 
       header: "warnings.text",
       value: (row) => row.result.warnings.map((warning) => `${warning.severity} ${warning.id}: ${warning.message}`).join(" | ")
     },
+    { header: "notes", value: (row) => row.scenario.notes ?? "" },
     { header: "reproducibilityUrl", value: (row) => (row.scenario.kind === "custom" ? "" : paramsToUrl(row.scenario.params)) },
     { header: "build.commit", value: () => build.commit },
     { header: "build.engine", value: () => build.engine },
@@ -528,4 +534,37 @@ export function changedInputRows(params: SimParams): ChangedInputRow[] {
           : "MODEL SWITCH"
     };
   });
+}
+
+export interface DifferingInputRow {
+  key: keyof SimParams;
+  label: string;
+  unit: string;
+  /** One display value per case, in the order the cases were given. */
+  values: string[];
+}
+
+/**
+ * Inputs that are not the same in every case, for a side-by-side comparison
+ * of saved cases. Rows follow the constants file's order.
+ */
+export function differingInputRows(cases: SimParams[]): DifferingInputRow[] {
+  if (cases.length < 2) {
+    return [];
+  }
+  return (Object.keys(PARAM_META) as Array<keyof SimParams>)
+    .filter((key) => cases.some((params) => params[key] !== cases[0]![key]))
+    .map((key) => {
+      const meta: ParamMeta = PARAM_META[key];
+      return {
+        key,
+        label: meta.description,
+        unit: meta.unit === "1" || meta.unit === "mode" ? "" : meta.unit,
+        values: cases.map((params) => {
+          const value = params[key];
+          if (key === "polarProfileData") return value === "" ? "none" : `imported profile (${String(value).length} bytes)`;
+          return typeof value === "number" ? formatInputValue(value) : String(value);
+        })
+      };
+    });
 }

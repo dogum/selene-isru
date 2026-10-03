@@ -218,3 +218,33 @@ export function candidateDetail(candidate: Candidate): string {
 export function recommendationTitle(candidate: Candidate): string {
   return `${candidate.params.site === "polar" ? "Polar ice" : "Equatorial MRE"} · ${candidate.result.power.architecture} power · ${formatQtyText(candidate.result.production.targetKgPerDay, "kg/day")}`;
 }
+
+/** Library name for a Brief pick: the goal, its rank, and what it is. */
+export function candidateCaseName(goalTitle: string, rank: number, candidate: Candidate): string {
+  return `${goalTitle} #${rank} · ${candidate.params.site === "polar" ? "polar" : "equatorial"} ${candidate.result.power.architecture}`.slice(0, 80);
+}
+
+/**
+ * Notes saved with a Brief pick, so the library records where the case came
+ * from: the question, the constraints it was searched under, its rank, and
+ * why it is or is not feasible.
+ */
+export function candidateNotes(
+  goalTitle: string,
+  constraints: MissionConstraints,
+  candidate: Candidate,
+  rank: number,
+  optimization: Pick<OptimizationResult, "evaluated" | "feasible">
+): string {
+  const objective = OBJECTIVES.find((item) => item.id === constraints.objective)?.label ?? constraints.objective;
+  return [
+    `Mission Brief pick #${rank} for "${goalTitle}" (${objective}).`,
+    `Searched ${optimization.evaluated} cases; ${optimization.feasible} met the caps.`,
+    `Constraints: ${constraints.site === "either" ? "either site" : `${constraints.site} site`}, ` +
+      `${constraints.targetKgPerDay} kg/day for ${constraints.missionYears} yr, ` +
+      `at most ${constraints.maxMissions} missions, ${constraints.maxPowerMw} MW, ${constraints.maxInfraT} t landed; ` +
+      `Sabatier ${constraints.allowSabatier ? "allowed" : "not allowed"}.`,
+    `Design: ${candidateDetail(candidate)}.`,
+    candidate.feasible ? "Meets every implemented constraint." : `Violates: ${candidate.violations.join("; ")}.`
+  ].join("\n");
+}

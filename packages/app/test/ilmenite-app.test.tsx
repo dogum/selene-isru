@@ -297,6 +297,14 @@ describe("asset inspector on the ilmenite route", () => {
     }
   });
 
+  it("shows the polar habitat without slag shielding controls, since the pole makes no slag", () => {
+    inspect({ site: "polar" }, "habitat");
+    expect(screen.getByRole("complementary", { name: /POLAR SURFACE HABITAT/ })).toBeTruthy();
+    for (const slagOnly of ["Designed shielding", "Shield material density", "Time to shield"]) {
+      expect(screen.queryByText(slagOnly)).toBeNull();
+    }
+  });
+
   it("stays nominal when an unsafe casting input carries over from MRE", () => {
     inspect({ site: "equatorial", equatorialProcess: "ilmenite", castDeltaT: 200 }, "castingYard");
     expect(screen.getByText("NOMINAL")).toBeTruthy();

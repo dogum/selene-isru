@@ -89,7 +89,7 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
       e.preventDefault();
       const current = useStore.getState().params[def.key] as number;
       const next = Math.min(def.max, Math.max(def.min, current + dir * step * 10));
-      setParam(def.key, next as SimParams[typeof def.key]);
+      setParam(def.key, next as SimParams[typeof def.key], { coalesce: true });
     };
     el.addEventListener("keydown", onKey);
     return () => el.removeEventListener("keydown", onKey);
@@ -171,7 +171,8 @@ export function ParamRow({ def, label, warnSeverity, warnLimit }: ParamRowProps)
           style={{
             background: `linear-gradient(to right, var(--melt) ${frac * 100}%, var(--line) ${frac * 100}%)`
           }}
-          onChange={(e) => setParam(def.key, Number(e.target.value) as SimParams[typeof def.key])}
+          onPointerDown={() => useStore.getState().startParamGesture()}
+          onChange={(e) => setParam(def.key, Number(e.target.value) as SimParams[typeof def.key], { coalesce: true })}
           onDoubleClick={() => resetParam(def.key)}
         />
         <span className="param-tick default" style={{ left: `${defaultFrac * 100}%` }} title="default" />

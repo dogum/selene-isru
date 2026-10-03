@@ -20,6 +20,7 @@ import {
   it,
   vi
 } from "vitest";
+import { linkedCustomCase } from "../src/analysis/caseDiff";
 import { CustomSiteWorkspace } from "../src/components/site-design/CustomSiteWorkspace";
 import { useStore } from "../src/state/store";
 
@@ -304,5 +305,78 @@ describe("custom site workspace", () => {
     expect(useStore.getState().customSite.editor.tool).toBe("select");
     expect(screen.getAllByRole("button", { name: "PLANNER ONLY" }))
       .toHaveLength(8);
+  });
+});
+
+describe("updating a saved design from the workspace", () => {
+  const clearLibrary = (): void => {
+    for (const item of useStore.getState().scenarioLibrary) {
+      useStore.getState().deleteScenario(item.id);
+    }
+  };
+  beforeEach(() => {
+    clearLibrary();
+    useStore.getState().resetCustomDesign();
+    useStore.getState().setCustomEnvironment("equatorial");
+    useStore.getState().enterCustomSite();
+  });
+  afterEach(() => {
+    cleanup();
+    clearLibrary();
+    useStore.getState().enterAuthoredSite("equatorial");
+  });
+
+  it("updates the case it was saved as, in place, after a confirming click", () => {
+    useStore.getState().setCustomDesignName("Trench layout");
+    render(<CustomSiteWorkspace />);
+    expect(screen.queryByRole("button", { name: /UPDATE “/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "SAVE TO STUDY" }));
+    const saved = useStore.getState().scenarioLibrary.find((item) => item.name === "Trench layout")!;
+    expect((screen.getByRole("button", { name: "SAVED AS “Trench layout”" }) as HTMLButtonElement).disabled).toBe(true);
+
+    act(() => {
+      useStore.getState().placeCustomAsset("equatorial.excavator", -60, -40);
+      // placing selects the asset; the project actions return when nothing is selected
+      useStore.getState().selectCustomAsset(null);
+    });
+    const update = screen.getByRole("button", { name: "UPDATE “Trench layout”" });
+    fireEvent.click(update);
+    expect(useStore.getState().scenarioLibrary.find((item) => item.id === saved.id)!.design!.assets).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "CONFIRM UPDATE" }));
+    const updated = useStore.getState().scenarioLibrary.find((item) => item.id === saved.id)!;
+    expect(updated.design!.assets.map((asset) => asset.kind)).toEqual(["equatorial.excavator"]);
+    expect(useStore.getState().scenarioLibrary).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "SAVED AS “Trench layout”" })).toBeTruthy();
+  });
+
+  it("links a case loaded from the library, forgets it for a new design, and undo brings it back", () => {
+    const linked = () => {
+      const state = useStore.getState();
+      return linkedCustomCase(state.scenarioLibrary, state.customSite.sourceScenarioId, state.customSite.design)?.id ?? null;
+    };
+    useStore.getState().setCustomDesignName("Loaded layout");
+    useStore.getState().saveCurrentScenario();
+    const saved = useStore.getState().scenarioLibrary.find((item) => item.name === "Loaded layout")!;
+    expect(linked()).toBe(saved.id);
+    useStore.getState().resetCustomDesign();
+    expect(linked()).toBeNull();
+    // undoing the reset restores the design and, with it, the link
+    useStore.getState().undoCustomEdit();
+    expect(linked()).toBe(saved.id);
+    useStore.getState().seedCustomDesign("equatorial");
+    expect(linked()).toBeNull();
+    useStore.getState().undoCustomEdit();
+    expect(linked()).toBe(saved.id);
+
+    useStore.getState().resetCustomDesign();
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().loadScenario(saved.id);
+    expect(useStore.getState().workspaceMode).toBe("custom");
+    expect(linked()).toBe(saved.id);
+    // a copy of the case is a different design, and the link prefers the case opened
+    useStore.getState().duplicateScenario(saved.id);
+    expect(linked()).toBe(saved.id);
+    useStore.getState().deleteScenario(saved.id);
+    expect(linked()).toBeNull();
   });
 });

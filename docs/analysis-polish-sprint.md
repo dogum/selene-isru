@@ -25,7 +25,8 @@ reviewable workflow without adding permanent clutter to the default diorama.
 
 ## Trade Study v2
 
-- A browser-local library stores up to eight named scenarios and persists them
+- A browser-local library stores up to eight named scenarios (24 since the
+  scenario-builder phase, which also added notes and update-from-live) and persists them
   in `localStorage`.
 - Up to four cases can be pinned into a live comparison matrix.
 - Each case can be loaded, renamed, duplicated, deleted, or copied as a compact

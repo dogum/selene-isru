@@ -111,15 +111,33 @@ when they are useful:
   adds a reset-camera control and readability lock, and can overlay live,
   directional material and power paths between equipment. Selecting one asset
   isolates its connected subsystem even when Learn is off.
-- **Trade Study** stores up to eight named browser-local cases, pins four into a
-  multi-case matrix, shares reproducible URLs, imports/exports JSON and CSV,
-  searches a constrained 625-point Pareto grid, ranks local sensitivity, and
-  produces a print/PDF-ready engineering report.
+- **Undo and redo** step back through every change to the case on screen and
+  the comparison beside it: slider drags (one step each), typed values and
+  resets, presets, applied Brief, frontier and sweep points, loaded cases,
+  comparison snapshots, swaps, and site switches (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, or the
+  arrows in the top bar). **Tours** put your case back when they end, or keep
+  theirs with KEEP THIS CASE, one undo away from yours.
+- **Trade Study** is the scenario workspace:
+  - **Scenarios.** It stores up to 24 named browser-local cases, each with notes
+    that travel with its exports. UPDATE overwrites a saved case with the live
+    one, keeping its name, notes, and pin; a Custom Site design is updated from
+    the planner, over the case it was opened from or saved as. Each card says
+    whether it matches the live case. Up to four pinned cases are compared side by side, outputs and
+    every input that differs between them.
+  - **Sweep.** It runs any input the rail shows across its full engine range
+    against any numeric output, as a line or as a 2-D map, and exports every
+    point.
+  - **Pareto, sensitivity, and report.** It searches a constrained Pareto grid
+    over curated or any other axes, ranks local sensitivity, and produces a
+    print/PDF-ready engineering report.
+  - **Sharing.** It shares reproducible URLs and imports and exports JSON and
+    CSV.
 - **Brief** is an opt-in goal workflow for questions such as a polar water camp,
   minimum landed mass, or the solar/nuclear crossover. It performs a transparent
   bounded design search, ranks designs inside active implemented constraints, and reports the
-  bottleneck, largest drivers, illustrative sensitivity range, and caveats before handing an
-  accepted case into Trade Study.
+  bottleneck, largest drivers, illustrative sensitivity range, and caveats. You
+  can apply a pick, or save it or the top three to the library with notes on
+  the search that produced them.
 - Inputs use plain engineering names by default, can toggle to engine variable
   names, and expose model maturity, source links/sections, illustrative input spreads,
   range rationale, applicability, and validity limits beside the control.
@@ -155,11 +173,12 @@ and engine versions plus commit), so a file read out of context can be traced.
   re-run and any headline value the current model computes differently is
   reported.
 - **Study CSV** (library and Report): one row per case with headline outputs,
-  every energy-flow stage, and every input as `param.<key> [unit]`.
+  every energy-flow stage, every input as `param.<key> [unit]`, and the case's
+  notes.
 - **Panel CSVs**: energy flows, mass manifest, the 96-sample timeseries, the
-  campaign ledger over time, every Pareto grid point, the sensitivity ranking
-  and uncertainty bands (with sample count and seed), and every candidate the
-  Brief evaluated.
+  campaign ledger over time, every sweep point, every Pareto grid point, the
+  sensitivity ranking and uncertainty bands (with sample count and seed), and
+  every candidate the Brief evaluated.
 
 Numbers are written at full precision. Result columns are named by engine field,
 which carries its unit (`energy.secTotal_kWhPerKg`, `logistics.totalInfraMassKg`).

@@ -28,6 +28,7 @@ import type {
   WorkspaceMode
 } from "@selene-isru/engine";
 import { create } from "zustand";
+import { scenarioNotes } from "../lib/scenarioNotes";
 import { parseParams, serializeParams } from "../lib/url";
 import {
   createWorkingSiteDesign,
@@ -60,7 +61,7 @@ export type ViewTab = "site" | "energy" | "mass" | "power" | "campaign" | "study
 export type SheetDetent = "peek" | "half" | "full";
 export type MobileTab = "controls" | "energy" | "mass" | "power" | "campaign" | "study";
 export type ParameterNameMode = "plain" | "code";
-export type StudyTab = "scenarios" | "frontier" | "uncertainty" | "report";
+export type StudyTab = "scenarios" | "sweep" | "frontier" | "uncertainty" | "report";
 export type KpiKey = "sec" | "power" | "missions" | "mass-throughput" | "leverage" | "output";
 
 export interface StudyScenario {
@@ -72,6 +73,8 @@ export interface StudyScenario {
   createdAt: number;
   updatedAt: number;
   pinned: boolean;
+  /** Free-text rationale, assumptions, or review notes; absent when empty. */
+  notes?: string;
 }
 
 export interface UiState {
@@ -116,6 +119,24 @@ export interface TimeState {
 export interface TourState {
   activeId: string | null;
   beatIndex: number;
+  /** The authored case the tour interrupted, put back when it ends. */
+  restore: AuthoredCaseEntry | null;
+}
+
+/**
+ * What was on screen before a step: the live authored case and the
+ * comparison case beside it. Undo and redo restore both, so no step can
+ * leave the two out of step; a tour restores only the live case.
+ */
+export interface AuthoredCaseEntry {
+  params: SimParams;
+  scenarioName: string;
+  compare: { params: SimParams; scenarioName: string };
+}
+
+export interface ParamHistory {
+  past: AuthoredCaseEntry[];
+  future: AuthoredCaseEntry[];
 }
 
 export interface CustomSiteState {
@@ -125,11 +146,21 @@ export interface CustomSiteState {
   findings: SiteDesignFinding[];
   editor: CustomEditorSession;
   history: CustomDesignHistory;
+  /**
+   * The saved library case this design was last loaded from or saved as. The
+   * link itself follows the design id (see `linkedCustomCase`); this only
+   * picks between saved cases holding the same design (session-local).
+   */
+  sourceScenarioId: string | null;
 }
 
 const SEC_HISTORY_LENGTH = 60;
 const SCENARIO_STORAGE_KEY = "selene-isru.study-scenarios.v2";
-export const MAX_STUDY_SCENARIOS = 8;
+export const MAX_STUDY_SCENARIOS = 24;
+export const PARAM_HISTORY_LIMIT = 100;
+/** Slider-gesture edits to one input closer together than this are one undo step. */
+export const PARAM_EDIT_COALESCE_MS = 800;
+let lastParamEdit: { key: string; at: number } | null = null;
 export const MAX_PINNED_SCENARIOS = 4;
 
 /** What an import actually did, so the UI never reports more than landed. */
@@ -179,6 +210,8 @@ interface Store {
   tour: TourState;
   /** last N secTotal values for the Sankey header sparkline (session-local) */
   secHistory: number[];
+  /** authored cases to step back and forward through (session-local) */
+  paramHistory: ParamHistory;
   /** local-only named study cases persisted in this browser */
   scenarioLibrary: StudyScenario[];
   ui: UiState;
@@ -233,8 +266,17 @@ interface Store {
   ) => void;
   undoCustomEdit: () => void;
   redoCustomEdit: () => void;
-  setParam: <K extends keyof SimParams>(key: K, value: SimParams[K]) => void;
+  /**
+   * `coalesce` marks an edit from a slider gesture: edits to the same input
+   * in quick succession then share one undo step. Everything else (typed
+   * values, resets, toggles) is its own step.
+   */
+  setParam: <K extends keyof SimParams>(key: K, value: SimParams[K], options?: { coalesce?: boolean }) => void;
+  /** A new slider gesture begins: its edits never fold into the previous one's. */
+  startParamGesture: () => void;
   applyPatch: (patch: Partial<SimParams>) => void;
+  undoParams: () => void;
+  redoParams: () => void;
   resetParam: (key: keyof SimParams) => void;
   setUi: (patch: Partial<UiState>) => void;
   setTimeHours: (tHours: number) => void;
@@ -249,10 +291,25 @@ interface Store {
   duplicateScenario: (id: string) => void;
   deleteScenario: (id: string) => void;
   toggleScenarioPin: (id: string) => void;
+  setScenarioNotes: (id: string, notes: string) => void;
+  /**
+   * Add authored cases (Brief picks) to the library, pinning them while pin
+   * slots are free. Cases beyond the library's capacity are not added.
+   */
+  saveScenarios: (cases: Array<{ name: string; params: SimParams; notes?: string }>) => { added: number; skipped: number };
+  /**
+   * Overwrite a saved case's inputs (or design) with the live case, keeping
+   * its identity, name, notes, and pin. Only a case of the live workspace's
+   * kind can take it; returns whether the case was updated.
+   */
+  updateScenarioFromCurrent: (id: string) => boolean;
   importScenarios: (scenarios: StudyScenario[]) => ScenarioImportSummary;
   importCustomDesign: (design: SiteDesignDocument) => void;
   startTour: (id: string) => void;
+  /** End the tour and put back the case it interrupted. */
   stopTour: () => void;
+  /** End the tour and keep its case, one undo away from the one it interrupted. */
+  keepTourCase: () => void;
   advanceTour: () => void;
   flyTo: (target: string) => void;
   pulseAsset: (asset: string, severity: string) => void;
@@ -362,6 +419,15 @@ function evaluateCustomRuntime(design: SiteDesignDocument): {
   };
 }
 
+/** The name a case gets when it is not a saved one. */
+function workingCaseName(params: Pick<SimParams, "site">): string {
+  return `${params.site === "polar" ? "Polar" : "Equatorial"} working case`;
+}
+
+function sameParams(a: SimParams, b: SimParams): boolean {
+  return (Object.keys(a) as Array<keyof SimParams>).every((key) => a[key] === b[key]);
+}
+
 function initialCompareParams(params: SimParams): SimParams {
   return { ...params, site: params.site === "polar" ? "equatorial" : "polar" };
 }
@@ -414,7 +480,8 @@ function normalizeScenario(value: unknown): StudyScenario | null {
     ...(parsedDesign === null ? {} : { design: parsedDesign }),
     createdAt: candidate.createdAt!,
     updatedAt: candidate.updatedAt!,
-    pinned: candidate.pinned!
+    pinned: candidate.pinned!,
+    ...scenarioNotes(candidate.notes)
   };
 }
 
@@ -497,7 +564,8 @@ export const useStore = create<Store>((set, get) => {
     viewMode: "planner",
     findings: customRuntime.evaluation.findings,
     editor: customEditorSession(),
-    history: emptyCustomHistory()
+    history: emptyCustomHistory(),
+    sourceScenarioId: null
   };
 
   const commitCustomDesign = (
@@ -556,11 +624,101 @@ export const useStore = create<Store>((set, get) => {
     });
   };
 
+  /**
+   * Undo history covers the authored workspace only (Custom Site keeps its
+   * own design history), never a tour's scripted beats, and nothing while a
+   * caller has suppressed it.
+   */
+  let historySuppressed = 0;
+  const withoutHistory = (change: () => void): void => {
+    historySuppressed += 1;
+    try {
+      change();
+    } finally {
+      historySuppressed -= 1;
+    }
+  };
+  const recordsAuthoredHistory = (): boolean =>
+    historySuppressed === 0 && get().workspaceMode === "authored" && get().tour.activeId === null;
+
+  /**
+   * Push the case on screen onto the undo stack before it changes. Edits to
+   * the same input in quick succession (one slider drag) are one step.
+   */
+  const rememberAuthoredCase = (coalesceKey: string | null = null): void => {
+    const { paramHistory } = get();
+    const now = Date.now();
+    const coalesce =
+      coalesceKey !== null &&
+      lastParamEdit !== null &&
+      lastParamEdit.key === coalesceKey &&
+      now - lastParamEdit.at < PARAM_EDIT_COALESCE_MS;
+    lastParamEdit = coalesceKey === null ? null : { key: coalesceKey, at: now };
+    set({
+      paramHistory: {
+        past: coalesce
+          ? paramHistory.past
+          : [...paramHistory.past, entryOnScreen()].slice(-PARAM_HISTORY_LIMIT),
+        future: []
+      }
+    });
+  };
+
+  /** Both cases on screen, as a history entry. */
+  function entryOnScreen(): AuthoredCaseEntry {
+    const { params, ui, compareParams } = get();
+    return {
+      params,
+      scenarioName: ui.currentScenarioName,
+      compare: { params: compareParams, scenarioName: ui.compareScenarioName }
+    };
+  }
+
+  /** Show a history entry: the live case and the comparison beside it. */
+  const showEntry = (entry: AuthoredCaseEntry): void => {
+    showAuthoredCase(entry.params, entry.scenarioName);
+    set({
+      ...(sameParams(entry.compare.params, get().compareParams)
+        ? {}
+        : { compareParams: entry.compare.params, compareResult: simulate(entry.compare.params) }),
+      ui: { ...get().ui, compareScenarioName: entry.compare.scenarioName }
+    });
+  };
+
+  /** Whether showing `params` under `name` would change the case on screen. */
+  const changesCase = (params: SimParams, name: string): boolean =>
+    !sameParams(params, get().params) || name !== get().ui.currentScenarioName;
+
+  /** Simulate an authored case and show it, without touching the undo stack. */
+  const showAuthoredCase = (input: Partial<SimParams>, scenarioName?: string): void => {
+    const { params: nextParams, result: nextResult } = simulateStoreParams(input);
+    const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
+    const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
+    set({
+      params: nextParams,
+      result: nextResult,
+      timeseries: nextTimeseries,
+      time: nextTime,
+      timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
+      secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
+      ui: {
+        ...get().ui,
+        selectedAsset: null,
+        currentScenarioName: scenarioName ?? workingCaseName(nextParams)
+      }
+    });
+  };
+
   const activateCustomDesign = (
     source: SiteDesignDocument,
     resetHistory = false,
     scenarioName?: string
   ): void => {
+    // Leaving the authored workspace: keep the case left behind one undo away
+    // for when the user comes back.
+    if (recordsAuthoredHistory()) {
+      rememberAuthoredCase();
+    }
     const runtime = evaluateCustomRuntime(source);
     const design = runtime.evaluation.normalizedDesign;
     const nextTime = {
@@ -614,8 +772,9 @@ export const useStore = create<Store>((set, get) => {
     timeseries,
     time,
     timePoint,
-    tour: { activeId: null, beatIndex: 0 },
+    tour: { activeId: null, beatIndex: 0, restore: null },
     secHistory: [result.energy.secTotal_kWhPerKg],
+    paramHistory: { past: [], future: [] },
     scenarioLibrary,
     ui: {
       view: "site",
@@ -627,7 +786,7 @@ export const useStore = create<Store>((set, get) => {
       parameterNames: "plain",
       missionBriefOpen: false,
       studyTab: "scenarios",
-      currentScenarioName: `${params.site === "polar" ? "Polar" : "Equatorial"} working case`,
+      currentScenarioName: workingCaseName(params),
       compareScenarioName: `${compareParams.site === "polar" ? "Polar" : "Equatorial"} reference`,
       selectedAsset: null,
       selectedKpi: null,
@@ -640,8 +799,16 @@ export const useStore = create<Store>((set, get) => {
     },
 
     enterAuthoredSite: (site) => {
+      // The custom design's params are not an authored case to undo back to;
+      // the case left behind was remembered on the way out.
+      const fromCustom = get().workspaceMode === "custom";
       set({ workspaceMode: "authored" });
-      get().setParam("site", site);
+      if (fromCustom) {
+        withoutHistory(() => get().setParam("site", site));
+        set({ ui: { ...get().ui, currentScenarioName: workingCaseName(get().params) } });
+      } else {
+        get().setParam("site", site);
+      }
     },
 
     enterCustomSite: () => {
@@ -1230,7 +1397,7 @@ export const useStore = create<Store>((set, get) => {
       });
     },
 
-    setParam: (key, value) => {
+    setParam: (key, value, options) => {
       if (get().workspaceMode === "custom" && key === "site") {
         get().setCustomEnvironment(value as SiteEnvironment);
         return;
@@ -1253,6 +1420,12 @@ export const useStore = create<Store>((set, get) => {
         );
         return;
       }
+      const switchesSite = key === "site" && nextParams.site !== get().params.site;
+      const nextName = switchesSite ? workingCaseName(nextParams) : get().ui.currentScenarioName;
+      if (recordsAuthoredHistory() && changesCase(nextParams, nextName)) {
+        // Only a slider gesture coalesces; a site switch is always its own step.
+        rememberAuthoredCase(options?.coalesce === true && key !== "site" ? String(key) : null);
+      }
       const nextResult = simulateStoreParams(nextInput).result;
       const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
@@ -1263,12 +1436,12 @@ export const useStore = create<Store>((set, get) => {
         time: nextTime,
         timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
         secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
-        ...(key === "site"
+        ...(switchesSite
           ? {
               ui: {
                 ...get().ui,
                 selectedAsset: null,
-                currentScenarioName: `${nextParams.site === "polar" ? "Polar" : "Equatorial"} working case`
+                currentScenarioName: nextName
               }
             }
           : {})
@@ -1276,22 +1449,56 @@ export const useStore = create<Store>((set, get) => {
     },
 
     applyPatch: (patch) => {
-      const { params: nextParams, result: nextResult } = simulateStoreParams(patch);
-      const nextTimeseries = simulateTimeseries(nextParams, { cycles: 1, samplesPerCycle: 96 });
-      const nextTime = { ...get().time, tHours: get().time.tHours % cycleHours(nextTimeseries) };
+      const next = normalizeParams(patch).params;
+      if (recordsAuthoredHistory() && changesCase(next, workingCaseName(next))) {
+        rememberAuthoredCase();
+      }
+      showAuthoredCase(patch);
+    },
+
+    undoParams: () => {
+      // During a tour, undo means "give me my case back".
+      if (get().tour.activeId !== null) {
+        get().stopTour();
+        return;
+      }
+      const { paramHistory, workspaceMode } = get();
+      const previous = paramHistory.past.at(-1);
+      if (workspaceMode !== "authored" || previous === undefined) {
+        return;
+      }
+      lastParamEdit = null;
       set({
-        params: nextParams,
-        result: nextResult,
-        timeseries: nextTimeseries,
-        time: nextTime,
-        timePoint: sampleTimeseries(nextTimeseries, nextTime.tHours),
-        secHistory: pushHistory(get().secHistory, nextResult.energy.secTotal_kWhPerKg),
-        ui: {
-          ...get().ui,
-          selectedAsset: null,
-          currentScenarioName: `${nextParams.site === "polar" ? "Polar" : "Equatorial"} working case`
+        paramHistory: {
+          past: paramHistory.past.slice(0, -1),
+          future: [entryOnScreen(), ...paramHistory.future].slice(0, PARAM_HISTORY_LIMIT)
         }
       });
+      showEntry(previous);
+    },
+
+    redoParams: () => {
+      if (get().tour.activeId !== null) {
+        get().stopTour();
+        return;
+      }
+      const { paramHistory, workspaceMode } = get();
+      const next = paramHistory.future[0];
+      if (workspaceMode !== "authored" || next === undefined) {
+        return;
+      }
+      lastParamEdit = null;
+      set({
+        paramHistory: {
+          past: [...paramHistory.past, entryOnScreen()].slice(-PARAM_HISTORY_LIMIT),
+          future: paramHistory.future.slice(1)
+        }
+      });
+      showEntry(next);
+    },
+
+    startParamGesture: () => {
+      lastParamEdit = null;
     },
 
     resetParam: (key) => {
@@ -1328,18 +1535,30 @@ export const useStore = create<Store>((set, get) => {
     },
 
     setCompareFromCurrent: () => {
-      const { params, result } = get();
+      const { params, result, compareParams, ui } = get();
+      // A new comparison is a step of its own, so undo can take it back and
+      // no older step can bring a superseded comparison back over it.
+      const nextName = `${ui.currentScenarioName} snapshot`;
+      if (recordsAuthoredHistory() && (!sameParams(params, compareParams) || nextName !== ui.compareScenarioName)) {
+        rememberAuthoredCase();
+      }
       set({
         compareParams: { ...params },
         compareResult: result,
         ui: {
           ...get().ui,
-          compareScenarioName: `${get().ui.currentScenarioName} snapshot`
+          compareScenarioName: nextName
         }
       });
     },
 
     swapCompare: () => {
+      const { ui: before } = get();
+      const changesSomething =
+        !sameParams(get().compareParams, get().params) || before.compareScenarioName !== before.currentScenarioName;
+      if (recordsAuthoredHistory() && changesSomething) {
+        rememberAuthoredCase();
+      }
       const { params, result, compareParams, compareResult, time, ui } = get();
       const nextTimeseries = simulateTimeseries(compareParams, { cycles: 1, samplesPerCycle: 96 });
       const nextTime = { ...time, tHours: time.tHours % cycleHours(nextTimeseries) };
@@ -1382,10 +1601,11 @@ export const useStore = create<Store>((set, get) => {
       const design = workspaceMode === "custom"
         ? structuredClone(customSite.evaluation.normalizedDesign)
         : undefined;
+      const id = scenarioId();
       const next: StudyScenario[] = [
         ...current,
         {
-          id: scenarioId(),
+          id,
           name: scenarioName,
           kind: workspaceMode,
           params: design?.params ?? { ...params },
@@ -1396,7 +1616,11 @@ export const useStore = create<Store>((set, get) => {
         }
       ];
       persistScenarioLibrary(next);
-      set({ scenarioLibrary: next });
+      set({
+        scenarioLibrary: next,
+        // A custom design saved here can be updated in place from the workspace.
+        ...(workspaceMode === "custom" ? { customSite: { ...get().customSite, sourceScenarioId: id } } : {})
+      });
     },
 
     loadScenario: (id) => {
@@ -1410,10 +1634,17 @@ export const useStore = create<Store>((set, get) => {
           true,
           scenario.name
         );
+        set({ customSite: { ...get().customSite, sourceScenarioId: scenario.id } });
         return;
       }
+      const fromCustom = get().workspaceMode === "custom";
       set({ workspaceMode: "authored" });
-      get().applyPatch(scenario.params);
+      // One step for the case as it lands, name included; coming back from
+      // Custom Site is not a step (leaving it was).
+      if (!fromCustom && recordsAuthoredHistory() && changesCase(normalizeParams(scenario.params).params, scenario.name)) {
+        rememberAuthoredCase();
+      }
+      withoutHistory(() => get().applyPatch(scenario.params));
       set({ ui: { ...get().ui, currentScenarioName: scenario.name } });
     },
 
@@ -1479,7 +1710,10 @@ export const useStore = create<Store>((set, get) => {
     deleteScenario: (id) => {
       const next = get().scenarioLibrary.filter((scenario) => scenario.id !== id);
       persistScenarioLibrary(next);
-      set({ scenarioLibrary: next });
+      set({
+        scenarioLibrary: next,
+        ...(get().customSite.sourceScenarioId === id ? { customSite: { ...get().customSite, sourceScenarioId: null } } : {})
+      });
     },
 
     toggleScenarioPin: (id) => {
@@ -1499,6 +1733,77 @@ export const useStore = create<Store>((set, get) => {
       );
       persistScenarioLibrary(next);
       set({ scenarioLibrary: next });
+    },
+
+    saveScenarios: (cases) => {
+      const current = get().scenarioLibrary;
+      const room = Math.max(0, MAX_STUDY_SCENARIOS - current.length);
+      let pins = current.filter((scenario) => scenario.pinned).length;
+      const now = Date.now();
+      const added: StudyScenario[] = cases.slice(0, room).map((item) => {
+        const pinned = pins < MAX_PINNED_SCENARIOS;
+        if (pinned) pins += 1;
+        return {
+          id: scenarioId(),
+          name: item.name.slice(0, 80),
+          kind: "authored",
+          params: { ...item.params },
+          createdAt: now,
+          updatedAt: now,
+          pinned,
+          ...scenarioNotes(item.notes)
+        };
+      });
+      if (added.length > 0) {
+        const next = [...current, ...added];
+        persistScenarioLibrary(next);
+        set({ scenarioLibrary: next });
+      }
+      return { added: added.length, skipped: cases.length - added.length };
+    },
+
+    setScenarioNotes: (id, notes) => {
+      const next = get().scenarioLibrary.map((scenario) => {
+        if (scenario.id !== id) {
+          return scenario;
+        }
+        const updated: StudyScenario = { ...scenario, updatedAt: Date.now() };
+        delete updated.notes;
+        return { ...updated, ...scenarioNotes(notes) };
+      });
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    updateScenarioFromCurrent: (id) => {
+      const { scenarioLibrary: current, workspaceMode, params, customSite } = get();
+      const target = current.find((scenario) => scenario.id === id);
+      if (target === undefined || target.kind !== workspaceMode) {
+        return false;
+      }
+      const now = Date.now();
+      const design = workspaceMode === "custom"
+        ? {
+            ...structuredClone(customSite.evaluation.normalizedDesign),
+            name: target.name.slice(0, 120),
+            updatedAt: new Date(now).toISOString()
+          }
+        : undefined;
+      const next = current.map((scenario) =>
+        scenario.id === id
+          ? {
+              ...scenario,
+              params: design?.params ?? { ...params },
+              ...(design === undefined ? {} : { design }),
+              updatedAt: now
+            }
+          : scenario
+      );
+      persistScenarioLibrary(next);
+      // Like saving, updating a case leaves the live case's name alone, so it
+      // never changes the case on screen behind the undo history's back.
+      set({ scenarioLibrary: next });
+      return true;
     },
 
     importScenarios: (scenarios) => {
@@ -1553,11 +1858,40 @@ export const useStore = create<Store>((set, get) => {
     },
 
     startTour: (id) => {
-      set({ tour: { activeId: id, beatIndex: 0 }, time: { ...get().time, playing: false } });
+      const { tour, params, ui, workspaceMode } = get();
+      // A tour started from inside another one still returns to the user's case.
+      const restore = tour.restore ??
+        (workspaceMode === "authored"
+          ? { params, scenarioName: ui.currentScenarioName, compare: { params: get().compareParams, scenarioName: ui.compareScenarioName } }
+          : null);
+      set({ tour: { activeId: id, beatIndex: 0, restore }, time: { ...get().time, playing: false } });
     },
 
     stopTour: () => {
-      set({ tour: { activeId: null, beatIndex: 0 } });
+      const { restore } = get().tour;
+      set({ tour: { activeId: null, beatIndex: 0, restore: null } });
+      if (restore === null) {
+        return;
+      }
+      if (sameParams(restore.params, get().params)) {
+        set({ ui: { ...get().ui, currentScenarioName: restore.scenarioName } });
+        return;
+      }
+      showAuthoredCase(restore.params, restore.scenarioName);
+    },
+
+    keepTourCase: () => {
+      const { restore } = get().tour;
+      set({ tour: { activeId: null, beatIndex: 0, restore: null } });
+      // a beat that only renamed the case still changed it
+      if (restore === null || !changesCase(restore.params, restore.scenarioName)) {
+        return;
+      }
+      lastParamEdit = null;
+      const { paramHistory, compareParams, ui } = get();
+      // the tour replaced only the live case, so undo keeps today's comparison
+      const step: AuthoredCaseEntry = { ...restore, compare: { params: compareParams, scenarioName: ui.compareScenarioName } };
+      set({ paramHistory: { past: [...paramHistory.past, step].slice(-PARAM_HISTORY_LIMIT), future: [] } });
     },
 
     advanceTour: () => {

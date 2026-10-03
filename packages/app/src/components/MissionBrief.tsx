@@ -4,7 +4,9 @@ import { useMemo, useRef, useState } from "react";
 import {
   GOALS,
   OBJECTIVES,
+  candidateCaseName,
   candidateDetail,
+  candidateNotes,
   energyDrivers,
   optimize,
   recommendationTitle,
@@ -17,17 +19,22 @@ import { briefCandidatesCsv } from "../analysis/panelExports";
 import { useDialog } from "../lib/a11y";
 import { ExportButton } from "./panels/ExportButton";
 import { formatQtyText } from "../lib/format";
-import { useStore } from "../state/store";
+import { MAX_STUDY_SCENARIOS, useStore } from "../state/store";
 
 export function MissionBrief(): React.JSX.Element | null {
   const open = useStore((s) => s.ui.missionBriefOpen);
   const baseParams = useStore((s) => s.params);
   const applyPatch = useStore((s) => s.applyPatch);
   const setCompareFromCurrent = useStore((s) => s.setCompareFromCurrent);
+  const saveScenarios = useStore((s) => s.saveScenarios);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const setUi = useStore((s) => s.setUi);
   const [activeId, setActiveId] = useState("landed-mass");
   const [constraints, setConstraints] = useState<MissionConstraints>(GOALS[2]!.constraints);
   const [optimization, setOptimization] = useState<OptimizationResult | null>(null);
+  // What the shown results were searched under; the fields stay editable after
+  // a run, so saved picks must not read their provenance from them.
+  const [searchedUnder, setSearchedUnder] = useState<{ goalTitle: string; constraints: MissionConstraints } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const activeGoal = GOALS.find((goal) => goal.id === activeId) ?? GOALS[2]!;
   const selected = optimization?.candidates[selectedIndex] ?? null;
@@ -47,6 +54,7 @@ export function MissionBrief(): React.JSX.Element | null {
   ), [selected]);
 
   if (!open) return null;
+  const searched = searchedUnder;
   const close = (): void => setUi({ missionBriefOpen: false });
   const drivers = selected === null ? [] : energyDrivers(selected.result);
 
@@ -71,6 +79,7 @@ export function MissionBrief(): React.JSX.Element | null {
                 setConstraints(goal.constraints);
                 setOptimization(null);
                 setSelectedIndex(0);
+                setSaveStatus(null);
               }}>
                 <strong>{goal.title}</strong><span>{goal.prompt}</span>
               </button>
@@ -106,11 +115,13 @@ export function MissionBrief(): React.JSX.Element | null {
             <label className="brief-check"><input type="checkbox" checked={constraints.allowSabatier} onChange={(event) => setConstraints({ ...constraints, allowSabatier: event.target.checked })} /> ALLOW SABATIER</label>
             <button type="button" className="brief-run" onClick={() => {
               setOptimization(optimize(baseParams, constraints));
+              setSearchedUnder({ goalTitle: activeGoal.title, constraints });
               setSelectedIndex(0);
+              setSaveStatus(null);
             }}>RUN DESIGN SEARCH</button>
           </section>
 
-          {optimization !== null && selected !== null && uncertainty !== null && (
+          {optimization !== null && searched !== null && selected !== null && uncertainty !== null && (
             <section className="brief-analysis" aria-live="polite">
               <div className="brief-analysis-head">
                 <div><span className="reactor-eyebrow">RECOMMENDED BOUNDED DESIGN</span><h3>{recommendationTitle(selected)}</h3><small>{optimization.feasible} of {optimization.evaluated} cases satisfy the active implemented constraints</small></div>
@@ -149,12 +160,36 @@ export function MissionBrief(): React.JSX.Element | null {
                   title="Every evaluated design in ranked order, with its inputs, outputs, and any violated constraints"
                   build={() => briefCandidatesCsv(optimization.all)}
                 />
+                <button type="button" className="topbar-btn" onClick={() => setSaveStatus(saveText(saveScenarios([
+                  {
+                    name: candidateCaseName(searched.goalTitle, selectedIndex + 1, selected),
+                    params: selected.params,
+                    notes: candidateNotes(searched.goalTitle, searched.constraints, selected, selectedIndex + 1, optimization)
+                  }
+                ])))}>SAVE THIS PICK</button>
+                <button type="button" className="topbar-btn" onClick={() => setSaveStatus(saveText(saveScenarios(
+                  optimization.candidates.slice(0, 3).map((candidate, index) => ({
+                    name: candidateCaseName(searched.goalTitle, index + 1, candidate),
+                    params: candidate.params,
+                    notes: candidateNotes(searched.goalTitle, searched.constraints, candidate, index + 1, optimization)
+                  }))
+                )))}>SAVE TOP 3 TO LIBRARY</button>
                 <button type="button" className="topbar-btn" onClick={close}>CLOSE WITHOUT APPLYING</button>
               </div>
+              {saveStatus !== null && <p className="brief-save-status" role="status">{saveStatus}</p>}
             </section>
           )}
         </div>
       </div>
     </div>
   );
+}
+
+/** What a save did, never more than landed. */
+function saveText({ added, skipped }: { added: number; skipped: number }): string {
+  const saved = `${added} case${added === 1 ? "" : "s"} saved to the library with their search notes`;
+  if (skipped > 0) {
+    return `${saved}; ${skipped} not saved: the library holds ${MAX_STUDY_SCENARIOS}. Delete cases in Trade Study → Scenarios to make room.`;
+  }
+  return `${saved}. Compare them in Trade Study → Scenarios.`;
 }

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { DEFAULTS } from "@selene-isru/engine";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,8 +9,14 @@ import {
   waitFor
 } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { GOALS, candidateCaseName, candidateNotes, optimize } from "../src/analysis/brief";
+import { caseExport } from "../src/analysis/caseExport";
+import { compareWithLive, differingInputCount } from "../src/analysis/caseDiff";
+import { differingInputRows, previewStudyExport, scenariosCsv, studyExport } from "../src/analysis/studyExport";
+import { MissionBrief } from "../src/components/MissionBrief";
 import { ScenarioLibrary } from "../src/components/panels/ScenarioLibrary";
-import { useStore } from "../src/state/store";
+import { MAX_SCENARIO_NOTES } from "../src/lib/scenarioNotes";
+import { MAX_STUDY_SCENARIOS, useStore } from "../src/state/store";
 
 describe("scenario library imports", () => {
   afterEach(() => {
@@ -88,8 +95,9 @@ describe("scenario library capacity", () => {
 
   it("reports what an import actually added, replaced, skipped, and unpinned", () => {
     clearLibrary();
-    expect(useStore.getState().importScenarios(ids("seed", 6).map((id) => scenario(id)))).toEqual({
-      added: 6, replaced: 0, skipped: 0, unpinned: 0
+    const seeded = MAX_STUDY_SCENARIOS - 2;
+    expect(useStore.getState().importScenarios(ids("seed", seeded).map((id) => scenario(id)))).toEqual({
+      added: seeded, replaced: 0, skipped: 0, unpinned: 0
     });
     const summary = useStore.getState().importScenarios([
       scenario("seed-0"),
@@ -99,7 +107,7 @@ describe("scenario library capacity", () => {
     // Two free slots: seed-0/seed-1 replace in place, two extras fit, two are
     // dropped, and a later same-id case still replaces after the library fills.
     expect(summary).toEqual({ added: 2, replaced: 2, skipped: 2, unpinned: 0 });
-    expect(useStore.getState().scenarioLibrary).toHaveLength(8);
+    expect(useStore.getState().scenarioLibrary).toHaveLength(MAX_STUDY_SCENARIOS);
   });
 
   it("counts pins dropped by the pin limit", () => {
@@ -111,7 +119,7 @@ describe("scenario library capacity", () => {
 
   it("disables actions that would do nothing at the caps and says why", () => {
     clearLibrary();
-    useStore.getState().importScenarios(ids("full", 8).map((id, index) => scenario(id, index < 4)));
+    useStore.getState().importScenarios(ids("full", MAX_STUDY_SCENARIOS).map((id, index) => scenario(id, index < 4)));
     render(<ScenarioLibrary />);
     expect(screen.getByText(/LIBRARY FULL/)).toBeTruthy();
     expect((screen.getByRole("button", { name: "SAVE LIVE CASE" }) as HTMLButtonElement).disabled).toBe(true);
@@ -119,9 +127,264 @@ describe("scenario library capacity", () => {
       expect((copy as HTMLButtonElement).disabled).toBe(true);
     }
     const pins = screen.getAllByRole("button", { name: "PIN" }) as HTMLButtonElement[];
-    expect(pins).toHaveLength(4);
+    expect(pins).toHaveLength(MAX_STUDY_SCENARIOS - 4);
     expect(pins.every((pin) => pin.disabled)).toBe(true);
     const unpins = screen.getAllByRole("button", { name: "UNPIN" }) as HTMLButtonElement[];
     expect(unpins.every((unpin) => !unpin.disabled)).toBe(true);
+  });
+});
+
+describe("saved-case notes, updates, and input comparison", () => {
+  const clearLibrary = (): void => {
+    for (const item of useStore.getState().scenarioLibrary) {
+      useStore.getState().deleteScenario(item.id);
+    }
+  };
+  const byName = (name: string) => useStore.getState().scenarioLibrary.find((item) => item.name === name)!;
+
+  afterEach(() => {
+    cleanup();
+    clearLibrary();
+    useStore.getState().applyPatch({});
+  });
+
+  it("keeps notes on a case, cut to the limit, and drops them when blanked", () => {
+    clearLibrary();
+    useStore.getState().saveCurrentScenario("Noted");
+    const { id } = byName("Noted");
+    useStore.getState().setScenarioNotes(id, "Assumes 90% availability; check spares.");
+    expect(byName("Noted").notes).toBe("Assumes 90% availability; check spares.");
+    expect(window.localStorage.getItem("selene-isru.study-scenarios.v2")).toContain("check spares");
+    useStore.getState().setScenarioNotes(id, "x".repeat(MAX_SCENARIO_NOTES + 50));
+    expect(byName("Noted").notes).toHaveLength(MAX_SCENARIO_NOTES);
+    useStore.getState().setScenarioNotes(id, "   ");
+    expect("notes" in byName("Noted")).toBe(false);
+  });
+
+  it("carries notes through the study JSON, the case file, and the study CSV", () => {
+    clearLibrary();
+    useStore.getState().saveCurrentScenario("Travelling");
+    useStore.getState().setScenarioNotes(byName("Travelling").id, "Review with the power team, \"v2\"");
+    const saved = byName("Travelling");
+
+    const study = previewStudyExport(JSON.parse(JSON.stringify(studyExport([saved]))));
+    expect(study.scenarios[0]!.notes).toBe(saved.notes);
+
+    const file = caseExport({ name: saved.name, kind: saved.kind, params: saved.params, notes: saved.notes! });
+    expect(file.case.notes).toBe(saved.notes);
+    expect(previewStudyExport(JSON.parse(JSON.stringify(file))).scenarios[0]!.notes).toBe(saved.notes);
+    expect("notes" in caseExport({ name: "Bare", kind: "authored", params: saved.params }).case).toBe(false);
+
+    const csv = scenariosCsv([saved]);
+    const header = csv.split("\n")[0]!.split(",");
+    expect(header).toContain("notes");
+    expect(csv).toContain('"Review with the power team, ""v2"""');
+  });
+
+  it("updates a saved case from the live case, keeping its identity, name, notes, and pin", () => {
+    clearLibrary();
+    useStore.getState().saveCurrentScenario("Baseline to revise");
+    const before = byName("Baseline to revise");
+    useStore.getState().setScenarioNotes(before.id, "Keep me");
+    useStore.getState().setParam("targetKgPerDay", 2500);
+
+    expect(useStore.getState().updateScenarioFromCurrent(before.id)).toBe(true);
+    const after = byName("Baseline to revise");
+    expect(after.id).toBe(before.id);
+    expect(after.params.targetKgPerDay).toBe(2500);
+    expect(after.notes).toBe("Keep me");
+    expect(after.pinned).toBe(before.pinned);
+    // the live case keeps its own name, as when saving
+    const liveName = useStore.getState().ui.currentScenarioName;
+    expect(liveName).not.toBe("Baseline to revise");
+    expect(useStore.getState().paramHistory.past.at(-1)?.scenarioName ?? liveName).toBe(liveName);
+
+    // A custom case cannot take an authored case's inputs.
+    useStore.setState({
+      scenarioLibrary: [...useStore.getState().scenarioLibrary, { ...after, id: "custom-like", name: "Custom", kind: "custom" }]
+    });
+    expect(useStore.getState().updateScenarioFromCurrent("custom-like")).toBe(false);
+  });
+
+  it("asks before overwriting, and says when a case already matches the live case", () => {
+    clearLibrary();
+    useStore.getState().saveCurrentScenario("Live twin");
+    render(<ScenarioLibrary />);
+    expect(screen.getByText("= LIVE CASE")).toBeTruthy();
+    const update = (): HTMLButtonElement => screen.getByRole("button", { name: /UPDATE/ }) as HTMLButtonElement;
+    expect(update().disabled).toBe(true);
+
+    act(() => useStore.getState().setParam("targetKgPerDay", 3000));
+    expect(screen.getByText("LIVE CASE DIFFERS IN 1 INPUT")).toBeTruthy();
+    fireEvent.click(update());
+    expect(byName("Live twin").params.targetKgPerDay).toBe(DEFAULTS.targetKgPerDay);
+    expect(update().textContent).toBe("CONFIRM UPDATE");
+    fireEvent.click(update());
+    expect(byName("Live twin").params.targetKgPerDay).toBe(3000);
+  });
+
+  it("shows an updated pinned case's new outputs in the comparison matrix", () => {
+    clearLibrary();
+    useStore.getState().importScenarios([
+      { id: "pin-x", name: "X", kind: "authored", params: { ...DEFAULTS }, createdAt: 1, updatedAt: 1, pinned: true },
+      { id: "pin-y", name: "Y", kind: "authored", params: { ...DEFAULTS, site: "polar" }, createdAt: 1, updatedAt: 1, pinned: true }
+    ]);
+    render(<ScenarioLibrary />);
+    const outputRow = () => [...document.querySelectorAll(".scenario-matrix tbody tr")].find((row) => row.querySelector("th")?.textContent === "Output")!;
+    expect(outputRow().querySelectorAll("td")[0]!.textContent).toMatch(/^1,000/);
+    act(() => {
+      useStore.getState().setParam("targetKgPerDay", 2500);
+      useStore.getState().updateScenarioFromCurrent("pin-x");
+    });
+    expect(outputRow().querySelectorAll("td")[0]!.textContent).toMatch(/^2,500/);
+  });
+
+  it("lists, side by side, only the inputs that differ between pinned cases", () => {
+    expect(differingInputRows([DEFAULTS])).toEqual([]);
+    const rows = differingInputRows([DEFAULTS, { ...DEFAULTS, targetKgPerDay: 2500, site: "polar" }]);
+    expect(rows.map((row) => row.key).sort()).toEqual(["site", "targetKgPerDay"]);
+    const target = rows.find((row) => row.key === "targetKgPerDay")!;
+    expect(target.values).toEqual([String(DEFAULTS.targetKgPerDay), "2500"]);
+    expect(target.unit).toBe("kg/day");
+
+    clearLibrary();
+    useStore.getState().importScenarios([
+      { id: "pin-a", name: "A", kind: "authored", params: { ...DEFAULTS }, createdAt: 1, updatedAt: 1, pinned: true },
+      { id: "pin-b", name: "B", kind: "authored", params: { ...DEFAULTS, reserveDays: 60 }, createdAt: 1, updatedAt: 1, pinned: true }
+    ]);
+    render(<ScenarioLibrary />);
+    expect(screen.getByText("INPUTS THAT DIFFER")).toBeTruthy();
+    const table = document.querySelector(".scenario-input-diff")!;
+    expect(table.querySelectorAll("tbody tr")).toHaveLength(1);
+    expect(table.textContent).toContain("60");
+  });
+});
+
+describe("Mission Brief picks in the library", () => {
+  const clearLibrary = (): void => {
+    for (const item of useStore.getState().scenarioLibrary) {
+      useStore.getState().deleteScenario(item.id);
+    }
+  };
+  afterEach(() => {
+    cleanup();
+    clearLibrary();
+    useStore.getState().setUi({ missionBriefOpen: false });
+  });
+
+  it("saves picks with their search provenance, pinning while slots are free, and stops at capacity", () => {
+    clearLibrary();
+    const constraints = GOALS[2]!.constraints;
+    const optimization = optimize(DEFAULTS, constraints);
+    const picks = optimization.candidates.slice(0, 3);
+    const outcome = useStore.getState().saveScenarios(picks.map((candidate, index) => ({
+      name: candidateCaseName(GOALS[2]!.title, index + 1, candidate),
+      params: candidate.params,
+      notes: candidateNotes(GOALS[2]!.title, constraints, candidate, index + 1, optimization)
+    })));
+    expect(outcome).toEqual({ added: 3, skipped: 0 });
+    const saved = useStore.getState().scenarioLibrary;
+    expect(saved.map((item) => item.params)).toEqual(picks.map((candidate) => candidate.params));
+    expect(saved.every((item) => item.pinned && item.kind === "authored")).toBe(true);
+    expect(saved[0]!.name).toMatch(new RegExp(`^${GOALS[2]!.title} #1 · `));
+    expect(saved[0]!.notes).toContain(`Searched ${optimization.evaluated} cases`);
+    expect(saved[0]!.notes).toContain(`at most ${constraints.maxMissions} missions`);
+
+    const fill = Array.from({ length: MAX_STUDY_SCENARIOS }, (_, index) => ({ name: `fill ${index}`, params: DEFAULTS }));
+    const capped = useStore.getState().saveScenarios(fill);
+    expect(capped).toEqual({ added: MAX_STUDY_SCENARIOS - 3, skipped: 3 });
+    expect(useStore.getState().scenarioLibrary.filter((item) => item.pinned)).toHaveLength(4);
+  });
+
+  it("saves the top three from the Brief dialog and says what landed", () => {
+    clearLibrary();
+    useStore.getState().setUi({ missionBriefOpen: true });
+    render(<MissionBrief />);
+    fireEvent.click(screen.getByRole("button", { name: "RUN DESIGN SEARCH" }));
+    // Editing a cap after the search must not rewrite the picks' provenance.
+    const searchedCap = GOALS[2]!.constraints.maxMissions;
+    fireEvent.change(screen.getByLabelText("MAX MISSIONS"), { target: { value: String(searchedCap + 7) } });
+    fireEvent.click(screen.getByRole("button", { name: "SAVE TOP 3 TO LIBRARY" }));
+    expect(useStore.getState().scenarioLibrary).toHaveLength(3);
+    for (const saved of useStore.getState().scenarioLibrary) {
+      expect(saved.notes).toContain(`at most ${searchedCap} missions`);
+      expect(saved.notes).not.toContain(`at most ${searchedCap + 7} missions`);
+    }
+    expect(screen.getByRole("status").textContent).toMatch(/^3 cases saved to the library/);
+    // nothing about the live case changed
+    expect(useStore.getState().params).toEqual(DEFAULTS);
+  });
+});
+
+describe("custom cases compare with the live design, not its effective inputs", () => {
+  const clearLibrary = (): void => {
+    for (const item of useStore.getState().scenarioLibrary) {
+      useStore.getState().deleteScenario(item.id);
+    }
+  };
+  const live = () => {
+    const state = useStore.getState();
+    return { workspaceMode: state.workspaceMode, params: state.params, design: state.customSite.evaluation.normalizedDesign };
+  };
+  afterEach(() => {
+    cleanup();
+    clearLibrary();
+    useStore.getState().enterAuthoredSite("equatorial");
+    useStore.getState().applyPatch({});
+  });
+
+  it("sees a layout change, lets UPDATE save it, and then matches", () => {
+    clearLibrary();
+    const store = useStore.getState();
+    store.resetCustomDesign();
+    store.setCustomEnvironment("equatorial");
+    store.enterCustomSite();
+    store.placeCustomAsset("equatorial.excavator", -60, -40);
+    useStore.getState().saveCurrentScenario("Custom layout");
+    const saved = useStore.getState().scenarioLibrary.find((item) => item.name === "Custom layout")!;
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+
+    // A move changes the design but not one SimParams value.
+    const assetId = useStore.getState().customSite.design.assets[0]!.id;
+    useStore.getState().moveCustomAsset(assetId, -30, -40);
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 0, layout: true });
+
+    render(<ScenarioLibrary />);
+    expect(screen.getByText("LIVE CASE DIFFERS IN LAYOUT")).toBeTruthy();
+    const update = screen.getByRole("button", { name: /UPDATE/ }) as HTMLButtonElement;
+    expect(update.disabled).toBe(false);
+    fireEvent.click(update);
+    fireEvent.click(update);
+    const updated = useStore.getState().scenarioLibrary.find((item) => item.id === saved.id)!;
+    expect(updated.design!.assets[0]!.transform.xM).toBe(-30);
+    expect(compareWithLive(updated, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+    expect(screen.getByText("= LIVE CASE")).toBeTruthy();
+  });
+
+  it("compares a custom case's planned inputs from the design, which UPDATE can always clear", () => {
+    clearLibrary();
+    const store = useStore.getState();
+    store.resetCustomDesign();
+    store.setCustomEnvironment("equatorial");
+    store.enterCustomSite();
+    useStore.getState().saveCurrentScenario("Planned");
+    const saved = useStore.getState().scenarioLibrary.find((item) => item.name === "Planned")!;
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+    // Even if the simulated params drifted from the plan, the comparison reads the design.
+    expect(compareWithLive(saved, { ...live(), params: { ...live().params, targetKgPerDay: 1 } })).toEqual({ comparable: true, inputs: 0, layout: false });
+    useStore.getState().setParam("reserveDays", 45);
+    expect(compareWithLive(saved, live())).toEqual({ comparable: true, inputs: 1, layout: false });
+    expect(differingInputCount(saved.params, { ...saved.params, reserveDays: 45 })).toBe(1);
+    expect(useStore.getState().updateScenarioFromCurrent(saved.id)).toBe(true);
+    const updated = useStore.getState().scenarioLibrary.find((item) => item.id === saved.id)!;
+    expect(compareWithLive(updated, live())).toEqual({ comparable: true, inputs: 0, layout: false });
+  });
+
+  it("does not compare cases across workspaces", () => {
+    clearLibrary();
+    useStore.getState().saveCurrentScenario("Authored");
+    const authored = useStore.getState().scenarioLibrary.find((item) => item.name === "Authored")!;
+    useStore.getState().enterCustomSite();
+    expect(compareWithLive(authored, live())).toEqual({ comparable: false });
   });
 });

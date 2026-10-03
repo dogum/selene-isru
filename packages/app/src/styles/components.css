@@ -113,6 +113,27 @@
   border: 1px solid var(--line);
 }
 
+/* undo / redo: two glyph buttons joined into one control */
+.undo-controls {
+  display: flex;
+}
+
+.undo-controls .topbar-btn {
+  padding: 3px 8px;
+  font-size: var(--fs-14);
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.undo-controls .topbar-btn + .topbar-btn {
+  border-left: 0;
+}
+
+.topbar-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* keep every top-bar control on one line; between 1100px (the mobile
    breakpoint) and ~1400px there is not room for the subtitle and the
    default spacing, so give those up before any label wraps */
@@ -2694,6 +2715,59 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border-color: var(--cryo);
 }
 
+.scenario-card-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  color: var(--text-low);
+  border-color: var(--line);
+}
+
+.scenario-card-live {
+  margin: 0 0 6px;
+  color: var(--text-low);
+  font-size: var(--fs-10);
+  letter-spacing: 0.06em;
+}
+
+.scenario-card-live.same {
+  color: var(--cryo);
+}
+
+.scenario-card-notes {
+  margin: 0 0 8px;
+}
+
+.scenario-card-notes summary {
+  cursor: pointer;
+  color: var(--text-low);
+  font: 500 var(--fs-10)/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.scenario-card-notes textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  resize: vertical;
+  color: var(--text-hi);
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  font: 400 var(--fs-11)/1.4 var(--font-body);
+}
+
+.scenario-input-diff {
+  margin-top: 6px;
+}
+
+.scenario-input-diff th small {
+  color: var(--text-low);
+}
+
+.scenario-input-diff td.differs {
+  color: var(--caution);
+}
+
 .scenario-matrix-wrap {
   overflow-x: auto;
 }
@@ -2874,6 +2948,90 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .frontier-key-good { background: var(--melt); }
 .frontier-key-bad { background: var(--alarm); opacity: 0.5; }
+
+.sweep-scales {
+  margin-top: 8px;
+}
+
+.frontier-constraints .sweep-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.frontier-constraints .sweep-toggle input {
+  width: auto;
+  padding: 0;
+}
+
+.sweep-readout {
+  min-height: 2.6em;
+  margin: 8px 0 0;
+  color: var(--text-mid);
+  font-size: var(--fs-11);
+  line-height: 1.3;
+}
+
+.sweep-well {
+  overflow: hidden;
+}
+
+.sweep-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.sweep-line {
+  fill: none;
+  stroke: var(--cryo);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.sweep-alarm {
+  fill: none;
+  stroke: var(--alarm);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.sweep-live line,
+.sweep-focus line {
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.sweep-live line { stroke: var(--text-low); }
+.sweep-live circle { fill: none; stroke: var(--text-hi); stroke-width: 2; }
+.sweep-focus line { stroke: var(--text-mid); }
+.sweep-focus circle { fill: var(--cryo); stroke: var(--bg-inset); stroke-width: 2; }
+
+.sweep-key-alarm {
+  fill: var(--alarm);
+}
+
+.sweep-live-ring {
+  fill: none;
+  stroke: var(--text-hi);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.sweep-cell.focus {
+  stroke: var(--text-hi);
+  stroke-width: 2;
+}
+
+.sweep-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.sweep-hit:focus-visible {
+  outline: none;
+  stroke: var(--cryo);
+  stroke-width: 1;
+}
 
 .frontier-candidate {
   display: flex;
@@ -3299,8 +3457,16 @@ body.selene-photo-mode .custom-scene-label-overlay {
 
 .brief-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.brief-save-status {
+  margin: 8px 0 0;
+  text-align: right;
+  color: var(--cryo);
+  font: 500 var(--fs-11)/1.4 var(--font-mono);
 }
 
 @media (max-width: 1099px) {

@@ -1,7 +1,7 @@
 {
   "schema": "selene-custom-site-release-evidence",
   "version": 1,
-  "measuredAt": "2026-10-02T20:29:33.217Z",
+  "measuredAt": "2026-10-03T06:45:53.305Z",
   "environment": {
     "browser": "Chrome/141.0.7390.37",
     "viewport": "1600x900",
@@ -9,29 +9,29 @@
     "note": "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Video capture is a separate reviewed workflow."
   },
   "timingsMs": {
-    "navigation": 3898.2,
-    "enterBlankCustomSite": 5877.8,
-    "firstPlacementCommit": 2617.6,
-    "importValidateEvaluateAndRender": 412.7,
+    "navigation": 4226.2,
+    "enterBlankCustomSite": 4762.2,
+    "firstPlacementCommit": 2665.5,
+    "importValidateEvaluateAndRender": 290.4,
     "contextLossRestore": null,
-    "mobileReviewLoad": 4632.9,
+    "mobileReviewLoad": 5221,
     "animationFrameSample": {
       "frames": 90,
       "medianMs": 16.7,
-      "p95Ms": 16.8,
-      "maxMs": 33.3
+      "p95Ms": 16.7,
+      "maxMs": 50
     }
   },
   "settledDesktop": {
     "assets": 8,
     "connections": 8,
-    "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 9.71 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
-    "jsHeapUsedMb": 14.31,
-    "domNodes": 916
+    "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 9.04 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
+    "jsHeapUsedMb": 15.02,
+    "domNodes": 918
   },
   "productionBundleBytes": {
-    "javascript": 1382407,
-    "css": 85869
+    "javascript": 1503995,
+    "css": 90492
   },
   "checks": [
     "blank custom site opened",

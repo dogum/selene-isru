@@ -155,8 +155,8 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       maturity: "SIMPLIFIED CORRELATION"
     },
     habitat: {
-      purpose: "Represent an occupied polar outpost consuming stored products and local shielding.",
-      inputs: ["Stored product", "Shield depth", "Roof area", "Internal pressure"],
+      purpose: "Represent an occupied polar outpost consuming stored products; the pole makes no slag for shielding.",
+      inputs: ["Stored product", "Landed infrastructure"],
       assumptions: [
         "Habitat demand is illustrative and is not a closed crew consumables model.",
         "The shielding calculation does not replace pressure-shell or radiation transport design."
