@@ -1,6 +1,10 @@
 import type { CampaignResult, SimParams, Warning } from "../types";
 
 const DAYS_PER_YEAR = 365;
+/** Landings marked one by one; beyond this the grid samples show the staircase. */
+const MAX_LANDING_EVENTS = 100;
+/** Regular samples per timeline, whatever step was asked for. */
+const MAX_SAMPLES = 2000;
 
 /**
  * Campaign mass ledger. Everything is counted in one currency, mass in low
@@ -182,7 +186,13 @@ export function campaignTimeline(params: SimParams, source: CampaignSource, step
     points.push({ ...ledgerAt(params, source, tDays, landers), event });
   };
   const interval = landingIntervalDays(params);
-  for (let i = 0; i < basis.nMissions; i += 1) {
+  // A near-empty lander can need millions of landings: mark each one only
+  // when there are few enough to draw, otherwise the first and the last.
+  const marked =
+    basis.nMissions <= MAX_LANDING_EVENTS
+      ? Array.from({ length: basis.nMissions }, (_, i) => i)
+      : [0, basis.nMissions - 1];
+  for (const i of marked) {
     if (i > 0) add(i * interval, `before landing ${i + 1}`, i);
     add(i * interval, `landing ${i + 1}`, i + 1);
   }
@@ -190,9 +200,11 @@ export function campaignTimeline(params: SimParams, source: CampaignSource, step
   if (campaign.paysBackInCampaign && campaign.paybackDays !== null) add(campaign.paybackDays, "payback");
   add(campaign.campaignEndDay, "campaign end");
 
-  const step = Math.max(1, stepDays);
-  for (let t = 0; t < campaign.campaignEndDay; t += step) {
-    if (!points.some((point) => Math.abs(point.tDays - t) < 1e-9)) add(t, "");
+  const eventDays = points.map((point) => point.tDays);
+  const step = Math.max(1, stepDays, campaign.campaignEndDay / MAX_SAMPLES);
+  for (let k = 0; k * step < campaign.campaignEndDay; k += 1) {
+    const t = k * step;
+    if (!eventDays.some((day) => Math.abs(day - t) < 1e-9)) add(t, "");
   }
   // Stable sort keeps each "before landing" ahead of its landing.
   return points.sort((a, b) => a.tDays - b.tDays);

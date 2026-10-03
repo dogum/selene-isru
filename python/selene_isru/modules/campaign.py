@@ -4,6 +4,10 @@ import math
 from typing import Any
 
 DAYS_PER_YEAR = 365
+# Landings marked one by one; beyond this the grid samples show the staircase.
+MAX_LANDING_EVENTS = 100
+# Regular samples per timeline, whatever step was asked for.
+MAX_SAMPLES = 2000
 
 
 def _capacity_kg(params: dict[str, Any], basis: dict[str, Any]) -> float:
@@ -121,7 +125,10 @@ def campaign_timeline(params: dict[str, Any], result: dict[str, Any], step_days:
         points.append({**_ledger_at(params, result, t_days, count), "event": event})
 
     interval = _landing_interval_days(params)
-    for i in range(basis["nMissions"]):
+    # A near-empty lander can need millions of landings: mark each one only
+    # when there are few enough to draw, otherwise the first and the last.
+    marked = range(basis["nMissions"]) if basis["nMissions"] <= MAX_LANDING_EVENTS else [0, basis["nMissions"] - 1]
+    for i in marked:
         if i > 0:
             add(i * interval, f"before landing {i + 1}", i)
         add(i * interval, f"landing {i + 1}", i + 1)
@@ -130,10 +137,12 @@ def campaign_timeline(params: dict[str, Any], result: dict[str, Any], step_days:
         add(campaign["paybackDays"], "payback")
     add(campaign["campaignEndDay"], "campaign end")
 
-    step = max(1, step_days)
-    t = 0.0
-    while t < campaign["campaignEndDay"]:
-        if not any(abs(point["tDays"] - t) < 1e-9 for point in points):
+    event_days = [point["tDays"] for point in points]
+    step = max(1, step_days, campaign["campaignEndDay"] / MAX_SAMPLES)
+    k = 0
+    while k * step < campaign["campaignEndDay"]:
+        t = float(k * step)
+        if not any(abs(day - t) < 1e-9 for day in event_days):
             add(t, "")
-        t += step
+        k += 1
     return sorted(points, key=lambda point: point["tDays"])

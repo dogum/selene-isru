@@ -76,3 +76,23 @@ def test_sabatier_lands_its_co2_feed() -> None:
     assert_rel(campaign["deliveredKgPerDay"], products * params["plantAvailability"], 1e-12)
     assert_rel(campaign["feedKgPerYear"], production["co2ImportedKgPerDay"] * params["plantAvailability"] * 365, 1e-12)
     assert campaign["paybackDays"] is None
+
+
+def test_near_empty_lander_keeps_timeline_bounded() -> None:
+    import math
+
+    from selene_isru.constants import c
+
+    dv_total = 380 * c("g0") * math.log(1_100_000 / (200_000 + 20_000 + 0.05))
+    params, result = run({"M0leo": 1_100_000, "IspLander": 380, "MdryLander": 200_000, "MresidProp": 20_000, "dvTotal": dv_total})
+    assert result["logistics"]["nMissions"] > 1_000_000
+    timeline = campaign_timeline(params, result, 30)
+    assert len(timeline) <= 2010
+    assert len([point for point in timeline if point["event"].startswith("landing ")]) == 2
+
+
+def test_storage_losses_are_not_delivered() -> None:
+    params, result = run({"cryoControlMode": "passive"})
+    lost = sum(inventory["actualLossKgPerDay"] for inventory in result["cryo"]["inventories"])
+    assert lost > 10
+    assert_rel(result["campaign"]["deliveredKgPerDay"], (result["production"]["o2KgPerDay"] - lost) * params["plantAvailability"], 1e-12)

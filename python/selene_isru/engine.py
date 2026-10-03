@@ -61,7 +61,12 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         cryo["cryoMassKg"],
     )
     # What the plant delivers: O2 at the equator, water at the pole, or the
-    # Sabatier products, whose imported CO2 feed must be landed.
+    # Sabatier products, whose imported CO2 feed must be landed. Storage losses
+    # (passive or capacity-limited control) are product never delivered, and
+    # feed lost in storage must be landed again.
+    def storage_loss_kg_per_day(roles: tuple[str, ...]) -> float:
+        return sum(inventory["actualLossKgPerDay"] for inventory in cryo["inventories"] if inventory["role"] in roles)
+
     if params["site"] == "equatorial":
         product_kg_per_day = production["o2KgPerDay"]
     elif params["enableSabatier"]:
@@ -69,7 +74,12 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     else:
         product_kg_per_day = production["waterKgPerDay"]
     campaign = simulate_campaign(
-        params, logistics, {"productKgPerDay": product_kg_per_day, "importedFeedKgPerDay": production["co2ImportedKgPerDay"]}
+        params,
+        logistics,
+        {
+            "productKgPerDay": max(0, product_kg_per_day - storage_loss_kg_per_day(("product", "custom"))),
+            "importedFeedKgPerDay": production["co2ImportedKgPerDay"] + storage_loss_kg_per_day(("feed",)),
+        },
     )
     campaign_warnings = campaign.pop("warnings")
     construction = simulate_construction(params, production["slagKgPerDay"] if params["site"] == "equatorial" else 0)

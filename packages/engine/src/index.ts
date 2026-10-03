@@ -26,6 +26,7 @@ import type {
   SimParams,
   SimResult,
   SimulationOptions,
+  StorageInventory,
   TimeseriesOptions,
   TimeseriesResult,
   UncertaintyBand,
@@ -176,15 +177,22 @@ export function simulate(
     options.supplementalMasses
   );
   // What the plant delivers: O2 at the equator, water at the pole, or the
-  // Sabatier products, whose imported CO2 feed must be landed.
+  // Sabatier products, whose imported CO2 feed must be landed. Storage losses
+  // (passive or capacity-limited control) are product never delivered, and
+  // feed lost in storage must be landed again.
+  const storageLossKgPerDay = (roles: ReadonlyArray<StorageInventory["role"]>): number =>
+    cryo.inventories
+      .filter((inventory) => roles.includes(inventory.role))
+      .reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
+  const grossProductKgPerDay =
+    params.site === "equatorial"
+      ? production.o2KgPerDay
+      : params.enableSabatier
+        ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
+        : production.waterKgPerDay;
   const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
-    productKgPerDay:
-      params.site === "equatorial"
-        ? production.o2KgPerDay
-        : params.enableSabatier
-          ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
-          : production.waterKgPerDay,
-    importedFeedKgPerDay: production.co2ImportedKgPerDay
+    productKgPerDay: Math.max(0, grossProductKgPerDay - storageLossKgPerDay(["product", "custom"])),
+    importedFeedKgPerDay: production.co2ImportedKgPerDay + storageLossKgPerDay(["feed"])
   });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);

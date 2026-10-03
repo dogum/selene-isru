@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { campaignAt, campaignTimeline, normalizeParams, simulate } from "../src/index";
+import { campaignAt, campaignTimeline, normalizeParams, PHYSICAL_CONSTANTS, simulate } from "../src/index";
 import type { SimParams } from "../src/types";
 
 function run(input: Partial<SimParams>): { params: SimParams; result: ReturnType<typeof simulate> } {
@@ -128,6 +128,42 @@ describe("campaign ledger behaviour", () => {
     // Water-only and equatorial plants import nothing.
     expect(run({ site: "polar" }).result.campaign.feedKgPerYear).toBe(0);
     expect(run({}).result.campaign.feedKgPerYear).toBe(0);
+  });
+
+  test("a near-empty lander keeps the timeline bounded", () => {
+    // About 0.05 kg of payload per lander: well over a million landings.
+    const dvTotal = 380 * PHYSICAL_CONSTANTS.g0.value * Math.log(1_100_000 / (200_000 + 20_000 + 0.05));
+    const { params, result } = run({ M0leo: 1_100_000, IspLander: 380, MdryLander: 200_000, MresidProp: 20_000, dvTotal });
+    expect(result.logistics.nMissions).toBeGreaterThan(1_000_000);
+    const started = performance.now();
+    const timeline = campaignTimeline(params, result, 30);
+    expect(performance.now() - started).toBeLessThan(2000);
+    expect(timeline.length).toBeLessThanOrEqual(2010);
+    expect(timeline.filter((point) => point.event.startsWith("landing "))).toHaveLength(2);
+    const end = timeline.at(-1)!;
+    expect(end.event).toBe("campaign end");
+    expectRel(end.leoMassSpentKg, result.campaign.leoMassSpentKg, 1e-12);
+  });
+
+  test("storage losses are not delivered, and lost feed is landed again", () => {
+    const equatorial = run({ cryoControlMode: "passive" });
+    const lost = equatorial.result.cryo.inventories.reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
+    expect(lost).toBeGreaterThan(10);
+    expectRel(
+      equatorial.result.campaign.deliveredKgPerDay,
+      (equatorial.result.production.o2KgPerDay - lost) * equatorial.params.plantAvailability,
+      1e-12
+    );
+    expect(equatorial.result.campaign.paybackDays!).toBeGreaterThan(run({}).result.campaign.paybackDays!);
+
+    const sabatier = run({ site: "polar", enableSabatier: true, cryoControlMode: "passive" });
+    const feedLost = sabatier.result.cryo.inventories.find((inventory) => inventory.role === "feed")!.actualLossKgPerDay;
+    expect(feedLost).toBeGreaterThan(0);
+    expectRel(
+      sabatier.result.campaign.feedKgPerYear,
+      (sabatier.result.production.co2ImportedKgPerDay + feedLost) * sabatier.params.plantAvailability * 365,
+      1e-12
+    );
   });
 
   test("a lander with no payload deploys nothing and says so", () => {
