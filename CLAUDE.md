@@ -460,6 +460,7 @@ in `assets/ASSET_LICENSES.md`.
 | Refuelling demand, store sizing, tank drawdown | `refuel.test.ts`, `test_refuel.py`, refuel vectors in `dynamics_vectors.json` |
 | Ilmenite reduction chain, Eagle calibration check | `ilmenite.test.ts`, `test_ilmenite.py`, v0.8 anchors in `regression.test.ts` |
 | Excavation on soil moved, polar overburden, NASA mine comparison | v0.9 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2020-polar-excavation` in `external-benchmarks.test.ts` |
+| Ilmenite conversion kinetics, bed hold-up, Eagle no-separation calibration | v0.10 tests in `ilmenite.test.ts` / `test_ilmenite.py`, v0.10 anchors in `regression.test.ts`, `eagle-1988-no-separation-trade` in `external-benchmarks.test.ts` |
 | Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
 | Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
@@ -506,7 +507,8 @@ script run on a clean checkout at all.
 - Prefer editing existing docs in `docs/` over adding new ones; the audit trail
   (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
   `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md` →
-  `model-ilmenite-v08.md` → `model-excavation-v09.md`) is
+  `model-ilmenite-v08.md` → `model-excavation-v09.md` →
+  `model-ilmenite-reactor-v010.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -535,6 +537,10 @@ script run on a clean checkout at all.
   plant's mining energy and fleet sized on the soil it moves, polar overburden,
   the comparison with NASA's polar mine, and how saved cases with retired
   inputs are upgraded.
+- [`docs/model-ilmenite-reactor-v010.md`](docs/model-ilmenite-reactor-v010.md) —
+  ilmenite conversion from temperature and residence time, and the fluidized
+  bed sized by its hold-up; why the rate is pinned to Eagle's design and only
+  its temperature dependence comes from the lab.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

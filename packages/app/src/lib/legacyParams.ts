@@ -9,12 +9,19 @@
  * soil-basis equivalent, so it is dropped and the case takes the soil-basis
  * fleet. A saved `eMining` keeps its value: its meaning (energy per kg of
  * soil) did not change, only its default.
+ *
+ * v0.10 derived ilmenite conversion from temperature and residence time, so
+ * `fIlmConversion` is an outcome, not an input; and it split the reactor
+ * into a hydrogen loop scaled with oxygen and a bed scaled with its hold-up,
+ * so `kIlmReactorMass` (the whole block at one feed) has no equivalent. Both
+ * are dropped and the case takes the new defaults, which reproduce v0.8's
+ * 90% and 18.6 kg per kg/day at Eagle's design point.
  */
 const RENAMED: Readonly<Record<string, string>> = {
   eIlmMining: "eMining",
   kIlmMiningMass: "kMiningMass"
 };
-const RETIRED: readonly string[] = ["kExcFleet"];
+const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass"];
 
 export function upgradeLegacyParams<T extends object>(raw: T): T {
   const renamed = Object.keys(RENAMED).filter((key) => key in raw);

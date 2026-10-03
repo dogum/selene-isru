@@ -227,7 +227,11 @@ hydrogen-reduction process (soil sizing, magnetic concentration, reduction at
 [`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md). The v0.9
 excavation basis (every plant's mining energy and fleet sized on the soil it
 moves, with the overburden a polar pit mine strips) is in
-[`docs/model-excavation-v09.md`](docs/model-excavation-v09.md).
+[`docs/model-excavation-v09.md`](docs/model-excavation-v09.md). The v0.10
+ilmenite reactor (conversion from temperature and residence time, and a
+fluidized bed sized by the solids it holds, calibrated to Eagle's
+no-separation trade) is in
+[`docs/model-ilmenite-reactor-v010.md`](docs/model-ilmenite-reactor-v010.md).
 
 ## Architecture
 

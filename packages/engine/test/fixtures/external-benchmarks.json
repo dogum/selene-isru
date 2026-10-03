@@ -108,6 +108,30 @@
       "modelSimplification": "Comparison, not calibration: the model sizes a continuous fleet at 0.0244 kg per kg/day of soil moved with no margin (Guerrero-Gonzalez & Zabel 2023), about 73 kg here. The study rounds up to two whole 66 kg RASSORs and adds its 20% growth margin (2 x 66 x 1.2 = 158 kg). Its excavators also idle while the extractor hopper is full, so they draw less power than the model's 10.1 kJ per kg of soil moved."
     },
     {
+      "id": "eagle-1988-no-separation-trade",
+      "kind": "calibration",
+      "quantity": "reduction reactor mass added by feeding sized soil instead of an ilmenite concentrate",
+      "inputs": { "targetKgPerDay": 438.4, "concentrateGrade": 0.9, "soilGrade": 0.075 },
+      "expected": 5600,
+      "unit": "kg",
+      "relativeTolerance": 0.05,
+      "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/19890004515",
+      "sourceLocator": "Sec. 6.3.5 and Fig. 6-21: 144 t/yr LOX at 90% duty (438.4 kg/day running), nuclear; process mass 12.5 t with magnetic separation and 18.1 t without, measured on the figure's axis (totals 47.2 and 51.1 t as stated)",
+      "modelSimplification": "Calibration anchor, not independent validation: kIlmBedMass was derived from this trade, so agreement confirms the derivation. The whole increase is charged to the fluidized bed, as Eagle's text attributes it (a wider, more massive reactor for the larger feed); the linear scaling carries no economy of scale between Eagle's 144 and 1,000 t/yr plants."
+    },
+    {
+      "id": "ilmenite-reduction-activation-energy",
+      "kind": "documentation-only",
+      "quantity": "apparent activation energy of ilmenite reduction by hydrogen",
+      "expected": { "zhaoShadmanKJPerMol": 93.3, "eagleCitedTimesKJPerMol": 80.9, "gasLimitedBedKJPerMol": 50.4, "briggsSaccoKJPerMol": 180.7 },
+      "unit": "kJ/mol",
+      "source": "Zhao & Shadman 1991, Kinetics and mechanism of ilmenite reduction with hydrogen, Ind. Eng. Chem. Res. 30(9); Eagle Engineering 1988, EEI 88-182, Sec. 4; Briggs & Sacco 1991, Hydrogen reduction mechanisms of ilmenite between 823 and 1353 K, J. Mater. Res. 6(3)",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/19910015054",
+      "sourceLocator": "Zhao & Shadman abstract: 22.3 kcal/mol apparent over 807-1014 C (synthetic ilmenite, under 45 um). Eagle Sec. 4 cites complete reduction in 2 h at 873 K and 0.25 h at 1,073 K, i.e. R ln 8 / (1/873 - 1/1073) = 80.9 kJ/mol, and equilibrium per-pass H2 conversion of 10.5% at 1,000 C and 7% at 900 C, i.e. R ln 1.5 / (1/1173 - 1/1273) = 50.4 kJ/mol for a bed held near equilibrium. Briggs & Sacco abstract: 43.2 kcal/mol under reaction control at 823-1023 K.",
+      "modelSimplification": "The default is Zhao & Shadman's value and the input spans the others. Lab rates on fine powder are 10 to 100 times faster than Eagle's design point (90% in 4 h at 1,000 C), whose bed approaches the reaction's gas equilibrium; so only the temperature dependence is taken from the lab, and the rate itself is pinned to Eagle's design. A gas-limited bed may follow the weaker, equilibrium-driven dependence."
+    },
+    {
       "id": "mli-layer-density-units",
       "kind": "open",
       "quantity": "MLI layer-density coefficient/unit pairing",

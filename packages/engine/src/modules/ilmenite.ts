@@ -22,13 +22,35 @@ export function ilmeniteSeparates(params: Pick<SimParams, "ilmConcentrateGrade" 
 }
 
 /**
+ * Fraction of the fed ilmenite reduced [1]. Each fluidized-bed stage is
+ * treated as well mixed, with a rate first order in the ilmenite left:
+ *   X = 1 − (1 + k·τ/N)^−N,  k = k_ref · exp(−Ea/R · (1/T − 1/T_ref))
+ * k_ref is fixed by Eagle's design point (90% at T_ref and τ_ref in N
+ * stages) and Ea defaults to Zhao & Shadman's measurement, so temperature
+ * and residence time both move conversion. A screening form, not a grain model.
+ */
+export function ilmeniteConversion(params: Pick<SimParams, "TIlmReactor" | "tIlmResidenceH" | "EaIlmReduction">): number {
+  const stages = PHYSICAL_CONSTANTS.nIlmBedStages.value;
+  const refRatePerH =
+    (stages * (Math.pow(1 - PHYSICAL_CONSTANTS.ilmConversionRef.value, -1 / stages) - 1)) /
+    PHYSICAL_CONSTANTS.tIlmResidenceRefH.value;
+  const ratePerH =
+    refRatePerH *
+    Math.exp(
+      (-params.EaIlmReduction / PHYSICAL_CONSTANTS.R.value) *
+        (1 / params.TIlmReactor - 1 / PHYSICAL_CONSTANTS.TIlmReactorRef.value)
+    );
+  return 1 - Math.pow(1 + (ratePerH * params.tIlmResidenceH) / stages, -stages);
+}
+
+/**
  * Soil mined per kg of oxygen [kg/kg]. Only soil inside the reactor's size
  * window is fed, the separator (when there is one) recovers part of its
  * ilmenite, and the reactor reduces part of what it is fed.
  */
 export function ilmeniteSoilPerKgO2(params: SimParams): number {
   const recovery = ilmeniteSeparates(params) ? params.etaIlmRecovery : 1;
-  return 1 / (params.fIlmenite * params.fIlmSized * recovery * params.fIlmConversion * ilmeniteOxygenFraction());
+  return 1 / (params.fIlmenite * params.fIlmSized * recovery * ilmeniteConversion(params) * ilmeniteOxygenFraction());
 }
 
 /**
@@ -38,8 +60,9 @@ export function ilmeniteSoilPerKgO2(params: SimParams): number {
  * and its oxygen sent to storage. Energies are per kg of O2.
  */
 export function simulateIlmenite(params: SimParams, o2KgPerDay: number): IlmeniteResult {
+  const conversion = ilmeniteConversion(params);
   const reducedPerKgO2 = 1 / ilmeniteOxygenFraction();
-  const fedIlmenitePerKgO2 = reducedPerKgO2 / params.fIlmConversion;
+  const fedIlmenitePerKgO2 = reducedPerKgO2 / conversion;
   const soilPerKgO2 = ilmeniteSoilPerKgO2(params);
   const sizedSoilPerKgO2 = soilPerKgO2 * params.fIlmSized;
   // Without enrichment the reactor takes the whole sized stream.
@@ -58,8 +81,13 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
   const water = simulateWaterElectrolysis(params, o2KgPerDay * waterPerKgO2);
   const soilKgPerDay = o2KgPerDay * soilPerKgO2;
   const concentrateKgPerDay = o2KgPerDay * concentratePerKgO2;
+  // The bed holds the feed for its residence time; the slower the reduction
+  // or the leaner the feed, the more it holds and the heavier it is.
+  const bedHoldupKg = (concentrateKgPerDay / 24) * params.tIlmResidenceH;
+  const bedMassKg = params.kIlmBedMass * bedHoldupKg;
 
   return {
+    conversion,
     soilPerKgO2,
     soilKgPerDay,
     sizedSoilKgPerDay: o2KgPerDay * sizedSoilPerKgO2,
@@ -79,7 +107,9 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
     secWaterElectrolysis_JPerKg: water.secWaterElectrolysis_JPerKg * waterPerKgO2,
     miningMassKg: params.kMiningMass * soilKgPerDay,
     beneficiationMassKg: params.kIlmBeneficiationMass * soilKgPerDay,
-    reactorMassKg: params.kIlmReactorMass * o2KgPerDay,
+    bedHoldupKg,
+    bedMassKg,
+    reactorMassKg: params.kIlmGasLoopMass * o2KgPerDay + bedMassKg,
     electrolyzerMassKg: params.kElectrolyzerMass * o2KgPerDay * waterPerKgO2
   };
 }

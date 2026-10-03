@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
 
 from selene_isru import simulate
-from selene_isru.constants import DEFAULTS
+from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
 
@@ -89,3 +90,33 @@ def test_polar_excavation_compares_with_nasa_mine() -> None:
     assert expected["excavatorMassKg"] / 2.5 < excavation["fleetMassKg"] < expected["excavatorMassKg"]
     mining_power_w = DEFAULTS["eMining"] * excavation["soilMovedKgPerDay"] / 86_400
     assert 0.5 < mining_power_w / expected["excavatorPowerW"] < 2
+
+
+def test_ilmenite_bed_mass_reproduces_eagle_no_separation_trade() -> None:
+    row = item("eagle-1988-no-separation-trade")
+    inputs = row["inputs"]
+
+    def reactor(grade: float) -> float:
+        result = simulate(
+            {
+                "equatorialProcess": "ilmenite",
+                "targetKgPerDay": inputs["targetKgPerDay"],
+                "fIlmenite": inputs["soilGrade"],
+                "ilmConcentrateGrade": grade,
+            }
+        )
+        return result["ilmenite"]["reactorMassKg"]
+
+    assert_benchmark(reactor(inputs["soilGrade"]) - reactor(inputs["concentrateGrade"]), row["id"])
+
+
+def test_ilmenite_activation_energy_default_and_range() -> None:
+    expected = item("ilmenite-reduction-activation-energy")["expected"]
+    assert DEFAULTS["EaIlmReduction"] / 1000 == pytest.approx(expected["zhaoShadmanKJPerMol"], abs=0.05)
+    from_times = c("R") * math.log(2 / 0.25) / (1 / 873 - 1 / 1073) / 1000
+    assert from_times == pytest.approx(expected["eagleCitedTimesKJPerMol"], rel=0.005)
+    from_equilibrium = c("R") * math.log(10.5 / 7) / (1 / 1173 - 1 / 1273) / 1000
+    assert from_equilibrium == pytest.approx(expected["gasLimitedBedKJPerMol"], rel=0.01)
+    bounds = PARAM_META["EaIlmReduction"]
+    for value in (from_equilibrium, from_times, expected["zhaoShadmanKJPerMol"], expected["briggsSaccoKJPerMol"]):
+        assert bounds["min"] <= value * 1000 <= bounds["max"]

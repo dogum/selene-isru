@@ -139,6 +139,26 @@ def test_excavation_on_soil_moved_v09() -> None:
     assert_rel(simulate({"site": "polar", "chiIce": 0.01})["energy"]["secTotal_kWhPerKg"], 20.72, 0.001)
 
 
+def test_ilmenite_kinetics_and_bed_hold_up_v010() -> None:
+    # New and deliberate; Eagle's design point is unchanged, so v0.8's anchors hold.
+    def at(patch: dict) -> dict:
+        return simulate({"equatorialProcess": "ilmenite", **patch})
+
+    base = at({})
+    assert_rel(base["ilmenite"]["conversion"], 0.9, 1e-12)
+    assert_rel(base["ilmenite"]["reactorMassKg"] / 1000, 18.60, 0.001)
+    cool = at({"TIlmReactor": 1173})
+    assert_rel(cool["ilmenite"]["conversion"], 0.7286, 0.001)
+    assert_rel(cool["energy"]["secTotal_kWhPerKg"], 22.14, 0.001)
+    assert_rel(at({"tIlmResidenceH": 1})["ilmenite"]["conversion"], 0.5327, 0.001)
+    long = at({"tIlmResidenceH": 8})
+    assert_rel(long["ilmenite"]["conversion"], 0.9724, 0.001)
+    assert_rel(long["logistics"]["totalInfraMassKg"] / 1000, 90.83, 0.001)
+    unseparated = at({"ilmConcentrateGrade": 0.075})
+    assert_rel(unseparated["ilmenite"]["reactorMassKg"] / 1000, 31.48, 0.001)
+    assert_rel(unseparated["energy"]["secTotal_kWhPerKg"], 44.33, 0.001)
+
+
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
     fallback = simulate({"oxideModel": False})
     direct = oxide_model_yield({**DEFAULTS, "oxideModel": False})

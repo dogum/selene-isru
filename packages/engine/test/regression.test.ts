@@ -182,6 +182,28 @@ describe("regression anchors", () => {
     expectRel(simulate({ site: "polar", chiIce: 0.01 }).energy.secTotal_kWhPerKg, 20.72, 0.001);
   });
 
+  test("ilmenite conversion from kinetics and reactor mass from bed hold-up (v0.10)", () => {
+    // New and deliberate. Eagle's design point is unchanged: 90% at 1,000 °C
+    // and 4 h, and an 18.6 t reactor at 1 t/day, so v0.8's anchors hold.
+    const at = (patch: Partial<SimParams>) => simulate({ equatorialProcess: "ilmenite", ...patch });
+    const base = at({});
+    expectRel(base.ilmenite!.conversion, 0.9, 1e-12);
+    expectRel(base.ilmenite!.reactorMassKg / 1000, 18.60, 0.001);
+    // 100 °C cooler reduces 73%, so the plant mines and heats more soil.
+    const cool = at({ TIlmReactor: 1173 });
+    expectRel(cool.ilmenite!.conversion, 0.7286, 0.001);
+    expectRel(cool.energy.secTotal_kWhPerKg, 22.14, 0.001);
+    // A 1 h stay reduces 53%; 8 h reduces 97% and lands less despite a heavier bed.
+    expectRel(at({ tIlmResidenceH: 1 }).ilmenite!.conversion, 0.5327, 0.001);
+    const long = at({ tIlmResidenceH: 8 });
+    expectRel(long.ilmenite!.conversion, 0.9724, 0.001);
+    expectRel(long.logistics.totalInfraMassKg / 1000, 90.83, 0.001);
+    // Feeding Eagle's mare soil unseparated: a 31.5 t reactor and 44.3 kWh/kg.
+    const unseparated = at({ ilmConcentrateGrade: 0.075 });
+    expectRel(unseparated.ilmenite!.reactorMassKg / 1000, 31.48, 0.001);
+    expectRel(unseparated.energy.secTotal_kWhPerKg, 44.33, 0.001);
+  });
+
   test("keeps the v1 aggregate electrolysis path reachable", () => {
     const fallback = simulate({ oxideModel: false });
     const direct = oxideModelYield({ ...DEFAULTS, oxideModel: false });

@@ -401,8 +401,10 @@ export interface SimParams {
   etaIlmRecovery: number;
   /** [kg/kg] */
   ilmConcentrateGrade: number;
-  /** [1] */
-  fIlmConversion: number;
+  /** [h] solids residence time in the reduction reactor */
+  tIlmResidenceH: number;
+  /** [J/mol] apparent activation energy of the bed's reduction rate */
+  EaIlmReduction: number;
   /** [K] */
   TIlmReactor: number;
   /** [1] */
@@ -413,8 +415,10 @@ export interface SimParams {
   eIlmBeneficiation: number;
   /** [kg/(kg/day)] per soil processed */
   kIlmBeneficiationMass: number;
-  /** [kg/(kg/day)] per O2 */
-  kIlmReactorMass: number;
+  /** [kg/(kg/day)] per O2: hydrogen loop, heaters, radiators */
+  kIlmGasLoopMass: number;
+  /** [kg/kg] fluidized-bed reactor mass per kg of solids held */
+  kIlmBedMass: number;
   /** [Pa] */
   Pinternal: number;
   /** [Pa] */
@@ -491,6 +495,8 @@ export interface CampaignResult {
 
 /** Hydrogen reduction of ilmenite; energies per kg O2. */
 export interface IlmeniteResult {
+  /** fraction of the fed ilmenite reduced, from temperature and residence time [1] */
+  conversion: number;
   /** soil mined per kg O2 [kg/kg] */
   soilPerKgO2: number;
   /** soil mined [kg/day] */
@@ -529,7 +535,11 @@ export interface IlmeniteResult {
   miningMassKg: number;
   /** sizing, separation, and handling plant [kg] */
   beneficiationMassKg: number;
-  /** reduction reactor, heater, gas handling, and radiators [kg] */
+  /** solids held in the fluidized bed: feed rate × residence time [kg] */
+  bedHoldupKg: number;
+  /** fluidized-bed reactor, scaled with its hold-up [kg] */
+  bedMassKg: number;
+  /** reduction reactor: hydrogen loop, heaters and radiators plus the bed [kg] */
   reactorMassKg: number;
   /** water electrolyzer [kg] */
   electrolyzerMassKg: number;

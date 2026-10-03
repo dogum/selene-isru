@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
+import { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -117,6 +117,33 @@ describe("external analytical benchmarks (separate from implementation parity)",
     const miningPowerW = (DEFAULTS.eMining * excavation.soilMovedKgPerDay) / 86_400;
     expect(miningPowerW / expected.excavatorPowerW!).toBeGreaterThan(0.5);
     expect(miningPowerW / expected.excavatorPowerW!).toBeLessThan(2);
+  });
+
+  test("ilmenite bed mass reproduces Eagle's no-separation trade", () => {
+    const item = benchmark("eagle-1988-no-separation-trade");
+    const input = item.inputs!;
+    const reactor = (ilmConcentrateGrade: number) =>
+      simulate({ equatorialProcess: "ilmenite", targetKgPerDay: input.targetKgPerDay!, fIlmenite: input.soilGrade!, ilmConcentrateGrade })
+        .ilmenite!.reactorMassKg;
+    // A grade equal to the soil's is no separation: the sized soil is fed whole.
+    expectRelative(reactor(input.soilGrade!) - reactor(input.concentrateGrade!), item);
+  });
+
+  test("the ilmenite activation energy defaults to Zhao & Shadman's, inside a range that holds the other anchors", () => {
+    const item = benchmark("ilmenite-reduction-activation-energy");
+    const expected = item.expected as Record<string, number>;
+    expect(DEFAULTS.EaIlmReduction / 1000).toBeCloseTo(expected.zhaoShadmanKJPerMol!, 1);
+    // Eagle's cited complete-reduction times, 2 h at 873 K and 0.25 h at 1,073 K.
+    const fromTimes = (PHYSICAL_CONSTANTS.R.value * Math.log(2 / 0.25)) / (1 / 873 - 1 / 1073) / 1000;
+    expectRelative2(fromTimes, expected.eagleCitedTimesKJPerMol!, 0.005);
+    // A bed held near gas equilibrium: Eagle's per-pass 10.5% at 1,000 °C and 7% at 900 °C.
+    const fromEquilibrium = (PHYSICAL_CONSTANTS.R.value * Math.log(10.5 / 7)) / (1 / 1173 - 1 / 1273) / 1000;
+    expectRelative2(fromEquilibrium, expected.gasLimitedBedKJPerMol!, 0.01);
+    const bounds = PARAM_META.EaIlmReduction;
+    for (const value of [fromEquilibrium, fromTimes, expected.zhaoShadmanKJPerMol!, expected.briggsSaccoKJPerMol!]) {
+      expect(value * 1000).toBeGreaterThanOrEqual(bounds.min!);
+      expect(value * 1000).toBeLessThanOrEqual(bounds.max!);
+    }
   });
 
   test("open benchmarks remain visibly unresolved", () => {

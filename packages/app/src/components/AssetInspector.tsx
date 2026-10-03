@@ -48,7 +48,7 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
     controlLabels: {
       fIlmenite: "Ilmenite in soil",
       ilmConcentrateGrade: "Concentrate grade",
-      fIlmConversion: "Ilmenite reduced",
+      tIlmResidenceH: "Residence time",
       TIlmReactor: "Reactor temperature",
       etaIlmHeatRecovery: "Feed heat recovered"
     },
@@ -61,6 +61,8 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
         { label: "O₂ output", value: formatQtyText(r.production.o2KgPerDay, "kg/day") },
         { label: "Concentrate fed", value: formatQtyText(ilmenite.concentrateKgPerDay, "kg/day") },
         { label: "Concentrate grade", value: formatQtyText(ilmenite.concentrateGrade, "kg/kg", 3) },
+        { label: "Ilmenite reduced", value: formatQtyText(ilmenite.conversion, "", 3) },
+        { label: "Bed hold-up", value: formatQtyText(ilmenite.bedHoldupKg, "kg") },
         { label: "Reactor heater", value: formatQtyText((ilmenite.secSensible_JPerKg + ilmenite.secReaction_JPerKg + ilmenite.secReactorLoss_JPerKg) * kgPerS, "W") },
         { label: "Water electrolysis", value: formatQtyText(ilmenite.secWaterElectrolysis_JPerKg * kgPerS, "W") },
         { label: "Iron in spent solids", value: formatQtyText(ilmenite.ironKgPerDay, "kg/day") }

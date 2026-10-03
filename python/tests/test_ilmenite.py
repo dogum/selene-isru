@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 
-from selene_isru import DEFAULTS, ilmenite_oxygen_fraction, simulate
+from selene_isru import DEFAULTS, ilmenite_conversion, ilmenite_oxygen_fraction, simulate
 from selene_isru.modules.construction import simulate_construction
+from selene_isru.constants import c
 from selene_isru.normalize import normalize_params
 
 ILMENITE = {"equatorialProcess": "ilmenite"}
@@ -64,7 +67,7 @@ def test_concentrate_no_richer_than_soil_is_no_separation() -> None:
     bypass = simulate(params)["ilmenite"]
     assert bypass["concentrateKgPerDay"] == bypass["sizedSoilKgPerDay"]
     assert_rel(bypass["concentrateGrade"], params["fIlmenite"], 1e-12)
-    expected = 1 / (params["fIlmenite"] * params["fIlmSized"] * params["fIlmConversion"] * ilmenite_oxygen_fraction())
+    expected = 1 / (params["fIlmenite"] * params["fIlmSized"] * ilmenite_conversion(params) * ilmenite_oxygen_fraction())
     assert_rel(bypass["soilPerKgO2"], expected, 1e-12)
     separated = simulate({**params, "ilmConcentrateGrade": 0.26})["ilmenite"]
     assert_rel(separated["soilPerKgO2"], bypass["soilPerKgO2"] / params["etaIlmRecovery"], 1e-12)
@@ -73,7 +76,7 @@ def test_concentrate_no_richer_than_soil_is_no_separation() -> None:
 def test_each_process_ignores_the_others_inputs() -> None:
     mre = simulate({})
     assert mre["ilmenite"] is None
-    assert simulate({"fIlmenite": 0.2, "kIlmReactorMass": 40, "eIlmBeneficiation": 30_000}) == mre
+    assert simulate({"fIlmenite": 0.2, "kIlmGasLoopMass": 40, "kIlmBedMass": 1.5, "tIlmResidenceH": 1, "eIlmBeneficiation": 30_000}) == mre
     ilmenite = simulate(ILMENITE)
     changed = simulate({**ILMENITE, "Vcell": 3.6, "kReactorMass": 30, "overburdenRatio": 3})
     assert changed["energy"] == ilmenite["energy"]
@@ -116,3 +119,36 @@ def test_no_slag_raises_no_casting_or_pad_alarms() -> None:
     assert idle["warnings"] == []
     assert idle["padJointUtilization"] > 1
     assert idle["maxSafeCoolingDeltaK"] < 200
+
+
+def test_conversion_from_kinetics_v010() -> None:
+    params, _ = normalize_params(ILMENITE)
+    assert_rel(ilmenite_conversion(params), 0.9, 1e-12)
+    assert simulate(params)["ilmenite"]["conversion"] == ilmenite_conversion(params)
+    k_ref = 3 * (0.1 ** (-1 / 3) - 1) / 4
+    k = k_ref * math.exp(-93_300 / c("R") * (1 / 1173 - 1 / 1273))
+    assert_rel(
+        ilmenite_conversion({"TIlmReactor": 1173, "tIlmResidenceH": 2, "EaIlmReduction": 93_300}), 1 - (1 + k * 2 / 3) ** -3, 1e-12
+    )
+    weak = ilmenite_conversion({"TIlmReactor": 1173, "tIlmResidenceH": 4, "EaIlmReduction": 50_000})
+    assert weak > simulate({**ILMENITE, "TIlmReactor": 1173})["ilmenite"]["conversion"]
+    cool = simulate({**ILMENITE, "TIlmReactor": 1073})
+    hot = simulate(ILMENITE)
+    assert_rel(cool["ilmenite"]["conversion"], 0.454, 0.002)
+    assert cool["energy"]["secTotal_kWhPerKg"] > hot["energy"]["secTotal_kWhPerKg"]
+
+
+def test_bed_holds_feed_for_its_residence_time_v010() -> None:
+    params, _ = normalize_params({**ILMENITE, "tIlmResidenceH": 6})
+    ilmenite = simulate(params)["ilmenite"]
+    assert_rel(ilmenite["bedHoldupKg"], ilmenite["concentrateKgPerDay"] / 24 * 6, 1e-12)
+    assert_rel(ilmenite["bedMassKg"], params["kIlmBedMass"] * ilmenite["bedHoldupKg"], 1e-12)
+    assert_rel(ilmenite["reactorMassKg"], params["kIlmGasLoopMass"] * params["targetKgPerDay"] + ilmenite["bedMassKg"], 1e-12)
+    assert_rel(simulate(ILMENITE)["ilmenite"]["reactorMassKg"] / DEFAULTS["targetKgPerDay"], 18.6, 1e-3)
+
+    def landed(hours: float) -> float:
+        return simulate({**ILMENITE, "tIlmResidenceH": hours})["logistics"]["totalInfraMassKg"]
+
+    assert landed(8) < landed(4)
+    assert landed(12) > landed(8)
+

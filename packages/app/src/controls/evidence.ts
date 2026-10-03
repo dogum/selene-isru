@@ -35,6 +35,11 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
     section: "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant (EEI 88-182, NASA contract NAS9-17878), Tables 6-1, 6-3 and 6-5, Appendix A"
   },
   {
+    match: /^Zhao & Shadman 1991/,
+    url: "https://ntrs.nasa.gov/citations/19910015054",
+    section: "Zhao & Shadman 1991, Kinetics and mechanism of ilmenite reduction with hydrogen (Ind. Eng. Chem. Res. 30(9); NASA Space Engineering Research Center report)"
+  },
+  {
     match: /^Guerrero-Gonzalez/,
     url: "https://doi.org/10.1016/j.actaastro.2022.11.050",
     section: "Guerrero-Gonzalez & Zabel 2023, System analysis of an ISRU production plant: extraction of metals and oxygen from lunar regolith (Acta Astronautica 203), Sec. 3.4 and Table 2"
@@ -144,18 +149,23 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     defaultUncertainty: 0.1
   },
   ilmConcentrateGrade: {
-    rangeRationale: "From an enrichment factor near 3, measured on simulants (Berggren et al., used by Guerrero-Gonzalez & Zabel), to Eagle's assumed 90 wt% concentrate.",
-    validity: "Sets the solids the reactor heats. A grade no richer than the soil's means no separation: the whole sized stream goes to the reactor with all its ilmenite, so magnetic recovery no longer applies. Reactor mass does not scale with feed here, so lean concentrates understate it: Eagle's no-separation trade added 46% to its process mass.",
+    rangeRationale: "Down to the soil's own grade, which is no separation at all, through an enrichment factor near 3 measured on simulants (Berggren et al., used by Guerrero-Gonzalez & Zabel), to Eagle's assumed 90 wt% concentrate.",
+    validity: "Sets the solids the reactor heats and holds. A grade no richer than the soil's means no separation: the whole sized stream goes to the reactor with all its ilmenite, so magnetic recovery no longer applies. The bed grows with the feed: at Eagle's mare soil, feeding it unseparated adds about half to the reactor's mass, as in Eagle's no-separation trade.",
     defaultUncertainty: 0.3
   },
-  fIlmConversion: {
-    rangeRationale: "From about a third, measured in short static runs at 1,000 °C (Sargeant et al. 2020), to complete reduction.",
-    validity: "Not tied to temperature or residence time in this model; Eagle's 90% assumes a three-stage fluidized bed with a 4 h residence. Reduction of FeO in other minerals is not credited.",
-    defaultUncertainty: 0.15
+  tIlmResidenceH: {
+    rangeRationale: "From a quarter hour, about the static runs in which Sargeant et al. 2020 reduced a third, to 12 h, past where a longer stay stops paying for its heavier bed. Eagle sized its three-stage bed for 4 h and its single-stage case for 1 h.",
+    validity: "Sets conversion with the reactor temperature: each of three well-mixed stages reduces at a rate first order in the ilmenite left, pinned to Eagle's 90% at 1,000 °C and 4 h. A screening form, not a grain model: grain size, product-layer diffusion, and reduction of FeO in other minerals are not modelled. It also sets the bed's hold-up, and so its mass.",
+    defaultUncertainty: 0.3
+  },
+  EaIlmReduction: {
+    rangeRationale: "From about 50 kJ/mol, the temperature dependence of a bed held near the reaction's gas equilibrium (Eagle's per-pass 10.5% at 1,000 °C and 7% at 900 °C), through Zhao & Shadman's 93 kJ/mol, to Briggs & Sacco's 181 kJ/mol under reaction control below 750 °C.",
+    validity: "Sets only how strongly temperature moves the reduction rate; the rate at Eagle's design point stays fixed, so it has no effect at 1,000 °C. Lab rates on fine powder are 10 to 100 times faster than that design point, whose bed nears gas equilibrium, so a real bed may follow the weaker dependence.",
+    defaultUncertainty: 0.3
   },
   TIlmReactor: {
     rangeRationale: "900–1,100 °C, the range of most ilmenite reduction studies.",
-    validity: "Sets the feed heat only. A hotter reactor reduces faster in practice, but conversion is a separate input here.",
+    validity: "Sets the feed heat and the reduction rate. The rate follows Zhao & Shadman's 93 kJ/mol, measured on synthetic ilmenite from 807 to 1,014 °C, so the top of the range extrapolates. Reduction of TiO₂ to lower oxides above about 876 °C is not credited.",
     defaultUncertainty: 0.05
   },
   etaIlmHeatRecovery: {
@@ -174,9 +184,14 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Screens, magnetic separator, hoppers, and conveyors. Guerrero-Gonzalez & Zabel's parametric models give about 2.3 times Eagle's mass per tonne of soil.",
     defaultUncertainty: 0.4
   },
-  kIlmReactorMass: {
-    validity: "Reactor vessels, heater, cyclones, hoppers, gas handling, piping, and radiators, scaled with oxygen output. The electrolyzer, liquefier, and tanks are sized separately. Derived from one design.",
+  kIlmGasLoopMass: {
+    validity: "Heater, cyclones, hoppers, gas handling, piping, and radiators, scaled with oxygen output. The fluidized bed is sized separately from its hold-up, and the electrolyzer, liquefier, and tanks from their own flows. Derived from one design.",
     defaultUncertainty: 0.3
+  },
+  kIlmBedMass: {
+    rangeRationale: "From a thin-walled vessel to several times Eagle's refractory-lined, 10 atm design.",
+    validity: "Vessel, refractory lining, and insulation per kg of solids held. Calibrated to Eagle's no-separation trade, which charged the whole increase to a wider, heavier reactor; scaling is linear, with no economy of scale.",
+    defaultUncertainty: 0.4
   },
   kLiquefierLox: {
     rangeRationale: "No liquefaction hardware up to several times the NASA case's cryocooler-based O2 liquefier.",

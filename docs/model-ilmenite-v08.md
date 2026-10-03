@@ -116,6 +116,11 @@ values. See [`model-excavation-v09.md`](model-excavation-v09.md).)*
 | `kIlmBeneficiationMass` | 0.094 kg/(kg/day) | 0.02–0.5 | Eagle, Table 6-5: 93.6 t for 995 t/day. Guerrero-Gonzalez & Zabel give about 0.22. |
 | `kIlmReactorMass` | 18.6 kg/(kg/day) | 5–60 | Eagle, Table 6-5: the 65.1 t process area at 1,000 t/yr, less the electrolyzer, liquefier and tanks in the Table 6-3 pilot proportion (87%). |
 
+*(v0.10: `fIlmConversion` became an outcome of temperature and the new
+`tIlmResidenceH`, and `kIlmReactorMass` split into `kIlmGasLoopMass` and a bed
+sized by its hold-up, `kIlmBedMass`. Eagle's design point is unchanged. See
+[`model-ilmenite-reactor-v010.md`](model-ilmenite-reactor-v010.md).)*
+
 Physical constants:
 - `cpIlmeniteFeed`: 1,080 J/(kg·K), Eagle's 0.3 kWh/(t·°C).
 - `dHIlmeniteReduction`: 294 kJ per kg of ilmenite reduced, at 900 °C (Eagle, App. A).
@@ -274,9 +279,11 @@ Screenshots: [rail](screenshots/ilmenite/ilmenite-rail.png),
   [`model-excavation-v09.md`](model-excavation-v09.md).)*
 - **Reactor mass with feed.** The reactor block scales with oxygen output,
   so lean concentrates understate it. Eagle's no-separation trade added 46% to
-  process mass for 12 times the feed.
+  process mass for 12 times the feed. *(v0.10: done, calibrated to that trade.)*
 - **Conversion from kinetics.** Tie `fIlmConversion` to temperature, grain
-  size and residence time, and reduce FeO in other minerals too.
+  size and residence time, and reduce FeO in other minerals too. *(v0.10:
+  temperature and residence time done; grain size and other minerals remain.
+  See [`model-ilmenite-reactor-v010.md`](model-ilmenite-reactor-v010.md).)*
 - **Iron and tailings.** Credit the metallic iron, and bag or berm the
   tailings for shielding.
 - **A dedicated scene.** A beneficiation plant, fluidized-bed reactor, and
