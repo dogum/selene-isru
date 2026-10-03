@@ -4147,10 +4147,10 @@
         "logistics": {
           "payloadPerMissionKg": 45289.546096831,
           "productKgPerDay": 8264.3293697228,
-          "totalInfraMassKg": 7178830.8038668,
-          "nMissions": 207,
-          "leverageL": 29.467673260266,
-          "plantMassThroughputDays": 868.65255276092,
+          "totalInfraMassKg": 7104259.8132008,
+          "nMissions": 205,
+          "leverageL": 29.776985369539,
+          "plantMassThroughputDays": 859.62931719879,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -4158,7 +4158,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 422442.76432656
+              "massKg": 347871.77366053
             },
             {
               "subsystem": "beneficiation plant",
@@ -4176,21 +4176,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 20.387341254355,
-          "deploymentDays": 13749.307162602,
-          "firstProductDay": 13838.693448643,
-          "campaignEndDay": 20154.663262535,
+          "deploymentDays": 13615.818743548,
+          "firstProductDay": 13705.205029589,
+          "campaignEndDay": 20021.174843481,
           "deliveredKgPerDay": 4460.0350941117,
           "usedKgPerDay": 4460.0350941117,
           "sortieIntervalDays": 9.8306159187052,
-          "resupplyKgPerYear": 1070570.9962857,
+          "resupplyKgPerYear": 1059450.3079797,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 28169447.023309,
           "cumulativeUsedKg": 28148420.660249,
-          "landedMassKg": 25704020.10844,
-          "leoMassSpentKg": 524076735.97202,
+          "landedMassKg": 25437016.42832,
+          "leoMassSpentKg": 518739077.62578,
           "leoMassSavedKg": 114079059.73026,
-          "netLeoMassKg": -409997676.24176,
-          "returnRatio": 0.21767625215928,
+          "netLeoMassKg": -404660017.89552,
+          "returnRatio": 0.21991607081615,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -11335,10 +11335,10 @@
         "logistics": {
           "payloadPerMissionKg": 313444.40975161,
           "productKgPerDay": 7200.6938259478,
-          "totalInfraMassKg": 1703676.8957536,
-          "nMissions": 7,
-          "leverageL": 175.85462458768,
-          "plantMassThroughputDays": 236.59899128253,
+          "totalInfraMassKg": 1462128.1570946,
+          "nMissions": 6,
+          "leverageL": 204.90643003333,
+          "plantMassThroughputDays": 203.05378793163,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -11346,7 +11346,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 391002.61687625
+              "massKg": 149453.87821722
             },
             {
               "subsystem": "beneficiation plant",
@@ -11364,22 +11364,22 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 6.8205436593248,
-          "deploymentDays": 645.08023128483,
-          "firstProductDay": 949.35413715736,
-          "campaignEndDay": 5476.0314077572,
+          "deploymentDays": 537.56685940403,
+          "firstProductDay": 841.84076527656,
+          "campaignEndDay": 5368.5180358764,
           "deliveredKgPerDay": 6019.66022642,
           "usedKgPerDay": 6019.66022642,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 427903.32209574,
+          "resupplyKgPerYear": 367234.83033075,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 27249059.12367,
           "cumulativeUsedKg": 27249059.12367,
-          "landedMassKg": 7010472.0797124,
-          "leoMassSpentKg": 48586560.150783,
+          "landedMassKg": 6016521.4706036,
+          "leoMassSpentKg": 41684580.071523,
           "leoMassSavedKg": 250460164.30624,
-          "netLeoMassKg": 201873604.15545,
-          "returnRatio": 5.1549268672028,
-          "paybackDays": 1211.1401369051,
+          "netLeoMassKg": 208775584.23471,
+          "returnRatio": 6.0084607755792,
+          "paybackDays": 1060.9802270729,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -18496,10 +18496,10 @@
         "logistics": {
           "payloadPerMissionKg": 18418.568225342,
           "productKgPerDay": 12986.67496966,
-          "totalInfraMassKg": 7993594.0153933,
-          "nMissions": 463,
-          "leverageL": 29.350267170507,
-          "plantMassThroughputDays": 615.52275960309,
+          "totalInfraMassKg": 7600453.0561236,
+          "nMissions": 440,
+          "leverageL": 30.86843879857,
+          "plantMassThroughputDays": 585.2501178231,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -18507,7 +18507,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 1129067.2827972
+              "massKg": 735926.3235275
             },
             {
               "subsystem": "beneficiation plant",
@@ -18525,21 +18525,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 49.797035793106,
-          "deploymentDays": 22123.56944878,
-          "firstProductDay": 22291.522270743,
-          "campaignEndDay": 27938.473224469,
+          "deploymentDays": 21022.179627737,
+          "firstProductDay": 21190.1324497,
+          "campaignEndDay": 26837.083403426,
           "deliveredKgPerDay": 7036.4135701542,
           "usedKgPerDay": 7036.4135701542,
           "sortieIntervalDays": 11.545096823648,
-          "resupplyKgPerYear": 1455947.9200519,
+          "resupplyKgPerYear": 1384341.4860957,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 39734282.320794,
           "cumulativeUsedKg": 39724441.143786,
-          "landedMassKg": 30518707.702278,
-          "leoMassSpentKg": 1520295515.6958,
+          "landedMassKg": 29017736.549798,
+          "leoMassSpentKg": 1445327414.5872,
           "leoMassSavedKg": 127086656.88405,
-          "netLeoMassKg": -1393208858.8118,
-          "returnRatio": 0.083593390608592,
+          "netLeoMassKg": -1318240757.7032,
+          "returnRatio": 0.087929320098274,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -25678,10 +25678,10 @@
         "logistics": {
           "payloadPerMissionKg": 249894.25875559,
           "productKgPerDay": 15414.394369377,
-          "totalInfraMassKg": 5608258.6730657,
-          "nMissions": 36,
-          "leverageL": 151.58198236777,
-          "plantMassThroughputDays": 363.83256705871,
+          "totalInfraMassKg": 5351114.0917915,
+          "nMissions": 34,
+          "leverageL": 158.86616370198,
+          "plantMassThroughputDays": 347.15045973018,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -25689,7 +25689,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 1098317.8561732
+              "massKg": 841173.27489908
             },
             {
               "subsystem": "beneficiation plant",
@@ -25707,22 +25707,22 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 9.3049229116238,
-          "deploymentDays": 1396.5584037756,
-          "firstProductDay": 1747.0608090481,
-          "campaignEndDay": 6041.8091212823,
+          "deploymentDays": 1316.755066417,
+          "firstProductDay": 1667.2574716895,
+          "campaignEndDay": 5962.0057839237,
           "deliveredKgPerDay": 13575.902874808,
           "usedKgPerDay": 13575.902874808,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 268028.06485736,
+          "resupplyKgPerYear": 255738.6951037,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 58305085.958638,
           "cumulativeUsedKg": 58305085.958638,
-          "landedMassKg": 8761993.1365658,
-          "leoMassSpentKg": 82876010.588538,
+          "landedMassKg": 8360246.5004754,
+          "leoMassSpentKg": 78556568.808836,
           "leoMassSavedKg": 748717312.41857,
-          "netLeoMassKg": 665841301.83003,
-          "returnRatio": 9.0341862150652,
-          "paybackDays": 2066.6466417277,
+          "netLeoMassKg": 670160743.60973,
+          "returnRatio": 9.530931961152,
+          "paybackDays": 1968.5250460717,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -32819,10 +32819,10 @@
         "logistics": {
           "payloadPerMissionKg": -76872.483069288,
           "productKgPerDay": 5044.4995876633,
-          "totalInfraMassKg": 1886528.3207577,
+          "totalInfraMassKg": 1863175.132116,
           "nMissions": 0,
-          "leverageL": 18.279736879899,
-          "plantMassThroughputDays": 373.97729704872,
+          "leverageL": 18.508856588679,
+          "plantMassThroughputDays": 369.34786092015,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -32830,7 +32830,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 186462.9202794
+              "massKg": 163109.73163772
             },
             {
               "subsystem": "beneficiation plant",
@@ -40033,10 +40033,10 @@
         "logistics": {
           "payloadPerMissionKg": -5921.4088095266,
           "productKgPerDay": 912.52823208284,
-          "totalInfraMassKg": 437849.81390091,
+          "totalInfraMassKg": 427026.40181231,
           "nMissions": 0,
-          "leverageL": 115.93309993267,
-          "plantMassThroughputDays": 479.82056719661,
+          "leverageL": 118.87154053015,
+          "plantMassThroughputDays": 467.95966064264,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -40044,7 +40044,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 57327.09006656
+              "massKg": 46503.677977962
             },
             {
               "subsystem": "beneficiation plant",
@@ -47218,10 +47218,10 @@
         "logistics": {
           "payloadPerMissionKg": 45698.52577803,
           "productKgPerDay": 3563.4264610958,
-          "totalInfraMassKg": 7300681.0547273,
-          "nMissions": 250,
-          "leverageL": 16.096689827887,
-          "plantMassThroughputDays": 2048.7811757682,
+          "totalInfraMassKg": 7159084.6674466,
+          "nMissions": 245,
+          "leverageL": 16.415059177138,
+          "plantMassThroughputDays": 2009.0451551637,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -47229,7 +47229,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 353160.66709687
+              "massKg": 211564.27981622
             },
             {
               "subsystem": "beneficiation plant",
@@ -47247,21 +47247,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 38.342877555664,
-          "deploymentDays": 24275.712285592,
-          "firstProductDay": 24464.527504797,
-          "campaignEndDay": 28184.395364869,
+          "deploymentDays": 23788.248183472,
+          "firstProductDay": 23977.063402676,
+          "campaignEndDay": 27696.931262748,
           "deliveredKgPerDay": 3049.3649482984,
           "usedKgPerDay": 3049.3649482984,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 1311750.8308004,
+          "resupplyKgPerYear": 1286309.4812521,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 11343234.664805,
           "cumulativeUsedKg": 11343234.664805,
-          "landedMassKg": 20669283.125733,
-          "leoMassSpentKg": 792967143.65232,
+          "landedMassKg": 20268403.290503,
+          "leoMassSpentKg": 777417940.72833,
           "leoMassSavedKg": 100563771.9773,
-          "netLeoMassKg": -692403371.67502,
-          "returnRatio": 0.12681959496344,
+          "netLeoMassKg": -676854168.75103,
+          "returnRatio": 0.12935612456163,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -54381,10 +54381,10 @@
         "logistics": {
           "payloadPerMissionKg": 300580.69653529,
           "productKgPerDay": 7752.0122426661,
-          "totalInfraMassKg": 6677411.1446437,
+          "totalInfraMassKg": 6649723.2452245,
           "nMissions": 28,
-          "leverageL": 13.300212700528,
-          "plantMassThroughputDays": 861.37778625943,
+          "leverageL": 13.355591689687,
+          "plantMassThroughputDays": 857.80608144879,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -54392,7 +54392,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 420022.21283142
+              "massKg": 392334.31341218
             },
             {
               "subsystem": "beneficiation plant",
@@ -54416,15 +54416,15 @@
           "deliveredKgPerDay": 7517.8845162797,
           "usedKgPerDay": 1752.2905672039,
           "sortieIntervalDays": 22.808703836664,
-          "resupplyKgPerYear": 1523567.0703877,
+          "resupplyKgPerYear": 1517249.5963114,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 22737321.037174,
           "cumulativeUsedKg": 5275706.9089737,
-          "landedMassKg": 19301857.948542,
-          "leoMassSpentKg": 158293242.58341,
+          "landedMassKg": 19221822.753777,
+          "leoMassSpentKg": 157865276.98039,
           "leoMassSavedKg": 19984315.194646,
-          "netLeoMassKg": -138308927.38876,
-          "returnRatio": 0.12624869431249,
+          "netLeoMassKg": -137880961.78575,
+          "returnRatio": 0.12659094879445,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -61547,10 +61547,10 @@
         "logistics": {
           "payloadPerMissionKg": -5604.4173268922,
           "productKgPerDay": 11092.041501391,
-          "totalInfraMassKg": 5495102.0188345,
+          "totalInfraMassKg": 5078121.3957387,
           "nMissions": 0,
-          "leverageL": 71.974447925942,
-          "plantMassThroughputDays": 495.40943550793,
+          "leverageL": 77.88449768732,
+          "plantMassThroughputDays": 457.81666026962,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -61558,7 +61558,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 575935.52766055
+              "massKg": 158954.90456474
             },
             {
               "subsystem": "beneficiation plant",
@@ -68642,10 +68642,10 @@
         "logistics": {
           "payloadPerMissionKg": -54374.297403805,
           "productKgPerDay": 5624.3053078874,
-          "totalInfraMassKg": 14023814.55348,
+          "totalInfraMassKg": 13817555.976469,
           "nMissions": 0,
-          "leverageL": 17.69561109497,
-          "plantMassThroughputDays": 2493.4305280003,
+          "leverageL": 17.959758500634,
+          "plantMassThroughputDays": 2456.7578074205,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -68653,7 +68653,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 352217.44840989
+              "massKg": 145958.8713982
             },
             {
               "subsystem": "beneficiation plant",
@@ -75832,10 +75832,10 @@
         "logistics": {
           "payloadPerMissionKg": 11254.542957414,
           "productKgPerDay": 6491.043049423,
-          "totalInfraMassKg": 2764520.0824174,
-          "nMissions": 269,
-          "leverageL": 40.944751732588,
-          "plantMassThroughputDays": 425.89766565531,
+          "totalInfraMassKg": 2693647.4511007,
+          "nMissions": 262,
+          "leverageL": 42.022050208568,
+          "plantMassThroughputDays": 414.97913826656,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -75843,7 +75843,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 459966.83061856
+              "massKg": 389094.19930185
             },
             {
               "subsystem": "beneficiation plant",
@@ -75861,21 +75861,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 100.46157807886,
-          "deploymentDays": 10381.378155502,
-          "firstProductDay": 10649.523396295,
-          "campaignEndDay": 13946.604130739,
+          "deploymentDays": 10110.222755918,
+          "firstProductDay": 10378.367996711,
+          "campaignEndDay": 13675.448731155,
           "deliveredKgPerDay": 4170.1502522471,
           "usedKgPerDay": 4170.1502522471,
           "sortieIntervalDays": 8.3403604924417,
-          "resupplyKgPerYear": 148384.22747192,
+          "resupplyKgPerYear": 144580.17456823,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 13749322.056419,
           "cumulativeUsedKg": 13738319.782498,
-          "landedMassKg": 4104889.3363707,
-          "leoMassSpentKg": 412815363.80033,
+          "landedMassKg": 3999654.3227483,
+          "leoMassSpentKg": 402124906.75376,
           "leoMassSavedKg": 72662032.412015,
-          "netLeoMassKg": -340153331.38832,
-          "returnRatio": 0.17601581429309,
+          "netLeoMassKg": -329462874.34174,
+          "returnRatio": 0.18069518000911,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -82986,10 +82986,10 @@
         "logistics": {
           "payloadPerMissionKg": 147655.6752179,
           "productKgPerDay": 18534.663295409,
-          "totalInfraMassKg": 34992405.167048,
-          "nMissions": 298,
-          "leverageL": 8.9602791842276,
-          "plantMassThroughputDays": 1887.943935605,
+          "totalInfraMassKg": 34497433.975578,
+          "nMissions": 294,
+          "leverageL": 9.0888417917207,
+          "plantMassThroughputDays": 1861.2387733055,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -82997,7 +82997,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 922642.05537194
+              "massKg": 427670.86390195
             },
             {
               "subsystem": "beneficiation plant",
@@ -83015,21 +83015,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 12.819358933502,
-          "deploymentDays": 14629.218238284,
-          "firstProductDay": 14962.52602116,
-          "campaignEndDay": 21809.285183724,
+          "deploymentDays": 14432.191730024,
+          "firstProductDay": 14765.4995129,
+          "campaignEndDay": 21612.258675464,
           "deliveredKgPerDay": 14362.797801774,
           "usedKgPerDay": 14362.797801774,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 1110843.6321624,
+          "resupplyKgPerYear": 1095130.6340554,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 98338617.449357,
           "cumulativeUsedKg": 98338617.449357,
-          "landedMassKg": 55829881.377142,
-          "leoMassSpentKg": 716212132.67839,
+          "landedMassKg": 55040161.928794,
+          "leoMassSpentKg": 706405608.09426,
           "leoMassSavedKg": 242968337.19664,
-          "netLeoMassKg": -473243795.48176,
-          "returnRatio": 0.33924074462131,
+          "netLeoMassKg": -463437270.89762,
+          "returnRatio": 0.34395018161325,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -90157,10 +90157,10 @@
         "logistics": {
           "payloadPerMissionKg": 258814.4090789,
           "productKgPerDay": 6375.2771943864,
-          "totalInfraMassKg": 2310261.2719388,
+          "totalInfraMassKg": 2209669.117959,
           "nMissions": 10,
-          "leverageL": 28.465336907705,
-          "plantMassThroughputDays": 362.37816827369,
+          "leverageL": 29.761182303757,
+          "plantMassThroughputDays": 346.59969293644,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -90168,7 +90168,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 413828.9061476
+              "massKg": 313236.75216783
             },
             {
               "subsystem": "beneficiation plant",
@@ -90192,15 +90192,15 @@
           "deliveredKgPerDay": 6323.2190443905,
           "usedKgPerDay": 757.180589732,
           "sortieIntervalDays": 143.55620712019,
-          "resupplyKgPerYear": 591176.53052096,
+          "resupplyKgPerYear": 565435.83992908,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 22134726.946845,
           "cumulativeUsedKg": 2608751.3656069,
-          "landedMassKg": 7979963.6548208,
-          "leoMassSpentKg": 59932268.756881,
+          "landedMassKg": 7632504.3685189,
+          "leoMassSpentKg": 58080536.856506,
           "leoMassSavedKg": 7687322.4968894,
-          "netLeoMassKg": -52244946.259991,
-          "returnRatio": 0.12826683615255,
+          "netLeoMassKg": -50393214.359617,
+          "returnRatio": 0.1323562575856,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -97323,10 +97323,10 @@
         "logistics": {
           "payloadPerMissionKg": -10379.604372623,
           "productKgPerDay": 4078.4219550297,
-          "totalInfraMassKg": 909604.41766275,
+          "totalInfraMassKg": 762258.72909474,
           "nMissions": 0,
-          "leverageL": 379.77808961939,
-          "plantMassThroughputDays": 223.02852124974,
+          "leverageL": 453.18973055195,
+          "plantMassThroughputDays": 186.9004084177,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -97334,7 +97334,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 231437.5072616
+              "massKg": 84091.818693594
             },
             {
               "subsystem": "beneficiation plant",
@@ -104499,10 +104499,10 @@
         "logistics": {
           "payloadPerMissionKg": 47097.344552295,
           "productKgPerDay": 5568.1326440164,
-          "totalInfraMassKg": 1727551.4623058,
-          "nMissions": 41,
-          "leverageL": 68.732849894468,
-          "plantMassThroughputDays": 310.25688013418,
+          "totalInfraMassKg": 1698883.3081886,
+          "nMissions": 40,
+          "leverageL": 69.892696438486,
+          "plantMassThroughputDays": 305.10826821164,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -104510,7 +104510,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 178654.42040901
+              "massKg": 149986.26629178
             },
             {
               "subsystem": "beneficiation plant",
@@ -104528,22 +104528,22 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 24.936726954573,
-          "deploymentDays": 1860.2887097789,
-          "firstProductDay": 2112.4300330953,
-          "campaignEndDay": 7954.3880359515,
+          "deploymentDays": 1813.7814920345,
+          "firstProductDay": 2065.9228153508,
+          "campaignEndDay": 7907.880818207,
           "deliveredKgPerDay": 5303.4788516159,
           "usedKgPerDay": 5303.4788516159,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 99443.757392229,
+          "resupplyKgPerYear": 97793.520611952,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 30982700.720176,
           "cumulativeUsedKg": 30982700.720176,
-          "landedMassKg": 3319185.0358171,
-          "leoMassSpentKg": 83144101.495689,
+          "landedMassKg": 3264104.2406995,
+          "leoMassSpentKg": 81425603.760345,
           "leoMassSavedKg": 113095835.67884,
-          "netLeoMassKg": 29951734.18315,
-          "returnRatio": 1.3602388340766,
-          "paybackDays": 5570.6935265787,
+          "netLeoMassKg": 31670231.918494,
+          "returnRatio": 1.38894684787,
+          "paybackDays": 5409.8346171283,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -111681,10 +111681,10 @@
         "logistics": {
           "payloadPerMissionKg": -106134.89045644,
           "productKgPerDay": 9991.0849312383,
-          "totalInfraMassKg": 6397349.9061713,
+          "totalInfraMassKg": 6124914.3941738,
           "nMissions": 0,
-          "leverageL": 17.021761703563,
-          "plantMassThroughputDays": 640.30582766535,
+          "leverageL": 17.778887773638,
+          "plantMassThroughputDays": 613.0379669803,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -111692,7 +111692,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 466976.68105466
+              "massKg": 194541.16905714
             },
             {
               "subsystem": "beneficiation plant",
@@ -118802,10 +118802,10 @@
         "logistics": {
           "payloadPerMissionKg": 160307.739146,
           "productKgPerDay": 19225.368154466,
-          "totalInfraMassKg": 8010918.7306889,
-          "nMissions": 55,
-          "leverageL": 8.2546002182522,
-          "plantMassThroughputDays": 416.68480240926,
+          "totalInfraMassKg": 7638147.2856647,
+          "nMissions": 52,
+          "leverageL": 8.6574569760985,
+          "plantMassThroughputDays": 397.29524159413,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -118813,7 +118813,7 @@
             },
             {
               "subsystem": "reactor/plant",
-              "massKg": 1471752.9166984
+              "massKg": 1098981.4716741
             },
             {
               "subsystem": "beneficiation plant",
@@ -118831,22 +118831,22 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 9.093008752624,
-          "deploymentDays": 2578.1929801028,
-          "firstProductDay": 2838.0172908661,
-          "campaignEndDay": 3564.8875852145,
+          "deploymentDays": 2434.9600367638,
+          "firstProductDay": 2694.7843475271,
+          "campaignEndDay": 3421.6546418755,
           "deliveredKgPerDay": 15153.784421905,
           "usedKgPerDay": 15153.784421905,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 1370119.5898212,
+          "resupplyKgPerYear": 1306363.9237705,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 11014835.743242,
           "cumulativeUsedKg": 11014835.743242,
-          "landedMassKg": 10739409.770541,
-          "leoMassSpentKg": 98591548.474362,
+          "landedMassKg": 10239673.668671,
+          "leoMassSpentKg": 93412620.161978,
           "leoMassSavedKg": 52122448.653442,
-          "netLeoMassKg": -46469099.82092,
-          "returnRatio": 0.52867055503238,
-          "paybackDays": 4801.5854463615,
+          "netLeoMassKg": -41290171.508536,
+          "returnRatio": 0.55798080134206,
+          "paybackDays": 4475.9584463676,
           "paysBackInCampaign": false
         },
         "refuel": null,

@@ -77,7 +77,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     # Equatorial plants are the MRE reactor, or the ilmenite reactor and its
     # electrolyzer, whose beneficiation plant is listed apart.
     reactor_mass_kg = (
-        (params["kReactorMass"] * params["targetKgPerDay"] if mre or params["enableSabatier"] else 0)
+        (params["kReactorMass"] * params["targetKgPerDay"] if mre or sabatier is not None else 0)
         + (params["kElectrolyzerMass"] * params["targetKgPerDay"] if propellant is not None else 0)
         + (ilmenite["reactorMassKg"] + ilmenite["electrolyzerMassKg"] if ilmenite is not None else 0)
         + thermal["extractorMassKg"]

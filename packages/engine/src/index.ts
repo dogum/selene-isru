@@ -196,7 +196,7 @@ export function simulate(
   // are the MRE reactor, or the ilmenite reactor and its electrolyzer, whose
   // beneficiation plant is listed apart. Liquefiers are part of the cryo block.
   const reactorMassKg =
-    (mre || params.enableSabatier
+    (mre || sabatier !== null
       ? params.kReactorMass * params.targetKgPerDay
       : 0) +
     (propellant !== null ? params.kElectrolyzerMass * params.targetKgPerDay : 0) +

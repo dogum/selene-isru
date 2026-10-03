@@ -90,6 +90,11 @@ def test_no_castable_slag_and_a_beneficiation_row() -> None:
     assert rows["excavation fleet"] == result["ilmenite"]["miningMassKg"]
 
 
+def test_leftover_sabatier_switch_adds_nothing_at_the_equator() -> None:
+    assert simulate({**ILMENITE, "enableSabatier": True}) == simulate(ILMENITE)
+    assert simulate({"enableSabatier": True}) == simulate({})
+
+
 def test_no_slag_raises_no_casting_or_pad_alarms() -> None:
     def construction_alarms(overrides: dict) -> list[str]:
         result = simulate({"castDeltaT": 200, **overrides})

@@ -155,6 +155,11 @@ describe("ilmenite reduction", () => {
     expect(simulate({ site: "polar", equatorialProcess: "ilmenite" })).toEqual(simulate({ site: "polar" }));
   });
 
+  test("a Sabatier switch left over from a polar case adds nothing at the equator", () => {
+    expect(simulate({ ...ILMENITE, enableSabatier: true })).toEqual(simulate(ILMENITE));
+    expect(simulate({ enableSabatier: true })).toEqual(simulate({}));
+  });
+
   test("a plant that casts no slag raises no casting or pad alarms", () => {
     // castDeltaT=200 is over the thermal-stress limit; switching from MRE carries it over.
     const constructionAlarms = (overrides: Partial<SimParams>) =>
