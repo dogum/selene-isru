@@ -118,6 +118,10 @@ Default inputs except as named.
 | Polar pilot, 10 kg/day | 1.4 | 1 | 76× | 30 | 22,501 (after the campaign) | 0.09× | −1,011 |
 | Polar pilot, 10 kg/day, shared lander | 1.4 | 1 | 76× | 30 | 406 | 3.57× | 71 |
 
+*(v0.6 measures Leverage L against the product rather than the target; the
+Sabatier row's L becomes 186× there. See
+[`model-propellant-v06.md`](model-propellant-v06.md).)*
+
 What the table shows:
 
 - **Production-scale plants.** Payback falls in the first year for every

@@ -35,10 +35,12 @@ export const PRESETS: Preset[] = [
   },
   { id: "shackleton", label: "Shackleton Ice Camp", patch: { site: "polar" } },
   {
-    // Kleinhenz & Paz 2020's baseline: 15 t of water a year into LOX/LH2.
+    // Kleinhenz & Paz 2020's baseline: 15 t of water into LOX/LH2 in a
+    // 225-day window after 48 h of commissioning, once a year. The plant is
+    // sized for the window's rate; availability carries the 223-of-365-day duty.
     id: "polar-propellant",
     label: "Polar Propellant (NASA baseline)",
-    patch: { site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26 }
+    patch: { site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26, plantAvailability: 0.611, commissioningDays: 2 }
   },
   { id: "industrial", label: "Industrial 10 t/day", patch: { targetKgPerDay: 10000 } },
   {

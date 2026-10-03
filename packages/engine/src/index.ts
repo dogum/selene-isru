@@ -179,12 +179,24 @@ export function simulate(
       : 0) +
     (propellant !== null ? params.kElectrolyzerMass * params.targetKgPerDay : 0) +
     thermal.extractorMassKg;
+  // The product each landed kilogram is measured against, before storage
+  // losses and downtime: O2 at the equator, water at the pole, propellant
+  // usable at the vehicle mixture ratio, or the Sabatier products.
+  const productKgPerDay =
+    propellant !== null
+      ? production.propellantKgPerDay
+      : params.site === "equatorial"
+        ? production.o2KgPerDay
+        : params.enableSabatier
+          ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
+          : production.waterKgPerDay;
   const logistics = simulateLogistics(
     params,
     excavation.fleetMassKg,
     reactorMassKg,
     power.selectedPowerMassKg,
     cryo.cryoMassKg,
+    productKgPerDay,
     options.supplementalMasses
   );
   // What the plant delivers: O2 at the equator, water at the pole, propellant
@@ -212,12 +224,6 @@ export function simulate(
     bufferLossKgPerDay > 0 && production.waterKgPerDay > 0
       ? Math.max(0, 1 - bufferLossKgPerDay / production.waterKgPerDay)
       : 1;
-  const grossProductKgPerDay =
-    params.site === "equatorial"
-      ? production.o2KgPerDay
-      : params.enableSabatier
-        ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
-        : production.waterKgPerDay;
   // Oxygen and hydrogen that reach the vehicle in propellant mode. A
   // one-stream storage what-if holding some other stream still stores the
   // product, so its loss takes both gases down in proportion.
@@ -236,7 +242,7 @@ export function simulate(
     productKgPerDay:
       propellant !== null
         ? usablePropellantKgPerDay(netO2KgPerDay, netH2KgPerDay, params.mixtureRatio)
-        : Math.max(0, grossProductKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
+        : Math.max(0, productKgPerDay * loopThroughput - storageLossKgPerDay(isProduct)),
     importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed)
   });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);

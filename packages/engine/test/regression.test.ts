@@ -104,6 +104,16 @@ describe("regression anchors", () => {
     expectRel(energy.secTotal_kWhPerKg, 20.78, 0.001);
     expectRel(logistics.totalInfraMassKg / 1000, 82.35, 0.001);
     expectRel(campaign.paybackDays!, 311.3, 0.001);
+    // Leverage and throughput days are measured against usable propellant,
+    // not the water processed (deliberately moved from 133x and 82.4 days).
+    expect(logistics.productKgPerDay).toBe(production.propellantKgPerDay);
+    expectRel(logistics.plantMassThroughputDays, logistics.totalInfraMassKg / production.propellantKgPerDay, 1e-12);
+    expectRel(logistics.leverageL, 103.4, 0.001);
+    // The Sabatier loop is measured against its products, imported carbon included.
+    const sabatier = simulate({ site: "polar", enableSabatier: true });
+    const p = sabatier.production;
+    expect(sabatier.logistics.productKgPerDay).toBe(p.o2KgPerDay + p.ch4KgPerDay + p.h2KgPerDay);
+    expectRel(sabatier.logistics.leverageL, 186.0, 0.001);
     expect(propellant.materials.maxAbsResidualKgPerDay).toBe(0);
     expect(energy.maxAbsResidualW).toBe(0);
   });

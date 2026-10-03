@@ -416,6 +416,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 166373.54115914,
+          "productKgPerDay": 16487.720558255,
           "totalInfraMassKg": 41846115573352.0,
           "nMissions": 276734723,
           "leverageL": 1.3204650011505e-05,
@@ -942,6 +943,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 19365.207836688,
+          "productKgPerDay": 2893.3070619164,
           "totalInfraMassKg": 174345.40024788,
           "nMissions": 11,
           "leverageL": 597.38281455525,
@@ -1448,6 +1450,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 139179.25429997,
+          "productKgPerDay": 4531.0174490918,
           "totalInfraMassKg": 893527.93338808,
           "nMissions": 8,
           "leverageL": 358.48662776938,
@@ -2033,10 +2036,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100882.7668107,
+          "productKgPerDay": 16741.455789897,
           "totalInfraMassKg": 2180386.7961347,
           "nMissions": 24,
-          "leverageL": 137.9249977226,
-          "plantMassThroughputDays": 139.44665900769,
+          "leverageL": 147.67629089956,
+          "plantMassThroughputDays": 130.23878111308,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -2589,6 +2593,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 92826.701837083,
+          "productKgPerDay": 5400.9686260419,
           "totalInfraMassKg": 11304687306033.0,
           "nMissions": 129534269,
           "leverageL": 1.8805994167198e-05,
@@ -3116,6 +3121,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -13755.295345172,
+          "productKgPerDay": 7293.9929442659,
           "totalInfraMassKg": 460718.1995735,
           "nMissions": 0,
           "leverageL": 1033.9652021385,
@@ -3648,6 +3654,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 45289.546096831,
+          "productKgPerDay": 8264.3293697228,
           "totalInfraMassKg": 24433676880094.0,
           "nMissions": 704346662,
           "leverageL": 8.657863552719e-06,
@@ -4183,6 +4190,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 235119.68211647,
+          "productKgPerDay": 11864.966572633,
           "totalInfraMassKg": 1146436.5884785,
           "nMissions": 8,
           "leverageL": 258.01077784543,
@@ -4689,6 +4697,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 173940.75581625,
+          "productKgPerDay": 7471.8110945962,
           "totalInfraMassKg": 11050622771755.0,
           "nMissions": 90985461,
           "leverageL": 1.7835913461991e-05,
@@ -5290,10 +5299,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -51562.720122531,
+          "productKgPerDay": 6156.4640599631,
           "totalInfraMassKg": 843255.93164739,
           "nMissions": 0,
-          "leverageL": 69.634592840796,
-          "plantMassThroughputDays": 144.80394382067,
+          "leverageL": 73.61687443423,
+          "plantMassThroughputDays": 136.97082017116,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -5855,6 +5865,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -12741.824267023,
+          "productKgPerDay": 2968.8924168351,
           "totalInfraMassKg": 377295.45182389,
           "nMissions": 0,
           "leverageL": 113.78990990787,
@@ -6374,6 +6385,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 214327.31546484,
+          "productKgPerDay": 5128.3902277256,
           "totalInfraMassKg": 286304.0696301,
           "nMissions": 2,
           "leverageL": 1036.1046145055,
@@ -6898,6 +6910,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 262569.3060086,
+          "productKgPerDay": 9284.5683324681,
           "totalInfraMassKg": 31067288789946.0,
           "nMissions": 122849518,
           "leverageL": 1.4421177853495e-05,
@@ -7425,6 +7438,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 166368.10745237,
+          "productKgPerDay": 13779.172186417,
           "totalInfraMassKg": 707853.48173963,
           "nMissions": 6,
           "leverageL": 46.04231888966,
@@ -7949,6 +7963,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 113296.94218814,
+          "productKgPerDay": 11130.775735623,
           "totalInfraMassKg": 14052420739361.0,
           "nMissions": 148134436,
           "leverageL": 2.3621742459374e-05,
@@ -8575,10 +8590,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 199086.04397666,
+          "productKgPerDay": 6417.6458965923,
           "totalInfraMassKg": 911668.75904612,
           "nMissions": 6,
-          "leverageL": 122.05514205456,
-          "plantMassThroughputDays": 153.35111048737,
+          "leverageL": 131.75942279273,
+          "plantMassThroughputDays": 142.05656929906,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -9149,6 +9165,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 309227.53141991,
+          "productKgPerDay": 17482.009324927,
           "totalInfraMassKg": 3046092.9943143,
           "nMissions": 13,
           "leverageL": 94.475956877742,
@@ -9660,6 +9677,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -64434.208805921,
+          "productKgPerDay": 16392.3467303,
           "totalInfraMassKg": 528490.41789705,
           "nMissions": 0,
           "leverageL": 475.39952657866,
@@ -10175,6 +10193,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 313444.40975161,
+          "productKgPerDay": 7200.6938259478,
           "totalInfraMassKg": 26623115970394.0,
           "nMissions": 102578874,
           "leverageL": 1.1253358219024e-05,
@@ -10702,6 +10721,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 4910.1175547088,
+          "productKgPerDay": 2504.4734465671,
           "totalInfraMassKg": 120998.12774577,
           "nMissions": 32,
           "leverageL": 364.79916630148,
@@ -11226,6 +11246,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 4378.4393878215,
+          "productKgPerDay": 17610.888234882,
           "totalInfraMassKg": 53472051853902.0,
           "nMissions": 14122262586,
           "leverageL": 2.0674481555724e-06,
@@ -11844,10 +11865,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 101177.71767575,
+          "productKgPerDay": 10142.198420215,
           "totalInfraMassKg": 923406.34508654,
           "nMissions": 15,
-          "leverageL": 477.27340401232,
-          "plantMassThroughputDays": 100.71879412845,
+          "leverageL": 527.97942638704,
+          "plantMassThroughputDays": 91.045975125671,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -12418,6 +12440,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 61104.660306587,
+          "productKgPerDay": 11322.206255459,
           "totalInfraMassKg": 25944722846959.0,
           "nMissions": 685348692,
           "leverageL": 6.0117497940381e-06,
@@ -12936,6 +12959,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 123588.49163988,
+          "productKgPerDay": 15101.965178198,
           "totalInfraMassKg": 744652.73093142,
           "nMissions": 8,
           "leverageL": 214.42955579163,
@@ -13460,6 +13484,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 198472.35458391,
+          "productKgPerDay": 718.33953632131,
           "totalInfraMassKg": 1586069699941.5,
           "nMissions": 9425480,
           "leverageL": 4.3465887901036e-06,
@@ -13987,6 +14012,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 237390.93870785,
+          "productKgPerDay": 18310.686866222,
           "totalInfraMassKg": 2248642.2465238,
           "nMissions": 10,
           "leverageL": 309.35459464885,
@@ -14511,6 +14537,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 41865.644436745,
+          "productKgPerDay": 14656.602644074,
           "totalInfraMassKg": 21855185050696.0,
           "nMissions": 781419983,
           "leverageL": 2.3901033055331e-05,
@@ -15129,10 +15156,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 251122.87396454,
+          "productKgPerDay": 17768.651358212,
           "totalInfraMassKg": 2984350.0637051,
           "nMissions": 20,
-          "leverageL": 295.88858223783,
-          "plantMassThroughputDays": 177.9734331356,
+          "leverageL": 313.53648603119,
+          "plantMassThroughputDays": 167.95591311582,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -15703,6 +15731,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 50652.979784436,
+          "productKgPerDay": 332.15991327797,
           "totalInfraMassKg": 154202381301.68,
           "nMissions": 3895471,
           "leverageL": 6.5072372275823e-05,
@@ -16221,6 +16250,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 17937.21228911,
+          "productKgPerDay": 4617.7950928695,
           "totalInfraMassKg": 98583.481496649,
           "nMissions": 9,
           "leverageL": 267.07616583707,
@@ -16745,6 +16775,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 18418.568225342,
+          "productKgPerDay": 12986.67496966,
           "totalInfraMassKg": 34043227813822.0,
           "nMissions": 1969088591,
           "leverageL": 6.8916532030226e-06,
@@ -17256,6 +17287,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 223411.83466085,
+          "productKgPerDay": 16224.782731292,
           "totalInfraMassKg": 1503578.1968435,
           "nMissions": 12,
           "leverageL": 496.80706588899,
@@ -17780,6 +17812,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -485.01651684835,
+          "productKgPerDay": 18686.824170008,
           "totalInfraMassKg": 50564864358350.0,
           "nMissions": 0,
           "leverageL": 3.2264870817025e-05,
@@ -18414,10 +18447,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 43108.616682457,
+          "productKgPerDay": 4498.2715796736,
           "totalInfraMassKg": 506155.51271728,
           "nMissions": 17,
-          "leverageL": 353.75424658346,
-          "plantMassThroughputDays": 123.07642609465,
+          "leverageL": 386.93519966034,
+          "plantMassThroughputDays": 112.52222186949,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -18988,6 +19022,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -25914.698353196,
+          "productKgPerDay": 19128.290587209,
           "totalInfraMassKg": 51156022023301.0,
           "nMissions": 0,
           "leverageL": 6.4143129160741e-06,
@@ -19523,6 +19558,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -23642.15402442,
+          "productKgPerDay": 2178.7290325291,
           "totalInfraMassKg": 137038.72161664,
           "nMissions": 0,
           "leverageL": 423.80737122546,
@@ -20038,6 +20074,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 322719.22669276,
+          "productKgPerDay": 19392.630396648,
           "totalInfraMassKg": 3258410.5226037,
           "nMissions": 14,
           "leverageL": 83.637131414161,
@@ -20540,6 +20577,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 317115.71347432,
+          "productKgPerDay": 6838.1295321535,
           "totalInfraMassKg": 415084.48260362,
           "nMissions": 2,
           "leverageL": 76.283960232075,
@@ -21064,6 +21102,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 208527.67509185,
+          "productKgPerDay": 16508.832192121,
           "totalInfraMassKg": 25828340822683.0,
           "nMissions": 131211559,
           "leverageL": 5.036908794906e-05,
@@ -21682,10 +21721,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 224390.0540847,
+          "productKgPerDay": 16234.666725517,
           "totalInfraMassKg": 2958763.3673069,
           "nMissions": 20,
-          "leverageL": 160.0931751898,
-          "plantMassThroughputDays": 195.0737984824,
+          "leverageL": 171.35820470253,
+          "plantMassThroughputDays": 182.24971398128,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -22256,6 +22296,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 52961.257039317,
+          "productKgPerDay": 16625.488563205,
           "totalInfraMassKg": 1778300.8361161,
           "nMissions": 52,
           "leverageL": 77.525364069943,
@@ -22767,6 +22808,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 86520.219448784,
+          "productKgPerDay": 4944.0149762881,
           "totalInfraMassKg": 785077.8203329,
           "nMissions": 10,
           "leverageL": 268.89811767897,
@@ -23273,6 +23315,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 249894.25875559,
+          "productKgPerDay": 15414.394369377,
           "totalInfraMassKg": 58616142560606.0,
           "nMissions": 366799851,
           "leverageL": 1.4503017942806e-05,
@@ -23791,6 +23834,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 108071.46018332,
+          "productKgPerDay": 17744.233565682,
           "totalInfraMassKg": 1090411.6999273,
           "nMissions": 11,
           "leverageL": 646.29709817439,
@@ -24315,6 +24359,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 120869.01988119,
+          "productKgPerDay": 8756.577153053,
           "totalInfraMassKg": 28518141961322.0,
           "nMissions": 390612451,
           "leverageL": 7.1842155573909e-06,
@@ -24933,10 +24978,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 51002.657253577,
+          "productKgPerDay": 15020.57742851,
           "totalInfraMassKg": 2464016.1332796,
           "nMissions": 60,
-          "leverageL": 32.010044259007,
-          "plantMassThroughputDays": 177.06502574362,
+          "leverageL": 34.551121026181,
+          "plantMassThroughputDays": 164.04270375137,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -25507,6 +25553,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 108718.62086654,
+          "productKgPerDay": 14157.90286917,
           "totalInfraMassKg": 16492165878566.0,
           "nMissions": 179906357,
           "leverageL": 2.5206428745423e-05,
@@ -26042,6 +26089,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 142831.62187348,
+          "productKgPerDay": 8705.4038837692,
           "totalInfraMassKg": 437904.3072489,
           "nMissions": 5,
           "leverageL": 1325.3732716537,
@@ -26566,6 +26614,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 35815.952969408,
+          "productKgPerDay": 17520.28147094,
           "totalInfraMassKg": 37903537689012.0,
           "nMissions": 1093025309,
           "leverageL": 3.8227223334327e-06,
@@ -27101,6 +27150,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 14085.065192963,
+          "productKgPerDay": 17095.004648346,
           "totalInfraMassKg": 1036854.0579411,
           "nMissions": 110,
           "leverageL": 1183.89382754,
@@ -27607,6 +27657,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 229288.3885884,
+          "productKgPerDay": 8814.6863957468,
           "totalInfraMassKg": 4068080004774.4,
           "nMissions": 19028837,
           "leverageL": 1.7169525342621e-05,
@@ -28224,10 +28275,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -48974.869187073,
+          "productKgPerDay": 10663.172372327,
           "totalInfraMassKg": 1606999.8704807,
           "nMissions": 0,
-          "leverageL": 147.53160139739,
-          "plantMassThroughputDays": 165.58879192634,
+          "leverageL": 162.101331517,
+          "plantMassThroughputDays": 150.70560752174,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -28806,6 +28858,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 103079.24236555,
+          "productKgPerDay": 2242.908039126,
           "totalInfraMassKg": 3212350334707.8,
           "nMissions": 49771589,
           "leverageL": 3.3565691297224e-05,
@@ -29341,6 +29394,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 111392.82644627,
+          "productKgPerDay": 5780.0262234551,
           "totalInfraMassKg": 265767.04997218,
           "nMissions": 3,
           "leverageL": 1455.0515178121,
@@ -29865,6 +29919,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -76872.483069288,
+          "productKgPerDay": 5044.4995876633,
           "totalInfraMassKg": 859831.16178141,
           "nMissions": 0,
           "leverageL": 40.106991759268,
@@ -30384,6 +30439,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 214618.50438141,
+          "productKgPerDay": 19983.610957129,
           "totalInfraMassKg": 1971775.3650062,
           "nMissions": 15,
           "leverageL": 188.9703858405,
@@ -30890,6 +30946,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 33571.34994228,
+          "productKgPerDay": 6584.311191159,
           "totalInfraMassKg": 15049521592294.0,
           "nMissions": 538740879,
           "leverageL": 2.4072388907915e-05,
@@ -31499,10 +31556,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 130842.1556322,
+          "productKgPerDay": 14075.449407052,
           "totalInfraMassKg": 1802958.073098,
           "nMissions": 18,
-          "leverageL": 179.64615280443,
-          "plantMassThroughputDays": 137.53338296552,
+          "leverageL": 192.8868804135,
+          "plantMassThroughputDays": 128.09239839935,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -32055,6 +32113,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 24378.261152873,
+          "productKgPerDay": 12080.212954468,
           "totalInfraMassKg": 16733996838878.0,
           "nMissions": 768830789,
           "leverageL": 4.9651832128778e-05,
@@ -32574,6 +32633,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 65245.216009471,
+          "productKgPerDay": 2718.3168018645,
           "totalInfraMassKg": 81527.978535375,
           "nMissions": 2,
           "leverageL": 340.85424475524,
@@ -33098,6 +33158,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -61749.234142684,
+          "productKgPerDay": 18073.871131154,
           "totalInfraMassKg": 26613040514892.0,
           "nMissions": 0,
           "leverageL": 7.6132938208015e-06,
@@ -33625,6 +33686,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 103366.85861825,
+          "productKgPerDay": 10999.883901956,
           "totalInfraMassKg": 460427.00886022,
           "nMissions": 6,
           "leverageL": 415.52230548555,
@@ -34149,6 +34211,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 167030.17307265,
+          "productKgPerDay": 3769.9710492488,
           "totalInfraMassKg": 10275063098985.0,
           "nMissions": 91395514,
           "leverageL": 1.5432324728421e-05,
@@ -34767,10 +34830,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -49925.148376052,
+          "productKgPerDay": 16990.580256414,
           "totalInfraMassKg": 1825697.8359063,
           "nMissions": 0,
-          "leverageL": 677.93949130506,
-          "plantMassThroughputDays": 114.04128399232,
+          "leverageL": 719.50255713689,
+          "plantMassThroughputDays": 107.45353062424,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -35349,6 +35413,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 145752.53924997,
+          "productKgPerDay": 483.41029785569,
           "totalInfraMassKg": 563650810916.03,
           "nMissions": 5223671,
           "leverageL": 1.6831907787543e-05,
@@ -35876,6 +35941,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 18423.065705402,
+          "productKgPerDay": 9347.5448886816,
           "totalInfraMassKg": 504585.36418414,
           "nMissions": 33,
           "leverageL": 430.89612893896,
@@ -36400,6 +36466,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -5921.4088095266,
+          "productKgPerDay": 912.52823208284,
           "totalInfraMassKg": 552003598844.06,
           "nMissions": 0,
           "leverageL": 9.1958252331637e-05,
@@ -36918,6 +36985,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 64993.473691021,
+          "productKgPerDay": 18819.611380399,
           "totalInfraMassKg": 695102.68676975,
           "nMissions": 13,
           "leverageL": 1619.9730477492,
@@ -37442,6 +37510,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -67224.82361291,
+          "productKgPerDay": 10568.814131768,
           "totalInfraMassKg": 15303588951089.0,
           "nMissions": 0,
           "leverageL": 3.2800654967979e-05,
@@ -38076,10 +38145,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 25489.760069241,
+          "productKgPerDay": 8741.7974793502,
           "totalInfraMassKg": 948628.68787181,
           "nMissions": 48,
-          "leverageL": 88.615712235457,
-          "plantMassThroughputDays": 119.61474241947,
+          "leverageL": 97.678712961639,
+          "plantMassThroughputDays": 108.516433847,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -38650,6 +38720,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 119400.4346176,
+          "productKgPerDay": 9411.6495942299,
           "totalInfraMassKg": 6185410875879.4,
           "nMissions": 65666569,
           "leverageL": 2.0340454602948e-05,
@@ -39160,6 +39231,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 68232.649732938,
+          "productKgPerDay": 11495.517152543,
           "totalInfraMassKg": 1046960.2687953,
           "nMissions": 19,
           "leverageL": 65.539681066201,
@@ -39684,6 +39756,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 113331.37011489,
+          "productKgPerDay": 11591.258331055,
           "totalInfraMassKg": 8113875104359.5,
           "nMissions": 78432592,
           "leverageL": 9.7968217472776e-05,
@@ -40211,6 +40284,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 84403.872432217,
+          "productKgPerDay": 19586.341843021,
           "totalInfraMassKg": 811475.98445285,
           "nMissions": 13,
           "leverageL": 496.35829295469,
@@ -40735,6 +40809,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 130867.3360249,
+          "productKgPerDay": 18168.252786502,
           "totalInfraMassKg": 2123843.5714574,
           "nMissions": 24,
           "leverageL": 142.54427156716,
@@ -41337,10 +41412,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 143341.76838252,
+          "productKgPerDay": 20986.086642933,
           "totalInfraMassKg": 3783070.5782386,
           "nMissions": 28,
-          "leverageL": 353.69594291796,
-          "plantMassThroughputDays": 199.68291985946,
+          "leverageL": 391.79421087976,
+          "plantMassThroughputDays": 180.26565136252,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -41893,6 +41969,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 88006.579853225,
+          "productKgPerDay": 18725.503200575,
           "totalInfraMassKg": 39668433508231.0,
           "nMissions": 459701959,
           "leverageL": 1.4830164090687e-06,
@@ -42420,6 +42497,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 143774.60192283,
+          "productKgPerDay": 577.38611376792,
           "totalInfraMassKg": 38200.979117056,
           "nMissions": 1,
           "leverageL": 124.00688979047,
@@ -42926,6 +43004,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 45698.52577803,
+          "productKgPerDay": 3563.4264610958,
           "totalInfraMassKg": 1443335292161.9,
           "nMissions": 49345821,
           "leverageL": 8.1420304144479e-05,
@@ -43436,6 +43515,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 14279.062324576,
+          "productKgPerDay": 12796.513406696,
           "totalInfraMassKg": 527879.22823394,
           "nMissions": 40,
           "leverageL": 100.14151761154,
@@ -43942,6 +44022,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 243503.45402746,
+          "productKgPerDay": 1159.9602610459,
           "totalInfraMassKg": 3359666241135.7,
           "nMissions": 21279479,
           "leverageL": 1.7480252833419e-05,
@@ -44568,10 +44649,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 1096.206148229,
+          "productKgPerDay": 746.31673715248,
           "totalInfraMassKg": 139632.59569157,
           "nMissions": 144,
-          "leverageL": 29.330436513583,
-          "plantMassThroughputDays": 199.79671013739,
+          "leverageL": 31.321548814575,
+          "plantMassThroughputDays": 187.09562407019,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -45124,6 +45206,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 46741.502437728,
+          "productKgPerDay": 3261.9959977409,
           "totalInfraMassKg": 451678.06941699,
           "nMissions": 13,
           "leverageL": 32.488078396589,
@@ -45635,6 +45718,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 248828.51897363,
+          "productKgPerDay": 6262.5671268903,
           "totalInfraMassKg": 238351.84560049,
           "nMissions": 2,
           "leverageL": 1735.4948816705,
@@ -46159,6 +46243,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 136124.57657676,
+          "productKgPerDay": 12605.646700401,
           "totalInfraMassKg": 1923874.7168873,
           "nMissions": 15,
           "leverageL": 412.76866946679,
@@ -46653,6 +46738,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 126721.9311652,
+          "productKgPerDay": 9902.1592838425,
           "totalInfraMassKg": 540978.93678249,
           "nMissions": 5,
           "leverageL": 1625.7883150942,
@@ -47177,6 +47263,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 115289.55997275,
+          "productKgPerDay": 8132.2110237719,
           "totalInfraMassKg": 1302049.3201683,
           "nMissions": 19,
           "leverageL": 72.205422780335,
@@ -47779,10 +47866,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -19586.215438128,
+          "productKgPerDay": 9407.1418061252,
           "totalInfraMassKg": 1295975.3913454,
           "nMissions": 0,
-          "leverageL": 103.66864027527,
-          "plantMassThroughputDays": 145.4475510049,
+          "leverageL": 109.44974428724,
+          "plantMassThroughputDays": 137.76505319624,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -48344,6 +48432,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 284956.52144961,
+          "productKgPerDay": 4336.774326962,
           "totalInfraMassKg": 548371.7356104,
           "nMissions": 3,
           "leverageL": 74.234095200468,
@@ -48838,6 +48927,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 116281.2981214,
+          "productKgPerDay": 2617.9699470458,
           "totalInfraMassKg": 187395.54344118,
           "nMissions": 3,
           "leverageL": 133.57207733239,
@@ -49362,6 +49452,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 300580.69653529,
+          "productKgPerDay": 7752.0122426661,
           "totalInfraMassKg": 716456.96149456,
           "nMissions": 3,
           "leverageL": 123.95858130455,
@@ -49873,6 +49964,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 25585.978120742,
+          "productKgPerDay": 18441.041997146,
           "totalInfraMassKg": 1965716.6689182,
           "nMissions": 108,
           "leverageL": 683.11730924225,
@@ -50397,6 +50489,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 161588.50994906,
+          "productKgPerDay": 3446.134511002,
           "totalInfraMassKg": 232424.17649471,
           "nMissions": 3,
           "leverageL": 722.59437020134,
@@ -50973,10 +51066,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 105074.31712281,
+          "productKgPerDay": 2027.3181732653,
           "totalInfraMassKg": 292343.59770207,
           "nMissions": 4,
-          "leverageL": 353.77451740353,
-          "plantMassThroughputDays": 153.0835557585,
+          "leverageL": 375.56353196164,
+          "plantMassThroughputDays": 144.20212947197,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -51547,6 +51641,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -33974.962947229,
+          "productKgPerDay": 18299.267312876,
           "totalInfraMassKg": 35757667269430.0,
           "nMissions": 0,
           "leverageL": 1.1614875784191e-05,
@@ -52074,6 +52169,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -14591.120059395,
+          "productKgPerDay": 9543.3928476863,
           "totalInfraMassKg": 550376.4379224,
           "nMissions": 0,
           "leverageL": 391.65696751024,
@@ -52589,6 +52685,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 372444.46410351,
+          "productKgPerDay": 10006.147528143,
           "totalInfraMassKg": 1596616.919465,
           "nMissions": 6,
           "leverageL": 90.932799656721,
@@ -53100,6 +53197,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 61709.286768454,
+          "productKgPerDay": 16165.028740579,
           "totalInfraMassKg": 1671300.7149244,
           "nMissions": 43,
           "leverageL": 687.4127397485,
@@ -53624,6 +53722,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 274932.96706706,
+          "productKgPerDay": 12536.149397898,
           "totalInfraMassKg": 1238141.9644756,
           "nMissions": 7,
           "leverageL": 498.42881158834,
@@ -54209,10 +54308,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 244830.01968227,
+          "productKgPerDay": 16935.51990625,
           "totalInfraMassKg": 2188761.540136,
           "nMissions": 15,
-          "leverageL": 84.131538362157,
-          "plantMassThroughputDays": 140.9856771417,
+          "leverageL": 91.777011000402,
+          "plantMassThroughputDays": 129.24088260959,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -54765,6 +54865,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 105663.3855208,
+          "productKgPerDay": 1329.2238231861,
           "totalInfraMassKg": 1357776925329.5,
           "nMissions": 13894170,
           "leverageL": 7.6041214917921e-05,
@@ -55284,6 +55385,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -11689.036064715,
+          "productKgPerDay": 8445.7200804888,
           "totalInfraMassKg": 641255.4081737,
           "nMissions": 0,
           "leverageL": 905.9005531469,
@@ -55816,6 +55918,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -5604.4173268922,
+          "productKgPerDay": 11092.041501391,
           "totalInfraMassKg": 1388381.2352057,
           "nMissions": 0,
           "leverageL": 284.86911524972,
@@ -56310,6 +56413,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 151776.63633916,
+          "productKgPerDay": 7027.5877352165,
           "totalInfraMassKg": 540252.28945932,
           "nMissions": 4,
           "leverageL": 762.0498243052,
@@ -56834,6 +56938,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 222167.82760196,
+          "productKgPerDay": 8527.6711098778,
           "totalInfraMassKg": 20497216920912.0,
           "nMissions": 94832058,
           "leverageL": 6.1108390426408e-06,
@@ -57444,10 +57549,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 126404.24016969,
+          "productKgPerDay": 119.9118977523,
           "totalInfraMassKg": 22771.98039619,
           "nMissions": 1,
-          "leverageL": 117.30395951372,
-          "plantMassThroughputDays": 202.50792208283,
+          "leverageL": 125.08814843497,
+          "plantMassThroughputDays": 189.90592946189,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -58000,6 +58106,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 167105.53504913,
+          "productKgPerDay": 17158.525757178,
           "totalInfraMassKg": 22186616016089.0,
           "nMissions": 208540019,
           "leverageL": 4.0701064904119e-06,
@@ -58519,6 +58626,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -106708.12509158,
+          "productKgPerDay": 8395.5873972161,
           "totalInfraMassKg": 1065395.6612226,
           "nMissions": 0,
           "leverageL": 310.30696969917,
@@ -59051,6 +59159,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 373914.48850334,
+          "productKgPerDay": 15354.081705312,
           "totalInfraMassKg": 1785499.9590709,
           "nMissions": 5,
           "leverageL": 74.492369496359,
@@ -59562,6 +59671,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 157159.16882386,
+          "productKgPerDay": 7832.5747726415,
           "totalInfraMassKg": 445866.14908514,
           "nMissions": 3,
           "leverageL": 182.81438967094,
@@ -60086,6 +60196,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 63659.908902734,
+          "productKgPerDay": 3894.2276046861,
           "totalInfraMassKg": 4852113158135.2,
           "nMissions": 86225547,
           "leverageL": 3.0613415982975e-06,
@@ -60704,10 +60815,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 282470.95167541,
+          "productKgPerDay": 9525.3157306644,
           "totalInfraMassKg": 1119687.2598323,
           "nMissions": 6,
-          "leverageL": 595.75200519759,
-          "plantMassThroughputDays": 124.18258723984,
+          "leverageL": 629.37408972729,
+          "plantMassThroughputDays": 117.54857177361,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -61278,6 +61390,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 142590.32008815,
+          "productKgPerDay": 6933.3107005538,
           "totalInfraMassKg": 1047347.7627353,
           "nMissions": 11,
           "leverageL": 80.616575912853,
@@ -61772,6 +61885,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 91263.014046915,
+          "productKgPerDay": 10615.849639751,
           "totalInfraMassKg": 1168226.8021676,
           "nMissions": 20,
           "leverageL": 173.4830245502,
@@ -62296,6 +62410,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -54374.297403805,
+          "productKgPerDay": 5624.3053078874,
           "totalInfraMassKg": 10489033592873.0,
           "nMissions": 0,
           "leverageL": 2.365899262397e-05,
@@ -62831,6 +62946,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 29453.43599727,
+          "productKgPerDay": 14775.606610356,
           "totalInfraMassKg": 950347.35819207,
           "nMissions": 44,
           "leverageL": 789.3378540125,
@@ -63337,6 +63453,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 70598.719026389,
+          "productKgPerDay": 3691.0989961921,
           "totalInfraMassKg": 9601308222800.7,
           "nMissions": 166106905,
           "leverageL": 9.1893304899326e-06,
@@ -63955,10 +64072,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 291404.91790453,
+          "productKgPerDay": 17063.230577954,
           "totalInfraMassKg": 1391916.6703816,
           "nMissions": 6,
-          "leverageL": 314.69109741117,
-          "plantMassThroughputDays": 87.956263988107,
+          "leverageL": 339.31202753701,
+          "plantMassThroughputDays": 81.574040977916,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -64511,6 +64629,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 155342.14979045,
+          "productKgPerDay": 3181.38669208,
           "totalInfraMassKg": 1320847728428.1,
           "nMissions": 8696762,
           "leverageL": 8.8810050793179e-05,
@@ -65038,6 +65157,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 123714.93664554,
+          "productKgPerDay": 12157.86093406,
           "totalInfraMassKg": 676261.27282589,
           "nMissions": 8,
           "leverageL": 1124.6935930714,
@@ -65562,6 +65682,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 42215.757724601,
+          "productKgPerDay": 851.77108587754,
           "totalInfraMassKg": 141158.22462694,
           "nMissions": 4,
           "leverageL": 31.795620142059,
@@ -66073,6 +66194,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 101827.50674622,
+          "productKgPerDay": 11254.433581999,
           "totalInfraMassKg": 572564.31704498,
           "nMissions": 7,
           "leverageL": 612.5970632607,
@@ -66579,6 +66701,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -65207.448239113,
+          "productKgPerDay": 4415.7752080935,
           "totalInfraMassKg": 3863834140002.6,
           "nMissions": 0,
           "leverageL": 9.1521278666953e-05,
@@ -67205,10 +67328,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 212871.41374001,
+          "productKgPerDay": 12632.746457701,
           "totalInfraMassKg": 2971714.8133958,
           "nMissions": 19,
-          "leverageL": 38.151819820424,
-          "plantMassThroughputDays": 249.31902545219,
+          "leverageL": 40.435361460171,
+          "plantMassThroughputDays": 235.23901341218,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -67779,6 +67903,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 49650.612921931,
+          "productKgPerDay": 1631.233040173,
           "totalInfraMassKg": 7107316981084.1,
           "nMissions": 185518125,
           "leverageL": 4.1523290136601e-06,
@@ -68306,6 +68431,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 84818.986380308,
+          "productKgPerDay": 13610.117791221,
           "totalInfraMassKg": 580905.98427446,
           "nMissions": 10,
           "leverageL": 769.81676208853,
@@ -68830,6 +68956,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 11254.542957414,
+          "productKgPerDay": 6491.043049423,
           "totalInfraMassKg": 22898313607394.0,
           "nMissions": 2224648917,
           "leverageL": 4.9432718223312e-06,
@@ -69365,6 +69492,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 135897.67524025,
+          "productKgPerDay": 19899.978282718,
           "totalInfraMassKg": 850024.66520838,
           "nMissions": 9,
           "leverageL": 987.33844828014,
@@ -69889,6 +70017,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 219197.64343321,
+          "productKgPerDay": 13291.15705944,
           "totalInfraMassKg": 1948582.3898856,
           "nMissions": 11,
           "leverageL": 320.78106778334,
@@ -70491,10 +70620,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 321015.52887417,
+          "productKgPerDay": 2786.7255184234,
           "totalInfraMassKg": 392021.22747023,
           "nMissions": 3,
-          "leverageL": 188.8912820963,
-          "plantMassThroughputDays": 154.19381870789,
+          "leverageL": 207.04440018197,
+          "plantMassThroughputDays": 140.6745030605,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -71065,6 +71195,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 267880.31024937,
+          "productKgPerDay": 13411.861062534,
           "totalInfraMassKg": 34702963107402.0,
           "nMissions": 143072041,
           "leverageL": 3.5090883535051e-06,
@@ -71600,6 +71731,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 293849.74562267,
+          "productKgPerDay": 237.38918037099,
           "totalInfraMassKg": 18131.200077133,
           "nMissions": 1,
           "leverageL": 432.45983585194,
@@ -72124,6 +72256,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 225886.12793212,
+          "productKgPerDay": 1890.0025741449,
           "totalInfraMassKg": 508129.87708034,
           "nMissions": 3,
           "leverageL": 64.440269337102,
@@ -72635,6 +72768,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 63124.841912332,
+          "productKgPerDay": 14050.504473691,
           "totalInfraMassKg": 720792.76138628,
           "nMissions": 17,
           "leverageL": 30.887392203105,
@@ -73141,6 +73275,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 142390.08211421,
+          "productKgPerDay": 11768.013002012,
           "totalInfraMassKg": 2367986.3557658,
           "nMissions": 24,
           "leverageL": 233.99607213841,
@@ -73743,10 +73878,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 173907.88023145,
+          "productKgPerDay": 8300.5592701662,
           "totalInfraMassKg": 1812070.4609168,
           "nMissions": 13,
-          "leverageL": 179.56042952222,
-          "plantMassThroughputDays": 235.40692356279,
+          "leverageL": 193.62531686244,
+          "plantMassThroughputDays": 218.3070323261,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -74299,6 +74435,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -272.04622668471,
+          "productKgPerDay": 3405.6129206097,
           "totalInfraMassKg": 6805862507329.6,
           "nMissions": 0,
           "leverageL": 1.2538774884997e-05,
@@ -74834,6 +74971,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 154665.84071046,
+          "productKgPerDay": 10176.986145845,
           "totalInfraMassKg": 685713.82804128,
           "nMissions": 6,
           "leverageL": 260.77682592279,
@@ -75358,6 +75496,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 147655.6752179,
+          "productKgPerDay": 18534.663295409,
           "totalInfraMassKg": 28784143587582.0,
           "nMissions": 244851869,
           "leverageL": 1.0892862546712e-05,
@@ -75877,6 +76016,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -32981.619672321,
+          "productKgPerDay": 6170.9179759974,
           "totalInfraMassKg": 361547.83925635,
           "nMissions": 0,
           "leverageL": 899.79859275453,
@@ -76409,6 +76549,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 27204.546326889,
+          "productKgPerDay": 14390.049682456,
           "totalInfraMassKg": 23079149635040.0,
           "nMissions": 1407143655,
           "leverageL": 1.2391328178719e-05,
@@ -77010,10 +77151,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -104049.681661,
+          "productKgPerDay": 5752.6551461633,
           "totalInfraMassKg": 573844.59612173,
           "nMissions": 0,
-          "leverageL": 133.56994602885,
-          "plantMassThroughputDays": 109.63609843,
+          "leverageL": 146.80348534407,
+          "plantMassThroughputDays": 99.75299779693,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -77592,6 +77734,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 231295.41887191,
+          "productKgPerDay": 6629.5933547928,
           "totalInfraMassKg": 16963390749941.0,
           "nMissions": 78846974,
           "leverageL": 6.8921237555417e-06,
@@ -78119,6 +78262,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 174205.95807154,
+          "productKgPerDay": 17947.72911557,
           "totalInfraMassKg": 804813.42778637,
           "nMissions": 6,
           "leverageL": 755.42275157995,
@@ -78643,6 +78787,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 235493.13810057,
+          "productKgPerDay": 13397.997597058,
           "totalInfraMassKg": 7080466668902.2,
           "nMissions": 39879270,
           "leverageL": 1.1287547918987e-05,
@@ -79170,6 +79315,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 46233.589784945,
+          "productKgPerDay": 14445.092637123,
           "totalInfraMassKg": 2589953.0610364,
           "nMissions": 77,
           "leverageL": 319.9974295201,
@@ -79694,6 +79840,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 88557.787161821,
+          "productKgPerDay": 10748.104786804,
           "totalInfraMassKg": 6718421405030.6,
           "nMissions": 117396350,
           "leverageL": 4.2093590062166e-05,
@@ -80320,10 +80467,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 206377.44503959,
+          "productKgPerDay": 17194.489826571,
           "totalInfraMassKg": 2335782.3468969,
           "nMissions": 13,
-          "leverageL": 334.35251381602,
-          "plantMassThroughputDays": 146.68258221673,
+          "leverageL": 361.02731556042,
+          "plantMassThroughputDays": 135.84481833752,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -80894,6 +81042,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 259371.1925089,
+          "productKgPerDay": 1031.3528655816,
           "totalInfraMassKg": 192565.09821895,
           "nMissions": 1,
           "leverageL": 336.54565813904,
@@ -81405,6 +81554,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 197005.14719176,
+          "productKgPerDay": 17248.64346908,
           "totalInfraMassKg": 1372234.0294212,
           "nMissions": 8,
           "leverageL": 450.87751779964,
@@ -81929,6 +82079,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 258814.4090789,
+          "productKgPerDay": 6375.2771943864,
           "totalInfraMassKg": 15370192225752.0,
           "nMissions": 66242802,
           "leverageL": 4.2785649316979e-06,
@@ -82464,6 +82615,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -85420.73388808,
+          "productKgPerDay": 14523.919230634,
           "totalInfraMassKg": 870206.43353636,
           "nMissions": 0,
           "leverageL": 358.28573927906,
@@ -82996,6 +83148,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 11351.520419352,
+          "productKgPerDay": 3089.1724709138,
           "totalInfraMassKg": 403731.73979706,
           "nMissions": 42,
           "leverageL": 430.56873181179,
@@ -83598,10 +83751,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -33821.450763399,
+          "productKgPerDay": 11374.288222659,
           "totalInfraMassKg": 1410737.3102265,
           "nMissions": 0,
-          "leverageL": 89.855886288063,
-          "plantMassThroughputDays": 136.19100847379,
+          "leverageL": 98.667254678895,
+          "plantMassThroughputDays": 124.02862338376,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -84180,6 +84334,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 176586.35279289,
+          "productKgPerDay": 19705.206303536,
           "totalInfraMassKg": 28383266395602.0,
           "nMissions": 217530032,
           "leverageL": 1.5006559952908e-05,
@@ -84715,6 +84870,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -21258.171688681,
+          "productKgPerDay": 15760.95145641,
           "totalInfraMassKg": 752282.72812694,
           "nMissions": 0,
           "leverageL": 1373.2411490525,
@@ -85247,6 +85403,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 139928.97681332,
+          "productKgPerDay": 15246.188103387,
           "totalInfraMassKg": 27581852167034.0,
           "nMissions": 238066963,
           "leverageL": 1.4904542667178e-06,
@@ -85774,6 +85931,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 35100.727619978,
+          "productKgPerDay": 1768.0471051034,
           "totalInfraMassKg": 55844.968648243,
           "nMissions": 3,
           "leverageL": 331.67144226667,
@@ -86298,6 +86456,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 127832.31774426,
+          "productKgPerDay": 4735.4334616309,
           "totalInfraMassKg": 13055036342999.0,
           "nMissions": 158479975,
           "leverageL": 1.5588866621851e-05,
@@ -86924,10 +87083,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 147112.36965906,
+          "productKgPerDay": 2240.1158326231,
           "totalInfraMassKg": 260637.73311874,
           "nMissions": 3,
-          "leverageL": 172.09126997861,
-          "plantMassThroughputDays": 124.73440531179,
+          "leverageL": 184.49231746419,
+          "plantMassThroughputDays": 116.3501142767,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -87498,6 +87658,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 249436.26853719,
+          "productKgPerDay": 13034.236036834,
           "totalInfraMassKg": 825434.69178595,
           "nMissions": 4,
           "leverageL": 826.05809479115,
@@ -87992,6 +88153,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 204487.25811475,
+          "productKgPerDay": 16823.012968897,
           "totalInfraMassKg": 546555.6652497,
           "nMissions": 4,
           "leverageL": 299.80546052831,
@@ -88516,6 +88678,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -10379.604372623,
+          "productKgPerDay": 4078.4219550297,
           "totalInfraMassKg": 1388678.7766479,
           "nMissions": 0,
           "leverageL": 248.76006882108,
@@ -89035,6 +89198,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 38398.403185564,
+          "productKgPerDay": 13551.824746808,
           "totalInfraMassKg": 441580.22680895,
           "nMissions": 14,
           "leverageL": 857.95069527445,
@@ -89541,6 +89705,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 36769.62985672,
+          "productKgPerDay": 12891.428251688,
           "totalInfraMassKg": 42285052806279.0,
           "nMissions": 1789910757,
           "leverageL": 2.067553401669e-06,
@@ -90158,10 +90323,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": -45659.727836737,
+          "productKgPerDay": 13513.196113082,
           "totalInfraMassKg": 1832568.1031367,
           "nMissions": 0,
-          "leverageL": 51.466195366951,
-          "plantMassThroughputDays": 149.21098580559,
+          "leverageL": 56.626643559101,
+          "plantMassThroughputDays": 135.61322486562,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -90740,6 +90906,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 236105.03930295,
+          "productKgPerDay": 14933.706043316,
           "totalInfraMassKg": 23408317200138.0,
           "nMissions": 135885056,
           "leverageL": 2.2789187441692e-05,
@@ -91242,6 +91409,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 32024.576743946,
+          "productKgPerDay": 1212.0522701699,
           "totalInfraMassKg": 75100.495393567,
           "nMissions": 4,
           "leverageL": 229.17623721084,
@@ -91766,6 +91934,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 102782.88290906,
+          "productKgPerDay": 17379.772711458,
           "totalInfraMassKg": 40056492059834.0,
           "nMissions": 428102846,
           "leverageL": 3.3661252404315e-06,
@@ -92285,6 +92454,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 23652.855883579,
+          "productKgPerDay": 8062.1087450096,
           "totalInfraMassKg": 163112.39411844,
           "nMissions": 9,
           "leverageL": 2919.0099833402,
@@ -92809,6 +92979,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 4350.6207191317,
+          "productKgPerDay": 19042.667069901,
           "totalInfraMassKg": 2517328.1149991,
           "nMissions": 623,
           "leverageL": 162.86212111366,
@@ -93419,10 +93590,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 186634.76260809,
+          "productKgPerDay": 14811.330592456,
           "totalInfraMassKg": 1883269.2333526,
           "nMissions": 13,
-          "leverageL": 189.09743953937,
-          "plantMassThroughputDays": 135.6856902922,
+          "leverageL": 201.7907994543,
+          "plantMassThroughputDays": 127.15057716096,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -93993,6 +94165,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 253476.74544838,
+          "productKgPerDay": 14822.705048786,
           "totalInfraMassKg": 5842146381995.7,
           "nMissions": 30918044,
           "leverageL": 0.00017422944364822,
@@ -94528,6 +94701,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 147373.0145345,
+          "productKgPerDay": 1474.2559495561,
           "totalInfraMassKg": 44806.304261395,
           "nMissions": 1,
           "leverageL": 1235.0086156407,
@@ -95052,6 +95226,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 47097.344552295,
+          "productKgPerDay": 5568.1326440164,
           "totalInfraMassKg": 3619346782638.6,
           "nMissions": 85157725,
           "leverageL": 3.2806896513262e-05,
@@ -95587,6 +95762,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 94346.688429215,
+          "productKgPerDay": 7545.793408511,
           "totalInfraMassKg": 330459.0018653,
           "nMissions": 5,
           "leverageL": 427.06673097334,
@@ -96119,6 +96295,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 53589.868244619,
+          "productKgPerDay": 4871.1366602042,
           "totalInfraMassKg": 8065746338206.9,
           "nMissions": 202352587,
           "leverageL": 1.8757881569502e-05,
@@ -96729,10 +96906,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 229882.89391631,
+          "productKgPerDay": 4320.9497065589,
           "totalInfraMassKg": 291345.16588148,
           "nMissions": 2,
-          "leverageL": 489.8486747893,
-          "plantMassThroughputDays": 73.465220854497,
+          "leverageL": 533.72201981945,
+          "plantMassThroughputDays": 67.426187682592,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -97285,6 +97463,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 219972.43107007,
+          "productKgPerDay": 19444.590917968,
           "totalInfraMassKg": 1775247.5212591,
           "nMissions": 12,
           "leverageL": 298.95247397813,
@@ -97796,6 +97975,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 7516.5970560491,
+          "productKgPerDay": 16914.77456928,
           "totalInfraMassKg": 2675580.473787,
           "nMissions": 414,
           "leverageL": 328.53789009204,
@@ -98302,6 +98482,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 119411.30795081,
+          "productKgPerDay": 14229.392410063,
           "totalInfraMassKg": 60254579298835.0,
           "nMissions": 621489467,
           "leverageL": 3.398571553099e-06,
@@ -98812,6 +98993,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 199720.74857885,
+          "productKgPerDay": 17843.436683371,
           "totalInfraMassKg": 1082886.931786,
           "nMissions": 6,
           "leverageL": 872.47730764816,
@@ -99318,6 +99500,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 79286.555647616,
+          "productKgPerDay": 10849.949684448,
           "totalInfraMassKg": 6361512324683.4,
           "nMissions": 101128109,
           "leverageL": 0.00015233559423889,
@@ -99944,10 +100127,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 99010.488595325,
+          "productKgPerDay": 7899.1233975837,
           "totalInfraMassKg": 710286.29232378,
           "nMissions": 10,
-          "leverageL": 507.36559053541,
-          "plantMassThroughputDays": 96.798235640413,
+          "leverageL": 546.17763980713,
+          "plantMassThroughputDays": 89.919634948487,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -100518,6 +100702,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 101708.09786894,
+          "productKgPerDay": 11634.029556905,
           "totalInfraMassKg": 2419826.5784361,
           "nMissions": 31,
           "leverageL": 168.32204642509,
@@ -101029,6 +101214,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 341.05599788673,
+          "productKgPerDay": 6709.8584193782,
           "totalInfraMassKg": 429294.20294694,
           "nMissions": 1844,
           "leverageL": 310.6960011279,
@@ -101553,6 +101739,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": -106134.89045644,
+          "productKgPerDay": 9991.0849312383,
           "totalInfraMassKg": 1581615.4247832,
           "nMissions": 0,
           "leverageL": 68.849964366074,
@@ -102072,6 +102259,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 237807.94856488,
+          "productKgPerDay": 73.910708505865,
           "totalInfraMassKg": 6986.8114493306,
           "nMissions": 1,
           "leverageL": 298.93096667399,
@@ -102596,6 +102784,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 284215.5513039,
+          "productKgPerDay": 9758.0349787927,
           "totalInfraMassKg": 2029946.963345,
           "nMissions": 9,
           "leverageL": 6.7914270779958,
@@ -103198,10 +103387,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 294488.53959958,
+          "productKgPerDay": 21109.20811757,
           "totalInfraMassKg": 1918606.6971257,
           "nMissions": 8,
-          "leverageL": 117.40234035164,
-          "plantMassThroughputDays": 97.613161280361,
+          "leverageL": 126.08723409823,
+          "plantMassThroughputDays": 90.889562812582,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -103772,6 +103962,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 40398.207256287,
+          "productKgPerDay": 1563.7169009863,
           "totalInfraMassKg": 8045008872138.6,
           "nMissions": 221534565,
           "leverageL": 1.4462908423334e-05,
@@ -104299,6 +104490,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 20238.531679833,
+          "productKgPerDay": 10273.036951384,
           "totalInfraMassKg": 846813.00279044,
           "nMissions": 64,
           "leverageL": 494.99225796583,
@@ -104823,6 +105015,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 61535.809085912,
+          "productKgPerDay": 5472.0711367554,
           "totalInfraMassKg": 1010879.3789871,
           "nMissions": 23,
           "leverageL": 57.550908030756,
@@ -105317,6 +105510,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 46121.748120515,
+          "productKgPerDay": 12356.858849536,
           "totalInfraMassKg": 508788.56836392,
           "nMissions": 12,
           "leverageL": 912.16323181709,
@@ -105841,6 +106035,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 74820.846119193,
+          "productKgPerDay": 12403.857161018,
           "totalInfraMassKg": 1477055.909889,
           "nMissions": 29,
           "leverageL": 326.81447525279,
@@ -106443,10 +106638,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 164608.24460296,
+          "productKgPerDay": 11024.169894293,
           "totalInfraMassKg": 1100879.8434441,
           "nMissions": 10,
-          "leverageL": 392.40645814712,
-          "plantMassThroughputDays": 105.53449611813,
+          "leverageL": 414.70241521343,
+          "plantMassThroughputDays": 99.860565829458,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -107017,6 +107213,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 65229.666742001,
+          "productKgPerDay": 4230.6784326514,
           "totalInfraMassKg": 395987.07032022,
           "nMissions": 7,
           "leverageL": 547.86683945137,
@@ -107528,6 +107725,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 155232.32776933,
+          "productKgPerDay": 6105.9028588961,
           "totalInfraMassKg": 826029.6066741,
           "nMissions": 9,
           "leverageL": 265.50946690316,
@@ -108034,6 +108232,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 160307.739146,
+          "productKgPerDay": 19225.368154466,
           "totalInfraMassKg": 2014164.3416932,
           "nMissions": 14,
           "leverageL": 32.830951344891,
@@ -108553,6 +108752,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 62604.016051269,
+          "productKgPerDay": 2324.3901760062,
           "totalInfraMassKg": 71815.842120774,
           "nMissions": 2,
           "leverageL": 1631.4911338067,
@@ -108938,6 +109138,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 1000,
           "totalInfraMassKg": 60368.226215373,
           "nMissions": 1,
           "leverageL": 181.38681035507,
@@ -109438,6 +109639,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 21945.302651518,
+          "productKgPerDay": 10.0,
           "totalInfraMassKg": 674.01947262716,
           "nMissions": 1,
           "leverageL": 10.830547627276,
@@ -109963,6 +110165,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 238739.2779947,
+          "productKgPerDay": 20000.0,
           "totalInfraMassKg": 119052235596240.0,
           "nMissions": 498670502,
           "leverageL": 1.8395286649024e-05,
@@ -110505,6 +110708,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 495367.08585738,
+          "productKgPerDay": 10.0,
           "totalInfraMassKg": 3175064536.2288,
           "nMissions": 10683,
           "leverageL": 0.00034487487970893,
@@ -110983,10 +111187,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 1105.5555555556,
           "totalInfraMassKg": 65088.530017985,
           "nMissions": 1,
-          "leverageL": 168.23240587818,
-          "plantMassThroughputDays": 65.088530017985,
+          "leverageL": 185.9902709431,
+          "plantMassThroughputDays": 58.874047252449,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -111524,6 +111729,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 21945.302651518,
+          "productKgPerDay": 10.0,
           "totalInfraMassKg": 1059.0709856442,
           "nMissions": 1,
           "leverageL": 6.8928335295296,
@@ -112106,10 +112312,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 238739.2779947,
+          "productKgPerDay": 22220.0,
           "totalInfraMassKg": 4409179.6844858,
           "nMissions": 19,
-          "leverageL": 496.69103023988,
-          "plantMassThroughputDays": 220.45898422429,
+          "leverageL": 551.82373459651,
+          "plantMassThroughputDays": 198.43292909477,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -112756,10 +112963,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 495367.08585738,
+          "productKgPerDay": 11.11,
           "totalInfraMassKg": 11840.986394179,
           "nMissions": 1,
-          "leverageL": 92.475403952686,
-          "plantMassThroughputDays": 1184.0986394179,
+          "leverageL": 102.74017379143,
+          "plantMassThroughputDays": 1065.7953550116,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -113162,6 +113370,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 1000,
           "totalInfraMassKg": 29823.06990196,
           "nMissions": 1,
           "leverageL": 367.1654204613,
@@ -113529,6 +113738,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 10000.0,
           "totalInfraMassKg": 589508.73901369,
           "nMissions": 7,
           "leverageL": 185.74788252199,
@@ -113876,6 +114086,7 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 10.0,
           "totalInfraMassKg": 1437.4714837378,
           "nMissions": 1,
           "leverageL": 76.175424165821,
@@ -114282,10 +114493,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 52.313333333333,
           "totalInfraMassKg": 7047.4103956546,
           "nMissions": 1,
-          "leverageL": 104.50604671102,
-          "plantMassThroughputDays": 104.77862616198,
+          "leverageL": 81.282480775237,
+          "plantMassThroughputDays": 134.71537649397,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -114708,10 +114920,11 @@
         },
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 722.22222222222,
           "totalInfraMassKg": 97653.954030146,
           "nMissions": 2,
-          "leverageL": 112.13063627326,
-          "plantMassThroughputDays": 97.653954030146,
+          "leverageL": 80.983237308466,
+          "plantMassThroughputDays": 135.21316711866,
           "manifest": [
             {
               "subsystem": "excavation fleet",

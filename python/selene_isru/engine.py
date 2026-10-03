@@ -64,12 +64,24 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         + (params["kElectrolyzerMass"] * params["targetKgPerDay"] if propellant is not None else 0)
         + thermal["extractorMassKg"]
     )
+    # The product each landed kilogram is measured against, before storage
+    # losses and downtime: O2 at the equator, water at the pole, propellant
+    # usable at the vehicle mixture ratio, or the Sabatier products.
+    if propellant is not None:
+        product_kg_per_day = production["propellantKgPerDay"]
+    elif params["site"] == "equatorial":
+        product_kg_per_day = production["o2KgPerDay"]
+    elif params["enableSabatier"]:
+        product_kg_per_day = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
+    else:
+        product_kg_per_day = production["waterKgPerDay"]
     logistics = simulate_logistics(
         params,
         excavation["fleetMassKg"],
         reactor_mass_kg,
         power["selectedPowerMassKg"],
         cryo["cryoMassKg"],
+        product_kg_per_day,
     )
     # What the plant delivers: O2 at the equator, water at the pole, propellant
     # usable at the vehicle mixture ratio, or the Sabatier products, whose
@@ -130,12 +142,6 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             net_o2_kg_per_day, net_h2_kg_per_day, params["mixtureRatio"]
         )
     else:
-        if params["site"] == "equatorial":
-            product_kg_per_day = production["o2KgPerDay"]
-        elif params["enableSabatier"]:
-            product_kg_per_day = production["o2KgPerDay"] + production["ch4KgPerDay"] + production["h2KgPerDay"]
-        else:
-            product_kg_per_day = production["waterKgPerDay"]
         net_product_kg_per_day = max(0, product_kg_per_day * loop_throughput - storage_loss_kg_per_day(is_product))
     campaign = simulate_campaign(
         params,

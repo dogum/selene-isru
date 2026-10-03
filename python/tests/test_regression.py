@@ -87,6 +87,10 @@ def test_polar_propellant_mode_v06() -> None:
     assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.78, 0.001)
     assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 82.35, 0.001)
     assert_rel(result["campaign"]["paybackDays"], 311.3, 0.001)
+    assert result["logistics"]["productKgPerDay"] == production["propellantKgPerDay"]
+    assert_rel(result["logistics"]["leverageL"], 103.4, 0.001)
+    sabatier = simulate({"site": "polar", "enableSabatier": True})
+    assert_rel(sabatier["logistics"]["leverageL"], 186.0, 0.001)
 
 
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:

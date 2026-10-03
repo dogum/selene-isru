@@ -591,10 +591,14 @@ export interface SimResult {
   logistics: {
     /** [kg] */
     payloadPerMissionKg: number;
+    /** product each landed kilogram is measured against: O2, water, usable propellant, or the Sabatier products [kg/day] */
+    productKgPerDay: number;
     /** [kg] */
     totalInfraMassKg: number;
     nMissions: number;
+    /** annual product × mission years × gearRatio / landed plant mass [kg/kg] */
     leverageL: number;
+    /** landed plant mass / product [day] */
     plantMassThroughputDays: number;
     manifest: ManifestRow[];
   };

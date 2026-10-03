@@ -113,22 +113,36 @@ Default inputs except as named. Polar water results do not move.
 | Case | Energy per kg (kWh/kg) | Grid power (kW) | Landed mass (t) | Leverage L | Payback / return |
 |---|---|---|---|---|---|
 | Equatorial | 24.78 → **23.89** | 1,032 → **996** | 58.97 → **60.37** | 185.7 → **181.4** | day 242 / 6.67× → **6.63×** |
-| Polar + Sabatier | 15.47 → **14.92** | 645 → **622** | 62.26 → **65.09** | 175.9 → **168.2** | never / 0.79× |
+| Polar + Sabatier | 15.47 → **14.92** | 645 → **622** | 62.26 → **65.09** | 175.9 → **186.0** | never / 0.79× |
 
 - **Equatorial:** less LOX conditioning energy lowers grid power and the power
   plant. The 2.5 t LOX liquefier more than offsets that in landed mass.
 - **Sabatier:** it gains a LOX liquefier and a 1.3 t LH₂ liquefier for its
   leftover hydrogen.
+- **Leverage L and plant-mass throughput days** are now measured against the
+  product the campaign ledger credits, not the target. They were per kg of
+  water processed whenever the plant converts its water. In propellant mode
+  that is usable propellant. With the Sabatier loop it is its oxygen, methane,
+  and leftover hydrogen, 1,106 kg/day at defaults. That mass includes the
+  carbon and oxygen of the imported CO₂, so the Sabatier L rises even though
+  the plant gained mass: L still ignores the feed, and the campaign ledger
+  does not. Equatorial and polar-water values do not move.
 
 ## Reference results
 
 | Case | kWh/kg | Grid (kW) | Landed (t) | Liquefiers (t) | Propellant (kg/day) | Leverage L | Payback (day) | Return |
 |---|---|---|---|---|---|---|---|---|
 | Polar water | 7.24 | 302 | 29.9 | 0 | — | 367× | 238 | 7.63× |
-| Polar propellant, 1,000 kg/day water | 20.78 | 866 | 82.3 | 28.1 | 778 | 133× | 311 | 4.71× |
-| Polar propellant, 10 t/day water (10 landers) | 20.36 | 8,485 | 804.8 | 281.1 | 7,778 | 136× | 1,406 | 4.74× |
-| NASA baseline, 67.3 kg/day water, dedicated lander | 22.08 | 62 | 7.0 | 1.9 | 52 | 105× | 4,298 (after the campaign) | 0.45× |
-| NASA baseline, shared lander | 22.08 | 62 | 7.0 | 1.9 | 52 | 105× | 380 | 3.80× |
+| Polar propellant, 1,000 kg/day water | 20.78 | 866 | 82.3 | 28.1 | 778 | 103× | 311 | 4.71× |
+| Polar propellant, 10 t/day water (10 landers) | 20.36 | 8,485 | 804.8 | 281.1 | 7,778 | 106× | 1,406 | 4.74× |
+| NASA baseline, 15 t of water a year, dedicated lander | 22.08 | 62 | 7.0 | 1.9 | 52 | 81× | 6,588 (after the campaign) | 0.31× |
+| NASA baseline, shared lander | 22.08 | 62 | 7.0 | 1.9 | 52 | 81× | 543 | 2.58× |
+
+The NASA baseline rows use the preset: 67.26 kg/day of water, the study's
+225-day window less 48 h of commissioning. `plantAvailability` = 0.611 carries
+that duty (223 of 365 days), and `commissioningDays` = 2, so the plant
+processes 15 t of water a year. Leverage L is steady-state at full output and
+ignores the duty.
 
 What the table shows:
 - **Hydrogen liquefaction dominates.** In the 1,000 kg/day propellant plant, the
@@ -142,7 +156,7 @@ What the table shows:
   this case.
 - **NASA's baseline is a pilot-scale plant.** On a dedicated lander it does not
   pay back its launch mass in five years. Manifested as a share of a lander,
-  it pays back on day 380.
+  it pays back on day 543.
 
 ## In the app
 
@@ -159,7 +173,8 @@ What the table shows:
   - The Campaign view says the surplus oxygen is not credited.
   - The study CSV adds `production.propellantKgPerDay` and
     `production.excessO2KgPerDay`.
-- **Preset:** "Polar Propellant (NASA baseline)".
+- **Preset:** "Polar Propellant (NASA baseline)", with the study's
+  223-of-365-day duty and 48 h commissioning.
 
 Screenshots: [rail](screenshots/propellant/propellant-rail.png),
 [energy](screenshots/propellant/propellant-energy.png),
