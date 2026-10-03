@@ -1600,6 +1600,8 @@ if (typeof window !== "undefined") {
     }
     urlTimer = setTimeout(() => {
       urlTimer = null;
+      // The page (or a test's DOM) can be gone by the time the throttle fires.
+      if (typeof window === "undefined") return;
       const target = lastQuery !== null && lastQuery.length > 0 ? `?${lastQuery}` : window.location.pathname;
       window.history.replaceState(null, "", target);
     }, 500);
