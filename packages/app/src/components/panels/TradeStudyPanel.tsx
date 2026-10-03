@@ -2,6 +2,9 @@ import { lazy, Suspense } from "react";
 import { useStore, type StudyTab } from "../../state/store";
 import { ComparePanel } from "./ComparePanel";
 
+const SweepPanel = lazy(() =>
+  import("./SweepPanel").then((module) => ({ default: module.SweepPanel }))
+);
 const FrontierExplorer = lazy(() =>
   import("./FrontierExplorer").then((module) => ({ default: module.FrontierExplorer }))
 );
@@ -14,6 +17,7 @@ const EngineeringReport = lazy(() =>
 
 const TABS: Array<{ id: StudyTab; label: string; note: string }> = [
   { id: "scenarios", label: "SCENARIOS", note: "Name and compare two operating cases" },
+  { id: "sweep", label: "SWEEP", note: "Run any input across its range against any output, as a line or a 2-D map" },
   { id: "frontier", label: "PARETO", note: "Explore non-dominated design points" },
   { id: "uncertainty", label: "SENSITIVITY", note: "Test response to illustrative input spreads" },
   { id: "report", label: "REPORT", note: "Print or export a reproducible engineering snapshot" }
@@ -30,8 +34,8 @@ export function TradeStudyPanel(): React.JSX.Element {
         <span className="reactor-eyebrow">ANALYSIS WORKSPACE</span>
         <h2>Trade Study</h2>
         <p>
-          Compare named cases, search the Pareto frontier, and explore sensitivity without
-          leaving the live simulator.
+          Compare named cases, sweep any input against any output, search the Pareto frontier,
+          and explore sensitivity without leaving the live simulator.
         </p>
       </div>
 
@@ -53,6 +57,7 @@ export function TradeStudyPanel(): React.JSX.Element {
 
       {active === "scenarios" && <ComparePanel />}
       <Suspense fallback={<div className="analysis-loading">LOADING ANALYSIS WORKSPACE…</div>}>
+        {active === "sweep" && <SweepPanel />}
         {active === "frontier" && <FrontierExplorer />}
         {active === "uncertainty" && <UncertaintyPanel />}
         {active === "report" && <EngineeringReport />}

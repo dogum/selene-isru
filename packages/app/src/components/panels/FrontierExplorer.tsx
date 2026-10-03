@@ -3,7 +3,8 @@ import type { SimParams } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { useMemo, useState } from "react";
 import { processScope, useScopedState, useSize } from "../../lib/hooks";
-import { appliesToCase, FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
+import { sweepInputs } from "../../analysis/generalSweep";
+import { appliesToCase, FRONTIER_PARAMS, sweepValues, type SweepKey, type SweepParam } from "../../analysis/sweep";
 import { frontierCsv } from "../../analysis/panelExports";
 import { useStore } from "../../state/store";
 import { ExportButton } from "./ExportButton";
@@ -60,7 +61,25 @@ export function FrontierExplorer(): React.JSX.Element {
   const params = useStore((s) => s.params);
   const applyPatch = useStore((s) => s.applyPatch);
   const [ref, size] = useSize<HTMLDivElement>();
-  const available = FRONTIER_PARAMS.filter((param) => appliesToCase(param, params));
+  const result = useStore((s) => s.result);
+  const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
+  // The curated axes come first; any other input the rail shows can be an axis
+  // too, across its full engine range.
+  const suggested = FRONTIER_PARAMS.filter((param) => appliesToCase(param, params));
+  const others: SweepParam[] = useMemo(() => {
+    const curated = new Set(suggested.map((param) => param.key));
+    return sweepInputs(params, new Set(streamKey.split(",").filter(Boolean)))
+      .filter((input) => !curated.has(input.key))
+      .map((input) => ({
+        key: input.key,
+        label: `${input.label}${input.unit.length > 0 ? ` [${input.unit}]` : ""}`,
+        group: input.group,
+        min: input.min,
+        max: input.max,
+        log: input.log
+      }));
+  }, [params, streamKey]);
+  const available = [...suggested, ...others];
   // Axes and the picked point belong to the site and process they were chosen for.
   const scope = processScope(params);
   const [aKey, setAKey] = useScopedState<SweepKey>(scope, () => "targetKgPerDay");
@@ -134,7 +153,7 @@ export function FrontierExplorer(): React.JSX.Element {
             if (bKey === next) setBKey("none");
             setCandidate(null);
           }} aria-label="Frontier parameter A">
-            {available.map((param) => <option key={param.key} value={param.key}>{param.label}</option>)}
+            <AxisOptions suggested={suggested} others={others} />
           </select>
         </label>
         <label>
@@ -144,9 +163,10 @@ export function FrontierExplorer(): React.JSX.Element {
             setCandidate(null);
           }} aria-label="Frontier parameter B">
             <option value="none">One parameter</option>
-            {available.filter((param) => param.key !== aParam.key).map((param) => (
-              <option key={param.key} value={param.key}>{param.label}</option>
-            ))}
+            <AxisOptions
+              suggested={suggested.filter((param) => param.key !== aParam.key)}
+              others={others.filter((param) => param.key !== aParam.key)}
+            />
           </select>
         </label>
         <label>
@@ -225,5 +245,23 @@ export function FrontierExplorer(): React.JSX.Element {
         Orange points are non-dominated among cases satisfying the mission and power caps. Select a point to inspect it before changing the live case.
       </p>
     </div>
+  );
+}
+
+function AxisOptions({ suggested, others }: { suggested: SweepParam[]; others: SweepParam[] }): React.JSX.Element {
+  const groups = [...new Set(others.map((param) => param.group ?? ""))];
+  return (
+    <>
+      <optgroup label="SUGGESTED">
+        {suggested.map((param) => <option key={param.key} value={param.key}>{param.label}</option>)}
+      </optgroup>
+      {groups.map((group) => (
+        <optgroup key={group} label={group.toUpperCase()}>
+          {others.filter((param) => (param.group ?? "") === group).map((param) => (
+            <option key={param.key} value={param.key}>{param.label}</option>
+          ))}
+        </optgroup>
+      ))}
+    </>
   );
 }

@@ -28,6 +28,17 @@
 
   --earthshine: #3b5b8f;
 
+  /* sequential magnitude ramp for heatmaps: one hue (cryo), evenly spaced in
+     OKLCH lightness 0.34 → 0.95 from the panel surface up; step 1 is 1.6:1
+     on --bg-panel, step 7 is 15.9:1 */
+  --seq-1: #1a3d48;
+  --seq-2: #215b6c;
+  --seq-3: #287b92;
+  --seq-4: #2e9cba;
+  --seq-5: #3dbee2;
+  --seq-6: #7dddfb;
+  --seq-7: #c3f9ff;
+
   /* type */
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;

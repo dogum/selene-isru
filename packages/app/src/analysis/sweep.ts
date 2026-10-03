@@ -1,24 +1,14 @@
 import type { SimParams } from "@selene-isru/engine";
 import { boundedRange, clampToBounds } from "./bounds";
 
-export type SweepKey =
-  | "targetKgPerDay"
-  | "Vcell"
-  | "etaCurrent"
-  | "reserveDays"
-  | "missionYears"
-  | "chiIce"
-  | "Nmli"
-  | "etaCell"
-  | "alphaSpecific"
-  | "shieldDesignM"
-  | "fIlmenite"
-  | "ilmConcentrateGrade"
-  | "etaIlmHeatRecovery";
+/** Any input can be a frontier axis; the curated list below just comes first. */
+export type SweepKey = keyof SimParams;
 
 export interface SweepParam {
   key: SweepKey;
   label: string;
+  /** rail group, for inputs offered beyond the curated list */
+  group?: string;
   min: number;
   max: number;
   log?: boolean;
