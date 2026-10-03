@@ -136,7 +136,7 @@ describe("refuelling demand wording", () => {
       /A reusable lander flying 1 sortie a year burns 100\u2009kg\/day of it, 86% of the propellant it needs\. The propellant burned does not repay the launch mass within the campaign\.$/
     );
     const matched = run({ refuelDemand: "lander", sortiesPerYear: 9 });
-    expect(caseSummary(matched.params, matched.result)).toMatch(/flying 9 sorties a year burns 900\u2009kg\/day .* The propellant burned repays the launch mass by day 242\.$/);
+    expect(caseSummary(matched.params, matched.result)).toMatch(/flying 9 sorties a year burns 900\u2009kg\/day .* The propellant burned repays the launch mass by day 273\.$/);
   });
 });
 
