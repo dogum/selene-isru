@@ -2713,6 +2713,59 @@ body.selene-photo-mode .custom-scene-label-overlay {
   border-color: var(--cryo);
 }
 
+.scenario-card-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  color: var(--text-low);
+  border-color: var(--line);
+}
+
+.scenario-card-live {
+  margin: 0 0 6px;
+  color: var(--text-low);
+  font-size: var(--fs-10);
+  letter-spacing: 0.06em;
+}
+
+.scenario-card-live.same {
+  color: var(--cryo);
+}
+
+.scenario-card-notes {
+  margin: 0 0 8px;
+}
+
+.scenario-card-notes summary {
+  cursor: pointer;
+  color: var(--text-low);
+  font: 500 var(--fs-10)/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.scenario-card-notes textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  resize: vertical;
+  color: var(--text-hi);
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  font: 400 var(--fs-11)/1.4 var(--font-body);
+}
+
+.scenario-input-diff {
+  margin-top: 6px;
+}
+
+.scenario-input-diff th small {
+  color: var(--text-low);
+}
+
+.scenario-input-diff td.differs {
+  color: var(--caution);
+}
+
 .scenario-matrix-wrap {
   overflow-x: auto;
 }

@@ -14,6 +14,7 @@ import type {
   TimeseriesResult
 } from "@selene-isru/engine";
 import { BUILD_INFO, MODEL_BOUNDARY, type BuildInfo } from "../lib/build";
+import { scenarioNotes } from "../lib/scenarioNotes";
 import { nonDefaultParams, paramsToUrl } from "../lib/url";
 
 export const CASE_SCHEMA = "selene-isru-case";
@@ -27,6 +28,7 @@ export interface CaseSource {
   kind: "authored" | "custom";
   params: SimParams;
   design?: SiteDesignDocument;
+  notes?: string;
 }
 
 export interface CustomSiteExport {
@@ -56,6 +58,8 @@ export interface CaseExport {
     /** Rebuilds an authored case in the app; null for custom designs (import the file instead). */
     reproducibilityUrl: string | null;
     nonDefaultParams: Partial<SimParams>;
+    /** The saved case's notes, when it has any. Optional within version 1. */
+    notes?: string;
   };
   units: {
     /** unit of every input, from constants.json */
@@ -121,7 +125,8 @@ export function caseExport(source: CaseSource, now: Date = new Date(), build: Bu
       name: source.name.trim() || "Untitled lunar ISRU case",
       kind: source.kind,
       reproducibilityUrl: source.kind === "custom" ? null : paramsToUrl(params),
-      nonDefaultParams: nonDefaultParams(params)
+      nonDefaultParams: nonDefaultParams(params),
+      ...scenarioNotes(source.notes)
     },
     units: { params: paramUnits(), results: RESULT_UNITS_NOTE },
     params: { ...params },

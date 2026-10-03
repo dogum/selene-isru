@@ -28,6 +28,7 @@ import type {
   WorkspaceMode
 } from "@selene-isru/engine";
 import { create } from "zustand";
+import { scenarioNotes } from "../lib/scenarioNotes";
 import { parseParams, serializeParams } from "../lib/url";
 import {
   createWorkingSiteDesign,
@@ -72,6 +73,8 @@ export interface StudyScenario {
   createdAt: number;
   updatedAt: number;
   pinned: boolean;
+  /** Free-text rationale, assumptions, or review notes; absent when empty. */
+  notes?: string;
 }
 
 export interface UiState {
@@ -142,7 +145,7 @@ export interface CustomSiteState {
 
 const SEC_HISTORY_LENGTH = 60;
 const SCENARIO_STORAGE_KEY = "selene-isru.study-scenarios.v2";
-export const MAX_STUDY_SCENARIOS = 8;
+export const MAX_STUDY_SCENARIOS = 24;
 export const PARAM_HISTORY_LIMIT = 100;
 /** Edits to one input closer together than this are one undo step: a slider drag. */
 export const PARAM_EDIT_COALESCE_MS = 800;
@@ -270,6 +273,13 @@ interface Store {
   duplicateScenario: (id: string) => void;
   deleteScenario: (id: string) => void;
   toggleScenarioPin: (id: string) => void;
+  setScenarioNotes: (id: string, notes: string) => void;
+  /**
+   * Overwrite a saved case's inputs (or design) with the live case, keeping
+   * its identity, name, notes, and pin. Only a case of the live workspace's
+   * kind can take it; returns whether the case was updated.
+   */
+  updateScenarioFromCurrent: (id: string) => boolean;
   importScenarios: (scenarios: StudyScenario[]) => ScenarioImportSummary;
   importCustomDesign: (design: SiteDesignDocument) => void;
   startTour: (id: string) => void;
@@ -442,7 +452,8 @@ function normalizeScenario(value: unknown): StudyScenario | null {
     ...(parsedDesign === null ? {} : { design: parsedDesign }),
     createdAt: candidate.createdAt!,
     updatedAt: candidate.updatedAt!,
-    pinned: candidate.pinned!
+    pinned: candidate.pinned!,
+    ...scenarioNotes(candidate.notes)
   };
 }
 
@@ -1641,6 +1652,48 @@ export const useStore = create<Store>((set, get) => {
       );
       persistScenarioLibrary(next);
       set({ scenarioLibrary: next });
+    },
+
+    setScenarioNotes: (id, notes) => {
+      const next = get().scenarioLibrary.map((scenario) => {
+        if (scenario.id !== id) {
+          return scenario;
+        }
+        const updated: StudyScenario = { ...scenario, updatedAt: Date.now() };
+        delete updated.notes;
+        return { ...updated, ...scenarioNotes(notes) };
+      });
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next });
+    },
+
+    updateScenarioFromCurrent: (id) => {
+      const { scenarioLibrary: current, workspaceMode, params, customSite } = get();
+      const target = current.find((scenario) => scenario.id === id);
+      if (target === undefined || target.kind !== workspaceMode) {
+        return false;
+      }
+      const now = Date.now();
+      const design = workspaceMode === "custom"
+        ? {
+            ...structuredClone(customSite.evaluation.normalizedDesign),
+            name: target.name.slice(0, 120),
+            updatedAt: new Date(now).toISOString()
+          }
+        : undefined;
+      const next = current.map((scenario) =>
+        scenario.id === id
+          ? {
+              ...scenario,
+              params: design?.params ?? { ...params },
+              ...(design === undefined ? {} : { design }),
+              updatedAt: now
+            }
+          : scenario
+      );
+      persistScenarioLibrary(next);
+      set({ scenarioLibrary: next, ui: { ...get().ui, currentScenarioName: target.name } });
+      return true;
     },
 
     importScenarios: (scenarios) => {

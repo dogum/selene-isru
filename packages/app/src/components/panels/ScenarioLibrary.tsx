@@ -1,8 +1,10 @@
-import { serializeSiteDesign } from "@selene-isru/engine";
+import { PARAM_META, serializeSiteDesign } from "@selene-isru/engine";
+import type { SimParams } from "@selene-isru/engine";
 import { caseExport, fileStem } from "../../analysis/caseExport";
 import { BUILD_INFO } from "../../lib/build";
 import { useRef, useState } from "react";
 import {
+  differingInputRows,
   downloadText,
   previewStudyExport,
   scenariosCsv,
@@ -11,6 +13,7 @@ import {
 } from "../../analysis/studyExport";
 import type { StudyImportPreview } from "../../analysis/studyExport";
 import { formatQtyText } from "../../lib/format";
+import { MAX_SCENARIO_NOTES } from "../../lib/scenarioNotes";
 import { paramsToUrl } from "../../lib/url";
 import {
   MAX_PINNED_SCENARIOS,
@@ -43,6 +46,11 @@ function simulateFor(id: string): ReturnType<typeof studyScenarioResult> {
   return result;
 }
 
+/** How many inputs a saved case sets differently from the live case. */
+function inputsDifferingFrom(params: SimParams, live: SimParams): number {
+  return (Object.keys(PARAM_META) as Array<keyof SimParams>).filter((key) => params[key] !== live[key]).length;
+}
+
 function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
@@ -71,7 +79,12 @@ export function ScenarioLibrary(): React.JSX.Element {
   const duplicateScenario = useStore((s) => s.duplicateScenario);
   const deleteScenario = useStore((s) => s.deleteScenario);
   const toggleScenarioPin = useStore((s) => s.toggleScenarioPin);
+  const setScenarioNotes = useStore((s) => s.setScenarioNotes);
+  const updateScenarioFromCurrent = useStore((s) => s.updateScenarioFromCurrent);
   const importScenarios = useStore((s) => s.importScenarios);
+  const liveParams = useStore((s) => s.params);
+  const workspaceMode = useStore((s) => s.workspaceMode);
+  const [confirmUpdateId, setConfirmUpdateId] = useState<string | null>(null);
   const [saveName, setSaveName] = useState(currentName);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -94,6 +107,7 @@ export function ScenarioLibrary(): React.JSX.Element {
       </div>
       <p className="panel-caption">
         Cases stay in this browser. Pin up to four for the comparison matrix; export them for review or transfer.
+        Notes travel with the JSON and CSV exports.
       </p>
       {libraryFull && <p className="scenario-import-status" role="status">LIBRARY FULL · {fullReason}</p>}
 
@@ -243,6 +257,13 @@ export function ScenarioLibrary(): React.JSX.Element {
       <div className="scenario-cards">
         {scenarios.map((scenario) => {
           const result = studyScenarioResult(scenario);
+          const differing = inputsDifferingFrom(scenario.params, liveParams);
+          const sameKind = scenario.kind === workspaceMode;
+          const updateReason = !sameKind
+            ? `Open the ${workspaceMode === "custom" ? "Equatorial or Polar site" : "Custom Site"} to update this ${scenario.kind} case`
+            : differing === 0
+              ? "This case already matches the live case"
+              : `Replace this case's inputs with the live case (${plural(differing, "input")} change); its name, notes, and pin stay`;
           return (
             <article key={scenario.id} className={scenario.pinned ? "pinned" : ""}>
               <div className="scenario-card-head">
@@ -262,8 +283,38 @@ export function ScenarioLibrary(): React.JSX.Element {
                 <span>{formatQtyText(result.energy.secTotal_kWhPerKg, "kWh/kg", 4)}</span>
                 <span>{formatQtyText(result.logistics.totalInfraMassKg, "kg")}</span>
               </div>
+              <p className={`scenario-card-live mono ${differing === 0 ? "same" : ""}`}>
+                {differing === 0 ? "= LIVE CASE" : `LIVE CASE DIFFERS IN ${plural(differing, "INPUT").toUpperCase()}`}
+              </p>
+              <details className="scenario-card-notes" open={scenario.notes !== undefined}>
+                <summary>NOTES{scenario.notes === undefined ? "" : ` · ${scenario.notes.length}/${MAX_SCENARIO_NOTES}`}</summary>
+                <textarea
+                  value={scenario.notes ?? ""}
+                  maxLength={MAX_SCENARIO_NOTES}
+                  rows={3}
+                  placeholder="Why this case, its assumptions, what to check"
+                  aria-label={`Notes for ${scenario.name}`}
+                  onChange={(event) => setScenarioNotes(scenario.id, event.target.value)}
+                />
+              </details>
               <div className="scenario-card-actions">
                 <button type="button" onClick={() => loadScenario(scenario.id)}>LOAD</button>
+                <button
+                  type="button"
+                  disabled={!sameKind || differing === 0}
+                  title={updateReason}
+                  onClick={() => {
+                    if (confirmUpdateId !== scenario.id) {
+                      setConfirmUpdateId(scenario.id);
+                      return;
+                    }
+                    updateScenarioFromCurrent(scenario.id);
+                    setConfirmUpdateId(null);
+                  }}
+                  onBlur={() => setConfirmUpdateId((id) => (id === scenario.id ? null : id))}
+                >
+                  {confirmUpdateId === scenario.id ? "CONFIRM UPDATE" : "UPDATE"}
+                </button>
                 <button
                   type="button"
                   disabled={!scenario.pinned && pinsFull}
@@ -313,7 +364,8 @@ export function ScenarioLibrary(): React.JSX.Element {
                       name: scenario.name,
                       kind: scenario.kind,
                       params: scenario.params,
-                      ...(scenario.design === undefined ? {} : { design: scenario.design })
+                      ...(scenario.design === undefined ? {} : { design: scenario.design }),
+                      ...(scenario.notes === undefined ? {} : { notes: scenario.notes })
                     }), null, 2),
                     "application/json"
                   )}
@@ -349,6 +401,42 @@ export function ScenarioLibrary(): React.JSX.Element {
               ))}
             </tbody>
           </table>
+          {pinned.length > 1 && (() => {
+            const rows = differingInputRows(pinned.map((scenario) => scenario.params));
+            return (
+              <>
+                <div className="panel-header">
+                  INPUTS THAT DIFFER
+                  <span className="num">{plural(rows.length, "INPUT")}</span>
+                </div>
+                {rows.length === 0 ? (
+                  <p className="panel-caption">The pinned cases share every input.</p>
+                ) : (
+                  <table className="scenario-matrix scenario-input-diff">
+                    <thead>
+                      <tr>
+                        <th>Input</th>
+                        {pinned.map((scenario) => <th key={scenario.id}>{scenario.name}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.key}>
+                          <th title={String(row.key)}>
+                            {row.label}
+                            {row.unit.length > 0 && <small> [{row.unit}]</small>}
+                          </th>
+                          {row.values.map((value, index) => (
+                            <td key={pinned[index]!.id} className={value === row.values[0] ? "" : "differs"}>{value}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </section>
