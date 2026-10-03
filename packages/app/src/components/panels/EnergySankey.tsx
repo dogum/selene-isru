@@ -10,11 +10,13 @@ import { Qty } from "../Qty";
 import { ExportButton } from "./ExportButton";
 
 /** fixed node order — no relayout jumps on param change (§4.1) */
-const NODE_ORDER = ["mine", "melt", "sublimation", "electrolysis", "parasitic", "cryo", "product"];
+const NODE_ORDER = ["mine", "melt", "beneficiation", "reduction", "sublimation", "electrolysis", "parasitic", "cryo", "product"];
 
 const NODE_COLOR: Record<string, string> = {
   mine: "var(--regolith)",
   melt: "var(--melt)",
+  beneficiation: "var(--regolith)",
+  reduction: "var(--melt)",
   electrolysis: "var(--melt)",
   parasitic: "var(--melt)",
   sublimation: "var(--cryo)",
@@ -26,6 +28,8 @@ const NODE_COLOR: Record<string, string> = {
 const NODE_NAME: Record<string, string> = {
   mine: "MINING",
   melt: "MELTING",
+  beneficiation: "BENEFICIATION",
+  reduction: "H₂ REDUCTION",
   electrolysis: "ELECTROLYSIS",
   parasitic: "PARASITIC LOSS",
   sublimation: "SUBLIMATION",
@@ -34,6 +38,49 @@ const NODE_NAME: Record<string, string> = {
 };
 
 const nodeName = (id: string): string => NODE_NAME[id] ?? id.toUpperCase();
+
+/** Width of one label character: 11px mono with 0.06em tracking [px]. */
+const LABEL_CHAR_PX = 7.3;
+const LABEL_LINE_PX = 14;
+
+export interface SankeyLabelInput {
+  id: string;
+  /** label anchor point before any shift [px] */
+  x: number;
+  y: number;
+  anchor: "start" | "end";
+  text: string;
+}
+
+/**
+ * Horizontal label positions that do not overlap. A chain with more stages
+ * than columns of room (the ilmenite plant has five) puts neighbouring
+ * labels on the same line, so each label, taken left to right, moves to the
+ * nearest free line within the chart.
+ */
+export function placeSankeyLabels(labels: SankeyLabelInput[], height: number): Map<string, number> {
+  const placed: Array<{ left: number; right: number; y: number }> = [];
+  const positions = new Map<string, number>();
+  const span = (label: SankeyLabelInput): [number, number] => {
+    const width = label.text.length * LABEL_CHAR_PX;
+    return label.anchor === "start" ? [label.x, label.x + width] : [label.x - width, label.x];
+  };
+  const ordered = [...labels].sort((a, b) => span(a)[0] - span(b)[0] || a.y - b.y);
+  for (const label of ordered) {
+    const [left, right] = span(label);
+    const clashes = (y: number): boolean =>
+      placed.some((other) => left < other.right && other.left < right && Math.abs(other.y - y) < LABEL_LINE_PX);
+    let y = label.y;
+    for (let step = 1; clashes(y) && step < 40; step += 1) {
+      const offset = Math.ceil(step / 2) * LABEL_LINE_PX * (step % 2 === 1 ? 1 : -1);
+      const candidate = label.y + offset;
+      if (candidate >= LABEL_LINE_PX / 2 && candidate <= height - LABEL_LINE_PX / 2) y = candidate;
+    }
+    placed.push({ left, right, y });
+    positions.set(label.id, y);
+  }
+  return positions;
+}
 
 interface NodeDatum {
   id: string;
@@ -75,7 +122,12 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
       present.add(f.from);
       present.add(f.to);
     }
-    const nodes: NodeDatum[] = NODE_ORDER.filter((id) => present.has(id)).map((id) => ({ id }));
+    // Known stages keep their fixed order; a stage the table does not know yet
+    // goes last rather than leaving a link without a node.
+    const nodes: NodeDatum[] = [
+      ...NODE_ORDER.filter((id) => present.has(id)),
+      ...[...present].filter((id) => !NODE_ORDER.includes(id))
+    ].map((id) => ({ id }));
     const links: LinkDatum[] = result.energy.flows.map((f) => ({
       source: f.from,
       target: f.to,
@@ -112,6 +164,44 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
     const c = (y0 + y1) / 2;
     return `M${sy},${y0}C${sy},${c} ${ty},${c} ${ty},${y1}`;
   };
+
+  // What each stage spends: its outgoing lines, or for an end node (product,
+  // parasitic loss) what reaches it. The layout's own node value is the larger
+  // of in and out, which for a stage cheaper than the one before it (ilmenite
+  // reduction after beneficiation) is the previous stage's energy.
+  const stageValue = useMemo(() => {
+    const out = new Map<string, number>();
+    const into = new Map<string, number>();
+    for (const f of result.energy.flows) {
+      out.set(f.from, (out.get(f.from) ?? 0) + f.kWhPerKg);
+      into.set(f.to, (into.get(f.to) ?? 0) + f.kWhPerKg);
+    }
+    return (id: string): number => out.get(id) ?? into.get(id) ?? 0;
+  }, [result.energy.flows]);
+
+  // Label anchors: beside each node when the chart runs left to right, just
+  // above its bar when it runs top to bottom. Nodes in the far half read back
+  // toward the middle so their labels stay inside the chart, and labels that
+  // would overlap move to the nearest free line.
+  const labels = useMemo(() => {
+    const anchors = graph.nodes.map((n) => {
+      const x0 = n.x0 ?? 0;
+      const x1 = n.x1 ?? 0;
+      const y0 = n.y0 ?? 0;
+      const y1 = n.y1 ?? 0;
+      const isRight = vertical ? y0 > width / 2 : x0 > layoutW / 2;
+      const x = vertical ? (isRight ? y1 - 2 : y0 + 2) : isRight ? x0 - 6 : x1 + 6;
+      return {
+        id: n.id,
+        x,
+        y: vertical ? x0 - 4 : (y0 + y1) / 2,
+        anchor: isRight ? ("end" as const) : ("start" as const),
+        text: `${nodeName(n.id)} ${formatQtyText(stageValue(n.id), "kWh/kg")}`
+      };
+    });
+    const y = placeSankeyLabels(anchors, vertical ? height : layoutH);
+    return new Map(anchors.map((anchor) => [anchor.id, { ...anchor, y: y.get(anchor.id) ?? anchor.y }]));
+  }, [graph, vertical, width, height, layoutW, layoutH, stageValue]);
 
   const sparkline = useMemo(() => {
     if (history.length < 2) {
@@ -183,33 +273,35 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
             const x1 = n.x1 ?? 0;
             const y0 = n.y0 ?? 0;
             const y1 = n.y1 ?? 0;
-            const rx = vertical ? y0 : x0;
-            const ry = vertical ? x0 : y0;
-            const rw = vertical ? y1 - y0 : x1 - x0;
-            const rh = vertical ? x1 - x0 : y1 - y0;
-            const isRight = !vertical && x0 > layoutW / 2;
             return (
-              <g key={n.id}>
-                <rect
-                  x={rx}
-                  y={ry}
-                  width={rw}
-                  height={rh}
-                  fill={NODE_COLOR[n.id] ?? "var(--text-low)"}
-                  stroke="var(--bg-inset)"
-                  strokeWidth={1.5}
-                />
-                <text
-                  className="sankey-node-label"
-                  x={vertical ? rx + rw + 6 : isRight ? rx - 6 : rx + rw + 6}
-                  y={vertical ? ry + 4 : ry + rh / 2}
-                  dominantBaseline={vertical ? "hanging" : "middle"}
-                  textAnchor={!vertical && isRight ? "end" : "start"}
-                >
-                  {nodeName(n.id)}
-                  <tspan className="sankey-node-value">{` ${formatQtyText(n.value ?? 0, "kWh/kg")}`}</tspan>
-                </text>
-              </g>
+              <rect
+                key={n.id}
+                x={vertical ? y0 : x0}
+                y={vertical ? x0 : y0}
+                width={vertical ? y1 - y0 : x1 - x0}
+                height={vertical ? x1 - x0 : y1 - y0}
+                fill={NODE_COLOR[n.id] ?? "var(--text-low)"}
+                stroke="var(--bg-inset)"
+                strokeWidth={1.5}
+              />
+            );
+          })}
+          {/* Labels after every bar, so no later bar is drawn over a label. */}
+          {graph.nodes.map((n) => {
+            const label = labels.get(n.id);
+            if (label === undefined) return null;
+            return (
+              <text
+                key={`label-${n.id}`}
+                className="sankey-node-label"
+                x={label.x}
+                y={label.y}
+                dominantBaseline={vertical ? "auto" : "middle"}
+                textAnchor={label.anchor}
+              >
+                {nodeName(n.id)}
+                <tspan className="sankey-node-value">{` ${formatQtyText(stageValue(n.id), "kWh/kg")}`}</tspan>
+              </text>
             );
           })}
         </svg>

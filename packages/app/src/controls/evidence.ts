@@ -30,6 +30,16 @@ const REPO_CONSTANTS =
 
 const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
   {
+    match: /^(?:calibrated to |derived from )?Eagle Engineering 1988/,
+    url: "https://ntrs.nasa.gov/citations/19890004515",
+    section: "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant (EEI 88-182, NASA contract NAS9-17878), Tables 6-1, 6-3 and 6-5, Appendix A"
+  },
+  {
+    match: /^Guerrero-Gonzalez/,
+    url: "https://doi.org/10.1016/j.actaastro.2022.11.050",
+    section: "Guerrero-Gonzalez & Zabel 2023, System analysis of an ISRU production plant: extraction of metals and oxygen from lunar regolith (Acta Astronautica 203), Sec. 3.4 and Table 2"
+  },
+  {
     match: /arXiv:1910\.04265/,
     url: "https://arxiv.org/abs/1910.04265",
     section: "Chen, Sarton du Jonchay, Hou & Ho 2021, Multifidelity Space Mission Planning and Infrastructure Design Framework for Space Resource Logistics (J. Spacecraft & Rockets; arXiv:1910.04265), Tables 1, 2 and 4"
@@ -107,7 +117,74 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   kElectrolyzerMass: {
     rangeRationale: "Bounded around the NASA case's PEM electrolyzer and gas dryers.",
     validity: "Derived from one small (67 kg/day) design and scaled linearly with water processed; storage tanks are sized separately in the cryo block.",
-    applicability: "Polar site · propellant mode",
+    applicability: "Polar propellant mode, and the equatorial ilmenite plant's water electrolysis",
+    defaultUncertainty: 0.3
+  },
+  Vel: {
+    applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis"
+  },
+  etaFaradayEl: {
+    applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis"
+  },
+  Tambient: {
+    applicability: "Equatorial site · feed temperature for the MRE melt and the ilmenite reactor"
+  },
+  fIlmenite: {
+    rangeRationale: "From highland soils near 1 wt% to high-Ti mare soils near 17 wt% (Guerrero-Gonzalez & Zabel 2023, Fig. 10). Eagle's mare soil is 7.5 wt%.",
+    validity: "A property of the site, not a design lever. Ilmenite is assumed spread evenly across grain sizes, so the share outside the feed window is lost with that soil, as Eagle assumed.",
+    defaultUncertainty: 0.3
+  },
+  fIlmSized: {
+    rangeRationale: "Eagle's split comes from one Apollo 11 soil (10084); coarser or finer soils move it.",
+    validity: "The window is 0.045–0.5 mm, set by fluidization and dust carry-over. Grinding oversize to recover its ilmenite is not modelled.",
+    defaultUncertainty: 0.2
+  },
+  etaIlmRecovery: {
+    validity: "Recovery of liberated ilmenite grains. Ilmenite locked in agglutinates or rock fragments is not recovered; lower values stand in for it.",
+    defaultUncertainty: 0.1
+  },
+  ilmConcentrateGrade: {
+    rangeRationale: "From an enrichment factor near 3, measured on simulants (Berggren et al., used by Guerrero-Gonzalez & Zabel), to Eagle's assumed 90 wt% concentrate.",
+    validity: "Sets the solids the reactor heats. A grade no better than the sized feed's means no enrichment, and the whole sized feed is reduced. Reactor mass does not scale with feed here, so lean concentrates understate it: Eagle's no-separation trade added 46% to its process mass.",
+    defaultUncertainty: 0.3
+  },
+  fIlmConversion: {
+    rangeRationale: "From about a third, measured in short static runs at 1,000 °C (Sargeant et al. 2020), to complete reduction.",
+    validity: "Not tied to temperature or residence time in this model; Eagle's 90% assumes a three-stage fluidized bed with a 4 h residence. Reduction of FeO in other minerals is not credited.",
+    defaultUncertainty: 0.15
+  },
+  TIlmReactor: {
+    rangeRationale: "900–1,100 °C, the range of most ilmenite reduction studies.",
+    validity: "Sets the feed heat only. A hotter reactor reduces faster in practice, but conversion is a separate input here.",
+    defaultUncertainty: 0.05
+  },
+  etaIlmHeatRecovery: {
+    validity: "Feed heat recovered from discharged solids and gas in a counter-current reactor. Eagle's conceptual design assumed half; no lunar heat-recovery hardware has been demonstrated.",
+    defaultUncertainty: 0.3
+  },
+  fIlmHeatLoss: {
+    validity: "Lumps reactor wall loss, heater inefficiency, and the gas recycle compressor. Calibrated so the model reproduces Eagle's 1,160 kW process power at 1,000 t/yr; Eagle's 2 t/month pilot lost about half its heater power.",
+    defaultUncertainty: 0.3
+  },
+  eIlmMining: {
+    rangeRationale: "From RASSOR (10 kJ/kg) and Eagle's front-end loaders (11.9 kJ/kg) up to the fleet-level figure MRE uses (120 kJ/kg).",
+    validity: "Energy per kg of soil delivered to the plant, tailings returned. Applies to the ilmenite plant only; MRE and polar plants keep the fleet-level mining energy and a fleet scaled with product.",
+    defaultUncertainty: 0.3
+  },
+  kIlmMiningMass: {
+    validity: "RASSOR-class excavators, 66 kg moving 2.7 t a day each; Eagle's front-end loaders give 0.014.",
+    defaultUncertainty: 0.3
+  },
+  eIlmBeneficiation: {
+    validity: "Fine screening dominates in both studies. Electrostatic separation, which needs the feed heated to about 200 °C, is not modelled.",
+    defaultUncertainty: 0.3
+  },
+  kIlmBeneficiationMass: {
+    validity: "Screens, magnetic separator, hoppers, and conveyors. Guerrero-Gonzalez & Zabel's parametric models give about 2.3 times Eagle's mass per tonne of soil.",
+    defaultUncertainty: 0.4
+  },
+  kIlmReactorMass: {
+    validity: "Reactor vessels, heater, cyclones, hoppers, gas handling, piping, and radiators, scaled with oxygen output. The electrolyzer, liquefier, and tanks are sized separately. Derived from one design.",
     defaultUncertainty: 0.3
   },
   kLiquefierLox: {
@@ -381,6 +458,7 @@ function applicabilityFor(group: string): string {
     global: "Both sites · mission definition",
     excavation: "Both sites · excavation",
     electrolysis: "Equatorial site · MRE electrolysis",
+    ilmenite: "Equatorial site · ilmenite H₂ reduction",
     thermal: "Polar site · sublimation",
     sabatier: "Polar site · optional Sabatier loop",
     cryo: "Both sites · cryogenic storage",

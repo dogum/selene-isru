@@ -3,6 +3,7 @@ import { COMPARE_METRICS, deltaTone } from "../../analysis/compare";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
 import { ScenarioLibrary } from "./ScenarioLibrary";
+import { energyStages } from "../../analysis/energyStages";
 
 function signed(value: number): string {
   if (!Number.isFinite(value)) {
@@ -11,15 +12,11 @@ function signed(value: number): string {
   return value > 0 ? `+${value.toFixed(1)}%` : `${value.toFixed(1)}%`;
 }
 
-function flowSegments(result: SimResult): Array<{ key: string; value: number; pct: number }> {
-  const totals = new Map<string, number>();
-  for (const flow of result.energy.flows) {
-    totals.set(flow.to, (totals.get(flow.to) ?? 0) + flow.kWhPerKg);
-  }
-  const total = [...totals.values()].reduce((sum, value) => sum + value, 0);
-  return [...totals.entries()]
-    .map(([key, value]) => ({ key, value, pct: total > 0 ? (value / total) * 100 : 0 }))
-    .sort((a, b) => b.value - a.value)
+function flowSegments(result: SimResult): Array<{ key: string; label: string; value: number; pct: number }> {
+  const stages = energyStages(result);
+  const total = stages.reduce((sum, stage) => sum + stage.kWhPerKg, 0);
+  return stages
+    .map((stage) => ({ key: stage.id, label: stage.label, value: stage.kWhPerKg, pct: total > 0 ? (stage.kWhPerKg / total) * 100 : 0 }))
     .slice(0, 6);
 }
 
@@ -39,14 +36,14 @@ function FlowStack({ label, result }: { label: string; result: SimResult }): Rea
               width: `${segment.pct}%`,
               background: i === 0 ? "var(--melt)" : i === 1 ? "var(--cryo)" : i === 2 ? "var(--solar)" : "var(--text-low)"
             }}
-            title={`${segment.key}: ${formatQtyText(segment.value, "kWh/kg")}`}
+            title={`${segment.label}: ${formatQtyText(segment.value, "kWh/kg")}`}
           />
         ))}
       </div>
       <div className="compare-flow-legend mono">
         {segments.map((segment) => (
           <span key={segment.key}>
-            {segment.key.toUpperCase()} <b>{formatQtyText(segment.value, "kWh/kg")}</b>
+            {segment.label.toUpperCase()} <b>{formatQtyText(segment.value, "kWh/kg")}</b>
           </span>
         ))}
       </div>

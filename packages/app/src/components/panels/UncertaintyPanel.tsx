@@ -6,6 +6,7 @@ import { oneAtATimeSensitivity } from "../../analysis/sensitivity";
 import { ExportButton } from "./ExportButton";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
+import { appliesToCase } from "../../analysis/sweep";
 
 /** Fixed so the bands are reproducible; the CSV export records both. */
 const BAND_SAMPLES = 256;
@@ -18,19 +19,25 @@ interface UncertaintyOption {
   label: string;
   rel: number;
   site?: SimParams["site"];
+  /** restrict to one equatorial oxygen process; omit = either */
+  process?: SimParams["equatorialProcess"];
 }
 
 const OPTIONS: UncertaintyOption[] = [
   { key: "targetKgPerDay", label: "Product target", rel: 0.1 },
-  { key: "eMining", label: "Mining energy", rel: 0.2 },
+  { key: "eMining", label: "Mining energy", rel: 0.2, process: "mre" },
   { key: "reserveDays", label: "Reserve duration", rel: 0.1 },
   { key: "Nmli", label: "MLI construction", rel: 0.15 },
   { key: "etaCell", label: "PV efficiency", rel: 0.08 },
   { key: "alphaSpecific", label: "Nuclear specific mass", rel: 0.2 },
-  { key: "Vcell", label: "MRE cell voltage", rel: 0.08, site: "equatorial" },
-  { key: "etaCurrent", label: "MRE current efficiency", rel: 0.12, site: "equatorial" },
-  { key: "xO2", label: "Regolith O₂ fraction", rel: 0.12, site: "equatorial" },
-  { key: "kReactorMass", label: "Reactor mass factor", rel: 0.2, site: "equatorial" },
+  { key: "Vcell", label: "MRE cell voltage", rel: 0.08, site: "equatorial", process: "mre" },
+  { key: "etaCurrent", label: "MRE current efficiency", rel: 0.12, site: "equatorial", process: "mre" },
+  { key: "xO2", label: "Regolith O₂ fraction", rel: 0.12, site: "equatorial", process: "mre" },
+  { key: "kReactorMass", label: "Reactor mass factor", rel: 0.2, site: "equatorial", process: "mre" },
+  { key: "fIlmenite", label: "Ilmenite in soil", rel: 0.3, site: "equatorial", process: "ilmenite" },
+  { key: "ilmConcentrateGrade", label: "Concentrate grade", rel: 0.3, site: "equatorial", process: "ilmenite" },
+  { key: "fIlmConversion", label: "Ilmenite reduced", rel: 0.15, site: "equatorial", process: "ilmenite" },
+  { key: "eIlmBeneficiation", label: "Beneficiation energy", rel: 0.3, site: "equatorial", process: "ilmenite" },
   { key: "chiIce", label: "Polar ice fraction", rel: 0.25, site: "polar" },
   { key: "cpRegCold", label: "Cold heat capacity", rel: 0.12, site: "polar" },
   { key: "rPore", label: "Representative pore radius", rel: 0.3, site: "polar" }
@@ -52,13 +59,15 @@ function metricValue(result: ReturnType<typeof simulate>, metric: SensitivityMet
 export function UncertaintyPanel(): React.JSX.Element {
   const params = useStore((s) => s.params);
   const available = OPTIONS.filter((option) =>
-    (option.site === undefined || option.site === params.site) &&
+    appliesToCase(option, params) &&
     // Superseded by the oxide-composition model while it is on.
     !(option.key === "xO2" && params.oxideModel)
   );
   const defaultKeys: Array<keyof SimParams> = params.site === "polar"
     ? ["targetKgPerDay", "chiIce", "eMining"]
-    : ["targetKgPerDay", "etaCurrent", "Vcell"];
+    : params.equatorialProcess === "ilmenite"
+      ? ["targetKgPerDay", "fIlmenite", "ilmConcentrateGrade"]
+      : ["targetKgPerDay", "etaCurrent", "Vcell"];
   const [keys, setKeys] = useState<Array<keyof SimParams>>(defaultKeys);
   const [sigma, setSigma] = useState(0.1);
   const [evidenceDefaults, setEvidenceDefaults] = useState(true);

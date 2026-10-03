@@ -1,4 +1,4 @@
-import { DEFAULTS, PARAM_META } from "@selene-isru/engine";
+import { DEFAULTS, PARAM_META, reducesIlmenite } from "@selene-isru/engine";
 import type { SimParams, SimResult } from "@selene-isru/engine";
 import { evidenceForParam, type ParamEvidence } from "./evidence";
 
@@ -33,6 +33,14 @@ export const GROUPS: GroupDef[] = [
     label: "Excavation",
     engineGroup: "excavation",
     readout: (r) => ({ value: r.excavation.mechPowerW, unit: "W" })
+  },
+  {
+    id: "oxygen-process",
+    label: "Oxygen process",
+    engineGroup: "ilmenite",
+    site: "equatorial",
+    // Soil the ilmenite plant mines; a dash while the plant runs MRE.
+    readout: (r) => ({ value: r.ilmenite === null ? Number.NaN : r.ilmenite.soilKgPerDay, unit: "kg/day" })
   },
   {
     id: "extraction-mre",
@@ -202,6 +210,7 @@ export type RailVisibilityParams = Pick<
   | "polarProduct"
   | "enableSabatier"
   | "refuelDemand"
+  | "equatorialProcess"
 >;
 
 /**
@@ -242,6 +251,20 @@ export function railParamsForGroup(
     // mixture ratio and electrolyzer mass belong to propellant mode alone.
     if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio" && def.key !== "kElectrolyzerMass");
     return params.polarProduct === "propellant" ? all : [];
+  }
+  if (group.id === "oxygen-process") {
+    if (!reducesIlmenite(params)) return [];
+    // The ilmenite plant heats its feed from the same ambient temperature as
+    // the MRE melt, and splits its water with the propellant plant's
+    // electrolyzer, whose groups are not shown on this route.
+    const shared = new Set<keyof SimParams>(["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]);
+    return [...all, ...[...paramsForGroup("electrolysis"), ...paramsForGroup("propellant")].filter((def) => shared.has(def.key))];
+  }
+  // The MRE inputs, the slag construction inputs, and the product-scaled
+  // excavation fleet have nothing to act on while the plant reduces ilmenite.
+  if ((group.id === "extraction-mre" || group.id === "construction") && reducesIlmenite(params)) return [];
+  if (group.id === "excavation" && reducesIlmenite(params)) {
+    return all.filter((def) => def.key !== "eMining" && def.key !== "kExcFleet");
   }
   if (group.id === "refuel") {
     if (params.refuelDemand !== "lander" || !makesLanderPropellant(params)) return [];
@@ -284,6 +307,7 @@ export function matchesParamQuery(def: NumericParamDef, groupLabel: string, quer
  * and the Sabatier switch). They count toward CHANGED like any slider.
  */
 const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
+  "oxygen-process": ["equatorialProcess"],
   "extraction-sub": ["polarProduct"],
   cryo: ["storageStream", "cryoControlMode"],
   power: ["polarProfileMode"],

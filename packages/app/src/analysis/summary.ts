@@ -75,7 +75,9 @@ export function caseSummary(params: SimParams, result: SimResult): string {
         : params.polarProduct === "propellant"
           ? "Polar ice-to-propellant plant"
           : "Polar ice plant"
-      : "Equatorial molten-regolith plant";
+      : result.ilmenite !== null
+        ? `Equatorial ilmenite-reduction plant mining ${formatQtyProse(result.ilmenite.soilKgPerDay, "kg/day")} of soil`
+        : "Equatorial molten-regolith plant";
   const named = [...deliveredInventories(result)]
     .sort((a, b) => b.rateKgPerDay - a.rateKgPerDay)
     .map((inventory) => `${formatQtyProse(inventory.rateKgPerDay, "kg/day")} ${STREAM_NAMES[inventory.stream]}`);

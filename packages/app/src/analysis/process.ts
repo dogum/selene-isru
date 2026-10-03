@@ -166,11 +166,114 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
   }
 };
 
+/** Equatorial assets whose role changes when the plant reduces ilmenite. */
+const ILMENITE_KNOWLEDGE: Record<string, AssetKnowledge> = {
+  hauler: {
+    purpose: "Move mined soil from the trench to the sizing and separation plant, and return its tailings.",
+    inputs: ["Soil throughput", "Bulk mining energy", "Fleet mass per soil mined", "Drive efficiency"],
+    assumptions: [
+      "Haul duty is folded into the RASSOR-based mining energy and fleet mass, both per kg of soil.",
+      "Availability and spares apply plant-wide in the campaign ledger; route congestion is not modelled."
+    ],
+    maturity: "LITERATURE-DERIVED"
+  },
+  reactor: {
+    purpose: "Size and magnetically concentrate the soil's ilmenite, reduce it with hydrogen near 1,000 °C, and split the water into oxygen and recycled hydrogen.",
+    inputs: ["Soil feed", "Ilmenite grade", "Concentrate grade", "Electrical power"],
+    assumptions: [
+      "Soil, beneficiation, and reactor terms are calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant design; conversion is an input, not a kinetics model.",
+      "The diorama shows the MRE reactor model as a stand-in for the separation plant, fluidized bed, and electrolyzer."
+    ],
+    maturity: "LITERATURE-DERIVED"
+  },
+  castingYard: {
+    purpose: "Idle on this route: ilmenite reduction leaves granular tailings and spent solids, not a castable melt.",
+    inputs: ["Slag throughput (none)", "Casting temperature drop", "Slag density", "Pad geometry"],
+    assumptions: [
+      "No slag is cast, so no pads or shielding are produced.",
+      "Bagging or berming the tailings for shielding is not modelled."
+    ],
+    maturity: "DESIGN ASSUMPTION"
+  },
+  pad: {
+    purpose: "Receive landed infrastructure; this route casts no pad surface.",
+    inputs: ["Infrastructure mass", "Lander performance", "Packing efficiency"],
+    assumptions: [
+      "Mission count uses an ideal rocket-equation payload estimate.",
+      "Landing cadence and spares are in the campaign ledger; boil-off during flight, crew, and schedule risk are excluded."
+    ],
+    maturity: "SIMPLIFIED CORRELATION"
+  },
+  habitat: {
+    purpose: "Represent the outpost; this route makes no cast slag, so its shielding is not produced on site.",
+    inputs: ["Shield depth", "Roof area", "Internal pressure"],
+    assumptions: [
+      "The simulator sizes bulk overhead shielding, not a complete pressure-vessel structure.",
+      "Shielding from tailings would need its own handling model."
+    ],
+    maturity: "DESIGN ASSUMPTION"
+  }
+};
+
 function q(value: number, unit: string, sig = 3): string {
   return formatQtyText(value, unit, sig);
 }
 
 export function processEdges(result: SimResult, params: SimParams): ProcessEdgeView[] {
+  if (result.site === "equatorial" && result.ilmenite !== null) {
+    const ilmenite = result.ilmenite;
+    return [
+      {
+        from: "excavator",
+        to: "hauler",
+        shortLabel: "SOIL",
+        label: `SOIL · ${q(ilmenite.soilKgPerDay, "kg/day")}`,
+        kind: "material"
+      },
+      {
+        from: "hauler",
+        to: "reactor",
+        shortLabel: "SOIL FEED",
+        label: `SOIL FEED · ${q(ilmenite.soilKgPerDay, "kg/day")} → CONCENTRATE ${q(ilmenite.concentrateKgPerDay, "kg/day")}`,
+        kind: "material"
+      },
+      {
+        from: "station",
+        to: "reactor",
+        shortLabel: "GRID POWER",
+        label: `GRID POWER · ${q(result.energy.gridPowerW, "W")}`,
+        kind: "power"
+      },
+      {
+        from: "reactor",
+        to: "tanks",
+        shortLabel: "O₂ PRODUCT",
+        label: `O₂ PRODUCT · ${q(result.production.o2KgPerDay, "kg/day")}`,
+        kind: "material"
+      },
+      {
+        from: "reactor",
+        to: "hauler",
+        shortLabel: "TAILINGS",
+        label: `TAILINGS + SPENT SOLIDS · ${q(ilmenite.tailingsKgPerDay + ilmenite.spentSolidsKgPerDay, "kg/day")}`,
+        kind: "material"
+      },
+      {
+        from: "tanks",
+        to: "pad",
+        shortLabel: "O₂ RESERVE",
+        label: `O₂ RESERVE · ${q(params.reserveDays, "days", 2)}`,
+        kind: "logistics"
+      },
+      {
+        from: "pad",
+        to: "habitat",
+        shortLabel: "LANDED INFRA",
+        label: `LANDED INFRA · ${q(result.logistics.totalInfraMassKg, "kg")}`,
+        kind: "logistics"
+      }
+    ];
+  }
   if (result.site === "equatorial") {
     return [
       {
@@ -279,7 +382,8 @@ export function processEdges(result: SimResult, params: SimParams): ProcessEdgeV
   ];
 }
 
-export function assetKnowledge(site: SimParams["site"], assetKey: string): AssetKnowledge | null {
+export function assetKnowledge(site: SimParams["site"], assetKey: string, reducesIlmenite = false): AssetKnowledge | null {
+  if (site === "equatorial" && reducesIlmenite && ILMENITE_KNOWLEDGE[assetKey] !== undefined) return ILMENITE_KNOWLEDGE[assetKey];
   return KNOWLEDGE[site][assetKey] ?? null;
 }
 

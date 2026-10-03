@@ -3,7 +3,7 @@ import type { SimParams } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { useMemo, useState } from "react";
 import { useSize } from "../../lib/hooks";
-import { FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
+import { appliesToCase, FRONTIER_PARAMS, sweepValues, type SweepKey } from "../../analysis/sweep";
 import { frontierCsv } from "../../analysis/panelExports";
 import { useStore } from "../../state/store";
 import { ExportButton } from "./ExportButton";
@@ -60,9 +60,11 @@ export function FrontierExplorer(): React.JSX.Element {
   const params = useStore((s) => s.params);
   const applyPatch = useStore((s) => s.applyPatch);
   const [ref, size] = useSize<HTMLDivElement>();
-  const available = FRONTIER_PARAMS.filter((param) => param.site === undefined || param.site === params.site);
+  const available = FRONTIER_PARAMS.filter((param) => appliesToCase(param, params));
   const [aKey, setAKey] = useState<SweepKey>("targetKgPerDay");
-  const [bKey, setBKey] = useState<SweepKey | "none">(params.site === "polar" ? "chiIce" : "etaCurrent");
+  const [bKey, setBKey] = useState<SweepKey | "none">(
+    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? "fIlmenite" : "etaCurrent"
+  );
   const [objective, setObjective] = useState<Objective>("mass-sec");
   const [maxMissions, setMaxMissions] = useState(30);
   const [maxPowerMw, setMaxPowerMw] = useState(20);

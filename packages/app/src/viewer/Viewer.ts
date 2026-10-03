@@ -86,6 +86,18 @@ const INTERACTIVE_ASSET_LABELS: Record<SiteMode, Record<string, string>> = {
   }
 };
 
+/**
+ * Asset labels for the running plant: the ilmenite route borrows the MRE
+ * reactor model and leaves the casting yard idle, so its labels say so.
+ */
+function interactiveAssetLabels(result: SimResult, mobile = false): Record<string, string> {
+  const base = (mobile ? MOBILE_ASSET_LABELS : INTERACTIVE_ASSET_LABELS)[result.site];
+  if (result.site !== "equatorial" || result.ilmenite === null) return base;
+  return mobile
+    ? { ...base, reactor: "ILMENITE PLANT", castingYard: "CASTING YARD · IDLE" }
+    : { ...base, hauler: "SOIL HAULER HV-01", reactor: "ILMENITE H₂ PLANT ILM-01", castingYard: "CASTING YARD CY-01 · IDLE" };
+}
+
 const MOBILE_ASSET_LABELS: Record<SiteMode, Record<string, string>> = {
   equatorial: {
     excavator: "EXCAVATOR",
@@ -1133,7 +1145,6 @@ export class Viewer {
       return;
     }
 
-    const site = this.lastResult.site;
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
     marker.id = "selene-process-arrow";
@@ -1149,14 +1160,15 @@ export class Viewer {
     marker.appendChild(arrow);
     defs.appendChild(marker);
     this.processSvg.appendChild(defs);
-    for (const [key, label] of Object.entries(INTERACTIVE_ASSET_LABELS[site])) {
+    const mobileLabels = interactiveAssetLabels(this.lastResult, true);
+    for (const [key, label] of Object.entries(interactiveAssetLabels(this.lastResult))) {
       if (this.diorama.assets[key] === undefined) {
         continue;
       }
       const button = document.createElement("button");
       button.type = "button";
       button.className = "learning-asset-label";
-      button.textContent = this.mobile ? MOBILE_ASSET_LABELS[site][key] ?? label : label;
+      button.textContent = this.mobile ? mobileLabels[key] ?? label : label;
       button.setAttribute("aria-label", `Inspect ${label}`);
       button.addEventListener("click", () => this.selectPickedAsset(key));
       this.learningOverlay.appendChild(button);
@@ -1972,8 +1984,8 @@ export class Viewer {
     this.renderer.domElement.style.cursor = assetKey === null ? "grab" : "pointer";
     this.assetTooltip.hidden = assetKey === null;
     if (assetKey !== null && this.diorama !== null) {
-      const site = this.lastResult?.site ?? "equatorial";
-      this.assetTooltip.textContent = `${INTERACTIVE_ASSET_LABELS[site][assetKey] ?? assetKey.toUpperCase()} · CLICK TO INSPECT`;
+      const labels = this.lastResult === null ? INTERACTIVE_ASSET_LABELS.equatorial : interactiveAssetLabels(this.lastResult);
+      this.assetTooltip.textContent = `${labels[assetKey] ?? assetKey.toUpperCase()} · CLICK TO INSPECT`;
       const asset = this.diorama.assets[assetKey];
       if (asset !== undefined) {
         this.hoverOutline = this.makeOutline(asset, 0xff7e1f, 0.72);

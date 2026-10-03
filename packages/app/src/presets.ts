@@ -33,6 +33,19 @@ export const PRESETS: Preset[] = [
       oxideCaO: 0.13
     }
   },
+  {
+    // Eagle Engineering 1988's soil-fed plant: 7.5 wt% ilmenite mare soil,
+    // magnetic concentration, and hydrogen reduction at 1,000 C.
+    id: "ilmenite-mare",
+    label: "Ilmenite Reduction (Mare Soil)",
+    patch: { equatorialProcess: "ilmenite" }
+  },
+  {
+    // High-Ti mare soil near the top of the lunar range (about 15 wt%).
+    id: "ilmenite-high-ti",
+    label: "Ilmenite Reduction (High-Ti Mare)",
+    patch: { equatorialProcess: "ilmenite", fIlmenite: 0.15 }
+  },
   { id: "shackleton", label: "Shackleton Ice Camp", patch: { site: "polar" } },
   {
     // Kleinhenz & Paz 2020's baseline: 15 t of water into LOX/LH2 in a
