@@ -224,7 +224,10 @@ crediting only what it burns) is in
 [`docs/model-refuel-v07.md`](docs/model-refuel-v07.md). The v0.8 ilmenite
 hydrogen-reduction process (soil sizing, magnetic concentration, reduction at
 1,000 °C, and water electrolysis, calibrated to Eagle Engineering 1988) is in
-[`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md).
+[`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md). The v0.9
+excavation basis (every plant's mining energy and fleet sized on the soil it
+moves, with the overburden a polar pit mine strips) is in
+[`docs/model-excavation-v09.md`](docs/model-excavation-v09.md).
 
 ## Architecture
 

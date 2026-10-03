@@ -108,8 +108,8 @@ describe("phase 2 dynamics regression anchors", () => {
     expect(result.secTotal.p10).toBeLessThanOrEqual(result.secTotal.p50);
     expect(result.secTotal.p50).toBeLessThanOrEqual(result.secTotal.p90);
     // v0.6: LOX conditioning and liquefier mass recalibrated (see regression.test.ts).
-    expectRel(result.plantMassThroughputDays.p50, 60.3325320797489, 1e-12);
-    expectRel(result.secTotal.p50, 23.897402251765627, 1e-12);
+    expectRel(result.plantMassThroughputDays.p50, 51.77811331203485, 1e-12);
+    expectRel(result.secTotal.p50, 23.758063285514478, 1e-12);
   });
 });
 

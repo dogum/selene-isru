@@ -27,6 +27,10 @@ function expectRelative(actual: number, item: ReturnType<typeof benchmark>): voi
   expect(Math.abs(actual - expected)).toBeLessThanOrEqual(Math.abs(expected) * (item.relativeTolerance ?? 0));
 }
 
+function expectRelative2(actual: number, expected: number, relTol: number): void {
+  expect(Math.abs(actual - expected)).toBeLessThanOrEqual(Math.abs(expected) * relTol);
+}
+
 describe("external analytical benchmarks (separate from implementation parity)", () => {
   test("Faraday oxygen SEC anchor", () => {
     const item = benchmark("faraday-o2-default");
@@ -91,6 +95,28 @@ describe("external analytical benchmarks (separate from implementation parity)",
     for (const [key, value] of Object.entries(expected)) {
       expect(Math.abs(actual[key]! - value), key).toBeLessThanOrEqual(value * item.relativeTolerance!);
     }
+  });
+
+  test("polar excavation compares with the NASA mine: whole margined vehicles, not a different rate", () => {
+    const item = benchmark("kleinhenz-paz-2020-polar-excavation");
+    expect(item.kind).toBe("documentation-only");
+    const expected = item.expected as Record<string, number>;
+    const { excavation } = simulate({ site: "polar", ...item.inputs });
+    // 398 t of icy regolith over the 223 production days, plus its overburden.
+    expectRelative2(excavation.soilMovedKgPerDay, (67.26 / (0.05 * 0.75)) * 1.667, 1e-12);
+    // A RASSOR moves 2.7 t/day and weighs 66 kg (Guerrero-Gonzalez & Zabel
+    // 2023): the study's two whole vehicles with 20% growth margin reproduce
+    // its Fig. 8 bar, so the gap is rounding and margin.
+    const wholeVehicles = Math.ceil(excavation.soilMovedKgPerDay / 2700);
+    expect(wholeVehicles).toBe(2);
+    expectRelative2(wholeVehicles * 66 * 1.2, expected.excavatorMassKg!, 0.05);
+    // The model's continuous, unmargined fleet is lighter, by less than 2.5x.
+    expect(excavation.fleetMassKg).toBeLessThan(expected.excavatorMassKg!);
+    expect(excavation.fleetMassKg).toBeGreaterThan(expected.excavatorMassKg! / 2.5);
+    // Mining power is the same order: within a factor of two.
+    const miningPowerW = (DEFAULTS.eMining * excavation.soilMovedKgPerDay) / 86_400;
+    expect(miningPowerW / expected.excavatorPowerW!).toBeGreaterThan(0.5);
+    expect(miningPowerW / expected.excavatorPowerW!).toBeLessThan(2);
   });
 
   test("open benchmarks remain visibly unresolved", () => {

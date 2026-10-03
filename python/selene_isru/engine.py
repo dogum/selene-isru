@@ -231,6 +231,8 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "cuttingForceN": excavation["cuttingForceN"],
             "mechPowerW": excavation["mechPowerW"],
             "fleetMassKg": excavation["fleetMassKg"],
+            "soilMovedKgPerDay": excavation["soilMovedKgPerDay"],
+            "overburdenKgPerDay": excavation["overburdenKgPerDay"],
         },
         "electrolysis": {
             "secElec_JPerKg": electrolysis["secElec_JPerKg"] if mre else 0,

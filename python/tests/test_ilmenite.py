@@ -75,10 +75,14 @@ def test_each_process_ignores_the_others_inputs() -> None:
     assert mre["ilmenite"] is None
     assert simulate({"fIlmenite": 0.2, "kIlmReactorMass": 40, "eIlmBeneficiation": 30_000}) == mre
     ilmenite = simulate(ILMENITE)
-    changed = simulate({**ILMENITE, "Vcell": 3.6, "kReactorMass": 30, "eMining": 400_000, "kExcFleet": 25})
+    changed = simulate({**ILMENITE, "Vcell": 3.6, "kReactorMass": 30, "overburdenRatio": 3})
     assert changed["energy"] == ilmenite["energy"]
     assert changed["logistics"] == ilmenite["logistics"]
     assert simulate({"site": "polar", "equatorialProcess": "ilmenite"}) == simulate({"site": "polar"})
+    # Mining is shared: both plants move soil with the same fleet (v0.9).
+    heavier = simulate({**ILMENITE, "eMining": 50_000, "kMiningMass": 0.1})
+    assert heavier["energy"]["secTotal_kWhPerKg"] > ilmenite["energy"]["secTotal_kWhPerKg"]
+    assert heavier["ilmenite"]["miningMassKg"] == pytest.approx(0.1 * heavier["ilmenite"]["soilKgPerDay"], rel=1e-12)
 
 
 def test_no_castable_slag_and_a_beneficiation_row() -> None:

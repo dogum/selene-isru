@@ -166,15 +166,6 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Lumps reactor wall loss, heater inefficiency, and the gas recycle compressor. Calibrated so the model reproduces Eagle's 1,160 kW process power at 1,000 t/yr; Eagle's 2 t/month pilot lost about half its heater power.",
     defaultUncertainty: 0.3
   },
-  eIlmMining: {
-    rangeRationale: "From RASSOR (10 kJ/kg) and Eagle's front-end loaders (11.9 kJ/kg) up to the fleet-level figure MRE uses (120 kJ/kg).",
-    validity: "Energy per kg of soil delivered to the plant, tailings returned. Applies to the ilmenite plant only; MRE and polar plants keep the fleet-level mining energy and a fleet scaled with product.",
-    defaultUncertainty: 0.3
-  },
-  kIlmMiningMass: {
-    validity: "RASSOR-class excavators, 66 kg moving 2.7 t a day each; Eagle's front-end loaders give 0.014.",
-    defaultUncertainty: 0.3
-  },
   eIlmBeneficiation: {
     validity: "Fine screening dominates in both studies. Electrostatic separation, which needs the feed heated to about 200 °C, is not modelled.",
     defaultUncertainty: 0.3
@@ -397,15 +388,30 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     defaultUncertainty: 0.3
   },
   // The blade-cutting model is a feasibility diagnostic by design (v0.4): at
-  // defaults its work is ~34 J/kg of regolith against the 120 kJ/kg fleet
+  // defaults its work is ~34 J/kg of regolith against the 10.1 kJ/kg fleet
   // figure, and that fleet figure is RASSOR-class, whose counter-rotating
   // drums cancel the reaction force a blade would need traction to resist.
+  eMining: {
+    rangeRationale: "From a busy RASSOR fleet on 100 m hauls (10.1 kJ/kg) and Eagle's front-end loaders (11.9 kJ/kg) up to the 120 kJ/kg fleet figure this model used before v0.9. NASA's polar mine implies 5–6 kJ/kg, its excavators idling while the extractor hopper is full.",
+    validity: "Energy per kg of soil moved, haul to the plant and tailings back included, for every plant: MRE, ilmenite, and the polar mine. Longer hauls cost more. RASSOR-class drums have dug icy simulant, but performance near ice saturation is unproven (Kleinhenz & Paz 2020).",
+    defaultUncertainty: 0.3
+  },
+  kMiningMass: {
+    rangeRationale: "From Eagle's front-end loaders (0.014) to NASA's polar mine (about 0.1), which rounds up to two whole RASSORs and adds a 20% growth margin.",
+    validity: "A continuous fleet of RASSOR-class excavators, 66 kg moving 2.7 t a day each, with no margin and no spare vehicle. Small plants need at least one whole vehicle, which this does not round up to.",
+    defaultUncertainty: 0.3
+  },
+  overburdenRatio: {
+    rangeRationale: "From an ice deposit at the surface (0) to a metre of dry overburden over a 20 cm mined layer (5). NASA's baseline strips 20 cm to mine 30 cm.",
+    validity: "Polar pit mine only. Neutron data put a desiccated layer of tens of centimetres over most polar ice, but its depth at any one site is unknown. The steady ratio spreads stripping over the campaign; in practice the first strip delays the start of production.",
+    defaultUncertainty: 0.5
+  },
   ...Object.fromEntries(
     (["c", "Nc", "Nq", "Ngamma", "zDepth", "wBlade", "dBlade", "vCut", "etaDrive"] as const).map((key) => [
       key,
       {
         validity:
-          "Blade-cutting force (Terzaghi/McKyes) for the excavation-drive diagnostics. Cutting work is about 0.03% of the fleet-level mining energy at defaults, so excavation energy uses the RASSOR-class fleet figure (eMining) instead; a blade excavator's traction limit in lunar gravity is not applied because RASSOR-class drums cancel the reaction force."
+          "Blade-cutting force (Terzaghi/McKyes) for the excavation-drive diagnostics. Cutting work is about 0.3% of the fleet-level mining energy at defaults, so excavation energy uses the RASSOR-class fleet figure (eMining) instead; a blade excavator's traction limit in lunar gravity is not applied because RASSOR-class drums cancel the reaction force."
       }
     ])
   ),

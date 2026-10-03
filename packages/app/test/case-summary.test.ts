@@ -13,7 +13,7 @@ describe("plain case summary", () => {
     const equatorial = run({ site: "equatorial" });
     expect(outputLabel(equatorial.params, equatorial.result)).toBe("O₂ OUTPUT");
     expect(caseSummary(equatorial.params, equatorial.result)).toMatch(
-      /^Equatorial molten-regolith plant makes 1,000\u2009kg\/day liquid oxygen from 60\.4\u2009t landed in 1 landing on 996\u2009kW of nuclear power\. Its product repays the launch mass by day 242\.$/
+      /^Equatorial molten-regolith plant makes 1,000\u2009kg\/day liquid oxygen from 51\.8\u2009t landed in 1 landing on 990\u2009kW of nuclear power\. Its product repays the launch mass by day 241\.$/
     );
     const polar = run({ site: "polar" });
     expect(outputLabel(polar.params, polar.result)).toBe("WATER OUTPUT");

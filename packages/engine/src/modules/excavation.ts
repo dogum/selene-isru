@@ -8,6 +8,12 @@ export interface ExcavationOutput {
   fleetMassKg: number;
   secExcavation_JPerKg: number;
   regolithPerKgProduct: number;
+  /** [kg/kg product] feed plus overburden */
+  soilMovedPerKgProduct: number;
+  /** [kg/day] */
+  soilMovedKgPerDay: number;
+  /** [kg/day] */
+  overburdenKgPerDay: number;
 }
 
 export function regolithPerKgProduct(params: SimParams, xO2Effective?: number): number {
@@ -30,19 +36,20 @@ export function simulateExcavation(params: SimParams, xO2Effective?: number): Ex
     params.dBlade;
   const mechPowerW = (cuttingForceN * params.vCut) / params.etaDrive;
   const regolithPerKg = regolithPerKgProduct(params, xO2Effective);
-  // MRE and polar fleets scale with product; an ilmenite plant moves tens of
-  // times more soil per kg of oxygen, so its fleet scales with soil mined.
-  const ilmenite = reducesIlmenite(params);
-  const secExcavation_JPerKg = (ilmenite ? params.eIlmMining : params.eMining) * regolithPerKg;
-  const fleetMassKg = ilmenite
-    ? params.kIlmMiningMass * (params.targetKgPerDay * regolithPerKg)
-    : params.kExcFleet * params.targetKgPerDay;
+  // Every plant's mining energy and fleet scale with the soil it moves. The
+  // polar pit mine also strips dry overburden to reach the icy regolith.
+  const overburdenPerKg = params.site === "polar" ? params.overburdenRatio * regolithPerKg : 0;
+  const soilMovedPerKg = regolithPerKg + overburdenPerKg;
+  const soilMovedKgPerDay = params.targetKgPerDay * soilMovedPerKg;
 
   return {
     cuttingForceN,
     mechPowerW,
-    fleetMassKg,
-    secExcavation_JPerKg,
-    regolithPerKgProduct: regolithPerKg
+    fleetMassKg: params.kMiningMass * soilMovedKgPerDay,
+    secExcavation_JPerKg: params.eMining * soilMovedPerKg,
+    regolithPerKgProduct: regolithPerKg,
+    soilMovedPerKgProduct: soilMovedPerKg,
+    soilMovedKgPerDay,
+    overburdenKgPerDay: params.targetKgPerDay * overburdenPerKg
   };
 }

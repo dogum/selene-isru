@@ -201,9 +201,10 @@ function ledgerAt(
     landedMassKg: plantLandedKg + suppliesKg,
     productKg,
     usedKg,
+    // Grouped as simulateCampaign groups it, so the end point equals its total exactly.
     leoMassSpentKg:
       (params.deploymentManifest === "shared" ? campaign.leoMassPerLandedKg * plantLandedKg : landers * params.M0leo) +
-      campaign.leoMassPerLandedKg * suppliesKg,
+      ((campaign.leoMassPerLandedKg * (campaign.resupplyKgPerYear + campaign.feedKgPerYear)) / DAYS_PER_YEAR) * operatingDays,
     leoMassSavedKg: params.gearRatio * usedKg
   };
 }

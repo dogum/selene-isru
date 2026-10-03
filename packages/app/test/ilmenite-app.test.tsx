@@ -36,7 +36,8 @@ describe("oxygen process rail", () => {
     expect(shown("oxygen-process", mre)).toEqual([]);
     const visible = shown("oxygen-process", ilmenite);
     expect(visible).toEqual(expect.arrayContaining([...ILMENITE_KEYS, "Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]));
-    expect(ILMENITE_KEYS).toHaveLength(13);
+    // v0.9 moved its two mining inputs to the shared excavation group.
+    expect(ILMENITE_KEYS).toHaveLength(11);
   });
 
   it("only hides inputs where they cannot act", () => {
@@ -49,22 +50,31 @@ describe("oxygen process rail", () => {
     for (const key of ["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"] as const) {
       expect(inputActivity(ilmenite, key).activity, key).toBe("drives-results");
     }
-    // MRE, slag construction, and product-scaled excavation inputs leave the
-    // ilmenite plant's results alone.
+    // MRE and slag construction inputs leave the ilmenite plant's results alone.
     expect(shown("extraction-mre", ilmenite)).toEqual([]);
     expect(shown("construction", ilmenite)).toEqual([]);
-    expect(shown("excavation", ilmenite)).not.toContain("eMining");
-    expect(shown("excavation", ilmenite)).not.toContain("kExcFleet");
-    expect(shown("excavation", mre)).toEqual(expect.arrayContaining(["eMining", "kExcFleet"]));
     const hidden = [
       ...railParamsForGroup(group("extraction-mre"), mre),
       ...railParamsForGroup(group("construction"), mre)
     ].map((def) => def.key).filter((key) => key !== "Tambient");
-    for (const key of [...hidden, "eMining", "kExcFleet"] as Array<keyof SimParams>) {
+    for (const key of hidden) {
       expect(inputActivity(ilmenite, key).activity, String(key)).not.toBe("drives-results");
     }
-    expect(inputActivity(ilmenite, "eMining").activity).toBe("no-effect");
-    expect(inputActivity(ilmenite, "kExcFleet").activity).toBe("no-effect");
+    // Mining is shared (v0.9): both plants show and use the soil-basis inputs,
+    // and only the pole strips overburden.
+    for (const params of [mre, ilmenite]) {
+      expect(shown("excavation", params)).toEqual(expect.arrayContaining(["eMining", "kMiningMass"]));
+      expect(shown("excavation", params)).not.toContain("overburdenRatio");
+      expect(inputActivity(params, "eMining").activity).toBe("drives-results");
+      expect(inputActivity(params, "kMiningMass").activity).toBe("drives-results");
+    }
+    const polar: SimParams = { ...DEFAULTS, site: "polar" };
+    expect(shown("excavation", polar)).toContain("overburdenRatio");
+    expect(inputActivity(polar, "overburdenRatio").activity).toBe("drives-results");
+    // The group header reads the soil moved, overburden included, not the blade diagnostic.
+    const polarResult = simulate(polar);
+    expect(group("excavation").readout!(polarResult)).toEqual({ value: polarResult.excavation.soilMovedKgPerDay, unit: "kg/day" });
+    expect(polarResult.excavation.soilMovedKgPerDay).toBeGreaterThan(polarResult.production.regolithKgPerDay);
   });
 
   afterEach(() => {
@@ -176,7 +186,7 @@ describe("ilmenite route across the app", () => {
     const evidence = (key: keyof SimParams, source: string) =>
       evidenceForParam({ key, group: "ilmenite", source, min: 0, max: 1, unit: "1" });
     expect(evidence("fIlmenite", "Eagle Engineering 1988, Conceptual Design").sourceUrl).toBe("https://ntrs.nasa.gov/citations/19890004515");
-    expect(evidence("eIlmMining", "Guerrero-Gonzalez & Zabel 2023, Acta").sourceUrl).toBe("https://doi.org/10.1016/j.actaastro.2022.11.050");
+    expect(evidence("eMining", "Guerrero-Gonzalez & Zabel 2023, Acta").sourceUrl).toBe("https://doi.org/10.1016/j.actaastro.2022.11.050");
     expect(evidence("fIlmHeatLoss", "calibrated to Eagle Engineering 1988").maturity).toBe("SIMPLIFIED CORRELATION");
     expect(evidence("fIlmenite", "Eagle Engineering 1988").applicability).toMatch(/ilmenite/);
   });

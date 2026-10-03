@@ -91,6 +91,10 @@ near 10–12 kJ/kg. So the ilmenite route scales its fleet with soil mined and
 uses its own two inputs from those studies. Re-basing MRE and the polar plant
 is left for the excavation calibration pass.
 
+*(v0.9: done. MRE and the polar plant now mine on the same soil basis, and
+these two inputs became the shared `eMining` and `kMiningMass`, with the same
+values. See [`model-excavation-v09.md`](model-excavation-v09.md).)*
+
 ## Inputs
 
 | Input | Default | Range | Basis |
@@ -105,6 +109,9 @@ is left for the excavation calibration pass.
 | `fIlmHeatLoss` | 0.25 | 0–1 | Calibrated so the model reproduces Eagle's 1,160 kW process power (Table 6-5). |
 | `eIlmMining` | 10.1 kJ/kg | 3–150 kJ/kg | Guerrero-Gonzalez & Zabel 2023, *Acta Astronautica* 203 ([doi:10.1016/j.actaastro.2022.11.050](https://doi.org/10.1016/j.actaastro.2022.11.050)), Sec. 3.4.1 and Table 2: RASSOR, 19.3 kW for 61 vehicles of 2.7 t/day. Eagle gives 11.9 kJ/kg. |
 | `kIlmMiningMass` | 0.0244 kg/(kg/day) | 0.005–0.2 | Same source: 66 kg per 2.7 t/day. Eagle gives 0.014. |
+
+*(v0.9: `eIlmMining` and `kIlmMiningMass` are now the shared `eMining` and
+`kMiningMass`.)*
 | `eIlmBeneficiation` | 87 kJ/kg | 20–200 kJ/kg | Eagle, Table 6-5: 1,002 kW for 995 t/day. Guerrero-Gonzalez & Zabel give about 58 kJ/kg. |
 | `kIlmBeneficiationMass` | 0.094 kg/(kg/day) | 0.02–0.5 | Eagle, Table 6-5: 93.6 t for 995 t/day. Guerrero-Gonzalez & Zabel give about 0.22. |
 | `kIlmReactorMass` | 18.6 kg/(kg/day) | 5–60 | Eagle, Table 6-5: the 65.1 t process area at 1,000 t/yr, less the electrolyzer, liquefier and tanks in the Table 6-3 pilot proportion (87%). |
@@ -160,6 +167,10 @@ every case.
 | Ilmenite, MRE's mining energy (120 kJ/kg) | 327 | 29.8 | 1,242 | 106.2 | 589 | 3.42× |
 | Ilmenite, 10 t/day | 3,273 | 19.8 | 8,230 | 923.3 | 1,485 | 5.47× |
 
+*(v0.9 moved the MRE row to 23.76 kWh/kg, 990 kW, 51.8 t, day 241, and 6.88×,
+and makes 120 kJ/kg a non-default `eMining`. The ilmenite rows do not move.
+See [`model-excavation-v09.md`](model-excavation-v09.md).)*
+
 What the table shows:
 - **Ilmenite uses less power but lands more.** At mare grade it takes 17%
   less energy per kg than MRE. It lands 55% more, mostly the 30.8 t
@@ -184,7 +195,8 @@ What the table shows:
   ilmenite is chosen, it also shows the 13 ilmenite inputs and the four shared
   ones. On that route the MRE group, the slag construction group, and the
   product-scaled excavation inputs are hidden, because nothing they set can
-  act. Tests check this.
+  act. Tests check this. *(v0.9: the excavation inputs are shared and shown on
+  every route.)*
 - **Energy:** the Sankey gains *beneficiation* and *H₂ reduction* stages.
   - The Brief drivers, the report's energy table and the comparison bars now
     charge energy to the stage that spends it.
@@ -258,6 +270,8 @@ Screenshots: [rail](screenshots/ilmenite/ilmenite-rail.png),
 
 - **Excavation basis for MRE and the polar plant.** Re-base `eMining` and
   `kExcFleet` on soil moved, using the same two studies (v0.4 item).
+  *(v0.9: done, with polar overburden added. See
+  [`model-excavation-v09.md`](model-excavation-v09.md).)*
 - **Reactor mass with feed.** The reactor block scales with oxygen output,
   so lean concentrates understate it. Eagle's no-separation trade added 46% to
   process mass for 12 times the feed.

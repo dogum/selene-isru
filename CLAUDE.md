@@ -338,6 +338,13 @@ Evidence: [`docs/custom-site-release.md`](docs/custom-site-release.md).
 - **URL sharing**: only non-default params serialize into a compact query string
   (`?site=polar&chiIce=0.03`) and must round-trip to an identical `SimResult`
   (asserted in `packages/app/test/url.test.ts`).
+- **Renaming or retiring an input** breaks records saved before it: library
+  cases store every input, and study files, case files, and links carry the old
+  keys. Add the key to `src/lib/legacyParams.ts`, which every entry point (link
+  parse, library load, study and case import) runs before merging over
+  `DEFAULTS`. Map a key whose meaning is unchanged; drop one whose meaning is
+  gone, rather than reinterpreting its value. `legacy-params.test.ts` covers
+  each path.
 - **Three.js is vanilla**, driven by the `Viewer` class — no react-three-fiber.
   React owns the DOM UI; `Scene.tsx` owns the canvas lifecycle.
 - **Graphics tiers**: Auto/Low/Medium/High/Ultra, plus bloom, dev HUD, photo
@@ -452,6 +459,8 @@ in `assets/ASSET_LICENSES.md`.
 | Campaign ledger self-agreement, timeline parity | `campaign.test.ts`, `test_campaign.py`, campaign vectors in `dynamics_vectors.json` |
 | Refuelling demand, store sizing, tank drawdown | `refuel.test.ts`, `test_refuel.py`, refuel vectors in `dynamics_vectors.json` |
 | Ilmenite reduction chain, Eagle calibration check | `ilmenite.test.ts`, `test_ilmenite.py`, v0.8 anchors in `regression.test.ts` |
+| Excavation on soil moved, polar overburden, NASA mine comparison | v0.9 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2020-polar-excavation` in `external-benchmarks.test.ts` |
+| Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
 | Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
 | Polar propellant mode, liquefaction calibration | v0.6 anchors in `regression.test.ts`, `kleinhenz-paz-2020-polar-propellant` in `external-benchmarks.test.ts` |
@@ -497,7 +506,7 @@ script run on a clean checkout at all.
 - Prefer editing existing docs in `docs/` over adding new ones; the audit trail
   (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
   `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md` →
-  `model-ilmenite-v08.md`) is
+  `model-ilmenite-v08.md` → `model-excavation-v09.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -522,6 +531,10 @@ script run on a clean checkout at all.
 - [`docs/model-ilmenite-v08.md`](docs/model-ilmenite-v08.md) — hydrogen
   reduction of ilmenite as the second equatorial process: the soil chain, the
   Eagle 1988 calibration, and why it mines on a soil basis.
+- [`docs/model-excavation-v09.md`](docs/model-excavation-v09.md) — every
+  plant's mining energy and fleet sized on the soil it moves, polar overburden,
+  the comparison with NASA's polar mine, and how saved cases with retired
+  inputs are upgraded.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

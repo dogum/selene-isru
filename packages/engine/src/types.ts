@@ -183,10 +183,12 @@ export interface SimParams {
   /** [m/s] */
   vCut: number;
   etaDrive: number;
-  /** [J/kg-regolith] */
+  /** [J/kg-regolith] excavation and haul, per kg of soil moved */
   eMining: number;
-  /** [kg/(kg/day)] */
-  kExcFleet: number;
+  /** [kg/(kg-regolith/day)] excavation fleet, per kg/day of soil moved */
+  kMiningMass: number;
+  /** [kg/kg] polar dry overburden moved per kg of icy regolith mined */
+  overburdenRatio: number;
   chiIce: number;
   /** [J/(kg*K)] */
   cpRegCold: number;
@@ -408,10 +410,6 @@ export interface SimParams {
   /** [1] */
   fIlmHeatLoss: number;
   /** [J/kg-regolith] */
-  eIlmMining: number;
-  /** [kg/(kg/day)] per soil mined */
-  kIlmMiningMass: number;
-  /** [J/kg-regolith] */
   eIlmBeneficiation: number;
   /** [kg/(kg/day)] per soil processed */
   kIlmBeneficiationMass: number;
@@ -613,6 +611,10 @@ export interface SimResult {
     mechPowerW: number;
     /** [kg] */
     fleetMassKg: number;
+    /** [kg/day] soil the fleet moves: the plant's feed plus any overburden */
+    soilMovedKgPerDay: number;
+    /** [kg/day] dry overburden stripped to reach the icy regolith; 0 off the pole */
+    overburdenKgPerDay: number;
   };
   electrolysis: {
     /** [J/kg O2] */

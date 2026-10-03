@@ -1,7 +1,7 @@
 {
   "schema": "selene-custom-site-release-evidence",
   "version": 1,
-  "measuredAt": "2026-10-03T06:45:53.305Z",
+  "measuredAt": "2026-10-03T08:40:34.255Z",
   "environment": {
     "browser": "Chrome/141.0.7390.37",
     "viewport": "1600x900",
@@ -9,29 +9,29 @@
     "note": "Headless measurements are reproducibility evidence, not end-user hardware guarantees. Video capture is a separate reviewed workflow."
   },
   "timingsMs": {
-    "navigation": 4226.2,
-    "enterBlankCustomSite": 4762.2,
-    "firstPlacementCommit": 2665.5,
-    "importValidateEvaluateAndRender": 290.4,
+    "navigation": 3935.8,
+    "enterBlankCustomSite": 4610.4,
+    "firstPlacementCommit": 2666.3,
+    "importValidateEvaluateAndRender": 392.4,
     "contextLossRestore": null,
-    "mobileReviewLoad": 5221,
+    "mobileReviewLoad": 5202.1,
     "animationFrameSample": {
       "frames": 90,
       "medianMs": 16.7,
-      "p95Ms": 16.7,
-      "maxMs": 50
+      "p95Ms": 16.8,
+      "maxMs": 49.9
     }
   },
   "settledDesktop": {
     "assets": 8,
     "connections": 8,
-    "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 9.04 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
-    "jsHeapUsedMb": 15.02,
+    "status": "TOPOLOGY GATE OPEN · 1,000 KG/DAY ACHIEVABLE12 KG CABLE · 8.93 KW ROUTE LOAD · SCREENING ASSUMPTIONS VISIBLE IN INSPECTORS",
+    "jsHeapUsedMb": 14.76,
     "domNodes": 918
   },
   "productionBundleBytes": {
-    "javascript": 1503995,
-    "css": 90492
+    "javascript": 1506651,
+    "css": 90654
   },
   "checks": [
     "blank custom site opened",
