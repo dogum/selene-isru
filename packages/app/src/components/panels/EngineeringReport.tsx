@@ -30,6 +30,8 @@ export function EngineeringReport(): React.JSX.Element {
   const result = useStore((s) => s.result);
   const currentName = useStore((s) => s.ui.currentScenarioName);
   const scenarios = useStore((s) => s.scenarioLibrary);
+  // The landed manifest's cryo block, which the inventory rows add up to.
+  const cryoBlockKg = result.logistics.manifest.find((row) => row.subsystem === "cryo block")?.massKg ?? 0;
   const pinned = scenarios.filter((scenario) => scenario.pinned);
   const snapshot = useMemo(() => reportSnapshot(params), [params]);
   const changedInputs = useMemo(() => changedInputRows(params), [params]);
@@ -172,15 +174,23 @@ export function EngineeringReport(): React.JSX.Element {
       <section className="report-section">
         <h3>Independent storage inventories</h3>
         <table>
-          <thead><tr><th>Stream</th><th>Role</th><th>Rate</th><th>Reserve</th><th>Volume</th><th>Storage mass</th><th>Conditioning</th><th>Actual loss</th></tr></thead>
+          <thead><tr><th>Stream</th><th>Role</th><th>Rate</th><th>Reserve</th><th>Volume</th><th>Storage mass</th><th>Liquefier mass</th><th>Conditioning</th><th>Actual loss</th></tr></thead>
           <tbody>{result.cryo.inventories.map((item) => (
             <tr key={item.id}>
               <th>{item.stream}</th><td>{item.role}</td><td>{formatQtyText(item.rateKgPerDay, "kg/day")}</td>
               <td>{formatQtyText(item.reserveInventoryKg, "kg")}</td><td>{formatQtyText(item.volumeM3, "m³", 4)}</td>
-              <td>{formatQtyText(item.storageMassKg, "kg")}</td><td>{formatQtyText(item.conditioningPowerW, "W")}</td>
+              <td>{formatQtyText(item.storageMassKg, "kg")}</td><td>{formatQtyText(item.liquefierMassKg, "kg")}</td>
+              <td>{formatQtyText(item.conditioningPowerW, "W")}</td>
               <td>{formatQtyText(item.actualLossKgPerDay, "kg/day", 4)}</td>
             </tr>
           ))}</tbody>
+          <tfoot>
+            <tr>
+              <th colSpan={5}>Cryo block landed (storage + liquefiers)</th>
+              <td colSpan={2}>{formatQtyText(cryoBlockKg, "kg")}</td>
+              <td colSpan={2} />
+            </tr>
+          </tfoot>
         </table>
       </section>
 
