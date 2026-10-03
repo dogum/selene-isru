@@ -180,9 +180,11 @@ export function simulate(
   // Sabatier products, whose imported CO2 feed must be landed. Storage losses
   // (passive or capacity-limited control) are product never delivered, and
   // feed lost in storage must be landed again.
-  const storageLossKgPerDay = (roles: ReadonlyArray<StorageInventory["role"]>): number =>
+  // CO2 is process feed whatever role a one-stream storage what-if gives it.
+  const isFeed = (inventory: StorageInventory): boolean => inventory.role === "feed" || inventory.stream === "co2-feed";
+  const storageLossKgPerDay = (feed: boolean): number =>
     cryo.inventories
-      .filter((inventory) => roles.includes(inventory.role))
+      .filter((inventory) => (feed ? isFeed(inventory) : !isFeed(inventory) && (inventory.role === "product" || inventory.role === "custom")))
       .reduce((total, inventory) => total + inventory.actualLossKgPerDay, 0);
   const grossProductKgPerDay =
     params.site === "equatorial"
@@ -191,8 +193,8 @@ export function simulate(
         ? production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay
         : production.waterKgPerDay;
   const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics, {
-    productKgPerDay: Math.max(0, grossProductKgPerDay - storageLossKgPerDay(["product", "custom"])),
-    importedFeedKgPerDay: production.co2ImportedKgPerDay + storageLossKgPerDay(["feed"])
+    productKgPerDay: Math.max(0, grossProductKgPerDay - storageLossKgPerDay(false)),
+    importedFeedKgPerDay: production.co2ImportedKgPerDay + storageLossKgPerDay(true)
   });
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);

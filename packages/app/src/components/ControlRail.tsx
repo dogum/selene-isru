@@ -60,10 +60,12 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
+  // A gated-off group's sliders cannot be shown, so they do not count either.
+  const gatedOff = (group: GroupDef): boolean => group.gatedBy !== undefined && !params[group.gatedBy];
   const changedCount = groups.reduce(
     (count, { group, defs }) =>
       count +
-      defs.filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length +
+      (gatedOff(group) ? [] : defs).filter((def) => isChangedFromDefault(params[def.key] as number, def.defaultValue)).length +
       railModeParamsForGroup(group, site).filter((key) => isModeChanged(params, key)).length,
     0
   );
@@ -73,7 +75,7 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
     // A gated-off group (the Sabatier loop switched off) cannot show or use its
     // inputs, so a filter does not count them; its switch can still match.
     defs: filtering
-      ? (group.gatedBy !== undefined && !params[group.gatedBy] ? [] : defs).filter((def) =>
+      ? (gatedOff(group) ? [] : defs).filter((def) =>
           matchesParamQuery(def, group.label, query) &&
           (!changedOnly || isChangedFromDefault(params[def.key] as number, def.defaultValue))
         )

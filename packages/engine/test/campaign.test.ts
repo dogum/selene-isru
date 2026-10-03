@@ -166,6 +166,20 @@ describe("campaign ledger behaviour", () => {
     );
   });
 
+  test("a CO2-only storage what-if charges its losses to landed feed", () => {
+    const { params, result } = run({ site: "polar", enableSabatier: true, cryoControlMode: "passive", storageStream: "co2-feed" });
+    const [selected] = result.cryo.inventories;
+    expect(selected!.stream).toBe("co2-feed");
+    expect(selected!.actualLossKgPerDay).toBeGreaterThan(0);
+    const { production, campaign } = result;
+    expectRel(
+      campaign.deliveredKgPerDay,
+      (production.o2KgPerDay + production.ch4KgPerDay + production.h2KgPerDay) * params.plantAvailability,
+      1e-12
+    );
+    expectRel(campaign.feedKgPerYear, (production.co2ImportedKgPerDay + selected!.actualLossKgPerDay) * params.plantAvailability * 365, 1e-12);
+  });
+
   test("a lander with no payload deploys nothing and says so", () => {
     const { params, result } = run({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 });
     expect(result.logistics.payloadPerMissionKg).toBeLessThan(0);

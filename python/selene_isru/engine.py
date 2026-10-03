@@ -64,8 +64,16 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     # Sabatier products, whose imported CO2 feed must be landed. Storage losses
     # (passive or capacity-limited control) are product never delivered, and
     # feed lost in storage must be landed again.
-    def storage_loss_kg_per_day(roles: tuple[str, ...]) -> float:
-        return sum(inventory["actualLossKgPerDay"] for inventory in cryo["inventories"] if inventory["role"] in roles)
+    # CO2 is process feed whatever role a one-stream storage what-if gives it.
+    def is_feed(inventory: dict[str, Any]) -> bool:
+        return inventory["role"] == "feed" or inventory["stream"] == "co2-feed"
+
+    def storage_loss_kg_per_day(feed: bool) -> float:
+        return sum(
+            inventory["actualLossKgPerDay"]
+            for inventory in cryo["inventories"]
+            if (is_feed(inventory) if feed else not is_feed(inventory) and inventory["role"] in ("product", "custom"))
+        )
 
     if params["site"] == "equatorial":
         product_kg_per_day = production["o2KgPerDay"]
@@ -77,8 +85,8 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         params,
         logistics,
         {
-            "productKgPerDay": max(0, product_kg_per_day - storage_loss_kg_per_day(("product", "custom"))),
-            "importedFeedKgPerDay": production["co2ImportedKgPerDay"] + storage_loss_kg_per_day(("feed",)),
+            "productKgPerDay": max(0, product_kg_per_day - storage_loss_kg_per_day(False)),
+            "importedFeedKgPerDay": production["co2ImportedKgPerDay"] + storage_loss_kg_per_day(True),
         },
     )
     campaign_warnings = campaign.pop("warnings")

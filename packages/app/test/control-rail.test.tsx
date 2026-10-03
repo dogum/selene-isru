@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { DEFAULTS } from "@selene-isru/engine";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ControlGroups } from "../src/components/ControlRail";
 import {
@@ -114,6 +114,19 @@ describe("control rail search, changed filter, and reset", () => {
     useStore.getState().applyPatch({ enableSabatier: false });
     fireEvent.change(search, { target: { value: "conversion fraction" } });
     expect(screen.getByText("No inputs match.")).toBeTruthy();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
+  it("does not count a changed slider in a gated-off group", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", enableSabatier: true, fConversion: 0.8 });
+    render(<ControlGroups />);
+    expect(screen.getByRole("button", { name: "CHANGED · 2" })).toBeTruthy();
+    // Switching the loop off hides its sliders; the badge drops them but counts the switch.
+    act(() => useStore.getState().setParam("enableSabatier", false));
+    expect(useStore.getState().params.fConversion).toBe(0.8);
+    const changed = screen.getByRole("button", { name: "CHANGED · 0" });
+    fireEvent.click(changed);
+    expect(screen.getByText("Every input is at its default.")).toBeTruthy();
     useStore.getState().applyPatch({ ...DEFAULTS });
   });
 
