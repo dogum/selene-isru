@@ -16,10 +16,11 @@ def simulate_logistics(
     reactor_mass_kg: float,
     power_mass_kg: float,
     cryo_mass_kg: float,
+    beneficiation_mass_kg: float,
     product_kg_per_day: float,
 ) -> dict[str, Any]:
     payload = payload_per_mission_kg(params)
-    total_infra_mass_kg = fleet_mass_kg + reactor_mass_kg + power_mass_kg + cryo_mass_kg
+    total_infra_mass_kg = fleet_mass_kg + reactor_mass_kg + beneficiation_mass_kg + power_mass_kg + cryo_mass_kg
     capacity = params["etaPack"] * payload
     n_missions = max(0, math.ceil(total_infra_mass_kg / capacity)) if capacity > 0 else 0
     # Measured against the product, not the target: in propellant mode and the
@@ -30,6 +31,8 @@ def simulate_logistics(
     manifest = [
         {"subsystem": "excavation fleet", "massKg": fleet_mass_kg},
         {"subsystem": "reactor/plant", "massKg": reactor_mass_kg},
+        # Only an ilmenite plant sizes and concentrates its feed.
+        *([{"subsystem": "beneficiation plant", "massKg": beneficiation_mass_kg}] if beneficiation_mass_kg > 0 else []),
         {"subsystem": "power system", "massKg": power_mass_kg},
         {"subsystem": "cryo block", "massKg": cryo_mass_kg},
     ]

@@ -104,6 +104,17 @@ def test_refuelling_demand_v07() -> None:
     assert_rel(matched["campaign"]["paybackDays"], 242.2, 0.001)
 
 
+def test_ilmenite_reduction_v08() -> None:
+    ilmenite = simulate({"equatorialProcess": "ilmenite"})
+    assert_rel(ilmenite["ilmenite"]["soilPerKgO2"], 327.3, 0.001)
+    assert_rel(ilmenite["energy"]["secTotal_kWhPerKg"], 19.81, 0.001)
+    assert_rel(ilmenite["energy"]["gridPowerW"] / 1000, 825.3, 0.001)
+    assert_rel(ilmenite["logistics"]["totalInfraMassKg"] / 1000, 93.75, 0.001)
+    assert_rel(ilmenite["campaign"]["paybackDays"], 585.5, 0.001)
+    high_ti = simulate({"equatorialProcess": "ilmenite", "fIlmenite": 0.15})
+    assert_rel(high_ti["campaign"]["paybackDays"], 243.3, 0.001)
+
+
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
     fallback = simulate({"oxideModel": False})
     direct = oxide_model_yield({**DEFAULTS, "oxideModel": False})

@@ -35,6 +35,18 @@ describe("custom site topology-backed evaluation", () => {
     }));
   });
 
+  test("evaluates an equatorial design as the MRE plant its catalog holds", () => {
+    const reference = evaluateSiteDesign(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
+    const asked = clone(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
+    asked.params = { ...asked.params, equatorialProcess: "ilmenite" };
+    const evaluated = evaluateSiteDesign(asked);
+    expect(evaluated.normalizedDesign.params.equatorialProcess).toBe("mre");
+    expect(evaluated.baseResult.ilmenite).toBeNull();
+    expect(evaluated.baseResult.energy).toEqual(reference.baseResult.energy);
+    expect(evaluated.findings).toContainEqual(expect.objectContaining({ id: "params.equatorial-process", severity: "info" }));
+    expect(reference.findings.some((finding) => finding.id === "params.equatorial-process")).toBe(false);
+  });
+
   test("keeps the continuously sized requirement but gates achieved output", () => {
     const broken = clone(SEEDED_SITE_DESIGN_FIXTURES.equatorial);
     broken.connections = broken.connections.filter((connection) =>

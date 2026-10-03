@@ -73,6 +73,7 @@ def latin_hypercube_samples() -> list[dict[str, Any]]:
         params["enableSabatier"] = i % 3 == 0
         params["polarProduct"] = "propellant" if i % 4 == 1 else "water"
         params["refuelDemand"] = "lander" if i % 5 < 2 else "none"
+        params["equatorialProcess"] = "ilmenite" if i % 4 == 2 else "mre"
         samples.append(params)
 
     return samples
@@ -122,6 +123,15 @@ def named_scenarios() -> list[tuple[str, dict[str, Any]]]:
                 "McargoDown": 5000,
                 "cryoControlMode": "passive",
             },
+        )
+    )
+    # Ilmenite reduction: Eagle's mare soil plant, and a high-Ti soil whose
+    # concentrate grade is no better than its feed, under a crewed sortie.
+    scenarios.append(("equatorial-ilmenite-eagle", {"equatorialProcess": "ilmenite"}))
+    scenarios.append(
+        (
+            "equatorial-ilmenite-unconcentrated-refuel",
+            {"equatorialProcess": "ilmenite", "fIlmenite": 0.2, "ilmConcentrateGrade": 0.15, "refuelDemand": "lander"},
         )
     )
     return scenarios

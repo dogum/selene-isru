@@ -114,6 +114,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "equatorialProcess") {
+      if (raw === "mre" || raw === "ilmenite") {
+        assign("equatorialProcess", raw);
+      } else {
+        assign("equatorialProcess", DEFAULTS.equatorialProcess);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "refuelDemand") {
       if (raw === "none" || raw === "lander") {
         assign("refuelDemand", raw);

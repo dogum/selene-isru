@@ -11,6 +11,7 @@ from .modules.cryo import simulate_cryo
 from .modules.energy_ledger import energy_ledger
 from .modules.electrolysis import simulate_electrolysis
 from .modules.excavation import simulate_excavation
+from .modules.ilmenite import reduces_ilmenite, simulate_ilmenite
 from .modules.logistics import simulate_logistics
 from .modules.materials import material_ledger
 from .modules.power import simulate_power
@@ -32,6 +33,9 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
     excavation = simulate_excavation(params, electrolysis["xO2Effective"])
     thermal = simulate_thermal(params)
     site_profile = resolve_polar_profile(params)
+    # The equatorial plant runs MRE unless it reduces ilmenite with hydrogen.
+    ilmenite = simulate_ilmenite(params, params["targetKgPerDay"]) if reduces_ilmenite(params) else None
+    mre = params["site"] == "equatorial" and ilmenite is None
     sabatier = simulate_sabatier(params, params["targetKgPerDay"]) if params["site"] == "polar" and params["enableSabatier"] else None
     # Propellant mode splits all the water into O2 and H2 without the Sabatier
     # loop; with the loop on, its own electrolysis step does that job.
@@ -49,7 +53,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         else None
     )
 
-    production = _production_state(params, excavation["regolithPerKgProduct"], sabatier, propellant)
+    production = _production_state(params, excavation["regolithPerKgProduct"], sabatier, propellant, ilmenite is not None)
     cryo = simulate_cryo(params, _storage_demands(params, production, refuel_sortie), site_profile["profile"])
     energy_lines = _energy_line_items(
         params,
@@ -60,16 +64,22 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         cryo["conditioningSecKWhPerKg"],
         cryo["cryocoolerPowerW"],
         water_electrolysis,
+        ilmenite,
     )
     flows = [{"from": line["from"], "to": line["to"], "kWhPerKg": line["jPerKg"] / J_PER_KWH} for line in energy_lines]
     sec_total_j_per_kg = sum(line["jPerKg"] for line in energy_lines)
     sec_total_kwh_per_kg = sec_total_j_per_kg / J_PER_KWH
     grid_power_w = params["targetKgPerDay"] / SECONDS_PER_DAY * sec_total_j_per_kg
-    energy_accounting = energy_ledger(params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, water_electrolysis)
+    energy_accounting = energy_ledger(
+        params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, water_electrolysis, ilmenite
+    )
     power = simulate_power(params, grid_power_w, site_profile["profile"])
+    # Equatorial plants are the MRE reactor, or the ilmenite reactor and its
+    # electrolyzer, whose beneficiation plant is listed apart.
     reactor_mass_kg = (
-        (params["kReactorMass"] * params["targetKgPerDay"] if params["site"] == "equatorial" or params["enableSabatier"] else 0)
+        (params["kReactorMass"] * params["targetKgPerDay"] if mre or params["enableSabatier"] else 0)
         + (params["kElectrolyzerMass"] * params["targetKgPerDay"] if propellant is not None else 0)
+        + (ilmenite["reactorMassKg"] + ilmenite["electrolyzerMassKg"] if ilmenite is not None else 0)
         + thermal["extractorMassKg"]
     )
     # The product each landed kilogram is measured against, before storage
@@ -89,6 +99,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         reactor_mass_kg,
         power["selectedPowerMassKg"],
         cryo["cryoMassKg"],
+        0 if ilmenite is None else ilmenite["beneficiationMassKg"],
         product_kg_per_day,
     )
     # What the plant delivers: O2 at the equator, water at the pole, propellant
@@ -183,12 +194,12 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         },
     )
     campaign_warnings = campaign.pop("warnings")
-    construction = simulate_construction(params, production["slagKgPerDay"] if params["site"] == "equatorial" else 0)
-    materials = material_ledger(params, production)
+    construction = simulate_construction(params, production["slagKgPerDay"])
+    materials = material_ledger(params, production, ilmenite)
     warnings = [
         *param_warnings,
         *site_profile["warnings"],
-        *(electrolysis["warnings"] if params["site"] == "equatorial" else []),
+        *(electrolysis["warnings"] if mre else []),
         *cryo["warnings"],
         *power["warnings"],
         *construction["warnings"],
@@ -199,7 +210,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         warnings.append({"id": "material-balance", "severity": "alarm", "module": "materials", "message": "A process-node material balance exceeds the conservation tolerance.", "value": materials["maxAbsResidualKgPerDay"], "limit": 1e-6})
     if energy_accounting["maxAbsResidualW"] > 1e-6:
         warnings.append({"id": "energy-balance", "severity": "alarm", "module": "energy", "message": "A process-node energy balance or grid allocation exceeds the conservation tolerance.", "value": energy_accounting["maxAbsResidualW"], "limit": 1e-6})
-    if params["site"] == "equatorial" and params["oxideModel"]:
+    if mre and params["oxideModel"]:
         oxide_sum = sum(params[key] for key in ("oxideSiO2", "oxideTiO2", "oxideAl2O3", "oxideFeO", "oxideMgO", "oxideCaO"))
         if abs(oxide_sum - 1) > 0.05:
             warnings.append({"id": "oxide-composition-sum", "severity": "caution", "module": "electrolysis", "message": "Oxide fractions differ from unity by more than five percentage points; the model normalizes them.", "value": oxide_sum, "limit": 1})
@@ -221,9 +232,9 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "fleetMassKg": excavation["fleetMassKg"],
         },
         "electrolysis": {
-            "secElec_JPerKg": electrolysis["secElec_JPerKg"] if params["site"] == "equatorial" else 0,
-            "secThermal_JPerKg": electrolysis["secThermal_JPerKg"] if params["site"] == "equatorial" else 0,
-            "currentA": electrolysis["currentA"] if params["site"] == "equatorial" else 0,
+            "secElec_JPerKg": electrolysis["secElec_JPerKg"] if mre else 0,
+            "secThermal_JPerKg": electrolysis["secThermal_JPerKg"] if mre else 0,
+            "currentA": electrolysis["currentA"] if mre else 0,
             "cellVoltageV": params["Vcell"],
             "jLimit_APerM2": electrolysis["jLimit_APerM2"],
             "jOperating_APerM2": params["jOperating"],
@@ -280,6 +291,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         "logistics": logistics,
         "campaign": campaign,
         "refuel": refuel,
+        "ilmenite": ilmenite,
         "materials": materials,
         "construction": construction,
         "warnings": warnings,
@@ -296,13 +308,16 @@ def _production_state(
     regolith_per_kg_product: float,
     sabatier: dict[str, float] | None,
     propellant: dict[str, float] | None,
+    reduces_ilmenite: bool,
 ) -> dict[str, float]:
     regolith_kg_per_day = params["targetKgPerDay"] * regolith_per_kg_product
     if params["site"] == "equatorial":
         return {
             "targetKgPerDay": params["targetKgPerDay"],
             "regolithKgPerDay": regolith_kg_per_day,
-            "slagKgPerDay": regolith_kg_per_day - params["targetKgPerDay"],
+            # Ilmenite reduction leaves granular tailings and spent solids, not
+            # a castable melt.
+            "slagKgPerDay": 0 if reduces_ilmenite else regolith_kg_per_day - params["targetKgPerDay"],
             "o2KgPerDay": params["targetKgPerDay"],
             "waterKgPerDay": 0,
             "grossH2KgPerDay": 0,
@@ -404,11 +419,22 @@ def _energy_line_items(
     conditioning_sec_kwh_per_kg: float,
     cryocooler_power_w: float,
     water_electrolysis: dict[str, float] | None,
+    ilmenite: dict[str, float] | None,
 ) -> list[dict[str, float | str]]:
     mdot_product_kg_per_s = params["targetKgPerDay"] / SECONDS_PER_DAY
     cryo_j_per_kg = conditioning_sec_kwh_per_kg * J_PER_KWH + (
         cryocooler_power_w / mdot_product_kg_per_s if mdot_product_kg_per_s > 0 else 0
     )
+
+    if ilmenite is not None:
+        return [
+            {"from": "mine", "to": "beneficiation", "jPerKg": sec_excavation_j_per_kg},
+            {"from": "beneficiation", "to": "reduction", "jPerKg": ilmenite["secBeneficiation_JPerKg"]},
+            {"from": "reduction", "to": "electrolysis", "jPerKg": ilmenite["secSensible_JPerKg"] + ilmenite["secReaction_JPerKg"]},
+            {"from": "reduction", "to": "parasitic", "jPerKg": ilmenite["secReactorLoss_JPerKg"]},
+            {"from": "electrolysis", "to": "product", "jPerKg": ilmenite["secWaterElectrolysis_JPerKg"]},
+            {"from": "cryo", "to": "product", "jPerKg": cryo_j_per_kg},
+        ]
 
     if params["site"] == "equatorial":
         return [

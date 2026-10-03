@@ -30,6 +30,7 @@ export function simulateLogistics(
   reactorMassKg: number,
   powerMassKg: number,
   cryoMassKg: number,
+  beneficiationMassKg: number,
   productKgPerDay: number,
   supplementalMasses: readonly SimulationSupplementalMass[] = []
 ): LogisticsOutput {
@@ -41,6 +42,7 @@ export function simulateLogistics(
   const totalInfraMassKg =
     fleetMassKg +
     reactorMassKg +
+    beneficiationMassKg +
     powerMassKg +
     cryoMassKg +
     supplementalMassKg;
@@ -54,6 +56,8 @@ export function simulateLogistics(
   const manifest: ManifestRow[] = [
     { subsystem: "excavation fleet", massKg: fleetMassKg },
     { subsystem: "reactor/plant", massKg: reactorMassKg },
+    // Only an ilmenite plant sizes and concentrates its feed.
+    ...(beneficiationMassKg > 0 ? [{ subsystem: "beneficiation plant", massKg: beneficiationMassKg }] : []),
     { subsystem: "power system", massKg: powerMassKg },
     { subsystem: "cryo block", massKg: cryoMassKg },
     ...supplementalMasses

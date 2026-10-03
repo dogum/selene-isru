@@ -1,6 +1,7 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
 import type {
   EnergyProcessBalance,
+  IlmeniteResult,
   SimParams,
   SimulationSupplementalLoad
 } from "../types";
@@ -63,6 +64,7 @@ export function energyLedger(
   electrolysis: ElectrolysisOutput,
   cryo: CryoOutput,
   waterElectrolysis: WaterElectrolysisEnergy | null,
+  ilmenite: IlmeniteResult | null,
   supplementalLoads: readonly SimulationSupplementalLoad[] = []
 ): EnergyLedger {
   const productMassFlowKgPerS = params.targetKgPerDay / 86_400;
@@ -70,11 +72,31 @@ export function energyLedger(
     (lines.find((line) => line.from === from && line.to === to)?.jPerKg ?? 0) * productMassFlowKgPerS;
   const balances: EnergyProcessBalance[] = [];
 
-  const excavationInputW = powerFor("mine", params.site === "equatorial" ? "melt" : "sublimation");
+  const excavationInputW = powerFor("mine", ilmenite !== null ? "beneficiation" : params.site === "equatorial" ? "melt" : "sublimation");
   const excavationUsefulW = Math.min(excavationInputW, Math.max(0, excavationMechPowerW));
   balances.push(balance("excavation-energy", "Excavation drive", excavationInputW, 0, excavationUsefulW, excavationInputW - excavationUsefulW, 0));
+  const waterElectrolysisBalance = (): EnergyProcessBalance => {
+    const waterElectrolysisW = powerFor("electrolysis", "product");
+    const thermoneutralFraction = Math.min(
+      1,
+      PHYSICAL_CONSTANTS.VthermoneutralWater.value * params.etaFaradayEl / params.Vel
+    );
+    const chemicalW = waterElectrolysisW * thermoneutralFraction;
+    return balance("water-electrolysis-energy", "Water electrolysis", waterElectrolysisW, 0, chemicalW, waterElectrolysisW - chemicalW, 0);
+  };
 
-  if (params.site === "equatorial") {
+  if (ilmenite !== null) {
+    const beneficiationW = powerFor("beneficiation", "reduction");
+    balances.push(balance("ilmenite-beneficiation-energy", "Soil sizing and separation", beneficiationW, 0, 0, beneficiationW, 0));
+    // The reduction heat leaves as chemical energy in the water; the feed
+    // heat not recovered leaves with the spent solids.
+    const reactorW = powerFor("reduction", "electrolysis");
+    const reactionW = Math.min(reactorW, ilmenite.secReaction_JPerKg * productMassFlowKgPerS);
+    balances.push(balance("ilmenite-reactor-energy", "Ilmenite feed heat and reduction", reactorW, 0, reactionW, reactorW - reactionW, 0));
+    const reactorLossW = powerFor("reduction", "parasitic");
+    balances.push(balance("ilmenite-aux-energy", "Reactor heat loss and gas recycle", reactorLossW, 0, 0, reactorLossW, 0));
+    balances.push(waterElectrolysisBalance());
+  } else if (params.site === "equatorial") {
     const meltInputW = powerFor("melt", "electrolysis");
     balances.push(balance("mre-melt-energy", "Regolith melt duty", meltInputW, 0, 0, 0, meltInputW));
 
@@ -90,15 +112,7 @@ export function energyLedger(
     const distillationW = powerFor("sublimation", "parasitic");
     balances.push(balance("polar-aux-energy", "Heater loss, vapor handling, and process allowance", distillationW, 0, 0, distillationW, 0));
 
-    if (waterElectrolysis !== null) {
-      const waterElectrolysisW = powerFor("electrolysis", "product");
-      const thermoneutralFraction = Math.min(
-        1,
-        PHYSICAL_CONSTANTS.VthermoneutralWater.value * params.etaFaradayEl / params.Vel
-      );
-      const chemicalW = waterElectrolysisW * thermoneutralFraction;
-      balances.push(balance("water-electrolysis-energy", "Water electrolysis", waterElectrolysisW, 0, chemicalW, waterElectrolysisW - chemicalW, 0));
-    }
+    if (waterElectrolysis !== null) balances.push(waterElectrolysisBalance());
   }
 
   balances.push(balance("storage-conditioning-energy", "Product conditioning", cryo.totalConditioningPowerW, 0, 0, 0, cryo.totalConditioningPowerW));

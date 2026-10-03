@@ -1,18 +1,46 @@
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 
 def _balance(node_id: str, label: str, mass_in: float, mass_out: float) -> dict[str, Any]:
     raw_residual = mass_in - mass_out
-    residual = 0 if abs(raw_residual) < 1e-9 else raw_residual
+    # Roundoff grows with the flow: a lean ilmenite plant mines thousands of
+    # tonnes a day.
+    tolerance = max(1e-9, 64 * sys.float_info.epsilon * max(abs(mass_in), abs(mass_out)))
+    residual = 0 if abs(raw_residual) < tolerance else raw_residual
     return {"id": node_id, "label": label, "massInKgPerDay": mass_in, "massOutKgPerDay": mass_out, "residualKgPerDay": residual}
 
 
-def material_ledger(params: dict[str, Any], production: dict[str, float]) -> dict[str, Any]:
+def material_ledger(
+    params: dict[str, Any], production: dict[str, float], ilmenite: dict[str, float] | None = None
+) -> dict[str, Any]:
     flows: list[dict[str, Any]] = []
     balances: list[dict[str, Any]] = []
-    if params["site"] == "equatorial":
+    if ilmenite is not None:
+        # Sizing and separation reject most of the soil; the reactor takes the
+        # concentrate's oxygen as water, and electrolysis returns its hydrogen.
+        flows.extend([
+            {"material": "regolith", "from": "terrain", "to": "beneficiation", "kgPerDay": ilmenite["soilKgPerDay"]},
+            {"material": "tailings", "from": "beneficiation", "to": "tailings", "kgPerDay": ilmenite["tailingsKgPerDay"]},
+            {"material": "ilmenite-concentrate", "from": "beneficiation", "to": "reduction", "kgPerDay": ilmenite["concentrateKgPerDay"]},
+            {"material": "hydrogen", "from": "electrolysis", "to": "reduction", "kgPerDay": ilmenite["hydrogenRecycleKgPerDay"]},
+            {"material": "water", "from": "reduction", "to": "electrolysis", "kgPerDay": ilmenite["waterKgPerDay"]},
+            {"material": "spent-solids", "from": "reduction", "to": "tailings", "kgPerDay": ilmenite["spentSolidsKgPerDay"]},
+            {"material": "oxygen", "from": "electrolysis", "to": "product-storage", "kgPerDay": production["o2KgPerDay"]},
+        ])
+        balances.extend([
+            _balance("ilmenite-beneficiation", "Soil sizing and ilmenite separation", ilmenite["soilKgPerDay"], ilmenite["concentrateKgPerDay"] + ilmenite["tailingsKgPerDay"]),
+            _balance(
+                "ilmenite-reduction",
+                "Hydrogen reduction of ilmenite",
+                ilmenite["concentrateKgPerDay"] + ilmenite["hydrogenRecycleKgPerDay"],
+                ilmenite["spentSolidsKgPerDay"] + ilmenite["waterKgPerDay"],
+            ),
+            _balance("water-electrolysis", "Water electrolysis", ilmenite["waterKgPerDay"], production["o2KgPerDay"] + ilmenite["hydrogenRecycleKgPerDay"]),
+        ])
+    elif params["site"] == "equatorial":
         flows.extend([
             {"material": "regolith", "from": "terrain", "to": "mre", "kgPerDay": production["regolithKgPerDay"]},
             {"material": "oxygen", "from": "mre", "to": "product-storage", "kgPerDay": production["o2KgPerDay"]},
