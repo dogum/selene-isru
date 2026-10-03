@@ -8,7 +8,8 @@ from ..constants import c
 def regolith_per_kg_product(params: dict[str, Any], x_o2_effective: float | None = None) -> float:
     if params["site"] == "equatorial":
         return 1 / (x_o2_effective if x_o2_effective is not None else params["xO2"] * params["fExtract"])
-    return 1 / params["chiIce"]
+    # Only the captured share of the mobilized ice becomes product water.
+    return 1 / (params["chiIce"] * params["etaIceCapture"])
 
 
 def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = None) -> dict[str, float]:

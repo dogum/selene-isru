@@ -48,10 +48,15 @@ export function materialLedger(params: SimParams, production: ProductionLedger):
       )
     );
   } else {
-    const dryTailingsKgPerDay = production.regolithKgPerDay - production.waterKgPerDay;
+    // Mobilized ice that escapes capture leaves as vapor; the rest of the
+    // feed is dry tailings.
+    const mobilizedWaterKgPerDay = production.regolithKgPerDay * params.chiIce;
+    const vaporLossKgPerDay = mobilizedWaterKgPerDay - production.waterKgPerDay;
+    const dryTailingsKgPerDay = production.regolithKgPerDay - mobilizedWaterKgPerDay;
     flows.push(
       { material: "icy-regolith", from: "terrain", to: "sublimation", kgPerDay: production.regolithKgPerDay },
       { material: "water", from: "sublimation", to: params.enableSabatier ? "electrolysis" : "product-storage", kgPerDay: production.waterKgPerDay },
+      { material: "water-vapor", from: "sublimation", to: "uncaptured-loss", kgPerDay: vaporLossKgPerDay },
       { material: "dry-tailings", from: "sublimation", to: "tailings", kgPerDay: dryTailingsKgPerDay }
     );
     balances.push(
@@ -59,7 +64,7 @@ export function materialLedger(params: SimParams, production: ProductionLedger):
         "polar-extraction",
         "Polar water extraction",
         production.regolithKgPerDay,
-        production.waterKgPerDay + dryTailingsKgPerDay
+        production.waterKgPerDay + vaporLossKgPerDay + dryTailingsKgPerDay
       )
     );
 

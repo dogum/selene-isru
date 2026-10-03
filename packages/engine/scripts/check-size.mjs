@@ -7,7 +7,11 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 // installed-capacity evaluator, and disclosed cable/haul spatial models. It
 // remains dependency-free; this narrow post-Milestone-5 increase still catches
 // accidental bulk.
-const limitBytes = 144 * 1024;
+// 144 -> 160 KiB (v0.4 model fidelity): the polar capture/heater/extractor
+// terms and per-stream storage provenance moved hard-coded property tables
+// into constants.json, so their values, units, bounds, and sources now ship
+// with the generated metadata. Still zero runtime dependencies.
+const limitBytes = 160 * 1024;
 
 function jsSize(dir) {
   let total = 0;

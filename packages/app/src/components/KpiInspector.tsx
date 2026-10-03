@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { useDialog } from "../lib/a11y";
 import { formatQtyText } from "../lib/format";
 import { useStore, type KpiKey } from "../state/store";
 
@@ -14,6 +16,8 @@ export function KpiInspector(): React.JSX.Element | null {
   const params = useStore((state) => state.params);
   const result = useStore((state) => state.result);
   const setUi = useStore((state) => state.setUi);
+  const dialog = useRef<HTMLElement | null>(null);
+  useDialog(dialog, { open: selected !== null, onClose: () => setUi({ selectedKpi: null }) });
 
   if (selected === null) {
     return null;
@@ -23,7 +27,7 @@ export function KpiInspector(): React.JSX.Element | null {
   const alarmCount = result.warnings.filter((warning) => warning.severity === "alarm").length;
 
   return (
-    <aside className="kpi-inspector" role="dialog" aria-label={`Why this number: ${explanation.title}`}>
+    <aside ref={dialog} tabIndex={-1} className="kpi-inspector" role="dialog" aria-label={`Why this number: ${explanation.title}`}>
       <div className="kpi-inspector-head">
         <div>
           <span className="reactor-eyebrow">WHY THIS NUMBER</span>

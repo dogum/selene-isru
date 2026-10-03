@@ -1,12 +1,20 @@
+import { beamEfficiency } from "@selene-isru/engine";
 import type { SimParams, SimResult } from "@selene-isru/engine";
 import { formatQtyText } from "./lib/format";
 
 export type TourReadout = "sec" | "power" | "missions" | "tank" | "production";
 
+/**
+ * A caption may read the live result. Narration must not contradict the
+ * engine: the polar scene shows rim solar towers, but whether they or a
+ * fission plant power the floor is the engine's mass trade, not the script's.
+ */
+export type TourCaption = string | ((result: SimResult, params: SimParams) => string);
+
 export interface TourBeat {
   cameraPose: string;
   paramPatch?: Partial<SimParams>;
-  caption: string;
+  caption: TourCaption;
   holdMs: number;
   readout: TourReadout;
 }
@@ -25,13 +33,25 @@ export const TOURS: TourDef[] = [
       {
         cameraPose: "overview",
         paramPatch: { site: "polar" },
-        caption: "PSR overview: rim power feeds the floor plant.",
+        caption: (result) =>
+          result.power.architecture === "solar"
+            ? "PSR overview: rim solar power feeds the floor plant."
+            : "PSR overview: here a fission plant is lighter than rim solar plus storage, so it powers the floor plant.",
         holdMs: 3000,
         readout: "sec"
       },
       {
         cameraPose: "towers",
-        caption: "Rim towers: solar collection and beamed delivery.",
+        caption: (result, params) => {
+          const delivered = Math.round(
+            beamEfficiency(params.w0Beam, params.thetaDivBeam, params.zCraterDrop, params.rReceiver, params.etaEmitter, params.etaPvReceiver) *
+              params.etaWire *
+              100
+          );
+          return result.power.architecture === "solar"
+            ? `Rim towers: solar collection, beamed to the floor at ${delivered}% delivery.`
+            : `Rim towers: the solar alternative. Beaming delivers only ${delivered}% of what they collect, so it loses the mass trade here.`;
+        },
         holdMs: 3000,
         readout: "power"
       },
@@ -70,7 +90,10 @@ export const TOURS: TourDef[] = [
       {
         cameraPose: "towers",
         paramPatch: { site: "polar", targetKgPerDay: 10000 },
-        caption: "Polar scale: rim power and floor demand are sized together.",
+        caption: (result) =>
+          result.power.architecture === "solar"
+            ? "Polar scale: rim solar and floor demand are sized together."
+            : "Polar scale: at this demand fission wins the mass trade over beamed rim solar.",
         holdMs: 3000,
         readout: "power"
       }
@@ -149,4 +172,9 @@ export function tourReadout(kind: TourReadout, result: SimResult): string {
     return `OUTPUT ${formatQtyText(result.production.targetKgPerDay, "kg/day")}`;
   }
   return `SEC ${formatQtyText(result.energy.secTotal_kWhPerKg, "kWh/kg")}`;
+}
+
+/** Resolve a beat's caption against the live engine result. */
+export function captionText(caption: TourCaption, result: SimResult, params: SimParams): string {
+  return typeof caption === "string" ? caption : caption(result, params);
 }

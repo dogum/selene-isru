@@ -25,7 +25,7 @@ import {
   siteLayoutSummary
 } from "../../site-design/editor";
 import { customSiteComplexity } from "../../site-design/performance";
-import { useStore } from "../../state/store";
+import { MAX_STUDY_SCENARIOS, useStore } from "../../state/store";
 
 const CATEGORY_ORDER = [
   "Excavation",
@@ -101,6 +101,7 @@ export function CustomSiteWorkspace(): React.JSX.Element {
   const redoCustomEdit = useStore((state) => state.redoCustomEdit);
   const importCustomDesign = useStore((state) => state.importCustomDesign);
   const saveCurrentScenario = useStore((state) => state.saveCurrentScenario);
+  const studyLibraryFull = useStore((state) => state.scenarioLibrary.length >= MAX_STUDY_SCENARIOS);
   const flyTo = useStore((state) => state.flyTo);
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const [importPreview, setImportPreview] =
@@ -1440,8 +1441,14 @@ export function CustomSiteWorkspace(): React.JSX.Element {
               </section>
             )}
             <div className="custom-project-actions">
-              <button onClick={() => saveCurrentScenario(design.name)}>
-                SAVE TO STUDY
+              <button
+                disabled={studyLibraryFull}
+                title={studyLibraryFull
+                  ? `The Trade Study library holds ${MAX_STUDY_SCENARIOS} cases. Delete one there to save this design.`
+                  : undefined}
+                onClick={() => saveCurrentScenario(design.name)}
+              >
+                {studyLibraryFull ? "STUDY LIBRARY FULL" : "SAVE TO STUDY"}
               </button>
               <button onClick={() => downloadText(
                 `${design.name.replaceAll(/[^a-z0-9]+/gi, "-").toLowerCase() || "selene-custom-site"}.json`,

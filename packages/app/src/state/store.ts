@@ -131,6 +131,18 @@ const SEC_HISTORY_LENGTH = 60;
 const SCENARIO_STORAGE_KEY = "selene-isru.study-scenarios.v2";
 export const MAX_STUDY_SCENARIOS = 8;
 export const MAX_PINNED_SCENARIOS = 4;
+
+/** What an import actually did, so the UI never reports more than landed. */
+export interface ScenarioImportSummary {
+  /** New cases added to the library. */
+  added: number;
+  /** Existing cases overwritten because an incoming case had the same id. */
+  replaced: number;
+  /** Incoming cases dropped because the library was full. */
+  skipped: number;
+  /** Incoming pinned cases left unpinned by the pin limit. */
+  unpinned: number;
+}
 let scenarioNonce = 0;
 
 function customEditorSession(
@@ -237,7 +249,7 @@ interface Store {
   duplicateScenario: (id: string) => void;
   deleteScenario: (id: string) => void;
   toggleScenarioPin: (id: string) => void;
-  importScenarios: (scenarios: StudyScenario[]) => void;
+  importScenarios: (scenarios: StudyScenario[]) => ScenarioImportSummary;
   importCustomDesign: (design: SiteDesignDocument) => void;
   startTour: (id: string) => void;
   stopTour: () => void;
@@ -1487,9 +1499,16 @@ export const useStore = create<Store>((set, get) => {
         .map(normalizeScenario)
         .filter((scenario): scenario is StudyScenario => scenario !== null);
       const byId = new Map(get().scenarioLibrary.map((scenario) => [scenario.id, scenario]));
+      const summary: ScenarioImportSummary = { added: 0, replaced: 0, skipped: 0, unpinned: 0 };
       for (const scenario of incoming) {
         if (byId.size >= MAX_STUDY_SCENARIOS && !byId.has(scenario.id)) {
-          break;
+          summary.skipped += 1;
+          continue;
+        }
+        if (byId.has(scenario.id)) {
+          summary.replaced += 1;
+        } else {
+          summary.added += 1;
         }
         byId.set(scenario.id, {
           ...scenario,
@@ -1507,10 +1526,15 @@ export const useStore = create<Store>((set, get) => {
           return scenario;
         }
         pinned += 1;
-        return pinned <= MAX_PINNED_SCENARIOS ? scenario : { ...scenario, pinned: false };
+        if (pinned <= MAX_PINNED_SCENARIOS) {
+          return scenario;
+        }
+        summary.unpinned += 1;
+        return { ...scenario, pinned: false };
       });
       persistScenarioLibrary(normalized);
       set({ scenarioLibrary: normalized });
+      return summary;
     },
 
     importCustomDesign: (design) => {

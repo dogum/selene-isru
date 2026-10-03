@@ -7,6 +7,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   previewStudyExport,
+  reportScenarios,
   scenariosCsv,
   studyExport,
   studyScenarioResult
@@ -162,5 +163,24 @@ describe("study export migration and custom design support", () => {
       params: design.params,
       design
     })).toEqual(evaluation.baseResult);
+  });
+});
+
+describe("engineering report export", () => {
+  it("exports the reported live case and the pinned comparison, not the whole library", () => {
+    const library: StudyScenario[] = [
+      { id: "pinned-a", name: "Pinned A", kind: "authored", params: { ...DEFAULTS }, createdAt: 1, updatedAt: 1, pinned: true },
+      { id: "loose-b", name: "Loose B", kind: "authored", params: { ...DEFAULTS }, createdAt: 1, updatedAt: 1, pinned: false }
+    ];
+    const live = { ...DEFAULTS, targetKgPerDay: 2345 };
+    const cases = reportScenarios("Live case", live, library, 1_700_000_000_000);
+    expect(cases.map((scenario) => scenario.name)).toEqual(["Live case", "Pinned A"]);
+    expect(cases[0]).toMatchObject({ kind: "authored", pinned: false, params: { targetKgPerDay: 2345 } });
+    // The live case gets its own id so re-importing never overwrites a library case.
+    expect(library.some((scenario) => scenario.id === cases[0]!.id)).toBe(false);
+    // Round-trips through the existing importable study format.
+    expect(previewStudyExport(studyExport(cases)).scenarios.map((scenario) => scenario.name)).toEqual(["Live case", "Pinned A"]);
+    expect(scenariosCsv(cases).split("\n")).toHaveLength(3);
+    expect(reportScenarios("  ", live, [], 1)[0]!.name).toBe("Untitled lunar ISRU case");
   });
 });

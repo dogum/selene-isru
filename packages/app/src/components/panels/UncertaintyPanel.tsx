@@ -1,8 +1,15 @@
 import { sampleUncertainty, simulate } from "@selene-isru/engine";
 import type { SimParams, UncertaintySpec } from "@selene-isru/engine";
 import { useMemo, useState } from "react";
+import { bandsCsv, sensitivityCsv } from "../../analysis/panelExports";
+import { oneAtATimeSensitivity } from "../../analysis/sensitivity";
+import { ExportButton } from "./ExportButton";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
+
+/** Fixed so the bands are reproducible; the CSV export records both. */
+const BAND_SAMPLES = 256;
+const BAND_SEED = 2026;
 
 type SensitivityMetric = "mass-throughput" | "sec" | "missions" | "mass";
 
@@ -44,7 +51,11 @@ function metricValue(result: ReturnType<typeof simulate>, metric: SensitivityMet
 
 export function UncertaintyPanel(): React.JSX.Element {
   const params = useStore((s) => s.params);
-  const available = OPTIONS.filter((option) => option.site === undefined || option.site === params.site);
+  const available = OPTIONS.filter((option) =>
+    (option.site === undefined || option.site === params.site) &&
+    // Superseded by the oxide-composition model while it is on.
+    !(option.key === "xO2" && params.oxideModel)
+  );
   const defaultKeys: Array<keyof SimParams> = params.site === "polar"
     ? ["targetKgPerDay", "chiIce", "eMining"]
     : ["targetKgPerDay", "etaCurrent", "Vcell"];
@@ -61,36 +72,18 @@ export function UncertaintyPanel(): React.JSX.Element {
   [available, evidenceDefaults, keys, sigma]);
 
   const bands = useMemo(
-    () => sampleUncertainty(params, spec, { n: 256, seed: 2026 }),
+    () => sampleUncertainty(params, spec, { n: BAND_SAMPLES, seed: BAND_SEED }),
     [params, spec]
   );
 
-  const sensitivity = useMemo(() => {
-    const base = simulate(params);
-    const baseValue = Math.max(1e-12, Math.abs(metricValue(base, metric)));
-    return spec
-      .map((item) => {
-        const value = params[item.key];
-        if (typeof value !== "number") {
-          return null;
-        }
-        const low = simulate({ ...params, [item.key]: value * (1 - item.rel) });
-        const high = simulate({ ...params, [item.key]: value * (1 + item.rel) });
-        const lowDelta = ((metricValue(low, metric) - metricValue(base, metric)) / baseValue) * 100;
-        const highDelta = ((metricValue(high, metric) - metricValue(base, metric)) / baseValue) * 100;
-        const option = available.find((candidate) => candidate.key === item.key);
-        return {
-          key: item.key,
-          label: option?.label ?? String(item.key),
-          rel: item.rel,
-          low: lowDelta,
-          high: highDelta,
-          swing: Math.abs(highDelta - lowDelta)
-        };
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
-      .sort((a, b) => b.swing - a.swing);
-  }, [available, metric, params, spec]);
+  const sensitivity = useMemo(
+    () =>
+      oneAtATimeSensitivity(params, spec, (result) => metricValue(result, metric)).map((row) => ({
+        ...row,
+        label: available.find((candidate) => candidate.key === row.key)?.label ?? String(row.key)
+      })),
+    [available, metric, params, spec]
+  );
 
   const maxDelta = Math.max(1, ...sensitivity.flatMap((row) => [Math.abs(row.low), Math.abs(row.high)]));
   const massEquivalent = bands.plantMassThroughputDays;
@@ -102,7 +95,7 @@ export function UncertaintyPanel(): React.JSX.Element {
     <div className="panel-section uncertainty-section">
       <div className="panel-header">
         ILLUSTRATIVE SENSITIVITY
-        <span className="num">256 DETERMINISTIC RUNS</span>
+        <span className="num">{BAND_SAMPLES} DETERMINISTIC RUNS</span>
       </div>
       <div className="uncertainty-mode-row">
         <button type="button" className={evidenceDefaults ? "active" : ""} onClick={() => setEvidenceDefaults(true)}>
@@ -166,7 +159,17 @@ export function UncertaintyPanel(): React.JSX.Element {
       <div className="sensitivity-ranking">
         {sensitivity.map((row, index) => (
           <div key={row.key}>
-            <span>{index + 1}. {row.label}</span>
+            <span>
+              {index + 1}. {row.label}
+              {row.capped && (
+                <small
+                  className="sensitivity-capped"
+                  title={`Requested ±${(row.rel * 100).toFixed(0)}% reaches past the engine range; simulated ${row.lowInput.toPrecision(3)} to ${row.highInput.toPrecision(3)}.`}
+                >
+                  {" "}· CAPPED
+                </small>
+              )}
+            </span>
             <div className="sensitivity-track">
               <i className="low" style={{ width: `${(Math.abs(row.low) / maxDelta) * 50}%` }} />
               <b />
@@ -175,6 +178,10 @@ export function UncertaintyPanel(): React.JSX.Element {
             <strong>{row.low.toFixed(1)}% / {row.high >= 0 ? "+" : ""}{row.high.toFixed(1)}%</strong>
           </div>
         ))}
+      </div>
+      <div className="panel-exports">
+        <ExportButton label="RANKING CSV" what="sensitivity-ranking" build={() => sensitivityCsv(sensitivity, metric)} />
+        <ExportButton label="BANDS CSV" what="uncertainty-bands" build={() => bandsCsv(bands, spec, BAND_SAMPLES, BAND_SEED)} />
       </div>
       <p className="panel-caption">
         Deterministic sampled bands combine the selected input spreads. They are illustrative model sensitivity, not calibrated uncertainty or empirical confidence.

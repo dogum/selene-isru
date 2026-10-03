@@ -86,6 +86,21 @@ export const GROUPS: GroupDef[] = [
   }
 ];
 
+/**
+ * Inputs that only exist at one site even though their engine group is shared
+ * (the power group serves both). Shown at the other site they cannot change
+ * anything, so the rail leaves them out there.
+ */
+export const SITE_ONLY_PARAMS: Partial<Record<keyof SimParams, SiteMode>> = {
+  polarIlluminationFraction: "polar",
+  polarLongestShadowHours: "polar",
+  thetaDivBeam: "polar",
+  zCraterDrop: "polar",
+  rReceiver: "polar",
+  etaEmitter: "polar",
+  etaPvReceiver: "polar"
+};
+
 /** Params handled outside the rail (top bar / group gates). */
 const EXCLUDED: ReadonlySet<string> = new Set(["site", "enableSabatier"]);
 
@@ -137,6 +152,72 @@ export function paramsForGroup(engineGroup: string): NumericParamDef[] {
     });
   }
   return defs;
+}
+
+/** Conditioning-energy input for each storage stream the engine can carry. */
+export const CONDITIONING_PARAM: Record<string, keyof SimParams> = {
+  lox: "secCondLox",
+  "water-ice": "secCondWaterIce",
+  "liquid-water": "secCondLiquidWater",
+  lh2: "secCondLh2",
+  lch4: "secCondLch4",
+  "co2-feed": "secCondCo2"
+};
+
+const CONDITIONING_KEYS = new Set<string>(Object.values(CONDITIONING_PARAM));
+
+/** The rail state that decides which inputs a group shows. */
+export type RailVisibilityParams = Pick<
+  SimParams,
+  "site" | "oxideModel" | "storageStream" | "cryoControlMode" | "polarProfileMode"
+>;
+
+/**
+ * Inputs a rail group shows for the current configuration. Inputs that cannot
+ * apply are left out rather than shown inert: the lumped O2 fraction while the
+ * oxide-composition model is on, the other site's power inputs, scalar polar
+ * illumination while a time-resolved profile drives it, and the custom-cryogen
+ * properties unless that stream is selected.
+ */
+export function railParamsForGroup(
+  group: GroupDef,
+  params: RailVisibilityParams,
+  /** streams the engine is storing (result.cryo.inventories); conditioning inputs for others are hidden */
+  activeStreams: ReadonlySet<string> = new Set(Object.keys(CONDITIONING_PARAM))
+): NumericParamDef[] {
+  const all = paramsForGroup(group.engineGroup).filter((def) =>
+    !(params.oxideModel && def.key === "xO2") &&
+    (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === params.site)
+  );
+  if (group.id === "power" && params.site === "polar" && params.polarProfileMode === "profile") {
+    return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
+  }
+  if (group.id !== "cryo") {
+    return all;
+  }
+  const customOnly = new Set(["rhoCryo", "customLatentHeatJPerKg", "Ttank", "secLiquefaction"]);
+  return all.filter((def) => {
+    if (customOnly.has(String(def.key)) && params.storageStream !== "custom") {
+      return false;
+    }
+    if (CONDITIONING_KEYS.has(String(def.key)) && ![...activeStreams].some((stream) => CONDITIONING_PARAM[stream] === def.key)) {
+      return false;
+    }
+    return def.key !== "coolerCapacityW" || params.cryoControlMode === "capacity-limited";
+  });
+}
+
+/** Every whitespace-separated term must appear in the plain name, code name, group, or unit. */
+export function matchesParamQuery(def: NumericParamDef, groupLabel: string, query: string): boolean {
+  const terms = query.toLowerCase().split(/\s+/).filter((term) => term.length > 0);
+  if (terms.length === 0) return true;
+  const haystack = `${def.label} ${String(def.key)} ${groupLabel} ${def.unit}`.toLowerCase();
+  return terms.every((term) => haystack.includes(term));
+}
+
+/** True when a numeric input differs from its default beyond float noise. */
+export function isChangedFromDefault(value: number, defaultValue: number): boolean {
+  return Math.abs(value - defaultValue) > 1e-12 * Math.max(1, Math.abs(defaultValue));
 }
 
 export function groupsForSite(site: SiteMode): GroupDef[] {

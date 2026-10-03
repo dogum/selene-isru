@@ -63,6 +63,28 @@
       "modelSimplification": "Documentation anchor only; not applied as the default because it is site-specific"
     },
     {
+      "id": "connecting-ridge-best-site",
+      "kind": "documentation-only",
+      "quantity": "best-site illumination and longest darkness on the Shackleton-de Gerlache ridge",
+      "expected": { "illuminationFraction2m": 0.9227, "illuminationFraction10m": 0.9565, "longestDarknessDaysMax": 5 },
+      "source": "Glaser et al. 2014, Icarus 243, 78-90 (LOLA 20 m/pixel DTM, 19-year study)",
+      "sourceUrl": "https://elib.dlr.de/94240",
+      "sourceLocator": "Connecting Ridge results: 92.27% at 2 m, 95.65% at 10 m; longest continuous darkness typically 3-5 days",
+      "modelSimplification": "Cross-check only: the 117 h default longest shadow sits inside the 3-5 day range, while the 0.71 default fraction is deliberately more conservative than the best site"
+    },
+    {
+      "id": "kleinhenz-paz-2020-polar-water",
+      "kind": "calibration",
+      "quantity": "polar water-extractor mass and heater power for the NASA baseline case",
+      "inputs": { "targetKgPerDay": 66.7, "chiIce": 0.05, "etaIceCapture": 0.75 },
+      "expected": { "extractorMassKg": 330, "heaterPowerKW": 16.7 },
+      "relativeTolerance": 0.1,
+      "source": "Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water, AIAA 2020-4042",
+      "sourceUrl": "https://ntrs.nasa.gov/api/citations/20205007966/downloads/PolarWaterISRUstudy_Kleinhenz_final.pdf",
+      "sourceLocator": "Table 3 (15 t water in 225 days, 5 wt%, 75% extraction efficiency); Fig. 8 water-extractor mass (~330 kg, read from log scale, incl. 20% growth + 15% structure margins); Sec. IV.B water extractor ~20 kW incl. 20% power margin, i.e. ~16.7 kW",
+      "modelSimplification": "Calibration anchor, not independent validation: the kIceExtractorMass and etaSubHeater defaults were derived from this case, so agreement confirms the derivation. Linear scaling with regolith throughput is conservative at larger plants (the study's Fig. 9A is sub-linear)."
+    },
+    {
       "id": "mli-layer-density-units",
       "kind": "open",
       "quantity": "MLI layer-density coefficient/unit pairing",

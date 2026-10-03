@@ -139,6 +139,11 @@ is off or a threshold has not been crossed.
 
 ## Remaining high-value validation work
 
+> **v0.4 note:** item 3 is partly addressed. Capture efficiency, heater
+> efficiency, and a water-extractor mass now replace the lower-bound polar chain;
+> purification, heterogeneous assay, and transient bed heating remain open. See
+> [`model-fidelity-v04.md`](model-fidelity-v04.md).
+
 1. Reconstruct and benchmark the MLI coefficient/unit pair against accepted
    product-specific heat-flux cases.
 2. Replace continuous tank mass/geometry with stream-specific pressure vessel,

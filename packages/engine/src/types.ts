@@ -277,6 +277,18 @@ export interface SimParams {
   eta2ndLaw: number;
   /** [kWh/kg] */
   secLiquefaction: number;
+  /** per-stream conditioning energy [kWh/kg] */
+  secCondLox: number;
+  /** [kWh/kg] */
+  secCondWaterIce: number;
+  /** [kWh/kg] */
+  secCondLiquidWater: number;
+  /** [kWh/kg] */
+  secCondLh2: number;
+  /** [kWh/kg] */
+  secCondLch4: number;
+  /** [kWh/kg] */
+  secCondCo2: number;
   /** [kg/(kg/day)] */
   kCryoMass: number;
   polarIlluminationFraction: number;
@@ -363,6 +375,12 @@ export interface SimParams {
   /** [m^2] */
   areaHabRoof: number;
   fDistill: number;
+  /** captured / mobilized ice [1] */
+  etaIceCapture: number;
+  /** heat delivered to feed / heater input [1] */
+  etaSubHeater: number;
+  /** [kg/(kg-regolith/day)] */
+  kIceExtractorMass: number;
   /** [K] */
   castDeltaT: number;
 }
@@ -444,8 +462,12 @@ export interface SimResult {
     modeledLossPowerW: number;
   };
   thermal: {
-    /** [J/kg H2O] */
+    /** heat delivered to the feed per kg of captured water [J/kg H2O] */
     secSub_JPerKg: number | null;
+    /** heater input lost before reaching the feed, per kg of captured water [J/kg H2O] */
+    heaterLoss_JPerKg: number | null;
+    /** polar water-extractor hardware mass [kg] */
+    extractorMassKg: number;
     /** [m^2/s] */
     knudsenD_M2PerS: number;
     /** [W/(m*K)] */

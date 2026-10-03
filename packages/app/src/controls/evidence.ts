@@ -5,7 +5,6 @@ export type EvidenceMaturity =
   | "LITERATURE-DERIVED"
   | "SIMPLIFIED CORRELATION"
   | "DESIGN ASSUMPTION";
-export type ParamRole = "CAUSAL INPUT" | "CONSTRAINT DIAGNOSTIC" | "REFERENCE ASSUMPTION";
 
 export interface ParamEvidence {
   maturity: EvidenceMaturity;
@@ -15,8 +14,6 @@ export interface ParamEvidence {
   validity: string;
   applicability: string;
   defaultUncertainty: number;
-  role: ParamRole;
-  affects: string;
 }
 
 interface EvidenceInput {
@@ -32,6 +29,11 @@ const REPO_CONSTANTS =
   "https://github.com/dogum/selene-isru/blob/main/constants/constants.json";
 
 const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
+  {
+    match: /Kleinhenz/i,
+    url: "https://ntrs.nasa.gov/citations/20205007966",
+    section: "NASA · Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water (AIAA 2020-4042)"
+  },
   {
     match: /CODATA|standard gravity|molar mass/i,
     url: "https://physics.nist.gov/cuu/Constants/",
@@ -175,6 +177,50 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.2
   },
+  etaIceCapture: {
+    rangeRationale: "From heavy capture loss (40%) to ideal capture; the NASA polar-water case study assumes 75%.",
+    validity: "Lumps sublimation during excavation, line losses, and cold-trap inefficiency into one mass fraction. Uncaptured ice still costs its heating and sublimation energy.",
+    applicability: "Polar site · ice extraction yield, regolith throughput, and extractor size",
+    defaultUncertainty: 0.15
+  },
+  etaSubHeater: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "Poorly coupled heaters (15%) to an ideal heater with every joule reaching the feed (100%).",
+    validity: "Default 0.4 is derived: this model's thermal minimum for the NASA baseline (67 kg/day water, 5 wt%, 75% capture) divided by the study's ~16.7 kW water-extractor power before margin. It calibrates the energy, not a specific heater design.",
+    applicability: "Polar site · sublimation heater input and parasitic heat loss",
+    defaultUncertainty: 0.25
+  },
+  kIceExtractorMass: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "Light auger-dryer scaling to heavy batch-oven scaling, per kg of regolith processed per day.",
+    validity: "Default 0.18 is derived from the NASA baseline water extractor (~330 kg incl. margins at ~1.8 t/day regolith). Scaling is linear in regolith throughput, which is conservative for large plants; the study's own trade is sub-linear.",
+    applicability: "Polar site · landed extraction-plant mass",
+    defaultUncertainty: 0.3
+  },
+  // The blade-cutting model is a feasibility diagnostic by design (v0.4): at
+  // defaults its work is ~34 J/kg of regolith against the 120 kJ/kg fleet
+  // figure, and that fleet figure is RASSOR-class, whose counter-rotating
+  // drums cancel the reaction force a blade would need traction to resist.
+  ...Object.fromEntries(
+    (["c", "Nc", "Nq", "Ngamma", "zDepth", "wBlade", "dBlade", "vCut", "etaDrive"] as const).map((key) => [
+      key,
+      {
+        validity:
+          "Blade-cutting force (Terzaghi/McKyes) for the excavation-drive diagnostics. Cutting work is about 0.03% of the fleet-level mining energy at defaults, so excavation energy uses the RASSOR-class fleet figure (eMining) instead; a blade excavator's traction limit in lunar gravity is not applied because RASSOR-class drums cancel the reaction force."
+      }
+    ])
+  ),
+  ...Object.fromEntries(
+    (["secCondLox", "secCondWaterIce", "secCondLiquidWater", "secCondLh2", "secCondLch4", "secCondCo2"] as const).map((key) => [
+      key,
+      {
+        rangeRationale: "Design sweep around the v0.3 conditioning estimate, which carries no published per-stream source.",
+        validity: "Lumped energy to bring the product to its storage state (liquefaction or chilling). Not derived from cryocooler efficiency; treat as an assumption to vary.",
+        applicability: "Shown only while the engine stores this stream · product conditioning energy",
+        defaultUncertainty: 0.3
+      }
+    ])
+  ),
   thetaDivBeam: {
     rangeRationale: "Narrow-to-diffuse beam divergence envelope for crater-floor delivery trades.",
     validity: "Geometric beam spread only; pointing jitter and atmospheric effects are absent.",
@@ -223,32 +269,12 @@ function applicabilityFor(group: string): string {
   return labels[group] ?? `Model group · ${group}`;
 }
 
-const DIAGNOSTIC_KEYS = new Set<keyof SimParams>([
-  "c", "Nc", "Nq", "Ngamma", "zDepth", "wBlade", "dBlade", "vCut", "etaDrive",
-  "kc", "kr", "rPore", "Amu", "Bmu", "T0vft", "rhoSlag", "hMelt", "thetaDrain",
-  "Tsabatier", "castDeltaT"
-]);
-
-function roleFor(key: keyof SimParams): { role: ParamRole; affects: string } {
-  if (DIAGNOSTIC_KEYS.has(key)) {
-    return {
-      role: "CONSTRAINT DIAGNOSTIC",
-      affects: "Updates a derived operating check or warning; it does not currently resize every headline KPI."
-    };
-  }
-  return {
-    role: "CAUSAL INPUT",
-    affects: "Propagates through one or more energy, mass, production, storage, power, or logistics outputs."
-  };
-}
-
 export function evidenceForParam(input: EvidenceInput): ParamEvidence {
   const link = SOURCE_LINKS.find((entry) => entry.match.test(input.source)) ?? {
     url: REPO_CONSTANTS,
     section: "SELENE model constants and cited source label"
   };
   const maturity = maturityFor(input.source);
-  const dependency = roleFor(input.key);
   const base: ParamEvidence = {
     maturity,
     sourceUrl: link.url,
@@ -259,8 +285,7 @@ export function evidenceForParam(input: EvidenceInput): ParamEvidence {
         : `Bounded literature/model sweep from ${input.min} to ${input.max} ${input.unit === "1" ? "" : input.unit}.`,
     validity: "Use inside the supported range and with the subsystem assumptions shown in the selected-asset inspector.",
     applicability: applicabilityFor(input.group),
-    defaultUncertainty: maturity === "REFERENCE DATA" ? 0.005 : maturity === "DESIGN ASSUMPTION" ? 0.15 : 0.1,
-    ...dependency
+    defaultUncertainty: maturity === "REFERENCE DATA" ? 0.005 : maturity === "DESIGN ASSUMPTION" ? 0.15 : 0.1
   };
   return { ...base, ...KEY_OVERRIDES[input.key] };
 }

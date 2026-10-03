@@ -4,11 +4,14 @@
   --bg-panel: #11151d;
   --bg-inset: #0d1117;
   --line: #232a36;
+  /* emphasized rule for popovers and causal-trace nodes */
+  --line-hi: #3a4556;
 
   /* text */
   --text-hi: #e8ecf1;
   --text-mid: #9aa4b2;
-  --text-low: #5c6675;
+  /* 5.0:1 on --bg-panel (WCAG AA for text); was #5c6675 at 3.1:1 */
+  --text-low: #7d8796;
 
   /* domains */
   --regolith: #8e8a84;
@@ -31,6 +34,7 @@
   --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* scale */
+  --fs-10: 10px;
   --fs-11: 11px;
   --fs-12: 12.5px;
   --fs-14: 14px;

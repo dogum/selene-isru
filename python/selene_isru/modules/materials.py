@@ -20,13 +20,18 @@ def material_ledger(params: dict[str, Any], production: dict[str, float]) -> dic
         ])
         balances.append(_balance("mre-separation", "MRE aggregate material split", production["regolithKgPerDay"], production["o2KgPerDay"] + production["slagKgPerDay"]))
     else:
-        dry_tailings = production["regolithKgPerDay"] - production["waterKgPerDay"]
+        mobilized_water = production["regolithKgPerDay"] * params["chiIce"]
+        vapor_loss = mobilized_water - production["waterKgPerDay"]
+        dry_tailings = production["regolithKgPerDay"] - mobilized_water
         flows.extend([
             {"material": "icy-regolith", "from": "terrain", "to": "sublimation", "kgPerDay": production["regolithKgPerDay"]},
             {"material": "water", "from": "sublimation", "to": "electrolysis" if params["enableSabatier"] else "product-storage", "kgPerDay": production["waterKgPerDay"]},
+            {"material": "water-vapor", "from": "sublimation", "to": "uncaptured-loss", "kgPerDay": vapor_loss},
             {"material": "dry-tailings", "from": "sublimation", "to": "tailings", "kgPerDay": dry_tailings},
         ])
-        balances.append(_balance("polar-extraction", "Polar water extraction", production["regolithKgPerDay"], production["waterKgPerDay"] + dry_tailings))
+        balances.append(
+            _balance("polar-extraction", "Polar water extraction", production["regolithKgPerDay"], production["waterKgPerDay"] + vapor_loss + dry_tailings)
+        )
         if params["enableSabatier"]:
             h2_consumed = production["grossH2KgPerDay"] - production["h2KgPerDay"]
             flows.extend([

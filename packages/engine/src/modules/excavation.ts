@@ -13,7 +13,8 @@ export function regolithPerKgProduct(params: SimParams, xO2Effective?: number): 
   if (params.site === "equatorial") {
     return 1 / (xO2Effective ?? params.xO2 * params.fExtract);
   }
-  return 1 / params.chiIce;
+  // Only the captured share of the mobilized ice becomes product water.
+  return 1 / (params.chiIce * params.etaIceCapture);
 }
 
 export function simulateExcavation(params: SimParams, xO2Effective?: number): ExcavationOutput {

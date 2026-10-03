@@ -48,7 +48,7 @@ def energy_ledger(
         sublimation_input = power_for("sublimation", "product")
         balances.append(_balance("sublimation-energy", "Polar heating and sublimation", sublimation_input, 0, 0, 0, sublimation_input))
         distillation = power_for("sublimation", "parasitic")
-        balances.append(_balance("polar-aux-energy", "Vapor handling and process allowance", distillation, 0, 0, distillation, 0))
+        balances.append(_balance("polar-aux-energy", "Heater loss, vapor handling, and process allowance", distillation, 0, 0, distillation, 0))
         if sabatier is not None:
             electrolysis_input = power_for("electrolysis", "product")
             fraction = min(1, c("VthermoneutralWater") * params["etaFaradayEl"] / params["Vel"])

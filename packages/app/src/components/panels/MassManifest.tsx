@@ -3,7 +3,9 @@ import { useSize } from "../../lib/hooks";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
 import { Qty } from "../Qty";
+import { manifestCsv } from "../../analysis/panelExports";
 import { AssayChart } from "./AssayChart";
+import { ExportButton } from "./ExportButton";
 
 const MAX_FAIRINGS = 8;
 
@@ -174,6 +176,10 @@ export function MassManifest(): React.JSX.Element {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="panel-exports">
+        <ExportButton label="MANIFEST CSV" what="mass-manifest" build={() => manifestCsv(result)} />
       </div>
 
       <p className="panel-caption">

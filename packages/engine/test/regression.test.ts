@@ -56,6 +56,18 @@ describe("regression anchors", () => {
     expect(sabatierKp(723)).toBeGreaterThan(0);
   });
 
+  test("polar chain charges capture loss, heater loss, and extractor mass (v0.4)", () => {
+    // v0.4 deliberately moved these from 2.814 kWh/kg and 19.5 t: the polar
+    // chain had no capture loss, a lower-bound heater, and no extractor mass.
+    const polar = simulate({ site: "polar" });
+    expect(polar.production.regolithKgPerDay).toBeCloseTo(1000 / (0.05 * 0.75), 9);
+    expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
+    expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
+    expectRel(polar.energy.secTotal_kWhPerKg, 7.24, 0.01);
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 29.85, 0.01);
+    expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
+  });
+
   test("keeps the v1 aggregate electrolysis path reachable", () => {
     const fallback = simulate({ oxideModel: false });
     const direct = oxideModelYield({ ...DEFAULTS, oxideModel: false });

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from selene_isru import sample_uncertainty, simulate, simulate_timeseries
 from selene_isru.constants import DEFAULTS
 from selene_isru.modules.construction import shield_full_balance_m, simulate_construction
@@ -44,6 +46,17 @@ def test_regression_anchors() -> None:
     assert 95_000 <= payload_per_mission_kg(DEFAULTS) <= 107_000
     assert 1.8 <= result["construction"]["padsPerYear"] <= 2.2
     assert sabatier_kp(523) > sabatier_kp(723) > 0
+
+
+def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
+    # v0.4 deliberately moved these from 2.814 kWh/kg and 19.5 t.
+    polar = simulate({"site": "polar"})
+    assert polar["production"]["regolithKgPerDay"] == pytest.approx(1000 / (0.05 * 0.75), rel=1e-12)
+    assert_rel(polar["thermal"]["extractorMassKg"], 4800, 1e-9)
+    assert_rel(polar["thermal"]["secSub_JPerKg"] / J_PER_KWH, 1.78 / 0.75, 0.01)
+    assert_rel(polar["energy"]["secTotal_kWhPerKg"], 7.24, 0.01)
+    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 29.85, 0.01)
+    assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:

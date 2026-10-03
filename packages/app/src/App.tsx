@@ -13,6 +13,7 @@ import { SlideOver, ViewTabs } from "./components/SlideOver";
 import { TimelineStrip } from "./components/TimelineStrip";
 import { TopBar } from "./components/TopBar";
 import { TourOverlay } from "./components/TourOverlay";
+import { IntroCard } from "./components/IntroCard";
 import { WarningsDock } from "./components/WarningsDock";
 import { MobileOverlay } from "./components/mobile/MobileShell";
 import { useIsMobile } from "./lib/hooks";
@@ -45,6 +46,7 @@ export default function App(): React.JSX.Element {
               <TimelineStrip />
               <LearningToolbar />
               <TourOverlay />
+              <IntroCard />
               {!isMobile && (
                 <>
                   <ViewTabs />

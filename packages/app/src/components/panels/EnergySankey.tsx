@@ -4,7 +4,9 @@ import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
+import { flowsCsv } from "../../analysis/panelExports";
 import { Qty } from "../Qty";
+import { ExportButton } from "./ExportButton";
 
 /** fixed node order — no relayout jumps on param change (§4.1) */
 const NODE_ORDER = ["mine", "melt", "sublimation", "electrolysis", "parasitic", "cryo", "product"];
@@ -18,6 +20,19 @@ const NODE_COLOR: Record<string, string> = {
   cryo: "var(--cryo)",
   product: "var(--text-hi)"
 };
+
+/** reader-facing stage names; ids stay the engine's */
+const NODE_NAME: Record<string, string> = {
+  mine: "MINING",
+  melt: "MELTING",
+  electrolysis: "ELECTROLYSIS",
+  parasitic: "PARASITIC LOSS",
+  sublimation: "SUBLIMATION",
+  cryo: "CRYO STORAGE",
+  product: "PRODUCT"
+};
+
+const nodeName = (id: string): string => NODE_NAME[id] ?? id.toUpperCase();
 
 interface NodeDatum {
   id: string;
@@ -39,6 +54,7 @@ interface Tooltip {
 export function EnergySankey({ vertical = false }: { vertical?: boolean }): React.JSX.Element {
   const result = useStore((s) => s.result);
   const history = useStore((s) => s.secHistory);
+  const nameMode = useStore((s) => s.ui.parameterNames);
   const [ref, size] = useSize<HTMLDivElement>();
   const [tip, setTip] = useState<Tooltip | null>(null);
 
@@ -113,7 +129,7 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
     <div className="panel-section">
       <div className="sankey-head">
         <div>
-          <div className="panel-header">SEC TOTAL</div>
+          <div className="panel-header">{nameMode === "code" ? "SEC TOTAL" : "ENERGY PER KG OF PRODUCT"}</div>
           <div className="sankey-hero">
             <Qty value={total} unit="kWh/kg" sig={4} animate />
           </div>
@@ -131,7 +147,7 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
       </div>
 
       <div className="chart-well sankey-well" ref={ref}>
-        <svg width={width} height={height} role="img" aria-label="Energy flow Sankey">
+        <svg width={width} height={height} role="img" aria-label="Energy flow Sankey" aria-describedby="sankey-ledger">
           {graph.links.map((l) => {
             const sourceId = (l.source as NodeDatum).id;
             const targetId = (l.target as NodeDatum).id;
@@ -143,14 +159,14 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
                 d={linkPath(l)}
                 fill="none"
                 stroke={NODE_COLOR[sourceId] ?? "var(--text-low)"}
-                strokeOpacity={tip !== null && tip.text.startsWith(`${sourceId.toUpperCase()} → ${targetId.toUpperCase()}`) ? 0.95 : 0.58}
+                strokeOpacity={tip !== null && tip.text.startsWith(`${nodeName(sourceId)} → ${nodeName(targetId)}`) ? 0.95 : 0.58}
                 strokeWidth={Math.max(1, l.width ?? 1)}
                 onMouseMove={(e) => {
                   const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
                   setTip({
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top,
-                    text: `${sourceId.toUpperCase()} → ${targetId.toUpperCase()} · ${formatQtyText(l.kWhPerKg, "kWh/kg")} · ${pct.toFixed(1)}%`
+                    text: `${nodeName(sourceId)} → ${nodeName(targetId)} · ${formatQtyText(l.kWhPerKg, "kWh/kg")} · ${pct.toFixed(1)}%`
                   });
                 }}
                 onMouseLeave={() => setTip(null)}
@@ -187,7 +203,8 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
                   dominantBaseline={vertical ? "hanging" : "middle"}
                   textAnchor={!vertical && isRight ? "end" : "start"}
                 >
-                  {n.id.toUpperCase()}
+                  {nodeName(n.id)}
+                  <tspan className="sankey-node-value">{` ${formatQtyText(n.value ?? 0, "kWh/kg")}`}</tspan>
                 </text>
               </g>
             );
@@ -198,6 +215,31 @@ export function EnergySankey({ vertical = false }: { vertical?: boolean }): Reac
             {tip.text}
           </div>
         )}
+      </div>
+
+      <table className="sankey-ledger mono" id="sankey-ledger">
+        <caption>Energy flows per kg of product</caption>
+        <thead>
+          <tr>
+            <th scope="col">FLOW</th>
+            <th scope="col">KWH/KG</th>
+            <th scope="col">SHARE</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...result.energy.flows]
+            .sort((a, b) => b.kWhPerKg - a.kWhPerKg)
+            .map((flow) => (
+              <tr key={`${flow.from}-${flow.to}`}>
+                <th scope="row">{nodeName(flow.from)} → {nodeName(flow.to)}</th>
+                <td className="num">{formatQtyText(flow.kWhPerKg, "kWh/kg", 4)}</td>
+                <td className="num">{total > 0 ? `${((flow.kWhPerKg / total) * 100).toFixed(1)}%` : "—"}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+      <div className="panel-exports">
+        <ExportButton label="FLOWS CSV" what="energy-flows" build={() => flowsCsv(result)} />
       </div>
 
       <p className="panel-caption">
