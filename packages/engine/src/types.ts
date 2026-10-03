@@ -1,6 +1,7 @@
 export type SiteMode = "equatorial" | "polar";
 export type PowerArchitecture = "solar" | "nuclear";
 export type PowerStrategy = "auto" | PowerArchitecture;
+export type DeploymentManifest = "dedicated" | "shared";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -349,6 +350,15 @@ export interface SimParams {
   etaPack: number;
   /** [kg/kg] */
   gearRatio: number;
+  /** [1/yr] */
+  landingsPerYear: number;
+  /** [day] */
+  commissioningDays: number;
+  /** [1] */
+  plantAvailability: number;
+  /** [1/yr] */
+  sparesFracPerYear: number;
+  deploymentManifest: DeploymentManifest;
   /** [Pa] */
   Pinternal: number;
   /** [Pa] */
@@ -383,6 +393,36 @@ export interface SimParams {
   kIceExtractorMass: number;
   /** [K] */
   castDeltaT: number;
+}
+
+export interface CampaignResult {
+  /** mass in LEO per kg landed: M0leo / (etaPack × payload) [kg/kg]; 0 when a lander lands nothing */
+  leoMassPerLandedKg: number;
+  /** last infrastructure landing [day] */
+  deploymentDays: number;
+  /** production start: deployment + commissioning [day] */
+  firstProductDay: number;
+  /** end of `missionYears` of production [day] */
+  campaignEndDay: number;
+  /** average output after downtime [kg/day] */
+  deliveredKgPerDay: number;
+  /** spares landed per year of operation [kg/yr] */
+  resupplyKgPerYear: number;
+  /** product delivered over the campaign [kg] */
+  cumulativeProductKg: number;
+  /** plant plus spares landed over the campaign [kg] */
+  landedMassKg: number;
+  /** [kg in LEO] */
+  leoMassSpentKg: number;
+  /** [kg in LEO] */
+  leoMassSavedKg: number;
+  /** saved − spent [kg in LEO] */
+  netLeoMassKg: number;
+  /** saved / spent over the campaign [kg/kg]; 0 when nothing is spent */
+  returnRatio: number;
+  /** when cumulative saved first equals spent [day]; null if output never outpaces spares */
+  paybackDays: number | null;
+  paysBackInCampaign: boolean;
 }
 
 export interface SimResult {
@@ -540,6 +580,8 @@ export interface SimResult {
     plantMassThroughputDays: number;
     manifest: ManifestRow[];
   };
+  /** deployment-to-end mass ledger in kg of LEO mass; see modules/campaign.ts */
+  campaign: CampaignResult;
   materials: {
     flows: MaterialFlow[];
     balances: ProcessBalance[];

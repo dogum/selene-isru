@@ -5,6 +5,7 @@ import { simulateCryo, type StorageDemand } from "./modules/cryo";
 import { energyLedger } from "./modules/energyLedger";
 import { simulateElectrolysis } from "./modules/electrolysis";
 import { simulateExcavation } from "./modules/excavation";
+import { simulateCampaign } from "./modules/campaign";
 import { simulateLogistics } from "./modules/logistics";
 import { materialLedger } from "./modules/materials";
 import { simulatePower } from "./modules/power";
@@ -50,6 +51,8 @@ export {
   secElecJPerKg,
   sensibleHeatRegolithJPerKg
 } from "./modules/electrolysis";
+export { campaignAt, campaignTimeline } from "./modules/campaign";
+export type { CampaignPoint, CampaignSource, CampaignTimelinePoint } from "./modules/campaign";
 export { payloadPerMissionKg } from "./modules/logistics";
 export {
   beamedPowerW,
@@ -64,6 +67,8 @@ export { sabatierKp } from "./modules/sabatier";
 export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 export { secSubDeliveredJPerKg, secSubJPerKg } from "./modules/thermal";
 export type {
+  CampaignResult,
+  DeploymentManifest,
   FlowEdge,
   ManifestRow,
   MaterialFlow,
@@ -170,6 +175,7 @@ export function simulate(
     cryo.cryoMassKg,
     options.supplementalMasses
   );
+  const { warnings: campaignWarnings, ...campaign } = simulateCampaign(params, logistics);
   const construction = simulateConstruction(params, params.site === "equatorial" ? production.slagKgPerDay : 0);
   const materials = materialLedger(params, production);
   const warnings: Warning[] = [
@@ -178,7 +184,8 @@ export function simulate(
     ...(params.site === "equatorial" ? electrolysis.warnings : []),
     ...cryo.warnings,
     ...power.warnings,
-    ...construction.warnings
+    ...construction.warnings,
+    ...campaignWarnings
   ];
 
   if (materials.maxAbsResidualKgPerDay > 1e-6) {
@@ -291,6 +298,7 @@ export function simulate(
       siteProfile: power.siteProfile
     },
     logistics,
+    campaign,
     materials,
     construction,
     warnings

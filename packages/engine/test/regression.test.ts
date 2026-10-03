@@ -68,6 +68,22 @@ describe("regression anchors", () => {
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
+  test("campaign ledger pays the equatorial default back on day ~242 (v0.5)", () => {
+    // v0.5 adds the ledger; no earlier number moves. Payback is commissioning
+    // plus one 1,100 t lander divided by the daily net LEO-mass saving.
+    const { logistics, campaign } = simulate({});
+    const leoPerKg = DEFAULTS.M0leo / (DEFAULTS.etaPack * logistics.payloadPerMissionKg);
+    const netPerDay =
+      DEFAULTS.gearRatio * DEFAULTS.targetKgPerDay * DEFAULTS.plantAvailability -
+      (leoPerKg * DEFAULTS.sparesFracPerYear * logistics.totalInfraMassKg) / 365;
+    expectRel(campaign.leoMassPerLandedKg, leoPerKg, 1e-12);
+    expectRel(campaign.paybackDays!, DEFAULTS.commissioningDays + DEFAULTS.M0leo / netPerDay, 1e-12);
+    expectRel(campaign.paybackDays!, 241.8, 0.001);
+    expectRel(campaign.returnRatio, 6.67, 0.001);
+    expectRel(campaign.leoMassPerLandedKg, 12.82, 0.001);
+    expect(campaign.paysBackInCampaign).toBe(true);
+  });
+
   test("keeps the v1 aggregate electrolysis path reachable", () => {
     const fallback = simulate({ oxideModel: false });
     const direct = oxideModelYield({ ...DEFAULTS, oxideModel: false });
@@ -82,6 +98,7 @@ describe("warnings", () => {
     expect(warningIds(simulate({ jOperating: 10000, Dox: 1e-11 })).has("anode-current")).toBe(true);
     expect(warningIds(simulate({ castDeltaT: 200 })).has("thermal-stress")).toBe(true);
     expect(warningIds(simulate({ targetKgPerDay: 1 })).has("param-clamped")).toBe(true);
+    expect(warningIds(simulate({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 })).has("lander-no-payload")).toBe(true);
   });
 
   test("module-level tests cover branches outside bounded public inputs", () => {

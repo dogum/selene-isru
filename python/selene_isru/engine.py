@@ -4,6 +4,7 @@ import math
 import sys
 from typing import Any
 
+from .modules.campaign import simulate_campaign
 from .modules.construction import simulate_construction
 from .modules.cryo import simulate_cryo
 from .modules.energy_ledger import energy_ledger
@@ -59,6 +60,8 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         power["selectedPowerMassKg"],
         cryo["cryoMassKg"],
     )
+    campaign = simulate_campaign(params, logistics)
+    campaign_warnings = campaign.pop("warnings")
     construction = simulate_construction(params, production["slagKgPerDay"] if params["site"] == "equatorial" else 0)
     materials = material_ledger(params, production)
     warnings = [
@@ -68,6 +71,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         *cryo["warnings"],
         *power["warnings"],
         *construction["warnings"],
+        *campaign_warnings,
     ]
     if materials["maxAbsResidualKgPerDay"] > 1e-6:
         warnings.append({"id": "material-balance", "severity": "alarm", "module": "materials", "message": "A process-node material balance exceeds the conservation tolerance.", "value": materials["maxAbsResidualKgPerDay"], "limit": 1e-6})
@@ -152,6 +156,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "siteProfile": power["siteProfile"],
         },
         "logistics": logistics,
+        "campaign": campaign,
         "materials": materials,
         "construction": construction,
         "warnings": warnings,

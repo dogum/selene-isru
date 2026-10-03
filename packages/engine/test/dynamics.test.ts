@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, sampleUncertainty, simulateTimeseries } from "../src/index";
+import { campaignTimeline, DEFAULTS, normalizeParams, sampleUncertainty, simulate, simulateTimeseries } from "../src/index";
 import type { SimParams, TimeseriesOptions, UncertaintySpec } from "../src/types";
 
 interface TimeseriesVector {
@@ -18,11 +18,19 @@ interface UncertaintyVector {
   result: unknown;
 }
 
+interface CampaignVector {
+  name: string;
+  params: Partial<SimParams>;
+  stepDays: number;
+  result: unknown;
+}
+
 interface DynamicsFile {
   schemaVersion: number;
   seed: number;
   timeseries: TimeseriesVector[];
   uncertainty: UncertaintyVector[];
+  campaign: CampaignVector[];
 }
 
 const dynamics = JSON.parse(
@@ -39,6 +47,7 @@ describe("phase 2 dynamics parity", () => {
     expect(dynamics.seed).toBe(42);
     expect(dynamics.timeseries).toHaveLength(3);
     expect(dynamics.uncertainty).toHaveLength(2);
+    expect(dynamics.campaign).toHaveLength(2);
   });
 
   test.each(dynamics.timeseries)("$name timeseries", (vector) => {
@@ -47,6 +56,11 @@ describe("phase 2 dynamics parity", () => {
 
   test.each(dynamics.uncertainty)("$name uncertainty", (vector) => {
     compareLeaves(sampleUncertainty(vector.base, vector.spec, vector.opts), vector.result, vector.name);
+  });
+
+  test.each(dynamics.campaign)("$name campaign", (vector) => {
+    const params = normalizeParams(vector.params).params;
+    compareLeaves(campaignTimeline(params, simulate(params), vector.stepDays), vector.result, vector.name);
   });
 });
 
