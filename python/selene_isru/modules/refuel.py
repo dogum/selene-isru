@@ -83,30 +83,16 @@ def refuel_timeline(params: dict[str, Any], result: dict[str, Any]) -> list[dict
         return []
     campaign = result["campaign"]
 
-    def capacity_kg(stream: str, load_kg: float) -> float:
-        store = next(
-            (i for i in result["cryo"]["inventories"] if i["role"] == "product" and i["stream"] == stream),
-            None,
-        )
-        return max(load_kg, 0 if store is None else store["reserveInventoryKg"])
-
+    loads = [refuel["oxidizerPerSortieKg"], refuel["fuelPerSortieKg"]]
+    rates = [refuel["supplyO2KgPerDay"], refuel["supplyH2KgPerDay"]]
+    capacities = _store_capacities_kg(params, result, loads, rates)
     interval = DAYS_PER_YEAR / params["sortiesPerYear"]
     operating_days = campaign["campaignEndDay"] - campaign["firstProductDay"]
     horizon = min(operating_days, max(MIN_HORIZON_DAYS, HORIZON_SORTIES * interval))
     sorties = math.floor(horizon / interval + 1e-9)
     stores = [
-        {
-            "rate": refuel["supplyO2KgPerDay"],
-            "load": refuel["oxidizerPerSortieKg"],
-            "capacity": capacity_kg("lox", refuel["oxidizerPerSortieKg"]),
-            "level": 0.0,
-        },
-        {
-            "rate": refuel["supplyH2KgPerDay"],
-            "load": refuel["fuelPerSortieKg"],
-            "capacity": capacity_kg("lh2", refuel["fuelPerSortieKg"]),
-            "level": 0.0,
-        },
+        {"rate": rate, "load": load, "capacity": capacity, "level": 0.0}
+        for rate, load, capacity in zip(rates, loads, capacities, strict=True)
     ]
     points: list[dict[str, Any]] = []
 
@@ -142,3 +128,22 @@ def refuel_timeline(params: dict[str, Any], result: dict[str, Any]) -> list[dict
             store["level"] -= min(store["level"], store["load"])
         add(end, [s["level"] for s in stores], f"sortie {k + 1}")
     return points
+
+
+def _store_capacities_kg(
+    params: dict[str, Any], result: dict[str, Any], loads: list[float], rates: list[float]
+) -> list[float]:
+    """Oxygen and hydrogen store capacity; mirrors `storeCapacitiesKg`."""
+    inventories = result["cryo"]["inventories"]
+    if params["storageStream"] == "auto":
+        capacities = []
+        for stream, load in zip(("lox", "lh2"), loads, strict=True):
+            store = next((i for i in inventories if i["role"] == "product" and i["stream"] == stream), None)
+            capacities.append(max(load, 0 if store is None else store["reserveInventoryKg"]))
+        return capacities
+    shared_kg = sum(i["reserveInventoryKg"] for i in inventories if i["role"] in ("product", "custom"))
+    made_load_kg = sum(load for load, rate in zip(loads, rates, strict=True) if rate > 0)
+    return [
+        max(load, shared_kg * load / made_load_kg) if rate > 0 and made_load_kg > 0 else load
+        for load, rate in zip(loads, rates, strict=True)
+    ]

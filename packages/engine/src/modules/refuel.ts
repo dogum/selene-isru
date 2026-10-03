@@ -129,18 +129,14 @@ const HORIZON_SORTIES = 3;
 export function refuelTimeline(params: SimParams, source: RefuelSource): RefuelTimelinePoint[] {
   const { refuel, campaign } = source;
   if (refuel === null) return [];
-  const capacityKg = (stream: "lox" | "lh2", loadKg: number): number => {
-    const store = source.cryo.inventories.find((inventory) => inventory.role === "product" && inventory.stream === stream);
-    return Math.max(loadKg, store === undefined ? 0 : store.reserveInventoryKg);
-  };
+  const loads = [refuel.oxidizerPerSortieKg, refuel.fuelPerSortieKg];
+  const rates = [refuel.supplyO2KgPerDay, refuel.supplyH2KgPerDay];
+  const capacities = storeCapacitiesKg(params, source, loads, rates);
   const interval = DAYS_PER_YEAR / params.sortiesPerYear;
   const operatingDays = campaign.campaignEndDay - campaign.firstProductDay;
   const horizon = Math.min(operatingDays, Math.max(MIN_HORIZON_DAYS, HORIZON_SORTIES * interval));
   const sorties = Math.floor(horizon / interval + 1e-9);
-  const stores = [
-    { rate: refuel.supplyO2KgPerDay, load: refuel.oxidizerPerSortieKg, capacity: capacityKg("lox", refuel.oxidizerPerSortieKg), level: 0 },
-    { rate: refuel.supplyH2KgPerDay, load: refuel.fuelPerSortieKg, capacity: capacityKg("lh2", refuel.fuelPerSortieKg), level: 0 }
-  ];
+  const stores = loads.map((load, index) => ({ rate: rates[index] ?? 0, load, capacity: capacities[index] ?? load, level: 0 }));
   const points: RefuelTimelinePoint[] = [];
   const add = (t: number, levels: number[], event: string): void => {
     points.push({ tDays: campaign.firstProductDay + t, o2Kg: levels[0] ?? 0, h2Kg: levels[1] ?? 0, event });
@@ -168,4 +164,27 @@ export function refuelTimeline(params: SimParams, source: RefuelSource): RefuelT
     add(end, stores.map((store) => store.level), `sortie ${k + 1}`);
   }
   return points;
+}
+
+/**
+ * Capacity of the oxygen and hydrogen stores [kg]. Auto storage keeps LOX and
+ * LH2 in stores of their own. A one-stream what-if store holds the plant's
+ * whole product, so its capacity is shared between the components the plant
+ * makes in proportion to their sortie loads, which keeps each at least one
+ * load. Neither is ever less than its load.
+ */
+function storeCapacitiesKg(params: SimParams, source: RefuelSource, loads: number[], rates: number[]): number[] {
+  if (params.storageStream === "auto") {
+    return (["lox", "lh2"] as const).map((stream, index) => {
+      const store = source.cryo.inventories.find((inventory) => inventory.role === "product" && inventory.stream === stream);
+      return Math.max(loads[index] ?? 0, store === undefined ? 0 : store.reserveInventoryKg);
+    });
+  }
+  const sharedKg = source.cryo.inventories
+    .filter((inventory) => inventory.role === "product" || inventory.role === "custom")
+    .reduce((total, inventory) => total + inventory.reserveInventoryKg, 0);
+  const madeLoadKg = loads.reduce((total, load, index) => total + ((rates[index] ?? 0) > 0 ? load : 0), 0);
+  return loads.map((load, index) =>
+    (rates[index] ?? 0) > 0 && madeLoadKg > 0 ? Math.max(load, (sharedKg * load) / madeLoadKg) : load
+  );
 }

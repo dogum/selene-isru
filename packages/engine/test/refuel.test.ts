@@ -162,6 +162,31 @@ describe("tank drawdown agrees with the demand", () => {
     }
   });
 
+  test("a one-stream store larger than a sortie shares its capacity between the gases", () => {
+    for (const storageStream of ["custom", "lox", "lh2"] as const) {
+      const { params, result } = run({ ...PROPELLANT, storageStream, reserveDays: 120 });
+      const refuel = result.refuel!;
+      const [store] = result.cryo.inventories;
+      const capacityKg = store!.reserveInventoryKg;
+      const loadKg = refuel.oxidizerPerSortieKg + refuel.fuelPerSortieKg;
+      expect(capacityKg, storageStream).toBeGreaterThan(2 * loadKg);
+      const timeline = refuelTimeline(params, result);
+      for (const point of timeline) expect(point.o2Kg + point.h2Kg).toBeLessThanOrEqual(capacityKg * (1 + 1e-12));
+      // A year between sorties fills both shares, and a sortie takes only its load.
+      const before = timeline.find((point) => point.event === "before sortie 1")!;
+      const after = timeline.find((point) => point.event === "sortie 1")!;
+      expectRel(before.o2Kg, (capacityKg * refuel.oxidizerPerSortieKg) / loadKg, 1e-12);
+      expectRel(before.h2Kg, (capacityKg * refuel.fuelPerSortieKg) / loadKg, 1e-12);
+      expectRel(after.o2Kg, before.o2Kg - refuel.oxidizerPerSortieKg, 1e-12);
+      expectRel(after.h2Kg, before.h2Kg - refuel.fuelPerSortieKg, 1e-12);
+    }
+    // At the equator the one store holds only oxygen.
+    const { params, result } = run({ ...EQUATORIAL, storageStream: "custom", reserveDays: 120 });
+    const before = refuelTimeline(params, result).find((point) => point.event === "before sortie 1")!;
+    expect(before.o2Kg).toBe(result.cryo.inventories[0]!.reserveInventoryKg);
+    expect(before.h2Kg).toBe(0);
+  });
+
   test("no demand, no drawdown", () => {
     const { params, result } = run({});
     expect(refuelTimeline(params, result)).toEqual([]);

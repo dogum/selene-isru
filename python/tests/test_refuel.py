@@ -84,3 +84,21 @@ def test_what_if_store_holds_the_whole_product_load(stream: str) -> None:
     _, propellant = run({**PROPELLANT, "storageStream": stream})
     load = propellant["refuel"]["oxidizerPerSortieKg"] + propellant["refuel"]["fuelPerSortieKg"]
     assert_rel(propellant["cryo"]["inventories"][0]["reserveInventoryKg"], load, 1e-12)
+
+
+@pytest.mark.parametrize("stream", ["custom", "lox", "lh2"])
+def test_one_stream_store_shares_its_capacity_in_the_drawdown(stream: str) -> None:
+    params, result = run({**PROPELLANT, "storageStream": stream, "reserveDays": 120})
+    refuel = result["refuel"]
+    capacity = result["cryo"]["inventories"][0]["reserveInventoryKg"]
+    load = refuel["oxidizerPerSortieKg"] + refuel["fuelPerSortieKg"]
+    assert capacity > 2 * load
+    timeline = refuel_timeline(params, result)
+    assert all(p["o2Kg"] + p["h2Kg"] <= capacity * (1 + 1e-12) for p in timeline)
+    before = next(p for p in timeline if p["event"] == "before sortie 1")
+    after = next(p for p in timeline if p["event"] == "sortie 1")
+    assert_rel(before["o2Kg"], capacity * refuel["oxidizerPerSortieKg"] / load, 1e-12)
+    assert_rel(before["h2Kg"], capacity * refuel["fuelPerSortieKg"] / load, 1e-12)
+    assert_rel(after["o2Kg"], before["o2Kg"] - refuel["oxidizerPerSortieKg"], 1e-12)
+    assert_rel(after["h2Kg"], before["h2Kg"] - refuel["fuelPerSortieKg"], 1e-12)
+
