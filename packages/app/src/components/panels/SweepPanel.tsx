@@ -342,6 +342,10 @@ function LineSweep(props: ChartProps & { liveValue: number | null }): React.JSX.
     });
     return best;
   };
+  const pointAt = (event: React.MouseEvent<SVGRectElement>): number => {
+    const box = (event.currentTarget.ownerSVGElement ?? event.currentTarget).getBoundingClientRect();
+    return nearest(event.clientX - box.left);
+  };
   const focus = hover ?? selected;
   const focusPoint = focus === null ? null : run.points[focus] ?? null;
   const yTicks = axisTicks(yScale, logOutput);
@@ -390,12 +394,10 @@ function LineSweep(props: ChartProps & { liveValue: number | null }): React.JSX.
         height={Math.max(0, plot.bottom - plot.top)}
         tabIndex={0}
         aria-label="Sweep points: arrow keys move, Enter selects"
-        onPointerMove={(event) => {
-          const box = (event.currentTarget.ownerSVGElement ?? event.currentTarget).getBoundingClientRect();
-          onHover(nearest(event.clientX - box.left));
-        }}
+        onPointerMove={(event) => onHover(pointAt(event))}
         onPointerLeave={() => onHover(null)}
-        onClick={() => hover !== null && onSelect(hover)}
+        // a tap may arrive with no pointermove before it, so it picks by its own position
+        onClick={(event) => onSelect(pointAt(event))}
         onKeyDown={onKey}
         onBlur={() => onHover(null)}
       />
@@ -422,6 +424,12 @@ function HeatSweep(
   };
   const xCenter = axisScale(run.x.values, xLog, plot.left + cw / 2, plot.right - cw / 2);
   const yCenter = axisScale(run.y!.values, yLog, plot.bottom - ch / 2, top + ch / 2);
+  const cellAt = (event: React.MouseEvent<SVGRectElement>): number => {
+    const box = (event.currentTarget.ownerSVGElement ?? event.currentTarget).getBoundingClientRect();
+    const i = Math.min(columns - 1, Math.max(0, Math.floor((event.clientX - box.left - plot.left) / cw)));
+    const j = Math.min(rows - 1, Math.max(0, rows - 1 - Math.floor((event.clientY - box.top - top) / ch)));
+    return j * columns + i;
+  };
   const focus = hover ?? selected;
   const labelEvery = Math.ceil(columns / 5);
   const swatch = Math.min(46, (plot.right - plot.left) / RAMP.length);
@@ -497,14 +505,10 @@ function HeatSweep(
         height={Math.max(0, plot.bottom - top)}
         tabIndex={0}
         aria-label="Sweep grid: arrow keys move, Enter selects"
-        onPointerMove={(event) => {
-          const box = (event.currentTarget.ownerSVGElement ?? event.currentTarget).getBoundingClientRect();
-          const i = Math.min(columns - 1, Math.max(0, Math.floor((event.clientX - box.left - plot.left) / cw)));
-          const j = Math.min(rows - 1, Math.max(0, rows - 1 - Math.floor((event.clientY - box.top - top) / ch)));
-          onHover(j * columns + i);
-        }}
+        onPointerMove={(event) => onHover(cellAt(event))}
         onPointerLeave={() => onHover(null)}
-        onClick={() => hover !== null && onSelect(hover)}
+        // a tap may arrive with no pointermove before it, so it picks by its own position
+        onClick={(event) => onSelect(cellAt(event))}
         onKeyDown={onKey}
         onBlur={() => onHover(null)}
       />

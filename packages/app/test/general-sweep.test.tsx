@@ -125,6 +125,17 @@ describe("sweep and frontier panels", () => {
     expect(useStore.getState().params.reserveDays).toBe(DEFAULTS.reserveDays);
   });
 
+  it("selects a point from a tap alone, with no hover before it", () => {
+    render(<SweepPanel />);
+    // jsdom lays the chart out at the origin, so client coordinates are chart coordinates
+    fireEvent.click(screen.getByLabelText(/Sweep points/), { clientX: 200, clientY: 150 });
+    expect(screen.getByRole("button", { name: "APPLY POINT" })).toBeTruthy();
+    fireEvent.change(screen.getByRole("combobox", { name: "Second sweep input" }), { target: { value: "reserveDays" } });
+    expect(screen.queryByRole("button", { name: "APPLY POINT" })).toBeNull();
+    fireEvent.click(screen.getByLabelText(/Sweep grid/), { clientX: 200, clientY: 200 });
+    expect(screen.getByRole("button", { name: "APPLY POINT" })).toBeTruthy();
+  });
+
   it("offers the frontier any rail input beyond its suggested axes", () => {
     render(<FrontierExplorer />);
     const axisA = screen.getByRole("combobox", { name: "Frontier parameter A" }) as HTMLSelectElement;
