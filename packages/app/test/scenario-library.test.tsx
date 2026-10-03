@@ -282,8 +282,15 @@ describe("Mission Brief picks in the library", () => {
     useStore.getState().setUi({ missionBriefOpen: true });
     render(<MissionBrief />);
     fireEvent.click(screen.getByRole("button", { name: "RUN DESIGN SEARCH" }));
+    // Editing a cap after the search must not rewrite the picks' provenance.
+    const searchedCap = GOALS[2]!.constraints.maxMissions;
+    fireEvent.change(screen.getByLabelText("MAX MISSIONS"), { target: { value: String(searchedCap + 7) } });
     fireEvent.click(screen.getByRole("button", { name: "SAVE TOP 3 TO LIBRARY" }));
     expect(useStore.getState().scenarioLibrary).toHaveLength(3);
+    for (const saved of useStore.getState().scenarioLibrary) {
+      expect(saved.notes).toContain(`at most ${searchedCap} missions`);
+      expect(saved.notes).not.toContain(`at most ${searchedCap + 7} missions`);
+    }
     expect(screen.getByRole("status").textContent).toMatch(/^3 cases saved to the library/);
     // nothing about the live case changed
     expect(useStore.getState().params).toEqual(DEFAULTS);

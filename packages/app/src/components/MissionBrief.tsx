@@ -32,6 +32,9 @@ export function MissionBrief(): React.JSX.Element | null {
   const [activeId, setActiveId] = useState("landed-mass");
   const [constraints, setConstraints] = useState<MissionConstraints>(GOALS[2]!.constraints);
   const [optimization, setOptimization] = useState<OptimizationResult | null>(null);
+  // What the shown results were searched under; the fields stay editable after
+  // a run, so saved picks must not read their provenance from them.
+  const [searchedUnder, setSearchedUnder] = useState<{ goalTitle: string; constraints: MissionConstraints } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const activeGoal = GOALS.find((goal) => goal.id === activeId) ?? GOALS[2]!;
   const selected = optimization?.candidates[selectedIndex] ?? null;
@@ -51,6 +54,7 @@ export function MissionBrief(): React.JSX.Element | null {
   ), [selected]);
 
   if (!open) return null;
+  const searched = searchedUnder;
   const close = (): void => setUi({ missionBriefOpen: false });
   const drivers = selected === null ? [] : energyDrivers(selected.result);
 
@@ -111,12 +115,13 @@ export function MissionBrief(): React.JSX.Element | null {
             <label className="brief-check"><input type="checkbox" checked={constraints.allowSabatier} onChange={(event) => setConstraints({ ...constraints, allowSabatier: event.target.checked })} /> ALLOW SABATIER</label>
             <button type="button" className="brief-run" onClick={() => {
               setOptimization(optimize(baseParams, constraints));
+              setSearchedUnder({ goalTitle: activeGoal.title, constraints });
               setSelectedIndex(0);
               setSaveStatus(null);
             }}>RUN DESIGN SEARCH</button>
           </section>
 
-          {optimization !== null && selected !== null && uncertainty !== null && (
+          {optimization !== null && searched !== null && selected !== null && uncertainty !== null && (
             <section className="brief-analysis" aria-live="polite">
               <div className="brief-analysis-head">
                 <div><span className="reactor-eyebrow">RECOMMENDED BOUNDED DESIGN</span><h3>{recommendationTitle(selected)}</h3><small>{optimization.feasible} of {optimization.evaluated} cases satisfy the active implemented constraints</small></div>
@@ -157,16 +162,16 @@ export function MissionBrief(): React.JSX.Element | null {
                 />
                 <button type="button" className="topbar-btn" onClick={() => setSaveStatus(saveText(saveScenarios([
                   {
-                    name: candidateCaseName(activeGoal.title, selectedIndex + 1, selected),
+                    name: candidateCaseName(searched.goalTitle, selectedIndex + 1, selected),
                     params: selected.params,
-                    notes: candidateNotes(activeGoal.title, constraints, selected, selectedIndex + 1, optimization)
+                    notes: candidateNotes(searched.goalTitle, searched.constraints, selected, selectedIndex + 1, optimization)
                   }
                 ])))}>SAVE THIS PICK</button>
                 <button type="button" className="topbar-btn" onClick={() => setSaveStatus(saveText(saveScenarios(
                   optimization.candidates.slice(0, 3).map((candidate, index) => ({
-                    name: candidateCaseName(activeGoal.title, index + 1, candidate),
+                    name: candidateCaseName(searched.goalTitle, index + 1, candidate),
                     params: candidate.params,
-                    notes: candidateNotes(activeGoal.title, constraints, candidate, index + 1, optimization)
+                    notes: candidateNotes(searched.goalTitle, searched.constraints, candidate, index + 1, optimization)
                   }))
                 )))}>SAVE TOP 3 TO LIBRARY</button>
                 <button type="button" className="topbar-btn" onClick={close}>CLOSE WITHOUT APPLYING</button>
