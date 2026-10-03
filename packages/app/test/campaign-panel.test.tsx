@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { inputActivity } from "../src/analysis/activity";
 import { campaignStatus } from "../src/analysis/campaign";
+import { COMPARE_METRICS } from "../src/analysis/compare";
 import { campaignCsv } from "../src/analysis/panelExports";
 import { CampaignPanel } from "../src/components/panels/CampaignPanel";
 import { parseParams, serializeParams } from "../src/lib/url";
@@ -36,6 +37,16 @@ describe("campaign status wording", () => {
     expect(campaignStatus(sabatier.result.campaign).paybackDetail).toBe("Spares and imported feed cost more LEO mass than the product saves");
     const grounded = run({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 });
     expect(campaignStatus(grounded.result.campaign).headline).toBe("NOTHING CAN BE LANDED");
+  });
+});
+
+describe("campaign compare row", () => {
+  it("shows payback only when it falls within the campaign", () => {
+    const payback = COMPARE_METRICS.find((metric) => metric.label === "PAYBACK")!;
+    expect(Math.round(payback.value(run({}).result))).toBe(242);
+    const pilot = run({ site: "polar", targetKgPerDay: 10 }).result;
+    expect(pilot.campaign.paybackDays).toBeGreaterThan(pilot.campaign.campaignEndDay);
+    expect(payback.value(pilot)).toBeNaN();
   });
 });
 

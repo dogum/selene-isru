@@ -74,7 +74,7 @@ function explainKpi(key: KpiKey, params: ReturnType<typeof useStore.getState>["p
         equation: "missions = ceil(plant mass / (packing factor × payload per mission))",
         substitution: `ceil(${formatQtyText(result.logistics.totalInfraMassKg, "kg")} / (${params.etaPack.toFixed(2)} × ${formatQtyText(result.logistics.payloadPerMissionKg, "kg")})) = ${result.logistics.nMissions}`,
         maturity: "Ideal rocket-equation logistics proxy",
-        caveat: "Does not schedule manifests, volume, center of gravity, spares, or partial-flight constraints."
+        caveat: "Counts whole landers for the plant alone. Landing cadence and spares are in the Campaign panel; volume, center of gravity, and partial-flight constraints are not modelled."
       };
     case "mass-throughput":
       return {

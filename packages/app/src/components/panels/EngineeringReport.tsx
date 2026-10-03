@@ -259,7 +259,7 @@ export function EngineeringReport(): React.JSX.Element {
           <p>No engine warning is active at the current operating point.</p>
         )}
         <ul>
-          <li>Steady-state analytical sizing; campaign scheduling, reliability, crew, and spares are outside the present boundary.</li>
+          <li>Plant sizing is steady-state and analytical. The campaign ledger adds landing cadence, commissioning, average availability, spares, and imported feed as mass flows; reliability, launch or landing failure, crew, and schedule risk are outside the present boundary.</li>
           <li>Input evidence and validity limits are available from each control's information disclosure.</li>
           <li>{MODEL_BOUNDARY}</li>
         </ul>
