@@ -1490,7 +1490,7 @@ export const useStore = create<Store>((set, get) => {
     },
 
     swapCompare: () => {
-      if (recordsAuthoredHistory()) {
+      if (recordsAuthoredHistory() && !sameParams(get().compareParams, get().params)) {
         rememberAuthoredCase();
       }
       const { params, result, compareParams, compareResult, time, ui } = get();

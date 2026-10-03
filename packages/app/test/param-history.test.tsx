@@ -84,6 +84,9 @@ describe("undo and redo of authored edits", () => {
   it("ignores edits that change nothing", () => {
     store().setParam("targetKgPerDay", DEFAULTS.targetKgPerDay);
     store().applyPatch({});
+    // swapping two identical cases changes nothing on screen either
+    store().setCompareFromCurrent();
+    store().swapCompare();
     expect(store().paramHistory.past).toHaveLength(0);
   });
 
