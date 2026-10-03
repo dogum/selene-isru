@@ -391,6 +391,13 @@ body.selene-photo-mode .app {
   font: 500 10px/1 var(--font-mono);
 }
 
+.rail-mode-note {
+  margin: 0;
+  color: var(--text-low);
+  font-size: var(--fs-11);
+  line-height: 1.4;
+}
+
 .rail-group-gated {
   font-size: var(--fs-11);
   color: var(--text-low);

@@ -65,6 +65,10 @@ export function parseParams(query: string): Partial<SimParams> {
       if (["zero-boiloff", "passive", "capacity-limited"].includes(raw)) {
         patch[key] = raw;
       }
+    } else if (key === "polarProduct") {
+      if (raw === "water" || raw === "propellant") {
+        patch[key] = raw;
+      }
     } else if (key === "deploymentManifest") {
       if (raw === "dedicated" || raw === "shared") {
         patch[key] = raw;

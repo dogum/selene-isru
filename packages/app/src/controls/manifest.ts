@@ -52,6 +52,17 @@ export const GROUPS: GroupDef[] = [
     })
   },
   {
+    id: "propellant",
+    label: "Propellant plant",
+    engineGroup: "propellant",
+    site: "polar",
+    // Water electrolysis power, in propellant mode or inside the Sabatier loop.
+    readout: (r) => ({
+      value: r.energy.balances.find((balance) => balance.id === "water-electrolysis-energy")?.electricalInputW ?? 0,
+      unit: "W"
+    })
+  },
+  {
     id: "sabatier",
     label: "Sabatier",
     engineGroup: "sabatier",
@@ -176,8 +187,16 @@ const CONDITIONING_KEYS = new Set<string>(Object.values(CONDITIONING_PARAM));
 /** The rail state that decides which inputs a group shows. */
 export type RailVisibilityParams = Pick<
   SimParams,
-  "site" | "oxideModel" | "storageStream" | "cryoControlMode" | "polarProfileMode"
+  "site" | "oxideModel" | "storageStream" | "cryoControlMode" | "polarProfileMode" | "polarProduct" | "enableSabatier"
 >;
+
+/** Liquefier mass input for each liquefied product stream. */
+export const LIQUEFIER_PARAM: Record<string, keyof SimParams> = {
+  lox: "kLiquefierLox",
+  lh2: "kLiquefierLh2"
+};
+
+const LIQUEFIER_KEYS = new Set<string>(Object.values(LIQUEFIER_PARAM));
 
 /**
  * Inputs a rail group shows for the current configuration. Inputs that cannot
@@ -196,6 +215,12 @@ export function railParamsForGroup(
     !(params.oxideModel && def.key === "xO2") &&
     (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === params.site)
   );
+  if (group.id === "propellant") {
+    // Electrolysis runs in propellant mode or inside the Sabatier loop; the
+    // mixture ratio and electrolyzer mass belong to propellant mode alone.
+    if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio" && def.key !== "kElectrolyzerMass");
+    return params.polarProduct === "propellant" ? all : [];
+  }
   if (group.id === "power" && params.site === "polar" && params.polarProfileMode === "profile") {
     return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
   }
@@ -208,6 +233,9 @@ export function railParamsForGroup(
       return false;
     }
     if (CONDITIONING_KEYS.has(String(def.key)) && ![...activeStreams].some((stream) => CONDITIONING_PARAM[stream] === def.key)) {
+      return false;
+    }
+    if (LIQUEFIER_KEYS.has(String(def.key)) && ![...activeStreams].some((stream) => LIQUEFIER_PARAM[stream] === def.key)) {
       return false;
     }
     return def.key !== "coolerCapacityW" || params.cryoControlMode === "capacity-limited";
@@ -227,6 +255,7 @@ export function matchesParamQuery(def: NumericParamDef, groupLabel: string, quer
  * and the Sabatier switch). They count toward CHANGED like any slider.
  */
 const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
+  "extraction-sub": ["polarProduct"],
   cryo: ["storageStream", "cryoControlMode"],
   power: ["polarProfileMode"],
   sabatier: ["enableSabatier"],

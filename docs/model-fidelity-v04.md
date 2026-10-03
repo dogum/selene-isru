@@ -122,6 +122,9 @@ Regression anchors for the polar default were added deliberately in
   cryocooler efficiency, which would make that input drive results. LOX would
   fall from 2.2 to about 0.9 kWh/kg at η₂ = 0.2; that calibration deserves its
   own sources.
+  *(v0.6: LOX and LH₂ were instead derived from NASA's polar propellant design,
+  1.32 and 54 kWh/kg, with liquefier mass added. See
+  [`model-propellant-v06.md`](model-propellant-v06.md).)*
 - **Sabatier plant mass** reuses the MRE reactor coefficient (`kReactorMass`).
   The NASA study's ridge propellant system is about 39 kg per kg/day of water,
   dominated by hydrogen liquefaction.

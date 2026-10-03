@@ -31,7 +31,7 @@ rim power towers, nuclear station, and occupied habitat.
 | Equatorial MRE industry | Shackleton ice industry |
 |---|---|
 | [![Equatorial lunar ISRU site with MRE reactor, excavation, power, landing, cryogenic, and habitat systems](docs/screenshots/equatorial-assets/base-overview-after-desktop.png)](https://dogum.github.io/selene-isru/) | [![Polar lunar ISRU site with ice excavation, beam receiver, Sabatier plant, cryogenics, power, and habitat systems](docs/screenshots/polar-assets/base-overview-after-desktop.png)](https://dogum.github.io/selene-isru/?site=polar) |
-| Molten-regolith electrolysis, casting, surface power, and reusable logistics. | Ice excavation, sublimation, beamed power, Sabatier processing, and cryogenic storage. |
+| Molten-regolith electrolysis, casting, surface power, and reusable logistics. | Ice excavation, sublimation, beamed power, and cryogenic storage, delivering water, LOX/LH₂ propellant, or Sabatier methane. |
 
 ## Build a custom lunar site
 
@@ -188,7 +188,10 @@ items and their remaining limits are documented in
 polar-water case study, and storage provenance moved into `constants.json`) is in
 [`docs/model-fidelity-v04.md`](docs/model-fidelity-v04.md). The v0.5 campaign
 ledger (launch-mass payback with deployment, commissioning, downtime, and
-spares) is in [`docs/model-campaign-v05.md`](docs/model-campaign-v05.md).
+spares) is in [`docs/model-campaign-v05.md`](docs/model-campaign-v05.md). The
+v0.6 polar propellant chain (water split into LOX/LH₂, with liquefaction energy
+and hardware derived from NASA's polar propellant design) is in
+[`docs/model-propellant-v06.md`](docs/model-propellant-v06.md).
 
 ## Architecture
 

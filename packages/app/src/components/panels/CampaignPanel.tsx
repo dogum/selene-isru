@@ -166,6 +166,8 @@ export function CampaignPanel(): React.JSX.Element {
         gear ratio {params.gearRatio}. Production starts on day {Math.round(campaign.firstProductDay)}, after the last landing and{" "}
         {params.commissioningDays} days of commissioning, and averages {formatQtyProse(campaign.deliveredKgPerDay, "kg/day")} at{" "}
         {Math.round(params.plantAvailability * 100)}% availability.
+        {result.production.propellantKgPerDay > 0 &&
+          ` Only propellant usable at O/F ${params.mixtureRatio} counts as product; the ${formatQtyProse(result.production.excessO2KgPerDay, "kg/day")} of surplus oxygen is not credited.`}
         {campaign.feedKgPerYear > 0 &&
           ` The Sabatier loop's CO₂ has no lunar source in this model, so its ${formatQtyProse(campaign.feedKgPerYear, "kg/yr")} is landed and charged like spares.`}
       </p>

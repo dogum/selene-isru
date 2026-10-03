@@ -257,7 +257,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~157 KB of ~163.8 KB. A ratchet normally reads nearly
+The current build sits at ~161 KB of ~163.8 KB. A ratchet normally reads nearly
 full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -434,6 +434,7 @@ in `assets/ASSET_LICENSES.md`.
 | Aging slopes ↔ crossover | `packages/engine/test/power-slopes.test.ts` |
 | Campaign ledger self-agreement, timeline parity | `campaign.test.ts`, `test_campaign.py`, campaign vectors in `dynamics_vectors.json` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
+| Polar propellant mode, liquefaction calibration | v0.6 anchors in `regression.test.ts`, `kleinhenz-paz-2020-polar-propellant` in `external-benchmarks.test.ts` |
 | Store clamping invariant, URL round-trip, export | `store.test.ts`, `url.test.ts`, `study-export.test.ts` |
 | Custom Site UI/editor/perf | `custom-site-*.test.*` |
 | Input activity tags, hidden-input guard | `input-activity.test.ts` |
@@ -472,7 +473,7 @@ script run on a clean checkout at all.
   `.gitignore` already covers it. Golden vectors and GLB assets *are* tracked.
 - Prefer editing existing docs in `docs/` over adding new ones; the audit trail
   (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
-  `model-campaign-v05.md`) is
+  `model-campaign-v05.md` → `model-propellant-v06.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -488,6 +489,9 @@ script run on a clean checkout at all.
 - [`docs/model-campaign-v05.md`](docs/model-campaign-v05.md) — the campaign
   mass ledger: launch-mass payback with deployment cadence, commissioning,
   downtime, spares, and dedicated vs shared landers.
+- [`docs/model-propellant-v06.md`](docs/model-propellant-v06.md) — the polar
+  LOX/LH₂ propellant chain and liquefaction energy and hardware derived from
+  NASA's polar propellant design.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

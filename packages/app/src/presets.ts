@@ -34,6 +34,12 @@ export const PRESETS: Preset[] = [
     }
   },
   { id: "shackleton", label: "Shackleton Ice Camp", patch: { site: "polar" } },
+  {
+    // Kleinhenz & Paz 2020's baseline: 15 t of water a year into LOX/LH2.
+    id: "polar-propellant",
+    label: "Polar Propellant (NASA baseline)",
+    patch: { site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26 }
+  },
   { id: "industrial", label: "Industrial 10 t/day", patch: { targetKgPerDay: 10000 } },
   {
     id: "minimal",

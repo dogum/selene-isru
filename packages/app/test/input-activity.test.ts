@@ -2,7 +2,7 @@ import { DEFAULTS } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
 import { describeResultPath, inputActivity } from "../src/analysis/activity";
-import { CONDITIONING_PARAM, SITE_ONLY_PARAMS } from "../src/controls/manifest";
+import { CONDITIONING_PARAM, GROUPS, LIQUEFIER_PARAM, railParamsForGroup, SITE_ONLY_PARAMS } from "../src/controls/manifest";
 import { simulate } from "@selene-isru/engine";
 
 const equatorial: SimParams = { ...DEFAULTS, site: "equatorial" };
@@ -68,6 +68,36 @@ describe("input activity", () => {
     for (const [key, site] of Object.entries(SITE_ONLY_PARAMS)) {
       const other = site === "polar" ? equatorial : polar;
       expect(inputActivity(other, key as keyof SimParams).activity, key).toBe("no-effect");
+    }
+  });
+
+  it("only hides propellant-plant inputs where they cannot act", () => {
+    const group = GROUPS.find((item) => item.id === "propellant")!;
+    const keys = ["Vel", "etaFaradayEl", "mixtureRatio", "kElectrolyzerMass"] as const;
+    const shown = (params: SimParams) => railParamsForGroup(group, params).map((def) => String(def.key));
+    const water = { ...polar, enableSabatier: false, polarProduct: "water" as const };
+    const sabatier = { ...polar, enableSabatier: true };
+    const propellant = { ...polar, enableSabatier: false, polarProduct: "propellant" as const };
+    expect(shown(water)).toEqual([]);
+    expect(shown(sabatier)).toEqual(["Vel", "etaFaradayEl"]);
+    expect(shown(propellant)).toEqual([...keys]);
+    for (const [params, visible] of [[water, shown(water)], [sabatier, shown(sabatier)], [propellant, shown(propellant)]] as const) {
+      for (const key of keys) {
+        const activity = inputActivity(params, key).activity;
+        expect(activity, `${key} ${params.polarProduct} sabatier=${params.enableSabatier}`).toBe(visible.includes(key) ? "drives-results" : "no-effect");
+      }
+    }
+  });
+
+  it("only hides liquefier inputs for streams the engine is not liquefying", () => {
+    const propellant = { ...polar, enableSabatier: false, polarProduct: "propellant" as const };
+    for (const params of [equatorial, polar, propellant]) {
+      const stored = new Set(simulate(params).cryo.inventories.map((inventory) => inventory.stream));
+      for (const [stream, key] of Object.entries(LIQUEFIER_PARAM)) {
+        expect(inputActivity(params, key).activity, `${key} at ${params.site}/${params.polarProduct}`).toBe(
+          stored.has(stream as never) ? "drives-results" : "no-effect"
+        );
+      }
     }
   });
 

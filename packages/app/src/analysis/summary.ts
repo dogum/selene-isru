@@ -47,6 +47,15 @@ export function outputLabel(params: SimParams, result: SimResult): string {
 }
 
 /**
+ * What "per kg" means in per-kg results such as energy per kg: the engine's
+ * target throughput, which is water processed when water is converted.
+ */
+export function perKgBasis(params: SimParams, result: SimResult): string {
+  const label = outputLabel(params, result);
+  return label === "WATER PROCESSED" ? "water processed" : label === "TARGET THROUGHPUT" ? "target throughput" : "product";
+}
+
+/**
  * What a newcomer can read before any KPI: what the plant makes, what it
  * lands, what powers it, and when its product repays the launch mass. Every
  * number is an engine output.
@@ -56,7 +65,9 @@ export function caseSummary(params: SimParams, result: SimResult): string {
     params.site === "polar"
       ? params.enableSabatier
         ? "Polar ice plant with Sabatier loop"
-        : "Polar ice plant"
+        : params.polarProduct === "propellant"
+          ? "Polar ice-to-propellant plant"
+          : "Polar ice plant"
       : "Equatorial molten-regolith plant";
   const named = [...deliveredInventories(result)]
     .sort((a, b) => b.rateKgPerDay - a.rateKgPerDay)
@@ -66,9 +77,13 @@ export function caseSummary(params: SimParams, result: SimResult): string {
       ? `${named.slice(0, -1).join(", ")} and ${named[named.length - 1]}`
       : (named[0] ?? `${formatQtyProse(result.production.targetKgPerDay, "kg/day")} of product`);
   const landings = result.logistics.nMissions;
+  const usable =
+    result.production.propellantKgPerDay > 0
+      ? ` (${formatQtyProse(result.production.propellantKgPerDay, "kg/day")} usable at O/F ${params.mixtureRatio})`
+      : "";
   const parts = [
     plant,
-    `makes ${products}`,
+    `makes ${products}${usable}`,
     `from ${formatQtyProse(result.logistics.totalInfraMassKg, "kg")} landed in ${landings} landing${landings === 1 ? "" : "s"}`,
     `on ${formatQtyProse(result.energy.gridPowerW, "W")} of ${result.power.architecture} power`
   ];

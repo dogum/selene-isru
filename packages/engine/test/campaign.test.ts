@@ -233,6 +233,19 @@ describe("campaign ledger behaviour", () => {
     );
   });
 
+  test("propellant storage losses reduce the usable propellant, not just the total", () => {
+    const { params, result } = run({ site: "polar", polarProduct: "propellant", cryoControlMode: "passive" });
+    const lost = (stream: string) => result.cryo.inventories.find((inventory) => inventory.stream === stream)!.actualLossKgPerDay;
+    // Water lost from the electrolyser's buffer is never split.
+    const throughput = 1 - lost("water-ice") / result.production.waterKgPerDay;
+    const o2 = result.production.o2KgPerDay * throughput - lost("lox");
+    const h2 = result.production.h2KgPerDay * throughput - lost("lh2");
+    expect(lost("lh2")).toBeGreaterThan(0);
+    expect(lost("water-ice")).toBeGreaterThan(0);
+    const usable = Math.min(o2, params.mixtureRatio * h2) + Math.min(h2, o2 / params.mixtureRatio);
+    expectRel(result.campaign.deliveredKgPerDay, usable * params.plantAvailability, 1e-12);
+  });
+
   test("a lander with no payload deploys nothing and says so", () => {
     const { params, result } = run({ M0leo: 500_000, dvTotal: 6500, IspLander: 310, MdryLander: 200_000 });
     expect(result.logistics.payloadPerMissionKg).toBeLessThan(0);

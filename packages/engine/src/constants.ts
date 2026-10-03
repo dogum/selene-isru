@@ -960,7 +960,7 @@ export const PARAM_META = {
     "unit": "kg/kg",
     "kind": "parameter",
     "group": "propellant",
-    "description": "Vehicle oxidizer-to-fuel mixture ratio (O/F)",
+    "description": "Vehicle mixture ratio (O/F)",
     "source": "Kleinhenz & Paz 2020, AIAA 2020-4042, Table 1 mixture ratio"
   },
   "kElectrolyzerMass": {
@@ -970,7 +970,7 @@ export const PARAM_META = {
     "unit": "kg/(kg/day)",
     "kind": "parameter",
     "group": "propellant",
-    "description": "Water electrolyzer and dryer mass per daily water processed",
+    "description": "Electrolyzer and dryer mass",
     "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, electrolyzer and dryer mass (Fig. 8)"
   },
   "fConversion": {
@@ -1266,7 +1266,7 @@ export const PARAM_META = {
     "unit": "kg/(kg/day)",
     "kind": "parameter",
     "group": "cryo",
-    "description": "LOX liquefier mass per daily oxygen product",
+    "description": "LOX liquefier mass",
     "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, O2 liquefaction mass (Fig. 8)"
   },
   "kLiquefierLh2": {
@@ -1276,7 +1276,7 @@ export const PARAM_META = {
     "unit": "kg/(kg/day)",
     "kind": "parameter",
     "group": "cryo",
-    "description": "LH2 liquefier mass per daily hydrogen product",
+    "description": "LH2 liquefier mass",
     "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, H2 liquefaction mass (Fig. 8)"
   },
   "polarIlluminationFraction": {

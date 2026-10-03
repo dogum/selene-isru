@@ -1,7 +1,7 @@
 import { DEFAULTS, simulate } from "@selene-isru/engine";
 import type { SimParams } from "@selene-isru/engine";
 import { describe, expect, it } from "vitest";
-import { caseSummary, outputLabel } from "../src/analysis/summary";
+import { caseSummary, outputLabel, perKgBasis } from "../src/analysis/summary";
 
 const run = (patch: Partial<SimParams>) => {
   const params = { ...DEFAULTS, ...patch };
@@ -13,11 +13,28 @@ describe("plain case summary", () => {
     const equatorial = run({ site: "equatorial" });
     expect(outputLabel(equatorial.params, equatorial.result)).toBe("O₂ OUTPUT");
     expect(caseSummary(equatorial.params, equatorial.result)).toMatch(
-      /^Equatorial molten-regolith plant makes 1,000\u2009kg\/day liquid oxygen from 59\u2009t landed in 1 landing on 1\.03\u2009MW of nuclear power\. Its product repays the launch mass by day 242\.$/
+      /^Equatorial molten-regolith plant makes 1,000\u2009kg\/day liquid oxygen from 60\.4\u2009t landed in 1 landing on 996\u2009kW of nuclear power\. Its product repays the launch mass by day 242\.$/
     );
     const polar = run({ site: "polar" });
     expect(outputLabel(polar.params, polar.result)).toBe("WATER OUTPUT");
     expect(caseSummary(polar.params, polar.result)).toContain("water ice");
+  });
+
+  it("says what per-kg results are per kg of", () => {
+    expect(perKgBasis(run({}).params, run({}).result)).toBe("product");
+    expect(perKgBasis(run({ site: "polar" }).params, run({ site: "polar" }).result)).toBe("product");
+    const propellant = run({ site: "polar", polarProduct: "propellant" });
+    expect(perKgBasis(propellant.params, propellant.result)).toBe("water processed");
+    const sabatier = run({ site: "polar", enableSabatier: true });
+    expect(perKgBasis(sabatier.params, sabatier.result)).toBe("water processed");
+  });
+
+  it("names the propellant plant and its usable propellant", () => {
+    const propellant = run({ site: "polar", polarProduct: "propellant" });
+    expect(outputLabel(propellant.params, propellant.result)).toBe("WATER PROCESSED");
+    expect(caseSummary(propellant.params, propellant.result)).toMatch(
+      /^Polar ice-to-propellant plant makes 889\u2009kg\/day liquid oxygen and 111\u2009kg\/day liquid hydrogen \(778\u2009kg\/day usable at O\/F 6\) from /
+    );
   });
 
   it("lists every product when the target stream is converted", () => {
