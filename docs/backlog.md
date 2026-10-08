@@ -64,5 +64,6 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 |---|---|---|
 | A dedicated ilmenite scene: beneficiation plant, fluidized bed, electrolyzer | needs Blender, not in the cloud container | v0.8 |
 | Ilmenite catalog kinds for Custom Site | after the scene | CLAUDE.md §5 |
-| Automatic routing, terrain and site-profile map layers, construction scheduling | deliberately future-facing | Custom Site spec |
+| Automatic routing and layout optimization, detailed network solvers, terrain and site-profile map layers, construction scheduling and reliability | deliberately future-facing | Custom Site spec |
+| Experimental mixed-environment equipment, user-authored equipment definitions, collaborative and cloud projects | deliberately future-facing | Custom Site spec |
 | Close-range shadow banding; a real-device GPU and browser matrix | | visual milestone |
