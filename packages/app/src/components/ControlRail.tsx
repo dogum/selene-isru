@@ -248,7 +248,9 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
       </div>
       {open && !gatedOff && (
         <div className="rail-group-body">
-          {group.id === "oxygen-process" && showMode("equatorialProcess") && <OxygenProcessControls />}
+          {group.id === "oxygen-process" && (showMode("equatorialProcess") || showMode("ilmFeed")) && (
+            <OxygenProcessControls process={showMode("equatorialProcess")} feed={showMode("ilmFeed")} />
+          )}
           {group.id === "extraction-sub" && showMode("polarProduct") && <PolarProductControls />}
           {group.id === "cryo" && (showMode("storageStream") || showMode("cryoControlMode")) && (
             <StorageModeControls stream={showMode("storageStream")} heat={showMode("cryoControlMode")} />
@@ -305,21 +307,21 @@ function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: b
   );
 }
 
-function OxygenProcessControls(): React.JSX.Element {
+function OxygenProcessControls({ process: showProcess, feed: showFeed }: { process: boolean; feed: boolean }): React.JSX.Element {
   const process = useStore((s) => s.params.equatorialProcess);
   const feed = useStore((s) => s.params.ilmFeed);
   const setParam = useStore((s) => s.setParam);
 
   return (
     <div className="rail-mode-grid">
-      <label>
+      {showProcess && <label>
         <span>OXYGEN PROCESS</span>
         <select value={process} onChange={(event) => setParam("equatorialProcess", event.target.value as typeof process)}>
           <option value="mre">MOLTEN REGOLITH ELECTROLYSIS</option>
           <option value="ilmenite">ILMENITE H₂ REDUCTION</option>
         </select>
-      </label>
-      {process === "ilmenite" && (
+      </label>}
+      {showFeed && process === "ilmenite" && (
         <label>
           <span>FEEDSTOCK</span>
           <select value={feed} onChange={(event) => setParam("ilmFeed", event.target.value as typeof feed)}>
