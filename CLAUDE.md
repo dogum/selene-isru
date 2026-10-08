@@ -494,6 +494,15 @@ script run on a clean checkout at all.
 
 ## Working agreements
 
+- **Codex review cap: two rounds per PR.** Codex re-reviews every push to an
+  open PR, so each push spends a review. Wait for a review to finish, then
+  answer all of its findings in one push. If the second round still raises a
+  blocking finding, stop pushing: reply on the thread and leave the PR for the
+  user rather than starting a third round. A PR with no findings, or only
+  optional ones, after its first or second round can merge once CI is green.
+- Work the open items in [`docs/backlog.md`](docs/backlog.md) in order, one
+  item or tight cluster per PR. When an item ships, delete it there and
+  annotate the doc it came from.
 - Keep changes focused; explain the engineering or product motivation.
 - Include screenshots for visible UI changes.
 - Visible Custom Site changes: regenerate
@@ -515,6 +524,8 @@ script run on a clean checkout at all.
 ## Further reading
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — model-change guidance.
+- [`docs/backlog.md`](docs/backlog.md) — every open item from the audit trail,
+  in working order.
 - [`docs/model-audit-v02.md`](docs/model-audit-v02.md) — original review snapshot.
 - [`docs/model-depth-v03.md`](docs/model-depth-v03.md) — continuation items and
   remaining limits (polar profile import, energy ledgers, causal tracing).
