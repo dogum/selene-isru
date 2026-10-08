@@ -1,6 +1,6 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
 import type { SimParams } from "../types";
-import { ilmeniteSoilPerKgO2, reducesIlmenite } from "./ilmenite";
+import { ilmeniteOverburdenPerKgO2, ilmeniteSoilPerKgO2, reducesIlmenite } from "./ilmenite";
 
 export interface ExcavationOutput {
   cuttingForceN: number;
@@ -37,8 +37,14 @@ export function simulateExcavation(params: SimParams, xO2Effective?: number): Ex
   const mechPowerW = (cuttingForceN * params.vCut) / params.etaDrive;
   const regolithPerKg = regolithPerKgProduct(params, xO2Effective);
   // Every plant's mining energy and fleet scale with the soil it moves. The
-  // polar pit mine also strips dry overburden to reach the icy regolith.
-  const overburdenPerKg = params.site === "polar" ? params.overburdenRatio * regolithPerKg : 0;
+  // polar pit mine strips dry overburden to reach the icy regolith, and a
+  // basalt mine the soil over the bedrock.
+  const overburdenPerKg =
+    params.site === "polar"
+      ? params.overburdenRatio * regolithPerKg
+      : reducesIlmenite(params)
+        ? ilmeniteOverburdenPerKgO2(params)
+        : 0;
   const soilMovedPerKg = regolithPerKg + overburdenPerKg;
   const soilMovedKgPerDay = params.targetKgPerDay * soilMovedPerKg;
 

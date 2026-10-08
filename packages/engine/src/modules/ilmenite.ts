@@ -17,8 +17,38 @@ export function reducesIlmenite(params: Pick<SimParams, "site" | "equatorialProc
  * than the soil is no separation at all: the whole sized stream goes to the
  * reactor with all its ilmenite, and no recovery loss applies.
  */
-export function ilmeniteSeparates(params: Pick<SimParams, "ilmConcentrateGrade" | "fIlmenite">): boolean {
-  return params.ilmConcentrateGrade > params.fIlmenite;
+export function ilmeniteSeparates(params: Pick<SimParams, "ilmConcentrateGrade" | "fIlmenite" | "ilmFeed" | "fIlmBasalt">): boolean {
+  return params.ilmConcentrateGrade > ilmeniteFeedGrade(params);
+}
+
+/** True when the ilmenite plant crushes and grinds basalt instead of sizing soil. */
+export function feedsBasalt(params: Pick<SimParams, "ilmFeed">): boolean {
+  return params.ilmFeed === "basalt";
+}
+
+/** Ilmenite mass fraction of the feed before separation [kg/kg]. */
+export function ilmeniteFeedGrade(params: Pick<SimParams, "fIlmenite" | "ilmFeed" | "fIlmBasalt">): number {
+  return feedsBasalt(params) ? params.fIlmBasalt : params.fIlmenite;
+}
+
+/**
+ * Feed inside the reactor's size window per kg of the stream it comes from
+ * [kg/kg]: the sized share of soil, or the coarse share of ground basalt.
+ */
+function sizedShare(params: SimParams): number {
+  return feedsBasalt(params) ? params.fBasaltSized : params.fIlmSized;
+}
+
+/**
+ * Feed (soil, or basalt to the crushers) per kg of oxygen [kg/kg]. Only feed
+ * inside the reactor's size window reaches it; the separator, when there is
+ * one, recovers part of its ilmenite (on basalt, only the grains grinding
+ * freed); and the reactor reduces part of what it is fed.
+ */
+function feedPerKgO2(params: SimParams): number {
+  const separates = ilmeniteSeparates(params);
+  const recovery = separates ? params.etaIlmRecovery * (feedsBasalt(params) ? params.fIlmLiberated : 1) : 1;
+  return 1 / (ilmeniteFeedGrade(params) * sizedShare(params) * recovery * ilmeniteConversion(params) * ilmeniteOxygenFraction());
 }
 
 /**
@@ -49,8 +79,13 @@ export function ilmeniteConversion(params: Pick<SimParams, "TIlmReactor" | "tIlm
  * ilmenite, and the reactor reduces part of what it is fed.
  */
 export function ilmeniteSoilPerKgO2(params: SimParams): number {
-  const recovery = ilmeniteSeparates(params) ? params.etaIlmRecovery : 1;
-  return 1 / (params.fIlmenite * params.fIlmSized * recovery * ilmeniteConversion(params) * ilmeniteOxygenFraction());
+  // A basalt mine digs a layer that is part basalt, part soil and oversize.
+  return feedsBasalt(params) ? feedPerKgO2(params) / params.fBasaltInMined : feedPerKgO2(params);
+}
+
+/** Overburden stripped per kg of oxygen [kg/kg]; a soil plant mines the surface. */
+export function ilmeniteOverburdenPerKgO2(params: SimParams): number {
+  return feedsBasalt(params) ? params.basaltOverburdenRatio * ilmeniteSoilPerKgO2(params) : 0;
 }
 
 /**
@@ -64,7 +99,14 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
   const reducedPerKgO2 = 1 / ilmeniteOxygenFraction();
   const fedIlmenitePerKgO2 = reducedPerKgO2 / conversion;
   const soilPerKgO2 = ilmeniteSoilPerKgO2(params);
-  const sizedSoilPerKgO2 = soilPerKgO2 * params.fIlmSized;
+  const basalt = feedsBasalt(params);
+  const basaltPerKgO2 = basalt ? feedPerKgO2(params) : 0;
+  const sizedSoilPerKgO2 = (basalt ? basaltPerKgO2 : soilPerKgO2) * sizedShare(params);
+  // Soil is sized and separated; basalt is crushed, ground, screened, and separated.
+  const beneficiatedPerKgO2 = basalt ? basaltPerKgO2 : soilPerKgO2;
+  const beneficiationJPerKg = basalt ? params.eIlmComminution : params.eIlmBeneficiation;
+  const beneficiationMassCoefficient = basalt ? params.kIlmComminutionMass : params.kIlmBeneficiationMass;
+  const movedPerKgO2 = soilPerKgO2 + ilmeniteOverburdenPerKgO2(params);
   // Without enrichment the reactor takes the whole sized stream.
   const concentratePerKgO2 = ilmeniteSeparates(params) ? fedIlmenitePerKgO2 / params.ilmConcentrateGrade : sizedSoilPerKgO2;
   const waterPerKgO2 = PHYSICAL_CONSTANTS.M_H2O.value / (PHYSICAL_CONSTANTS.M_O2.value / 2);
@@ -90,6 +132,7 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
     conversion,
     soilPerKgO2,
     soilKgPerDay,
+    basaltFedKgPerDay: o2KgPerDay * basaltPerKgO2,
     sizedSoilKgPerDay: o2KgPerDay * sizedSoilPerKgO2,
     concentrateKgPerDay,
     concentrateGrade: fedIlmenitePerKgO2 / concentratePerKgO2,
@@ -99,14 +142,14 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
     hydrogenRecycleKgPerDay: water.grossH2KgPerDay,
     spentSolidsKgPerDay: concentrateKgPerDay - o2KgPerDay,
     ironKgPerDay: o2KgPerDay * ironPerKgO2,
-    secMining_JPerKg: params.eMining * soilPerKgO2,
-    secBeneficiation_JPerKg: params.eIlmBeneficiation * soilPerKgO2,
+    secMining_JPerKg: params.eMining * movedPerKgO2,
+    secBeneficiation_JPerKg: beneficiationJPerKg * beneficiatedPerKgO2,
     secSensible_JPerKg,
     secReaction_JPerKg,
     secReactorLoss_JPerKg: params.fIlmHeatLoss * (secSensible_JPerKg + secReaction_JPerKg),
     secWaterElectrolysis_JPerKg: water.secWaterElectrolysis_JPerKg * waterPerKgO2,
-    miningMassKg: params.kMiningMass * soilKgPerDay,
-    beneficiationMassKg: params.kIlmBeneficiationMass * soilKgPerDay,
+    miningMassKg: params.kMiningMass * (o2KgPerDay * movedPerKgO2),
+    beneficiationMassKg: beneficiationMassCoefficient * o2KgPerDay * beneficiatedPerKgO2,
     bedHoldupKg,
     bedMassKg,
     reactorMassKg: params.kIlmGasLoopMass * o2KgPerDay + bedMassKg,

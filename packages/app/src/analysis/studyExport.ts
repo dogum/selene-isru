@@ -17,6 +17,7 @@ import { nonDefaultParams, paramsToUrl } from "../lib/url";
 import { BUILD_INFO, type BuildInfo } from "../lib/build";
 import { CASE_SCHEMA, CASE_VERSION, fileStem, resultDrift } from "./caseExport";
 import { toCsv, type CsvColumn, type CsvValue } from "./csv";
+import { ilmeniteGradeKey } from "./sweep";
 
 export interface StudyExport {
   schema: "selene-isru-study";
@@ -494,10 +495,10 @@ export function reportSnapshot(params: SimParams): {
 } {
   const result = simulate(params);
   // The input with the widest stated spread for this plant: ice grade at the
-  // pole, ilmenite grade for an ilmenite plant, MRE current efficiency otherwise.
+  // pole, the feed's ilmenite grade for an ilmenite plant, MRE current efficiency otherwise.
   const dominant: keyof SimParams =
-    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? "fIlmenite" : "etaCurrent";
-  const spread: Partial<Record<keyof SimParams, number>> = { chiIce: 0.25, fIlmenite: 0.3, etaCurrent: 0.12 };
+    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? ilmeniteGradeKey(params) : "etaCurrent";
+  const spread: Partial<Record<keyof SimParams, number>> = { chiIce: 0.25, fIlmenite: 0.3, fIlmBasalt: 0.3, etaCurrent: 0.12 };
   // A fixed, stated spec so a printed report says exactly what it sampled.
   const spec: UncertaintySpec[] = [
     { key: "targetKgPerDay", rel: 0.1 },

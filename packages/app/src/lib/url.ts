@@ -75,6 +75,10 @@ export function parseParams(query: string): Partial<SimParams> {
       if (raw === "none" || raw === "lander") {
         patch[key] = raw;
       }
+    } else if (key === "ilmFeed") {
+      if (raw === "soil" || raw === "basalt") {
+        patch[key] = raw;
+      }
     } else if (key === "equatorialProcess") {
       if (raw === "mre" || raw === "ilmenite") {
         patch[key] = raw;

@@ -232,6 +232,10 @@ ilmenite reactor (conversion from temperature and residence time, and a
 fluidized bed sized by the solids it holds, calibrated to Eagle's
 no-separation trade) is in
 [`docs/model-ilmenite-reactor-v010.md`](docs/model-ilmenite-reactor-v010.md).
+The v0.11 basalt feed (Eagle's crushed high-Ti basalt as a second ilmenite
+feedstock, with crushing, grinding, and overburden, calibrated to Eagle's
+basalt-fed plant) is in
+[`docs/model-basalt-feed-v011.md`](docs/model-basalt-feed-v011.md).
 
 ## Architecture
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..constants import c
-from .ilmenite import ilmenite_soil_per_kg_o2, reduces_ilmenite
+from .ilmenite import ilmenite_overburden_per_kg_o2, ilmenite_soil_per_kg_o2, reduces_ilmenite
 
 
 def regolith_per_kg_product(params: dict[str, Any], x_o2_effective: float | None = None) -> float:
@@ -27,7 +27,14 @@ def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = N
     regolith_per_kg = regolith_per_kg_product(params, x_o2_effective)
     # Every plant's mining energy and fleet scale with the soil it moves. The
     # polar pit mine also strips dry overburden to reach the icy regolith.
-    overburden_per_kg = params["overburdenRatio"] * regolith_per_kg if params["site"] == "polar" else 0
+    # The polar pit mine strips dry overburden to reach the icy regolith, and a
+    # basalt mine the soil over the bedrock.
+    if params["site"] == "polar":
+        overburden_per_kg = params["overburdenRatio"] * regolith_per_kg
+    elif reduces_ilmenite(params):
+        overburden_per_kg = ilmenite_overburden_per_kg_o2(params)
+    else:
+        overburden_per_kg = 0
     soil_moved_per_kg = regolith_per_kg + overburden_per_kg
     soil_moved_kg_per_day = params["targetKgPerDay"] * soil_moved_per_kg
 

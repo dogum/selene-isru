@@ -211,7 +211,8 @@ export function EngineeringReport(): React.JSX.Element {
         <section className="report-section">
           <h3>Ilmenite hydrogen reduction</h3>
           <table><tbody>
-            <tr><th>Soil mined / per kg O₂</th><td>{formatQtyText(result.ilmenite.soilKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.soilPerKgO2, "kg/kg")}</td></tr>
+            <tr><th>{result.ilmenite.basaltFedKgPerDay > 0 ? "Basalt layer mined" : "Soil mined"} / per kg O₂</th><td>{formatQtyText(result.ilmenite.soilKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.soilPerKgO2, "kg/kg")}</td></tr>
+            {result.ilmenite.basaltFedKgPerDay > 0 && <tr><th>Overburden stripped / basalt ground</th><td>{formatQtyText(result.excavation.overburdenKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.basaltFedKgPerDay, "kg/day")}</td></tr>}
             <tr><th>Sized feed / concentrate fed</th><td>{formatQtyText(result.ilmenite.sizedSoilKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.concentrateKgPerDay, "kg/day")}</td></tr>
             <tr><th>Concentrate grade</th><td>{(result.ilmenite.concentrateGrade * 100).toFixed(1)}% ilmenite</td></tr>
             <tr><th>Ilmenite reduced / water split</th><td>{formatQtyText(result.ilmenite.ilmeniteReducedKgPerDay, "kg/day")} · {formatQtyText(result.ilmenite.waterKgPerDay, "kg/day")}</td></tr>
@@ -222,7 +223,7 @@ export function EngineeringReport(): React.JSX.Element {
             <tr><th>Water electrolysis</th><td>{formatQtyText(result.ilmenite.secWaterElectrolysis_JPerKg / 3.6e6, "kWh/kg")}</td></tr>
             <tr><th>Fleet / beneficiation / reactor / electrolyzer</th><td>{formatQtyText(result.ilmenite.miningMassKg, "kg")} · {formatQtyText(result.ilmenite.beneficiationMassKg, "kg")} · {formatQtyText(result.ilmenite.reactorMassKg, "kg")} · {formatQtyText(result.ilmenite.electrolyzerMassKg, "kg")}</td></tr>
           </tbody></table>
-          <p className="report-note">Energies are per kg of oxygen. The soil chain, beneficiation, and reactor are calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant design and the mining to RASSOR (Guerrero-Gonzalez &amp; Zabel 2023). Conversion is an input, not a kinetics model.</p>
+          <p className="report-note">Energies are per kg of oxygen. The soil chain, beneficiation, and reactor are calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant design and the mining to RASSOR (Guerrero-Gonzalez &amp; Zabel 2023). Conversion follows from reactor temperature and residence time, with the rate pinned to Eagle's design. A basalt feed adds Eagle's crushing and grinding circuit.</p>
         </section>
       )}
 

@@ -132,6 +132,40 @@
       "modelSimplification": "The default is Zhao & Shadman's value and the input spans the others. Lab rates on fine powder are 10 to 100 times faster than Eagle's design point (90% in 4 h at 1,000 C), whose bed approaches the reaction's gas equilibrium; so only the temperature dependence is taken from the lab, and the rate itself is pinned to Eagle's design. A gas-limited bed may follow the weaker, equilibrium-driven dependence."
     },
     {
+      "id": "eagle-1988-basalt-feed",
+      "kind": "calibration",
+      "quantity": "basalt fed, layer mined, and beneficiation power and mass for Eagle's basalt-fed plants",
+      "inputs": { "runningO2KgPerDay": 3044.1 },
+      "expected": { "basaltFedPerKgO2": 88.23, "minedPerKgO2": 185.74, "beneficiationKW": 526, "beneficiationMassKg": 73400 },
+      "relativeTolerance": 0.01,
+      "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/19890004515",
+      "sourceLocator": "Table 6-1 (25 vol% ilmenite: 88.23 t basalt fed and 185.74 t mined per t LOX); Table 6-5 (1,000 t/yr basalt plant, nuclear, 90% duty: beneficiation 526 kW and 73.4 t)",
+      "modelSimplification": "Calibration anchor: the chain's fractions are Eagle's Table 6-1 values, and eIlmComminution and kIlmComminutionMass were derived from Table 6-5, so agreement confirms the derivation, not the physics."
+    },
+    {
+      "id": "eagle-1988-basalt-vs-soil",
+      "kind": "documentation-only",
+      "quantity": "basalt-fed plant relative to the soil-fed plant at 1,000 t/yr",
+      "expected": { "powerRatio": 0.797, "landedMassRatio": 0.827 },
+      "unit": "1",
+      "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/19890004515",
+      "sourceLocator": "Table 6-5: basalt 2,380 kW and 201.7 t against soil 2,988 kW and 243.8 t, both nuclear at 90% duty",
+      "modelSimplification": "Comparison, not calibration: only beneficiation was fitted to the basalt plant. The model's power ratio comes out near Eagle's; its mass ratio is closer to one because Eagle's basalt process area is 13 t lighter than its soil one for the same concentrate, a difference the model, whose reactor follows the concentrate, does not reproduce."
+    },
+    {
+      "id": "bond-law-basalt-grinding",
+      "kind": "documentation-only",
+      "quantity": "Bond's-law grinding energy for basalt, 100 mm to 0.1 mm",
+      "expected": 71.3,
+      "unit": "kJ/kg",
+      "source": "Bond's third theory of comminution, with Eagle Engineering 1988's basalt work index (App. A.5, Eqn. 37: 20.41 kWh/t)",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/19890004515",
+      "sourceLocator": "W = 10 Wi (1/sqrt(P80) - 1/sqrt(F80)), sizes in um",
+      "modelSimplification": "Cross-check only: grinding alone is well under the calibrated 169 kJ/kg, which also carries the fine screens, magnetic separation, and handling."
+    },
+    {
       "id": "mli-layer-density-units",
       "kind": "open",
       "quantity": "MLI layer-density coefficient/unit pairing",

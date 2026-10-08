@@ -230,4 +230,5 @@ Screenshots:
 - **Economy of scale** in the bed and gas loop between pilot and production
   plants.
 - **Still open from v0.8:** iron and tailings credit, a dedicated ilmenite
-  scene, and basalt feed.
+  scene, and basalt feed. *(v0.11: basalt feed done. See
+  [`model-basalt-feed-v011.md`](model-basalt-feed-v011.md).)*

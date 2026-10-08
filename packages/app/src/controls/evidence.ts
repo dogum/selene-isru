@@ -135,11 +135,13 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Equatorial site · feed temperature for the MRE melt and the ilmenite reactor"
   },
   fIlmenite: {
+    applicability: "Equatorial site · ilmenite reduction · soil feed",
     rangeRationale: "From highland soils near 1 wt% to high-Ti mare soils near 17 wt% (Guerrero-Gonzalez & Zabel 2023, Fig. 10). Eagle's mare soil is 7.5 wt%.",
     validity: "A property of the site, not a design lever. Ilmenite is assumed spread evenly across grain sizes, so the share outside the feed window is lost with that soil, as Eagle assumed.",
     defaultUncertainty: 0.3
   },
   fIlmSized: {
+    applicability: "Equatorial site · ilmenite reduction · soil feed",
     rangeRationale: "Eagle's split comes from one Apollo 11 soil (10084); coarser or finer soils move it.",
     validity: "The window is 0.045–0.5 mm, set by fluidization and dust carry-over. Grinding oversize to recover its ilmenite is not modelled.",
     defaultUncertainty: 0.2
@@ -177,11 +179,59 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     defaultUncertainty: 0.3
   },
   eIlmBeneficiation: {
+    applicability: "Equatorial site · ilmenite reduction · soil feed",
     validity: "Fine screening dominates in both studies. Electrostatic separation, which needs the feed heated to about 200 °C, is not modelled.",
     defaultUncertainty: 0.3
   },
   kIlmBeneficiationMass: {
+    applicability: "Equatorial site · ilmenite reduction · soil feed",
     validity: "Screens, magnetic separator, hoppers, and conveyors. Guerrero-Gonzalez & Zabel's parametric models give about 2.3 times Eagle's mass per tonne of soil.",
+    defaultUncertainty: 0.4
+  },
+  ilmFeed: {
+    validity: "Mare soil is scooped, sized, and separated; high-Ti basalt is mined from a layer under the soil, then crushed, ground, and separated. Both follow Eagle Engineering's 1988 designs, and only the chosen feed's inputs act.",
+    applicability: "Equatorial site · ilmenite reduction"
+  },
+  fIlmBasalt: {
+    rangeRationale: "From ilmenite-poor basalts near 5 wt% to the richest Apollo 11 and 17 high-Ti basalts near 45 wt%. Eagle used 25 vol%, about 33 wt%.",
+    validity: "A property of the deposit, not a design lever. Feeding unseparated basalt becomes worthwhile as the grade rises, as Eagle noted.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
+    defaultUncertainty: 0.3
+  },
+  fIlmLiberated: {
+    rangeRationale: "From coarse grinding that frees few grains to fine grinding that frees nearly all. Eagle's 64.7% is its own crushing-circuit estimate, not a measurement.",
+    validity: "Share of the basalt's ilmenite that leaves the mill as clean grains the magnetic separator can catch; it multiplies the separator's recovery. Grinding finer frees more but feeds more fines out of the reactor window, which this input does not couple.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
+    defaultUncertainty: 0.2
+  },
+  fBasaltSized: {
+    rangeRationale: "From a mill that makes many fines to a circuit tuned to the reactor window. Eagle's 56.9% follows its grinding flowsheet.",
+    validity: "Share of the ground basalt inside the reactor's 0.045–0.5 mm window. Fines below it are lost with their ilmenite.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
+    defaultUncertainty: 0.2
+  },
+  fBasaltInMined: {
+    rangeRationale: "From a thin, broken flow mixed with regolith to a clean basalt face. Eagle's 47.5% is its own estimate for a mare flow under a few metres of soil.",
+    validity: "The rest of the mined layer, soil and oversize, is moved and rejected. No surveyed basalt deposit stands behind the number.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
+    defaultUncertainty: 0.3
+  },
+  basaltOverburdenRatio: {
+    rangeRationale: "From basalt exposed at the surface to a layer under four times its depth of soil. Eagle stripped 1.1 kg per kg of layer mined.",
+    validity: "Stripped at the shared mining energy and fleet mass, as Eagle's mining power implies. Strip timing is not modelled: the overburden is moved at a steady rate with the layer.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
+    defaultUncertainty: 0.5
+  },
+  eIlmComminution: {
+    rangeRationale: "From about Bond's-law grinding alone (roughly 70 kJ/kg for basalt to the reactor window) to more than twice Eagle's whole circuit.",
+    validity: "Eagle's crushing, grinding, screening, and separation power per kg of basalt fed. A Bond's-law estimate covers less than half, so the remainder is conveying, screening, and separation.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
+    defaultUncertainty: 0.3
+  },
+  kIlmComminutionMass: {
+    rangeRationale: "From a light terrestrial-derived circuit to several times Eagle's estimate.",
+    validity: "Crushers, mills, screens, separators, and conveyors per kg/day of basalt fed, from Eagle's design; scaled linearly, with no economy of scale.",
+    applicability: "Equatorial site · ilmenite reduction · basalt feed",
     defaultUncertainty: 0.4
   },
   kIlmGasLoopMass: {

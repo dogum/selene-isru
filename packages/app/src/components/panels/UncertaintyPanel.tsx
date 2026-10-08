@@ -6,7 +6,7 @@ import { oneAtATimeSensitivity } from "../../analysis/sensitivity";
 import { ExportButton } from "./ExportButton";
 import { formatQtyText } from "../../lib/format";
 import { useStore } from "../../state/store";
-import { appliesToCase } from "../../analysis/sweep";
+import { appliesToCase, ilmeniteGradeKey } from "../../analysis/sweep";
 import { processScope, useScopedState } from "../../lib/hooks";
 
 /** Fixed so the bands are reproducible; the CSV export records both. */
@@ -22,6 +22,8 @@ interface UncertaintyOption {
   site?: SimParams["site"];
   /** restrict to one equatorial oxygen process; omit = either */
   process?: SimParams["equatorialProcess"];
+  /** restrict to one ilmenite feedstock; omit = either */
+  feed?: SimParams["ilmFeed"];
 }
 
 const OPTIONS: UncertaintyOption[] = [
@@ -35,11 +37,14 @@ const OPTIONS: UncertaintyOption[] = [
   { key: "etaCurrent", label: "MRE current efficiency", rel: 0.12, site: "equatorial", process: "mre" },
   { key: "xO2", label: "Regolith O₂ fraction", rel: 0.12, site: "equatorial", process: "mre" },
   { key: "kReactorMass", label: "Reactor mass factor", rel: 0.2, site: "equatorial", process: "mre" },
-  { key: "fIlmenite", label: "Ilmenite in soil", rel: 0.3, site: "equatorial", process: "ilmenite" },
+  { key: "fIlmenite", label: "Ilmenite in soil", rel: 0.3, site: "equatorial", process: "ilmenite", feed: "soil" },
+  { key: "fIlmBasalt", label: "Ilmenite in basalt", rel: 0.3, site: "equatorial", process: "ilmenite", feed: "basalt" },
+  { key: "fIlmLiberated", label: "Ilmenite liberated by grinding", rel: 0.2, site: "equatorial", process: "ilmenite", feed: "basalt" },
   { key: "ilmConcentrateGrade", label: "Concentrate grade", rel: 0.3, site: "equatorial", process: "ilmenite" },
   { key: "tIlmResidenceH", label: "Reactor residence time", rel: 0.3, site: "equatorial", process: "ilmenite" },
   { key: "EaIlmReduction", label: "Reduction activation energy", rel: 0.3, site: "equatorial", process: "ilmenite" },
-  { key: "eIlmBeneficiation", label: "Beneficiation energy", rel: 0.3, site: "equatorial", process: "ilmenite" },
+  { key: "eIlmBeneficiation", label: "Beneficiation energy", rel: 0.3, site: "equatorial", process: "ilmenite", feed: "soil" },
+  { key: "eIlmComminution", label: "Crushing and grinding energy", rel: 0.3, site: "equatorial", process: "ilmenite", feed: "basalt" },
   { key: "chiIce", label: "Polar ice fraction", rel: 0.25, site: "polar" },
   { key: "cpRegCold", label: "Cold heat capacity", rel: 0.12, site: "polar" },
   { key: "rPore", label: "Representative pore radius", rel: 0.3, site: "polar" },
@@ -69,7 +74,7 @@ export function UncertaintyPanel(): React.JSX.Element {
   const defaultKeys: Array<keyof SimParams> = params.site === "polar"
     ? ["targetKgPerDay", "chiIce", "cpRegCold"]
     : params.equatorialProcess === "ilmenite"
-      ? ["targetKgPerDay", "fIlmenite", "ilmConcentrateGrade"]
+      ? ["targetKgPerDay", ilmeniteGradeKey(params), "ilmConcentrateGrade"]
       : ["targetKgPerDay", "etaCurrent", "Vcell"];
   // A selection made for one site or process resets to the new one's defaults.
   const [keys, setKeys] = useScopedState<Array<keyof SimParams>>(processScope(params), () => defaultKeys);

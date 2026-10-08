@@ -76,7 +76,7 @@ export function caseSummary(params: SimParams, result: SimResult): string {
           ? "Polar ice-to-propellant plant"
           : "Polar ice plant"
       : result.ilmenite !== null
-        ? `Equatorial ilmenite-reduction plant mining ${formatQtyProse(result.ilmenite.soilKgPerDay, "kg/day")} of soil`
+        ? `Equatorial ilmenite-reduction plant mining ${formatQtyProse(result.ilmenite.soilKgPerDay, "kg/day")} of ${params.ilmFeed === "basalt" ? "high-Ti basalt layer" : "soil"}`
         : "Equatorial molten-regolith plant";
   const named = [...deliveredInventories(result)]
     .sort((a, b) => b.rateKgPerDay - a.rateKgPerDay)

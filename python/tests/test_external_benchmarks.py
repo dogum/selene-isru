@@ -120,3 +120,29 @@ def test_ilmenite_activation_energy_default_and_range() -> None:
     bounds = PARAM_META["EaIlmReduction"]
     for value in (from_equilibrium, from_times, expected["zhaoShadmanKJPerMol"], expected["briggsSaccoKJPerMol"]):
         assert bounds["min"] <= value * 1000 <= bounds["max"]
+
+
+def test_basalt_chain_reproduces_eagle_basalt_plants() -> None:
+    row = item("eagle-1988-basalt-feed")
+    o2 = row["inputs"]["runningO2KgPerDay"]
+    ilmenite = simulate({"equatorialProcess": "ilmenite", "ilmFeed": "basalt", "targetKgPerDay": o2})["ilmenite"]
+    actual = {
+        "basaltFedPerKgO2": ilmenite["basaltFedKgPerDay"] / o2,
+        "minedPerKgO2": ilmenite["soilPerKgO2"],
+        "beneficiationKW": ilmenite["secBeneficiation_JPerKg"] * o2 / 86_400 / 1000,
+        "beneficiationMassKg": ilmenite["beneficiationMassKg"],
+    }
+    for key, value in row["expected"].items():
+        assert actual[key] == pytest.approx(value, rel=row["relativeTolerance"]), key
+
+
+def test_basalt_against_soil_power_ratio() -> None:
+    expected = item("eagle-1988-basalt-vs-soil")["expected"]
+
+    def run(feed: str) -> dict:
+        return simulate({"equatorialProcess": "ilmenite", "ilmFeed": feed, "targetKgPerDay": 3044.1})
+
+    soil, basalt = run("soil"), run("basalt")
+    assert basalt["energy"]["gridPowerW"] / soil["energy"]["gridPowerW"] == pytest.approx(expected["powerRatio"], rel=0.05)
+    ratio = basalt["logistics"]["totalInfraMassKg"] / soil["logistics"]["totalInfraMassKg"]
+    assert expected["landedMassRatio"] < ratio < 1

@@ -159,6 +159,22 @@ def test_ilmenite_kinetics_and_bed_hold_up_v010() -> None:
     assert_rel(unseparated["energy"]["secTotal_kWhPerKg"], 44.33, 0.001)
 
 
+def test_basalt_feed_v011() -> None:
+    basalt = simulate({"equatorialProcess": "ilmenite", "ilmFeed": "basalt"})
+    ilmenite = basalt["ilmenite"]
+    assert_rel(ilmenite["soilPerKgO2"], 186.3, 0.001)
+    assert_rel(ilmenite["basaltFedKgPerDay"] / 1000, 88.49, 0.001)
+    assert_rel(basalt["excavation"]["overburdenKgPerDay"], 1.1 * ilmenite["soilKgPerDay"], 1e-12)
+    assert_rel(basalt["energy"]["secTotal_kWhPerKg"], 16.23, 0.001)
+    assert_rel(basalt["energy"]["gridPowerW"] / 1000, 676.3, 0.001)
+    assert_rel(basalt["logistics"]["totalInfraMassKg"] / 1000, 84.24, 0.001)
+    assert basalt["logistics"]["nMissions"] == 1
+    assert_rel(basalt["campaign"]["paybackDays"], 245.5, 0.001)
+    unseparated = simulate({"equatorialProcess": "ilmenite", "ilmFeed": "basalt", "ilmConcentrateGrade": 0.33})
+    assert_rel(unseparated["ilmenite"]["soilPerKgO2"], 118.1, 0.001)
+    assert_rel(unseparated["ilmenite"]["reactorMassKg"] / 1000, 20.62, 0.001)
+
+
 def test_v1_aggregate_electrolysis_path_stays_reachable() -> None:
     fallback = simulate({"oxideModel": False})
     direct = oxide_model_yield({**DEFAULTS, "oxideModel": False})

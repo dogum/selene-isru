@@ -22,6 +22,7 @@ export function energyStageLabel(id: string, result: Pick<SimResult, "site" | "i
   if (id === "electrolysis") {
     return result.site === "equatorial" && result.ilmenite === null ? "Molten-regolith electrolysis" : "Water electrolysis";
   }
+  if (id === "beneficiation" && (result.ilmenite?.basaltFedKgPerDay ?? 0) > 0) return "Basalt crushing, grinding, and separation";
   return STAGE_LABELS[id] ?? id;
 }
 

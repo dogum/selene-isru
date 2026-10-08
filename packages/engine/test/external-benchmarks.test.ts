@@ -146,6 +146,40 @@ describe("external analytical benchmarks (separate from implementation parity)",
     }
   });
 
+  test("the basalt chain and comminution reproduce Eagle's basalt plants", () => {
+    const item = benchmark("eagle-1988-basalt-feed");
+    const expected = item.expected as Record<string, number>;
+    const o2 = item.inputs!.runningO2KgPerDay!;
+    const ilmenite = simulate({ equatorialProcess: "ilmenite", ilmFeed: "basalt", targetKgPerDay: o2 }).ilmenite!;
+    const actual: Record<string, number> = {
+      basaltFedPerKgO2: ilmenite.basaltFedKgPerDay / o2,
+      minedPerKgO2: ilmenite.soilPerKgO2,
+      beneficiationKW: (ilmenite.secBeneficiation_JPerKg * o2) / 86_400 / 1000,
+      beneficiationMassKg: ilmenite.beneficiationMassKg
+    };
+    for (const [key, value] of Object.entries(expected)) {
+      expectRelative2(actual[key]!, value, item.relativeTolerance!);
+    }
+  });
+
+  test("basalt against soil: the power ratio follows Eagle, the mass ratio is disclosed", () => {
+    const expected = benchmark("eagle-1988-basalt-vs-soil").expected as Record<string, number>;
+    const run = (ilmFeed: "soil" | "basalt") => simulate({ equatorialProcess: "ilmenite", ilmFeed, targetKgPerDay: 3044.1 });
+    const soil = run("soil");
+    const basalt = run("basalt");
+    expectRelative2(basalt.energy.gridPowerW / soil.energy.gridPowerW, expected.powerRatio!, 0.05);
+    const massRatio = basalt.logistics.totalInfraMassKg / soil.logistics.totalInfraMassKg;
+    expect(massRatio).toBeLessThan(1);
+    expect(massRatio).toBeGreaterThan(expected.landedMassRatio!);
+  });
+
+  test("Bond's law puts grinding alone well under the calibrated comminution energy", () => {
+    const item = benchmark("bond-law-basalt-grinding");
+    const grindingKJPerKg = (10 * 20.41 * (1 / Math.sqrt(100) - 1 / Math.sqrt(100_000)) * 3.6);
+    expectRelative2(grindingKJPerKg, item.expected as number, 0.01);
+    expect(grindingKJPerKg * 1000).toBeLessThan(DEFAULTS.eIlmComminution);
+  });
+
   test("open benchmarks remain visibly unresolved", () => {
     expect(benchmark("mli-layer-density-units").kind).toBe("open");
   });

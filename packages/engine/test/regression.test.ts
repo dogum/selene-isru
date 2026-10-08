@@ -204,6 +204,27 @@ describe("regression anchors", () => {
     expectRel(unseparated.energy.secTotal_kWhPerKg, 44.33, 0.001);
   });
 
+  test("basalt feed for the ilmenite plant (v0.11)", () => {
+    // New and deliberate: Eagle's crushed high-Ti basalt, 33 wt% ilmenite.
+    // The soil route does not move.
+    const basalt = simulate({ equatorialProcess: "ilmenite", ilmFeed: "basalt" });
+    const ilmenite = basalt.ilmenite!;
+    expectRel(ilmenite.soilPerKgO2, 186.3, 0.001);
+    expectRel(ilmenite.basaltFedKgPerDay / 1000, 88.49, 0.001);
+    // 1.1 kg of overburden per kg of layer mined, moved by the shared fleet.
+    expectRel(basalt.excavation.overburdenKgPerDay, 1.1 * ilmenite.soilKgPerDay, 1e-12);
+    expectRel(basalt.energy.secTotal_kWhPerKg, 16.23, 0.001);
+    expectRel(basalt.energy.gridPowerW / 1000, 676.3, 0.001);
+    expectRel(basalt.logistics.totalInfraMassKg / 1000, 84.24, 0.001);
+    // It fits one lander where the soil plant needs two: payback day 586 -> 246.
+    expect(basalt.logistics.nMissions).toBe(1);
+    expectRel(basalt.campaign.paybackDays!, 245.5, 0.001);
+    // Fed whole, the ground basalt loses nothing to liberation: less is mined.
+    const unseparated = simulate({ equatorialProcess: "ilmenite", ilmFeed: "basalt", ilmConcentrateGrade: 0.33 });
+    expectRel(unseparated.ilmenite!.soilPerKgO2, 118.1, 0.001);
+    expectRel(unseparated.ilmenite!.reactorMassKg / 1000, 20.62, 0.001);
+  });
+
   test("keeps the v1 aggregate electrolysis path reachable", () => {
     const fallback = simulate({ oxideModel: false });
     const direct = oxideModelYield({ ...DEFAULTS, oxideModel: false });

@@ -1831,6 +1831,14 @@ export const PARAM_META = {
     "description": "Equatorial oxygen process: molten regolith electrolysis, or hydrogen reduction of ilmenite",
     "source": "model switch"
   },
+  "ilmFeed": {
+    "value": "soil",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Ilmenite plant feedstock: mare soil, or crushed high-Ti basalt",
+    "source": "model switch; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6.3.1: soil vs basalt feedstock"
+  },
   "fIlmenite": {
     "value": 0.075,
     "min": 0.005,
@@ -1940,6 +1948,76 @@ export const PARAM_META = {
     "group": "ilmenite",
     "description": "Beneficiation plant mass per kg/day of soil processed",
     "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 93.6 t for 995 t/d of soil; Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Table 2 gives about 0.22"
+  },
+  "fIlmBasalt": {
+    "value": 0.33,
+    "min": 0.05,
+    "max": 0.45,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Ilmenite mass fraction in the basalt",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1 and Sec. 5.1: 25 vol% (33 wt%) ilmenite; Table 5-2: high-Ti mare basalts typically over 15 vol%"
+  },
+  "fIlmLiberated": {
+    "value": 0.647,
+    "min": 0.2,
+    "max": 0.95,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Share of the basalt's ilmenite freed as clean grains by grinding",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1 and Fig. 6-5: 64.7% liberated grinding 0.5 mm grains to an average 0.1 mm"
+  },
+  "fBasaltSized": {
+    "value": 0.569,
+    "min": 0.3,
+    "max": 0.95,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Share of the ground basalt coarse enough for the reactor",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1 and Sec. 6.2: 43.1% of the ball-mill product is finer than the 0.03 mm reactor minimum"
+  },
+  "fBasaltInMined": {
+    "value": 0.475,
+    "min": 0.2,
+    "max": 1,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Share of the mined layer that is crushable basalt",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-1: 50% basalt in the mined material, 5% of it larger than the crusher inlet"
+  },
+  "basaltOverburdenRatio": {
+    "value": 1.1,
+    "min": 0,
+    "max": 4,
+    "unit": "kg/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Overburden stripped per kg of basalt layer mined",
+    "source": "Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6.2.1: 1.1 t of overburden per t of basalt layer for 2 m of overburden over a 2 m layer"
+  },
+  "eIlmComminution": {
+    "value": 169000,
+    "min": 50000,
+    "max": 400000,
+    "unit": "J/kg",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Crushing, grinding, screening and separation energy per kg of basalt",
+    "source": "calibrated to Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 526 kW of beneficiation for the 1,000 t/yr basalt-fed plant (268.6 t/d of basalt); Bond's law with the report's work index (20.41 kWh/t) gives about 71 kJ/kg for grinding 100 mm rock to 0.1 mm"
+  },
+  "kIlmComminutionMass": {
+    "value": 0.273,
+    "min": 0.05,
+    "max": 1,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "ilmenite",
+    "description": "Crushing, grinding and separation plant mass per kg/day of basalt",
+    "source": "calibrated to Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Table 6-5: 73.4 t of beneficiation for 268.6 t/d of basalt"
   },
   "kIlmGasLoopMass": {
     "value": 17.43,
@@ -2294,6 +2372,7 @@ export const DEFAULTS = {
   "dvDescent": 2050,
   "dvAscent": 1860,
   "equatorialProcess": "mre",
+  "ilmFeed": "soil",
   "fIlmenite": 0.075,
   "fIlmSized": 0.438,
   "etaIlmRecovery": 0.98,
@@ -2305,6 +2384,13 @@ export const DEFAULTS = {
   "fIlmHeatLoss": 0.25,
   "eIlmBeneficiation": 87000,
   "kIlmBeneficiationMass": 0.094,
+  "fIlmBasalt": 0.33,
+  "fIlmLiberated": 0.647,
+  "fBasaltSized": 0.569,
+  "fBasaltInMined": 0.475,
+  "basaltOverburdenRatio": 1.1,
+  "eIlmComminution": 169000,
+  "kIlmComminutionMass": 0.273,
   "kIlmGasLoopMass": 17.43,
   "kIlmBedMass": 0.6,
   "Pinternal": 101325,

@@ -16,9 +16,30 @@ def reduces_ilmenite(params: dict[str, Any]) -> bool:
     return params["site"] == "equatorial" and params["equatorialProcess"] == "ilmenite"
 
 
+def feeds_basalt(params: dict[str, Any]) -> bool:
+    return params["ilmFeed"] == "basalt"
+
+
+def ilmenite_feed_grade(params: dict[str, Any]) -> float:
+    """Ilmenite mass fraction of the feed before separation; mirrors `ilmeniteFeedGrade`."""
+    return params["fIlmBasalt"] if feeds_basalt(params) else params["fIlmenite"]
+
+
 def ilmenite_separates(params: dict[str, Any]) -> bool:
     """True when magnetic separation enriches the feed; mirrors `ilmeniteSeparates`."""
-    return params["ilmConcentrateGrade"] > params["fIlmenite"]
+    return params["ilmConcentrateGrade"] > ilmenite_feed_grade(params)
+
+
+def _sized_share(params: dict[str, Any]) -> float:
+    return params["fBasaltSized"] if feeds_basalt(params) else params["fIlmSized"]
+
+
+def _feed_per_kg_o2(params: dict[str, Any]) -> float:
+    separates = ilmenite_separates(params)
+    recovery = params["etaIlmRecovery"] * (params["fIlmLiberated"] if feeds_basalt(params) else 1) if separates else 1
+    return 1 / (
+        ilmenite_feed_grade(params) * _sized_share(params) * recovery * ilmenite_conversion(params) * ilmenite_oxygen_fraction()
+    )
 
 
 def ilmenite_conversion(params: dict[str, Any]) -> float:
@@ -33,8 +54,13 @@ def ilmenite_conversion(params: dict[str, Any]) -> float:
 
 def ilmenite_soil_per_kg_o2(params: dict[str, Any]) -> float:
     """Soil mined per kg of oxygen; mirrors `ilmeniteSoilPerKgO2`."""
-    recovery = params["etaIlmRecovery"] if ilmenite_separates(params) else 1
-    return 1 / (params["fIlmenite"] * params["fIlmSized"] * recovery * ilmenite_conversion(params) * ilmenite_oxygen_fraction())
+    # A basalt mine digs a layer that is part basalt, part soil and oversize.
+    return _feed_per_kg_o2(params) / params["fBasaltInMined"] if feeds_basalt(params) else _feed_per_kg_o2(params)
+
+
+def ilmenite_overburden_per_kg_o2(params: dict[str, Any]) -> float:
+    """Overburden stripped per kg of oxygen; mirrors `ilmeniteOverburdenPerKgO2`."""
+    return params["basaltOverburdenRatio"] * ilmenite_soil_per_kg_o2(params) if feeds_basalt(params) else 0
 
 
 def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str, float]:
@@ -43,7 +69,13 @@ def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str,
     reduced_per_kg_o2 = 1 / ilmenite_oxygen_fraction()
     fed_ilmenite_per_kg_o2 = reduced_per_kg_o2 / conversion
     soil_per_kg_o2 = ilmenite_soil_per_kg_o2(params)
-    sized_soil_per_kg_o2 = soil_per_kg_o2 * params["fIlmSized"]
+    basalt = feeds_basalt(params)
+    basalt_per_kg_o2 = _feed_per_kg_o2(params) if basalt else 0
+    sized_soil_per_kg_o2 = (basalt_per_kg_o2 if basalt else soil_per_kg_o2) * _sized_share(params)
+    beneficiated_per_kg_o2 = basalt_per_kg_o2 if basalt else soil_per_kg_o2
+    beneficiation_j_per_kg = params["eIlmComminution"] if basalt else params["eIlmBeneficiation"]
+    beneficiation_mass_coefficient = params["kIlmComminutionMass"] if basalt else params["kIlmBeneficiationMass"]
+    moved_per_kg_o2 = soil_per_kg_o2 + ilmenite_overburden_per_kg_o2(params)
     # Without enrichment the reactor takes the whole sized stream.
     concentrate_per_kg_o2 = (
         fed_ilmenite_per_kg_o2 / params["ilmConcentrateGrade"] if ilmenite_separates(params) else sized_soil_per_kg_o2
@@ -70,6 +102,7 @@ def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str,
         "conversion": conversion,
         "soilPerKgO2": soil_per_kg_o2,
         "soilKgPerDay": soil_kg_per_day,
+        "basaltFedKgPerDay": o2_kg_per_day * basalt_per_kg_o2,
         "sizedSoilKgPerDay": o2_kg_per_day * sized_soil_per_kg_o2,
         "concentrateKgPerDay": concentrate_kg_per_day,
         "concentrateGrade": fed_ilmenite_per_kg_o2 / concentrate_per_kg_o2,
@@ -79,14 +112,14 @@ def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str,
         "hydrogenRecycleKgPerDay": water["grossH2KgPerDay"],
         "spentSolidsKgPerDay": concentrate_kg_per_day - o2_kg_per_day,
         "ironKgPerDay": o2_kg_per_day * iron_per_kg_o2,
-        "secMining_JPerKg": params["eMining"] * soil_per_kg_o2,
-        "secBeneficiation_JPerKg": params["eIlmBeneficiation"] * soil_per_kg_o2,
+        "secMining_JPerKg": params["eMining"] * moved_per_kg_o2,
+        "secBeneficiation_JPerKg": beneficiation_j_per_kg * beneficiated_per_kg_o2,
         "secSensible_JPerKg": sec_sensible,
         "secReaction_JPerKg": sec_reaction,
         "secReactorLoss_JPerKg": params["fIlmHeatLoss"] * (sec_sensible + sec_reaction),
         "secWaterElectrolysis_JPerKg": water["secWaterElectrolysis_JPerKg"] * water_per_kg_o2,
-        "miningMassKg": params["kMiningMass"] * soil_kg_per_day,
-        "beneficiationMassKg": params["kIlmBeneficiationMass"] * soil_kg_per_day,
+        "miningMassKg": params["kMiningMass"] * (o2_kg_per_day * moved_per_kg_o2),
+        "beneficiationMassKg": beneficiation_mass_coefficient * o2_kg_per_day * beneficiated_per_kg_o2,
         "bedHoldupKg": bed_holdup_kg,
         "bedMassKg": bed_mass_kg,
         "reactorMassKg": params["kIlmGasLoopMass"] * o2_kg_per_day + bed_mass_kg,
