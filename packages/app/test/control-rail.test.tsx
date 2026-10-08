@@ -154,4 +154,17 @@ describe("control rail search, changed filter, and reset", () => {
     expect(screen.getByDisplayValue("DEDICATED (WHOLE LANDERS)")).toBeTruthy();
     expect(screen.getByText("1 input shown")).toBeTruthy();
   });
+
+  it("shows only the select a search matches in the oxygen process group", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "equatorial", equatorialProcess: "ilmenite" });
+    render(<ControlGroups />);
+    const search = screen.getByRole("searchbox", { name: /Search inputs/ });
+    fireEvent.change(search, { target: { value: "ilmFeed" } });
+    expect(screen.getByDisplayValue("MARE SOIL")).toBeTruthy();
+    expect(screen.queryByDisplayValue("ILMENITE H₂ REDUCTION")).toBeNull();
+    fireEvent.change(search, { target: { value: "equatorialProcess" } });
+    expect(screen.getByDisplayValue("ILMENITE H₂ REDUCTION")).toBeTruthy();
+    expect(screen.queryByDisplayValue("MARE SOIL")).toBeNull();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
 });
