@@ -5,6 +5,7 @@ export type DeploymentManifest = "dedicated" | "shared";
 export type PolarProduct = "water" | "propellant";
 export type RefuelDemand = "none" | "lander";
 export type EquatorialProcess = "mre" | "ilmenite";
+export type IlmeniteFeed = "soil" | "basalt";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -393,6 +394,7 @@ export interface SimParams {
   /** [m/s] */
   dvAscent: number;
   equatorialProcess: EquatorialProcess;
+  ilmFeed: IlmeniteFeed;
   /** [kg/kg] */
   fIlmenite: number;
   /** [1] */
@@ -415,6 +417,20 @@ export interface SimParams {
   eIlmBeneficiation: number;
   /** [kg/(kg/day)] per soil processed */
   kIlmBeneficiationMass: number;
+  /** [kg/kg] ilmenite in the basalt */
+  fIlmBasalt: number;
+  /** [1] share of the basalt's ilmenite freed by grinding */
+  fIlmLiberated: number;
+  /** [1] share of the ground basalt above the reactor's minimum size */
+  fBasaltSized: number;
+  /** [kg/kg] crushable basalt per kg of layer mined */
+  fBasaltInMined: number;
+  /** [kg/kg] overburden per kg of basalt layer mined */
+  basaltOverburdenRatio: number;
+  /** [J/kg] crushing, grinding, screening and separation per kg of basalt */
+  eIlmComminution: number;
+  /** [kg/(kg/day)] comminution plant per kg/day of basalt */
+  kIlmComminutionMass: number;
   /** [kg/(kg/day)] per O2: hydrogen loop, heaters, radiators */
   kIlmGasLoopMass: number;
   /** [kg/kg] fluidized-bed reactor mass per kg of solids held */
@@ -497,9 +513,11 @@ export interface CampaignResult {
 export interface IlmeniteResult {
   /** fraction of the fed ilmenite reduced, from temperature and residence time [1] */
   conversion: number;
-  /** soil mined per kg O2 [kg/kg] */
+  /** soil or basalt layer mined per kg O2 [kg/kg] */
   soilPerKgO2: number;
-  /** soil mined [kg/day] */
+  /** basalt crushed and ground, 0 on a soil feed [kg/day] */
+  basaltFedKgPerDay: number;
+  /** soil or basalt layer mined [kg/day] */
   soilKgPerDay: number;
   /** soil inside the reactor feed size window [kg/day] */
   sizedSoilKgPerDay: number;
@@ -507,7 +525,7 @@ export interface IlmeniteResult {
   concentrateKgPerDay: number;
   /** ilmenite mass fraction of the concentrate actually fed [kg/kg] */
   concentrateGrade: number;
-  /** soil rejected by sizing and separation [kg/day] */
+  /** solids rejected: soil by sizing and separation, or the basalt layer's soil and oversize plus the ground basalt separation rejects [kg/day] */
   tailingsKgPerDay: number;
   /** ilmenite reduced to iron and rutile [kg/day] */
   ilmeniteReducedKgPerDay: number;
@@ -623,7 +641,7 @@ export interface SimResult {
     fleetMassKg: number;
     /** [kg/day] soil the fleet moves: the plant's feed plus any overburden */
     soilMovedKgPerDay: number;
-    /** [kg/day] dry overburden stripped to reach the icy regolith; 0 off the pole */
+    /** [kg/day] overburden stripped: polar dry regolith over the ice, or the soil over an ilmenite plant's basalt; 0 otherwise */
     overburdenKgPerDay: number;
   };
   electrolysis: {

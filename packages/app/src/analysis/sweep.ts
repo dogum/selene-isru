@@ -15,15 +15,24 @@ export interface SweepParam {
   site?: SimParams["site"];
   /** restrict to one equatorial oxygen process; omit = either */
   process?: SimParams["equatorialProcess"];
+  /** restrict to one ilmenite feedstock; omit = either */
+  feed?: SimParams["ilmFeed"];
 }
 
-/** Whether a site- or process-specific option acts on this configuration. */
+/** The ilmenite grade input the plant reads: the soil's or the basalt's. */
+export function ilmeniteGradeKey(params: { ilmFeed: string }): "fIlmenite" | "fIlmBasalt" {
+  return params.ilmFeed === "basalt" ? "fIlmBasalt" : "fIlmenite";
+}
+
+/** Whether a site-, process- or feed-specific option acts on this configuration. */
 export function appliesToCase(
-  option: { site?: SimParams["site"]; process?: SimParams["equatorialProcess"] },
-  params: Pick<SimParams, "site" | "equatorialProcess">
+  option: { site?: SimParams["site"]; process?: SimParams["equatorialProcess"]; feed?: SimParams["ilmFeed"] },
+  params: Pick<SimParams, "site" | "equatorialProcess" | "ilmFeed">
 ): boolean {
   if (option.site !== undefined && option.site !== params.site) return false;
-  return option.process === undefined || params.site !== "equatorial" || option.process === params.equatorialProcess;
+  if (params.site !== "equatorial") return true;
+  if (option.process !== undefined && option.process !== params.equatorialProcess) return false;
+  return option.feed === undefined || params.equatorialProcess !== "ilmenite" || option.feed === params.ilmFeed;
 }
 
 /**
@@ -41,7 +50,8 @@ export const FRONTIER_PARAMS: SweepParam[] = [
   { key: "Vcell", label: "MRE cell voltage", min: 3.5, max: 5, site: "equatorial", process: "mre" },
   { key: "etaCurrent", label: "Current efficiency", min: 0.5, max: 0.95, site: "equatorial", process: "mre" },
   { key: "shieldDesignM", label: "Shield depth", min: 0.5, max: 5, site: "equatorial", process: "mre" },
-  { key: "fIlmenite", label: "Ilmenite in soil", min: 0.01, max: 0.2, log: true, site: "equatorial", process: "ilmenite" },
+  { key: "fIlmenite", label: "Ilmenite in soil", min: 0.01, max: 0.2, log: true, site: "equatorial", process: "ilmenite", feed: "soil" },
+  { key: "fIlmBasalt", label: "Ilmenite in basalt", min: 0.05, max: 0.45, site: "equatorial", process: "ilmenite", feed: "basalt" },
   { key: "ilmConcentrateGrade", label: "Concentrate grade", min: 0.2, max: 1, site: "equatorial", process: "ilmenite" },
   { key: "etaIlmHeatRecovery", label: "Feed heat recovered", min: 0, max: 0.9, site: "equatorial", process: "ilmenite" },
   { key: "chiIce", label: "Polar ice fraction", min: 0.005, max: 0.12, log: true, site: "polar" }

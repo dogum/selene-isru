@@ -152,3 +152,14 @@ def test_bed_holds_feed_for_its_residence_time_v010() -> None:
     assert landed(8) < landed(4)
     assert landed(12) > landed(8)
 
+
+
+def test_basalt_mill_takes_only_the_basalt_v011() -> None:
+    result = simulate({**ILMENITE, "ilmFeed": "basalt"})
+    ilmenite = result["ilmenite"]
+    mill = next(b for b in result["materials"]["balances"] if b["id"] == "ilmenite-beneficiation")
+    assert mill["massInKgPerDay"] == ilmenite["basaltFedKgPerDay"]
+    flows = {f["material"]: f["kgPerDay"] for f in result["materials"]["flows"]}
+    assert_rel(flows["layer-rejects"], ilmenite["soilKgPerDay"] - ilmenite["basaltFedKgPerDay"], 1e-12)
+    assert_rel(flows["layer-rejects"] + flows["tailings"], ilmenite["tailingsKgPerDay"], 1e-12)
+    assert result["materials"]["maxAbsResidualKgPerDay"] == 0

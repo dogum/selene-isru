@@ -46,6 +46,13 @@ export const PRESETS: Preset[] = [
     label: "Ilmenite Reduction (High-Ti Mare)",
     patch: { equatorialProcess: "ilmenite", fIlmenite: 0.15 }
   },
+  {
+    // Eagle 1988's basalt-fed plant: high-Ti basalt (about 33 wt% ilmenite)
+    // crushed, ground, and separated before the same reactor.
+    id: "ilmenite-basalt",
+    label: "Ilmenite Reduction (High-Ti Basalt)",
+    patch: { equatorialProcess: "ilmenite", ilmFeed: "basalt" }
+  },
   { id: "shackleton", label: "Shackleton Ice Camp", patch: { site: "polar" } },
   {
     // Kleinhenz & Paz 2020's baseline: 15 t of water into LOX/LH2 in a

@@ -153,7 +153,7 @@ camelCase result keys preserved on both sides.
 
 `python/tools/generate_golden.py` Latin-hypercube samples the full parameter
 box (200 points, seed 42, plus named corner scenarios) and writes
-`packages/engine/test/golden_vectors.json` (217 vectors) plus
+`packages/engine/test/golden_vectors.json` (218 vectors) plus
 `dynamics_vectors.json`. `packages/engine/test/parity.test.ts` asserts the TS
 engine reproduces **every numeric leaf to 1e-9 relative / 1e-12 absolute
 tolerance**. CI regenerates from Python and runs `git diff --exit-code` on the
@@ -461,6 +461,7 @@ in `assets/ASSET_LICENSES.md`.
 | Ilmenite reduction chain, Eagle calibration check | `ilmenite.test.ts`, `test_ilmenite.py`, v0.8 anchors in `regression.test.ts` |
 | Excavation on soil moved, polar overburden, NASA mine comparison | v0.9 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2020-polar-excavation` in `external-benchmarks.test.ts` |
 | Ilmenite conversion kinetics, bed hold-up, Eagle no-separation calibration | v0.10 tests in `ilmenite.test.ts` / `test_ilmenite.py`, v0.10 anchors in `regression.test.ts`, `eagle-1988-no-separation-trade` in `external-benchmarks.test.ts` |
+| Basalt feed chain, per-feed inputs, Eagle basalt calibration | v0.11 tests in `ilmenite.test.ts` / `test_ilmenite.py`, v0.11 anchors in `regression.test.ts`, `eagle-1988-basalt-feed` in `external-benchmarks.test.ts`, basalt route in `ilmenite-app.test.tsx` |
 | Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
 | Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
@@ -517,7 +518,7 @@ script run on a clean checkout at all.
   (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
   `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md` →
   `model-ilmenite-v08.md` → `model-excavation-v09.md` →
-  `model-ilmenite-reactor-v010.md`) is
+  `model-ilmenite-reactor-v010.md` → `model-basalt-feed-v011.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -552,6 +553,9 @@ script run on a clean checkout at all.
   ilmenite conversion from temperature and residence time, and the fluidized
   bed sized by its hold-up; why the rate is pinned to Eagle's design and only
   its temperature dependence comes from the lab.
+- [`docs/model-basalt-feed-v011.md`](docs/model-basalt-feed-v011.md) — crushed
+  high-Ti basalt as a second ilmenite feedstock: liberation, sizing, the mined
+  layer and its overburden, and the comparison with Eagle's soil-fed plant.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

@@ -114,6 +114,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "ilmFeed") {
+      if (raw === "soil" || raw === "basalt") {
+        assign("ilmFeed", raw);
+      } else {
+        assign("ilmFeed", DEFAULTS.ilmFeed);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "equatorialProcess") {
       if (raw === "mre" || raw === "ilmenite") {
         assign("equatorialProcess", raw);

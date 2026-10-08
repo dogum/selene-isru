@@ -213,7 +213,25 @@ export type RailVisibilityParams = Pick<
   | "enableSabatier"
   | "refuelDemand"
   | "equatorialProcess"
+  | "ilmFeed"
 >;
+
+/** Ilmenite inputs that only act on one feed; the other feed hides them. */
+const SOIL_FEED_ONLY = new Set<keyof SimParams>(["fIlmenite", "fIlmSized", "eIlmBeneficiation", "kIlmBeneficiationMass"]);
+const BASALT_FEED_ONLY = new Set<keyof SimParams>([
+  "fIlmBasalt",
+  "fIlmLiberated",
+  "fBasaltSized",
+  "fBasaltInMined",
+  "basaltOverburdenRatio",
+  "eIlmComminution",
+  "kIlmComminutionMass"
+]);
+
+/** Whether an ilmenite input belongs to the feedstock this case runs; inputs of the other feed are inert. */
+export function readsIlmeniteFeed(key: keyof SimParams, params: Pick<SimParams, "ilmFeed">): boolean {
+  return !(params.ilmFeed === "basalt" ? SOIL_FEED_ONLY : BASALT_FEED_ONLY).has(key);
+}
 
 /**
  * Plants whose product a refuelled lander burns: oxygen at the equator, LOX
@@ -260,7 +278,11 @@ export function railParamsForGroup(
     // the MRE melt, and splits its water with the propellant plant's
     // electrolyzer, whose groups are not shown on this route.
     const shared = new Set<keyof SimParams>(["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]);
-    return [...all, ...[...paramsForGroup("electrolysis"), ...paramsForGroup("propellant")].filter((def) => shared.has(def.key))];
+    const otherFeed = params.ilmFeed === "basalt" ? SOIL_FEED_ONLY : BASALT_FEED_ONLY;
+    return [
+      ...all.filter((def) => !otherFeed.has(def.key)),
+      ...[...paramsForGroup("electrolysis"), ...paramsForGroup("propellant")].filter((def) => shared.has(def.key))
+    ];
   }
   // The MRE inputs and the slag construction inputs have nothing to act on
   // while the plant reduces ilmenite.
@@ -306,7 +328,7 @@ export function matchesParamQuery(def: NumericParamDef, groupLabel: string, quer
  * and the Sabatier switch). They count toward CHANGED like any slider.
  */
 const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
-  "oxygen-process": ["equatorialProcess"],
+  "oxygen-process": ["equatorialProcess", "ilmFeed"],
   "extraction-sub": ["polarProduct"],
   cryo: ["storageStream", "cryoControlMode"],
   power: ["polarProfileMode"],
@@ -321,9 +343,11 @@ const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
  */
 export function railModeParamsForGroup(
   group: GroupDef,
-  params: Pick<SimParams, "site" | "enableSabatier" | "polarProduct">
+  params: Pick<SimParams, "site" | "enableSabatier" | "polarProduct" | "equatorialProcess">
 ): Array<keyof SimParams> {
   if (group.id === "power" && params.site !== "polar") return [];
+  // The feed choice belongs to the ilmenite plant.
+  if (group.id === "oxygen-process" && params.equatorialProcess !== "ilmenite") return ["equatorialProcess"];
   if (group.id === "refuel" && !makesLanderPropellant(params)) return [];
   return GROUP_MODE_PARAMS[group.id] ?? [];
 }

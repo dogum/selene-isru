@@ -4,7 +4,7 @@ import { scaleLog } from "d3-scale";
 import { useMemo, useState } from "react";
 import { processScope, useScopedState, useSize } from "../../lib/hooks";
 import { sweepInputs } from "../../analysis/generalSweep";
-import { appliesToCase, FRONTIER_PARAMS, sweepValues, type SweepKey, type SweepParam } from "../../analysis/sweep";
+import { appliesToCase, FRONTIER_PARAMS, ilmeniteGradeKey, sweepValues, type SweepKey, type SweepParam } from "../../analysis/sweep";
 import { frontierCsv } from "../../analysis/panelExports";
 import { useStore } from "../../state/store";
 import { ExportButton } from "./ExportButton";
@@ -84,7 +84,7 @@ export function FrontierExplorer(): React.JSX.Element {
   const scope = processScope(params);
   const [aKey, setAKey] = useScopedState<SweepKey>(scope, () => "targetKgPerDay");
   const [bKey, setBKey] = useScopedState<SweepKey | "none">(scope, () =>
-    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? "fIlmenite" : "etaCurrent"
+    params.site === "polar" ? "chiIce" : params.equatorialProcess === "ilmenite" ? ilmeniteGradeKey(params) : "etaCurrent"
   );
   const [objective, setObjective] = useState<Objective>("mass-sec");
   const [maxMissions, setMaxMissions] = useState(30);

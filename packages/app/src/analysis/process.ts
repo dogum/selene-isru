@@ -169,19 +169,19 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
 /** Equatorial assets whose role changes when the plant reduces ilmenite. */
 const ILMENITE_KNOWLEDGE: Record<string, AssetKnowledge> = {
   hauler: {
-    purpose: "Move mined soil from the trench to the sizing and separation plant, and return its tailings.",
-    inputs: ["Soil throughput", "Bulk mining energy", "Fleet mass per soil mined", "Drive efficiency"],
+    purpose: "Move mined soil, or a crushable basalt layer and the soil over it, from the trench to the sizing and separation plant, and return its tailings.",
+    inputs: ["Soil or basalt-layer throughput", "Overburden on basalt", "Bulk mining energy", "Fleet mass per kg moved"],
     assumptions: [
-      "Haul duty is folded into the RASSOR-based mining energy and fleet mass, both per kg of soil.",
+      "Haul duty is folded into the RASSOR-based mining energy and fleet mass, both per kg of material moved, overburden included.",
       "Availability and spares apply plant-wide in the campaign ledger; route congestion is not modelled."
     ],
     maturity: "LITERATURE-DERIVED"
   },
   reactor: {
-    purpose: "Size and magnetically concentrate the soil's ilmenite, reduce it with hydrogen near 1,000 °C, and split the water into oxygen and recycled hydrogen.",
+    purpose: "Size (or crush and grind basalt) and magnetically concentrate the ilmenite, reduce it with hydrogen near 1,000 °C, and split the water into oxygen and recycled hydrogen.",
     inputs: ["Soil feed", "Ilmenite grade", "Concentrate grade", "Electrical power"],
     assumptions: [
-      "Soil, beneficiation, and reactor terms are calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant design; conversion is an input, not a kinetics model.",
+      "Soil, basalt, beneficiation, and reactor terms are calibrated to Eagle Engineering's 1988 lunar oxygen pilot-plant design; conversion follows from temperature and residence time, with the rate pinned to Eagle's design.",
       "The diorama shows the MRE reactor model as a stand-in for the separation plant, fluidized bed, and electrolyzer."
     ],
     maturity: "LITERATURE-DERIVED"
@@ -222,19 +222,22 @@ function q(value: number, unit: string, sig = 3): string {
 export function processEdges(result: SimResult, params: SimParams): ProcessEdgeView[] {
   if (result.site === "equatorial" && result.ilmenite !== null) {
     const ilmenite = result.ilmenite;
+    const basalt = ilmenite.basaltFedKgPerDay > 0;
+    const mined = basalt ? "BASALT LAYER" : "SOIL";
+    const feed = basalt ? "BASALT FEED" : "SOIL FEED";
     return [
       {
         from: "excavator",
         to: "hauler",
-        shortLabel: "SOIL",
-        label: `SOIL · ${q(ilmenite.soilKgPerDay, "kg/day")}`,
+        shortLabel: mined,
+        label: `${mined} · ${q(ilmenite.soilKgPerDay, "kg/day")}`,
         kind: "material"
       },
       {
         from: "hauler",
         to: "reactor",
-        shortLabel: "SOIL FEED",
-        label: `SOIL FEED · ${q(ilmenite.soilKgPerDay, "kg/day")} → CONCENTRATE ${q(ilmenite.concentrateKgPerDay, "kg/day")}`,
+        shortLabel: feed,
+        label: `${feed} · ${q(basalt ? ilmenite.basaltFedKgPerDay : ilmenite.soilKgPerDay, "kg/day")} → CONCENTRATE ${q(ilmenite.concentrateKgPerDay, "kg/day")}`,
         kind: "material"
       },
       {

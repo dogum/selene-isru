@@ -50,18 +50,18 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [query, setQuery] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
 
-  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess } = params;
+  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed } = params;
   // Custom Site plans the MRE plant only, so its rail has no process switch.
   const customWorkspace = useStore((s) => s.workspaceMode === "custom");
   // Engine-reported streams, joined so the memo only reruns when the set changes.
   const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
-    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess };
+    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed };
     const activeStreams = new Set(streamKey.split(",").filter(Boolean));
     return groupsForSite(site)
       .filter((group) => !(customWorkspace && group.id === "oxygen-process"))
       .map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, customWorkspace, streamKey]);
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, customWorkspace, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   // A gated-off group's sliders cannot be shown, so they do not count either.
@@ -307,6 +307,7 @@ function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: b
 
 function OxygenProcessControls(): React.JSX.Element {
   const process = useStore((s) => s.params.equatorialProcess);
+  const feed = useStore((s) => s.params.ilmFeed);
   const setParam = useStore((s) => s.setParam);
 
   return (
@@ -319,9 +320,21 @@ function OxygenProcessControls(): React.JSX.Element {
         </select>
       </label>
       {process === "ilmenite" && (
+        <label>
+          <span>FEEDSTOCK</span>
+          <select value={feed} onChange={(event) => setParam("ilmFeed", event.target.value as typeof feed)}>
+            <option value="soil">MARE SOIL</option>
+            <option value="basalt">CRUSHED HIGH-TI BASALT</option>
+          </select>
+        </label>
+      )}
+      {process === "ilmenite" && (
         <p className="rail-mode-note">
-          Soil is sized and its ilmenite concentrated, reduced by hydrogen at about 1,000 °C, and the water split. Calibrated
-          to Eagle Engineering's 1988 pilot plant design; the diorama still shows the MRE reactor.
+          {feed === "basalt"
+            ? "Basalt is mined from under its overburden, crushed and ground to free the ilmenite, and its ilmenite concentrated,"
+            : "Soil is sized and its ilmenite concentrated,"}{" "}
+          reduced by hydrogen at about 1,000 °C, and the water split. Calibrated to Eagle Engineering's 1988 pilot plant
+          design; the diorama still shows the MRE reactor.
         </p>
       )}
     </div>

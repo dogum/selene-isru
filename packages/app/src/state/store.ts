@@ -488,9 +488,10 @@ function normalizeScenario(value: unknown): StudyScenario | null {
 
 
 /** Site, and the equatorial process when it is not the default, for case names. */
-function siteCaseName(params: Pick<SimParams, "site" | "equatorialProcess">): string {
+function siteCaseName(params: Pick<SimParams, "site" | "equatorialProcess" | "ilmFeed">): string {
   if (params.site === "polar") return "Polar";
-  return params.equatorialProcess === "ilmenite" ? "Equatorial ilmenite" : "Equatorial";
+  if (params.equatorialProcess !== "ilmenite") return "Equatorial";
+  return params.ilmFeed === "basalt" ? "Equatorial ilmenite (basalt)" : "Equatorial ilmenite";
 }
 
 function initialScenarioLibrary(params: SimParams, compareParams: SimParams): StudyScenario[] {

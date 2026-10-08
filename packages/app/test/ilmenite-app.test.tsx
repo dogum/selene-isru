@@ -27,18 +27,30 @@ const ilmenite: SimParams = { ...DEFAULTS, site: "equatorial", equatorialProcess
 const group = (id: string) => GROUPS.find((item) => item.id === id)!;
 const shown = (id: string, params: SimParams) => railParamsForGroup(group(id), params).map((def) => String(def.key));
 const ILMENITE_KEYS = Object.entries(PARAM_META)
-  .filter(([key, meta]) => meta.group === "ilmenite" && key !== "equatorialProcess")
+  .filter(([key, meta]) => meta.group === "ilmenite" && key !== "equatorialProcess" && key !== "ilmFeed")
   .map(([key]) => key);
+// Each feed reads its own grade, sizing, and beneficiation inputs (v0.11).
+const SOIL_KEYS = ["fIlmenite", "fIlmSized", "eIlmBeneficiation", "kIlmBeneficiationMass"];
+const BASALT_KEYS = ["fIlmBasalt", "fIlmLiberated", "fBasaltSized", "fBasaltInMined", "basaltOverburdenRatio", "eIlmComminution", "kIlmComminutionMass"];
+const basalt: SimParams = { ...ilmenite, ilmFeed: "basalt" };
 
 describe("oxygen process rail", () => {
   it("shows the process switch at the equator and the ilmenite inputs only while it is chosen", () => {
     expect(railModeParamsForGroup(group("oxygen-process"), mre)).toEqual(["equatorialProcess"]);
+    // The feedstock switch appears only once the plant reduces ilmenite.
+    expect(railModeParamsForGroup(group("oxygen-process"), ilmenite)).toEqual(["equatorialProcess", "ilmFeed"]);
     expect(shown("oxygen-process", mre)).toEqual([]);
+    const shared = ILMENITE_KEYS.filter((key) => !SOIL_KEYS.includes(key) && !BASALT_KEYS.includes(key));
     const visible = shown("oxygen-process", ilmenite);
-    expect(visible).toEqual(expect.arrayContaining([...ILMENITE_KEYS, "Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]));
+    expect(visible).toEqual(expect.arrayContaining([...shared, ...SOIL_KEYS, "Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]));
+    for (const key of BASALT_KEYS) expect(visible).not.toContain(key);
+    const onBasalt = shown("oxygen-process", basalt);
+    expect(onBasalt).toEqual(expect.arrayContaining([...shared, ...BASALT_KEYS]));
+    for (const key of SOIL_KEYS) expect(onBasalt).not.toContain(key);
     // v0.9 moved its two mining inputs to the shared excavation group; v0.10
-    // replaced conversion with residence time and split the reactor mass.
-    expect(ILMENITE_KEYS).toHaveLength(13);
+    // replaced conversion with residence time and split the reactor mass;
+    // v0.11 added the basalt feed's seven.
+    expect(ILMENITE_KEYS).toHaveLength(20);
     expect(ILMENITE_KEYS).toEqual(expect.arrayContaining(["tIlmResidenceH", "EaIlmReduction", "kIlmGasLoopMass", "kIlmBedMass"]));
   });
 
@@ -46,9 +58,13 @@ describe("oxygen process rail", () => {
     // Every ilmenite input is inert on the MRE route and acts on its own.
     for (const key of ILMENITE_KEYS) {
       expect(inputActivity(mre, key as keyof SimParams).activity, `${key} on MRE`).toBe("no-effect");
+      // Each feed's own inputs act only on that feed, and are hidden on the other.
+      const feed = BASALT_KEYS.includes(key) ? basalt : ilmenite;
+      const other = BASALT_KEYS.includes(key) ? ilmenite : SOIL_KEYS.includes(key) ? basalt : null;
+      if (other !== null) expect(inputActivity(other, key as keyof SimParams).activity, `${key} on the other feed`).toBe("no-effect");
       // The activation energy is conditional by design: at Eagle's design
       // temperature, where the rate is pinned, it cannot act.
-      const at = key === "EaIlmReduction" ? { ...ilmenite, TIlmReactor: 1173 } : ilmenite;
+      const at = key === "EaIlmReduction" ? { ...feed, TIlmReactor: 1173 } : feed;
       expect(inputActivity(at, key as keyof SimParams).activity, `${key} on ilmenite`).toBe("drives-results");
     }
     expect(inputActivity(ilmenite, "EaIlmReduction").activity).toBe("no-effect");
@@ -227,6 +243,50 @@ describe("ilmenite route across the app", () => {
   });
 });
 
+describe("basalt feed across the app (v0.11)", () => {
+  const result = simulate(basalt);
+
+  it("round-trips the feed through the URL, and drops it off the ilmenite route", () => {
+    const query = serializeParams(basalt);
+    expect(query).toBe("equatorialProcess=ilmenite&ilmFeed=basalt");
+    expect(simulate(parseParams(query))).toEqual(result);
+    expect(parseParams("ilmFeed=gravel").ilmFeed).toBeUndefined();
+  });
+
+  it("names the basalt layer it mines and the stages it runs", () => {
+    expect(caseSummary(basalt, result)).toMatch(/^Equatorial ilmenite-reduction plant mining 186 t\/day of high-Ti basalt layer/);
+    expect(energyStages(result).map((stage) => stage.label)).toContain("Basalt crushing, grinding, and separation");
+    const edges = processEdges(result, basalt).map((edge) => edge.shortLabel);
+    expect(edges).toEqual(expect.arrayContaining(["BASALT LAYER", "BASALT FEED"]));
+    expect(edges).not.toContain("SOIL");
+  });
+
+  it("ships a basalt preset that lands in fewer missions than the soil plant", () => {
+    const preset = PRESETS.find((item) => item.id === "ilmenite-basalt")!;
+    expect(preset.patch).toEqual({ equatorialProcess: "ilmenite", ilmFeed: "basalt" });
+    const soil = simulate(ilmenite);
+    expect(result.logistics.totalInfraMassKg).toBeLessThan(soil.logistics.totalInfraMassKg);
+    expect(result.campaign.paybackDays!).toBeLessThan(soil.campaign.paybackDays!);
+  });
+
+  it("offers the basalt grade, not the soil's, as an analysis lever", () => {
+    const axes = FRONTIER_PARAMS.filter((param) => appliesToCase(param, basalt)).map((param) => param.key);
+    expect(axes).toContain("fIlmBasalt");
+    expect(axes).not.toContain("fIlmenite");
+    expect(FRONTIER_PARAMS.filter((param) => appliesToCase(param, ilmenite)).map((param) => param.key)).not.toContain("fIlmBasalt");
+    expect(inputActivity(basalt, "fIlmBasalt").activity).toBe("drives-results");
+  });
+
+  it("states where each basalt input applies", () => {
+    for (const key of BASALT_KEYS) {
+      const meta = PARAM_META[key as keyof typeof PARAM_META] as unknown as { group: string; source: string; min: number; max: number; unit: string };
+      const evidence = evidenceForParam({ key: key as keyof SimParams, group: meta.group, source: meta.source, min: meta.min, max: meta.max, unit: meta.unit });
+      expect(evidence.applicability, key).toMatch(/basalt feed/);
+      expect(evidence.sourceUrl, key).toBe("https://ntrs.nasa.gov/citations/19890004515");
+    }
+  });
+});
+
 describe("Sankey labels", () => {
   it("moves a label that would overlap its neighbour to the nearest free line", () => {
     const labels = [
@@ -256,6 +316,9 @@ describe("analysis panels follow a process switch", () => {
     expect(screen.queryByRole("checkbox", { name: /MRE cell voltage/ })).toBeNull();
     expect((screen.getByRole("checkbox", { name: /Ilmenite in soil/ }) as HTMLInputElement).checked).toBe(true);
     expect((screen.getByRole("checkbox", { name: /Concentrate grade/ }) as HTMLInputElement).checked).toBe(true);
+    act(() => useStore.getState().applyPatch({ site: "equatorial", equatorialProcess: "ilmenite", ilmFeed: "basalt" }));
+    expect(screen.queryByRole("checkbox", { name: /Ilmenite in soil/ })).toBeNull();
+    expect((screen.getByRole("checkbox", { name: /Ilmenite in basalt/ }) as HTMLInputElement).checked).toBe(true);
     act(() => useStore.getState().applyPatch({ site: "equatorial" }));
     expect((screen.getByRole("checkbox", { name: /MRE cell voltage/ }) as HTMLInputElement).checked).toBe(true);
   });
@@ -273,6 +336,8 @@ describe("analysis panels follow a process switch", () => {
     expect(axisB().value).toBe("etaCurrent");
     act(() => useStore.getState().applyPatch({ site: "equatorial", equatorialProcess: "ilmenite" }));
     expect(axisB().value).toBe("fIlmenite");
+    act(() => useStore.getState().applyPatch({ site: "equatorial", equatorialProcess: "ilmenite", ilmFeed: "basalt" }));
+    expect(axisB().value).toBe("fIlmBasalt");
   });
 });
 
@@ -320,6 +385,18 @@ describe("asset inspector on the ilmenite route", () => {
     for (const slagOnly of ["Designed shielding", "Shield material density", "Time to shield"]) {
       expect(screen.queryByText(slagOnly)).toBeNull();
     }
+  });
+
+  it("reads the basalt layer and its overburden on a basalt feed", () => {
+    inspect({ site: "equatorial", equatorialProcess: "ilmenite", ilmFeed: "basalt" }, "hauler");
+    expect(screen.getByText("Basalt layer mined")).toBeTruthy();
+    expect(screen.getByText("Overburden stripped")).toBeTruthy();
+    expect(screen.queryByText("Soil moved")).toBeNull();
+    cleanup();
+    inspect({ site: "equatorial", equatorialProcess: "ilmenite", ilmFeed: "basalt" }, "reactor");
+    expect(screen.getByText("Basalt ground")).toBeTruthy();
+    expect(screen.getByText("Ilmenite in basalt")).toBeTruthy();
+    expect(screen.queryByText("Ilmenite in soil")).toBeNull();
   });
 
   it("stays nominal when an unsafe casting input carries over from MRE", () => {

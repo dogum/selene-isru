@@ -289,4 +289,5 @@ Screenshots: [rail](screenshots/ilmenite/ilmenite-rail.png),
 - **A dedicated scene.** A beneficiation plant, fluidized-bed reactor, and
   electrolyzer in place of the borrowed MRE model.
 - **Basalt feed.** Eagle's crushed-basalt case (25 vol% ilmenite) needs
-  crushing and grinding stages.
+  crushing and grinding stages. *(v0.11: done, calibrated to Eagle's
+  basalt-fed plant. See [`model-basalt-feed-v011.md`](model-basalt-feed-v011.md).)*

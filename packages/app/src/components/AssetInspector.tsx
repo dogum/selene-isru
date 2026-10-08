@@ -1,7 +1,7 @@
 import type { SimParams, SimResult } from "@selene-isru/engine";
 import { useEffect } from "react";
 import { assetKnowledge, flowsForAsset } from "../analysis/process";
-import { paramsForGroup } from "../controls/manifest";
+import { paramsForGroup, readsIlmeniteFeed } from "../controls/manifest";
 import { formatInputValue, formatQtyText } from "../lib/format";
 import { useStore } from "../state/store";
 import { ParamRow } from "./ParamRow";
@@ -32,10 +32,11 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
       eMining: "Mining energy",
       kMiningMass: "Fleet mass per soil moved"
     },
-    note: "The hauler shuttles between trench and plant with a throughput-scaled load. Every fleet scales with the soil it moves, and an ilmenite plant moves hundreds of kilograms of soil per kilogram of oxygen.",
-    metrics: (r) => [
-      { label: "Soil moved", value: formatQtyText(r.ilmenite?.soilKgPerDay ?? 0, "kg/day") },
-      { label: "Soil per kg O₂", value: formatQtyText(r.ilmenite?.soilPerKgO2 ?? 0, "kg/kg") },
+    note: "The hauler shuttles between trench and plant with a throughput-scaled load. Every fleet scales with the soil it moves, and an ilmenite plant moves hundreds of kilograms of soil per kilogram of oxygen. A basalt mine also strips the soil lying over the basalt.",
+    metrics: (r, p) => [
+      { label: p.ilmFeed === "basalt" ? "Basalt layer mined" : "Soil moved", value: formatQtyText(r.ilmenite?.soilKgPerDay ?? 0, "kg/day") },
+      ...(p.ilmFeed === "basalt" ? [{ label: "Overburden stripped", value: formatQtyText(r.excavation.overburdenKgPerDay, "kg/day") }] : []),
+      { label: p.ilmFeed === "basalt" ? "Layer per kg O₂" : "Soil per kg O₂", value: formatQtyText(r.ilmenite?.soilPerKgO2 ?? 0, "kg/kg") },
       { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") },
       { label: "Mining energy", value: formatQtyText((r.ilmenite?.secMining_JPerKg ?? 0) / 3.6e6, "kWh/kg") }
     ]
@@ -47,6 +48,7 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
     module: "ilmenite",
     controlLabels: {
       fIlmenite: "Ilmenite in soil",
+      fIlmBasalt: "Ilmenite in basalt",
       ilmConcentrateGrade: "Concentrate grade",
       tIlmResidenceH: "Residence time",
       TIlmReactor: "Reactor temperature",
@@ -59,6 +61,7 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
       const kgPerS = r.production.targetKgPerDay / 86_400;
       return [
         { label: "O₂ output", value: formatQtyText(r.production.o2KgPerDay, "kg/day") },
+        ...(ilmenite.basaltFedKgPerDay > 0 ? [{ label: "Basalt ground", value: formatQtyText(ilmenite.basaltFedKgPerDay, "kg/day") }] : []),
         { label: "Concentrate fed", value: formatQtyText(ilmenite.concentrateKgPerDay, "kg/day") },
         { label: "Concentrate grade", value: formatQtyText(ilmenite.concentrateGrade, "kg/kg", 3) },
         { label: "Ilmenite reduced", value: formatQtyText(ilmenite.conversion, "", 3) },
@@ -435,7 +438,7 @@ export function AssetInspector(): React.JSX.Element | null {
     return null;
   }
 
-  const controls = paramsForGroup(config.group).filter((def) => def.key in config.controlLabels);
+  const controls = paramsForGroup(config.group).filter((def) => def.key in config.controlLabels && readsIlmeniteFeed(def.key, params));
   const warnings = result.warnings.filter((warning) => warning.module === config.module);
   const knowledge = assetKnowledge(site, selected ?? "", ilmenite);
   const flows = flowsForAsset(result, params, selected ?? "");

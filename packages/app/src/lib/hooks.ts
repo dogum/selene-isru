@@ -95,8 +95,9 @@ export function useScopedState<T>(scope: string, initial: () => T): [T, (next: T
   return [value, set];
 }
 
-/** The site and, at the equator, the oxygen process: what decides which levers apply. */
-export function processScope(params: { site: string; equatorialProcess: string }): string {
-  return params.site === "equatorial" ? `equatorial:${params.equatorialProcess}` : params.site;
+/** The site and, at the equator, the oxygen process and ilmenite feed: what decides which levers apply. */
+export function processScope(params: { site: string; equatorialProcess: string; ilmFeed: string }): string {
+  if (params.site !== "equatorial") return params.site;
+  return params.equatorialProcess === "ilmenite" ? `equatorial:ilmenite:${params.ilmFeed}` : `equatorial:${params.equatorialProcess}`;
 }
 
