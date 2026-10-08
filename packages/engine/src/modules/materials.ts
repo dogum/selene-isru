@@ -43,9 +43,15 @@ export function materialLedger(
   if (ilmenite !== null) {
     // Sizing and separation reject most of the soil; the reactor takes the
     // concentrate's oxygen as water, and electrolysis returns its hydrogen.
+    // A basalt mine rejects the layer's soil and oversize before the mill, so
+    // only the basalt enters beneficiation.
+    const basalt = ilmenite.basaltFedKgPerDay > 0;
+    const beneficiationFeedKgPerDay = basalt ? ilmenite.basaltFedKgPerDay : ilmenite.soilKgPerDay;
+    const layerRejectKgPerDay = ilmenite.soilKgPerDay - beneficiationFeedKgPerDay;
     flows.push(
-      { material: "regolith", from: "terrain", to: "beneficiation", kgPerDay: ilmenite.soilKgPerDay },
-      { material: "tailings", from: "beneficiation", to: "tailings", kgPerDay: ilmenite.tailingsKgPerDay },
+      { material: "regolith", from: "terrain", to: "beneficiation", kgPerDay: beneficiationFeedKgPerDay },
+      ...(basalt ? [{ material: "layer-rejects", from: "terrain", to: "tailings", kgPerDay: layerRejectKgPerDay }] : []),
+      { material: "tailings", from: "beneficiation", to: "tailings", kgPerDay: ilmenite.tailingsKgPerDay - layerRejectKgPerDay },
       { material: "ilmenite-concentrate", from: "beneficiation", to: "reduction", kgPerDay: ilmenite.concentrateKgPerDay },
       { material: "hydrogen", from: "electrolysis", to: "reduction", kgPerDay: ilmenite.hydrogenRecycleKgPerDay },
       { material: "water", from: "reduction", to: "electrolysis", kgPerDay: ilmenite.waterKgPerDay },
@@ -53,7 +59,12 @@ export function materialLedger(
       { material: "oxygen", from: "electrolysis", to: "product-storage", kgPerDay: production.o2KgPerDay }
     );
     balances.push(
-      balance("ilmenite-beneficiation", "Soil sizing and ilmenite separation", ilmenite.soilKgPerDay, ilmenite.concentrateKgPerDay + ilmenite.tailingsKgPerDay),
+      balance(
+        "ilmenite-beneficiation",
+        basalt ? "Basalt crushing, grinding, and ilmenite separation" : "Soil sizing and ilmenite separation",
+        beneficiationFeedKgPerDay,
+        ilmenite.concentrateKgPerDay + (ilmenite.tailingsKgPerDay - layerRejectKgPerDay)
+      ),
       balance(
         "ilmenite-reduction",
         "Hydrogen reduction of ilmenite",

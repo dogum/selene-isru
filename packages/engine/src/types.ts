@@ -525,7 +525,7 @@ export interface IlmeniteResult {
   concentrateKgPerDay: number;
   /** ilmenite mass fraction of the concentrate actually fed [kg/kg] */
   concentrateGrade: number;
-  /** soil rejected by sizing and separation [kg/day] */
+  /** solids rejected: soil by sizing and separation, or the basalt layer's soil and oversize plus the ground basalt separation rejects [kg/day] */
   tailingsKgPerDay: number;
   /** ilmenite reduced to iron and rutile [kg/day] */
   ilmeniteReducedKgPerDay: number;

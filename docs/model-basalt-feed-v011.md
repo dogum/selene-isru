@@ -60,6 +60,10 @@ overburden/O2 = basaltOverburdenRatio · layer/O2
 The overburden joins the excavation's `overburdenKgPerDay`, which was polar
 only.
 
+In the material ledger only the basalt enters the mill. The layer's soil and
+oversize go straight to tailings as `layer-rejects`, and `tailingsKgPerDay`
+counts both reject streams.
+
 **Energy and mass.**
 - **Mining:** the shared `eMining` and `kMiningMass`, on layer plus
   overburden. Eagle's 144 kW mining power for the basalt plant works out to
@@ -194,7 +198,7 @@ Screenshots:
   feed, the URL round trip, labels, preset, analysis levers, evidence, and
   inspector.
 - **Parity:** 218 golden vectors.
-- **Size budget:** the engine is 195,925 B, within 192 KiB.
+- **Size budget:** the engine is 196,333 B, within 192 KiB.
 
 ## Left for later
 

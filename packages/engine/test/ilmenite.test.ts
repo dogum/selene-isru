@@ -272,6 +272,15 @@ describe("basalt feed (v0.11)", () => {
     expect(simulate({ ...BASALT, fIlmenite: 0.2, fIlmSized: 0.7, eIlmBeneficiation: 30_000, kIlmBeneficiationMass: 0.3 })).toEqual(basalt);
     expect(basalt.materials.maxAbsResidualKgPerDay).toBe(0);
     expect(basalt.energy.maxAbsResidualW).toBe(0);
+    // Only the basalt enters the mill; the layer's soil and oversize are
+    // rejected at the mine, and the two reject streams add up to the tailings.
+    const ilm = basalt.ilmenite!;
+    const mill = basalt.materials.balances.find((balance) => balance.id === "ilmenite-beneficiation")!;
+    expect(mill.massInKgPerDay).toBe(ilm.basaltFedKgPerDay);
+    const flow = (material: string) => basalt.materials.flows.find((item) => item.material === material)!.kgPerDay;
+    expect(flow("layer-rejects")).toBeCloseTo(ilm.soilKgPerDay - ilm.basaltFedKgPerDay, 6);
+    expect(flow("layer-rejects") + flow("tailings")).toBeCloseTo(ilm.tailingsKgPerDay, 6);
+    expect(soil.materials.flows.some((item) => item.material === "layer-rejects")).toBe(false);
     // MRE ignores the feed choice.
     expect(simulate({ ilmFeed: "basalt" })).toEqual(simulate({}));
   });

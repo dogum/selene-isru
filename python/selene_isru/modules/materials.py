@@ -21,9 +21,16 @@ def material_ledger(
     if ilmenite is not None:
         # Sizing and separation reject most of the soil; the reactor takes the
         # concentrate's oxygen as water, and electrolysis returns its hydrogen.
+        # A basalt mine rejects the layer's soil and oversize before the mill, so
+        # only the basalt enters beneficiation.
+        basalt = ilmenite["basaltFedKgPerDay"] > 0
+        beneficiation_feed = ilmenite["basaltFedKgPerDay"] if basalt else ilmenite["soilKgPerDay"]
+        layer_reject = ilmenite["soilKgPerDay"] - beneficiation_feed
+        flows.append({"material": "regolith", "from": "terrain", "to": "beneficiation", "kgPerDay": beneficiation_feed})
+        if basalt:
+            flows.append({"material": "layer-rejects", "from": "terrain", "to": "tailings", "kgPerDay": layer_reject})
         flows.extend([
-            {"material": "regolith", "from": "terrain", "to": "beneficiation", "kgPerDay": ilmenite["soilKgPerDay"]},
-            {"material": "tailings", "from": "beneficiation", "to": "tailings", "kgPerDay": ilmenite["tailingsKgPerDay"]},
+            {"material": "tailings", "from": "beneficiation", "to": "tailings", "kgPerDay": ilmenite["tailingsKgPerDay"] - layer_reject},
             {"material": "ilmenite-concentrate", "from": "beneficiation", "to": "reduction", "kgPerDay": ilmenite["concentrateKgPerDay"]},
             {"material": "hydrogen", "from": "electrolysis", "to": "reduction", "kgPerDay": ilmenite["hydrogenRecycleKgPerDay"]},
             {"material": "water", "from": "reduction", "to": "electrolysis", "kgPerDay": ilmenite["waterKgPerDay"]},
@@ -31,7 +38,12 @@ def material_ledger(
             {"material": "oxygen", "from": "electrolysis", "to": "product-storage", "kgPerDay": production["o2KgPerDay"]},
         ])
         balances.extend([
-            _balance("ilmenite-beneficiation", "Soil sizing and ilmenite separation", ilmenite["soilKgPerDay"], ilmenite["concentrateKgPerDay"] + ilmenite["tailingsKgPerDay"]),
+            _balance(
+                "ilmenite-beneficiation",
+                "Basalt crushing, grinding, and ilmenite separation" if basalt else "Soil sizing and ilmenite separation",
+                beneficiation_feed,
+                ilmenite["concentrateKgPerDay"] + (ilmenite["tailingsKgPerDay"] - layer_reject),
+            ),
             _balance(
                 "ilmenite-reduction",
                 "Hydrogen reduction of ilmenite",

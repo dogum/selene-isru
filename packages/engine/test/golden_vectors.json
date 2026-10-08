@@ -4328,13 +4328,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 2307844.7275362
+              "kgPerDay": 879938.90175577
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 1427905.8257804
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 2218037.8980424
+              "kgPerDay": 790132.07226206
             },
             {
               "material": "ilmenite-concentrate",
@@ -4370,9 +4376,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 2307844.7275362,
-              "massOutKgPerDay": 2307844.7275362,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 879938.90175577,
+              "massOutKgPerDay": 879938.90175577,
               "residualKgPerDay": 0
             },
             {
@@ -9078,13 +9084,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 14128461.540412
+              "kgPerDay": 3132865.1137016
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 10995596.42671
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 13800150.515575
+              "kgPerDay": 2804554.0888641
             },
             {
               "material": "ilmenite-concentrate",
@@ -9120,9 +9132,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 14128461.540412,
-              "massOutKgPerDay": 14128461.540412,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 3132865.1137016,
+              "massOutKgPerDay": 3132865.1137016,
               "residualKgPerDay": 0
             },
             {
@@ -13996,13 +14008,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 1143273.0625542
+              "kgPerDay": 466699.50268324
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 676573.55987092
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 792722.52407009
+              "kgPerDay": 116148.96419916
             },
             {
               "material": "ilmenite-concentrate",
@@ -14038,9 +14056,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 1143273.0625542,
-              "massOutKgPerDay": 1143273.0625542,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 466699.50268324,
+              "massOutKgPerDay": 466699.50268324,
               "residualKgPerDay": 0
             },
             {
@@ -18881,13 +18899,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 904170.14443744
+              "kgPerDay": 706161.09397563
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 198009.05046182
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 704609.73881431
+              "kgPerDay": 506600.68835249
             },
             {
               "material": "ilmenite-concentrate",
@@ -18923,9 +18947,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 904170.14443744,
-              "massOutKgPerDay": 904170.14443744,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 706161.09397563,
+              "massOutKgPerDay": 706161.09397563,
               "residualKgPerDay": 0
             },
             {
@@ -23655,13 +23679,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 3715564.0935487
+              "kgPerDay": 3545447.704771
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 170116.38877769
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 3393488.052046
+              "kgPerDay": 3223371.6632683
             },
             {
               "material": "ilmenite-concentrate",
@@ -23697,9 +23727,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 3715564.0935487,
-              "massOutKgPerDay": 3715564.0935487,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 3545447.704771,
+              "massOutKgPerDay": 3545447.704771,
               "residualKgPerDay": 0
             },
             {
@@ -28608,13 +28638,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 3700068.9156113
+              "kgPerDay": 2455237.1380106
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 1244831.7776007
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 2620173.8388968
+              "kgPerDay": 1375342.0612961
             },
             {
               "material": "ilmenite-concentrate",
@@ -28650,9 +28686,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 3700068.9156113,
-              "massOutKgPerDay": 3700068.9156113,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 2455237.1380106,
+              "massOutKgPerDay": 2455237.1380106,
               "residualKgPerDay": 0
             },
             {
@@ -33488,13 +33524,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 681150.73476479
+              "kgPerDay": 459294.31131922
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 221856.42344557
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 432897.64646242
+              "kgPerDay": 211041.22301685
             },
             {
               "material": "ilmenite-concentrate",
@@ -33530,9 +33572,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 681150.73476479,
-              "massOutKgPerDay": 681150.73476479,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 459294.31131922,
+              "massOutKgPerDay": 459294.31131922,
               "residualKgPerDay": 0
             },
             {
@@ -38318,13 +38360,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 6276743.9748192
+              "kgPerDay": 3239727.1714349
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 3037016.8033844
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 6157125.2980571
+              "kgPerDay": 3120108.4946727
             },
             {
               "material": "ilmenite-concentrate",
@@ -38360,9 +38408,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 6276743.9748192,
-              "massOutKgPerDay": 6276743.9748192,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 3239727.1714349,
+              "massOutKgPerDay": 3239727.1714349,
               "residualKgPerDay": 0
             },
             {
@@ -43281,13 +43329,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 21490366.91446
+              "kgPerDay": 6429472.2807458
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 15060894.633714
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 21172230.093037
+              "kgPerDay": 6111335.4593224
             },
             {
               "material": "ilmenite-concentrate",
@@ -43323,9 +43377,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 21490366.91446,
-              "massOutKgPerDay": 21490366.91446,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 6429472.2807458,
+              "massOutKgPerDay": 6429472.2807458,
               "residualKgPerDay": 0
             },
             {
@@ -48169,13 +48223,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 470891.66261157
+              "kgPerDay": 350377.82684857
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 120513.835763
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 406481.57202196
+              "kgPerDay": 285967.73625896
             },
             {
               "material": "ilmenite-concentrate",
@@ -48211,9 +48271,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 470891.66261157,
-              "massOutKgPerDay": 470891.66261157,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 350377.82684857,
+              "massOutKgPerDay": 350377.82684857,
               "residualKgPerDay": 0
             },
             {
@@ -52980,13 +53040,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 984706.08053312
+              "kgPerDay": 237151.36678864
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 747554.71374448
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 765044.74809108
+              "kgPerDay": 17490.034346594
             },
             {
               "material": "ilmenite-concentrate",
@@ -53022,9 +53088,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 984706.08053312,
-              "massOutKgPerDay": 984706.08053312,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 237151.36678864,
+              "massOutKgPerDay": 237151.36678864,
               "residualKgPerDay": 0
             },
             {
@@ -57887,13 +57953,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 11020953.450971
+              "kgPerDay": 2515650.1317917
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 8505303.3191795
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 10451976.95021
+              "kgPerDay": 1946673.631031
             },
             {
               "material": "ilmenite-concentrate",
@@ -57929,9 +58001,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 11020953.450971,
-              "massOutKgPerDay": 11020953.450971,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 2515650.1317917,
+              "massOutKgPerDay": 2515650.1317917,
               "residualKgPerDay": 0
             },
             {
@@ -62805,13 +62877,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 45354183.105416
+              "kgPerDay": 32670005.760518
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 12684177.344898
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 45056053.922168
+              "kgPerDay": 32371876.57727
             },
             {
               "material": "ilmenite-concentrate",
@@ -62847,9 +62925,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 45354183.105416,
-              "massOutKgPerDay": 45354183.105416,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 32670005.760518,
+              "massOutKgPerDay": 32670005.760518,
               "residualKgPerDay": 0
             },
             {
@@ -67599,13 +67677,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 5011903.7021001
+              "kgPerDay": 4678966.6685751
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 332937.03352501
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 4916726.1067663
+              "kgPerDay": 4583789.0732413
             },
             {
               "material": "ilmenite-concentrate",
@@ -67641,9 +67725,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 5011903.7021001,
-              "massOutKgPerDay": 5011903.7021001,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 4678966.6685751,
+              "massOutKgPerDay": 4678966.6685751,
               "residualKgPerDay": 0
             },
             {
@@ -72482,13 +72566,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 2778991.2690914
+              "kgPerDay": 1091474.1993192
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 1687517.0697722
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 2662948.252604
+              "kgPerDay": 975431.18283186
             },
             {
               "material": "ilmenite-concentrate",
@@ -72524,9 +72614,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 2778991.2690914,
-              "massOutKgPerDay": 2778991.2690914,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 1091474.1993192,
+              "massOutKgPerDay": 1091474.1993192,
               "residualKgPerDay": 0
             },
             {
@@ -77420,13 +77510,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 1000964.7500791
+              "kgPerDay": 658573.54718881
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 342391.20289033
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 511959.59996735
+              "kgPerDay": 169568.39707702
             },
             {
               "material": "ilmenite-concentrate",
@@ -77462,9 +77558,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 1000964.7500791,
-              "massOutKgPerDay": 1000964.7500791,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 658573.54718881,
+              "massOutKgPerDay": 658573.54718881,
               "residualKgPerDay": 0
             },
             {
@@ -82196,13 +82292,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 6557520.5595536
+              "kgPerDay": 3688635.3890559
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 2868885.1704977
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 6268497.0195679
+              "kgPerDay": 3399611.8490703
             },
             {
               "material": "ilmenite-concentrate",
@@ -82238,9 +82340,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 6557520.5595536,
-              "massOutKgPerDay": 6557520.5595536,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 3688635.3890559,
+              "massOutKgPerDay": 3688635.3890559,
               "residualKgPerDay": 0
             },
             {
@@ -87148,13 +87250,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 6824065.2960592
+              "kgPerDay": 3004443.8382231
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 3819621.4578361
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 6317213.636384
+              "kgPerDay": 2497592.1785479
             },
             {
               "material": "ilmenite-concentrate",
@@ -87190,9 +87298,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 6824065.2960592,
-              "massOutKgPerDay": 6824065.2960592,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 3004443.8382231,
+              "massOutKgPerDay": 3004443.8382231,
               "residualKgPerDay": 0
             },
             {
@@ -92044,13 +92152,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 1270722.3332084
+              "kgPerDay": 764553.21823704
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 506169.11497131
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 1174851.331125
+              "kgPerDay": 668682.21615372
             },
             {
               "material": "ilmenite-concentrate",
@@ -92086,9 +92200,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 1270722.3332084,
-              "massOutKgPerDay": 1270722.3332084,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 764553.21823704,
+              "massOutKgPerDay": 764553.21823704,
               "residualKgPerDay": 0
             },
             {
@@ -96786,13 +96900,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 453785.71099618
+              "kgPerDay": 390433.12129039
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 63352.58970579
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 352527.18670995
+              "kgPerDay": 289174.59700416
             },
             {
               "material": "ilmenite-concentrate",
@@ -96828,9 +96948,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 453785.71099618,
-              "massOutKgPerDay": 453785.71099618,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 390433.12129039,
+              "massOutKgPerDay": 390433.12129039,
               "residualKgPerDay": 0
             },
             {
@@ -101739,13 +101859,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 13034877.86473
+              "kgPerDay": 8032367.8032565
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 5002510.0614734
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 12771829.642774
+              "kgPerDay": 7769319.581301
             },
             {
               "material": "ilmenite-concentrate",
@@ -101781,9 +101907,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 13034877.86473,
-              "massOutKgPerDay": 13034877.86473,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 8032367.8032565,
+              "massOutKgPerDay": 8032367.8032565,
               "residualKgPerDay": 0
             },
             {
@@ -106584,13 +106710,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 2469071.9052311
+              "kgPerDay": 785611.52462769
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 1683460.3806034
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 1972261.6133983
+              "kgPerDay": 288801.23279486
             },
             {
               "material": "ilmenite-concentrate",
@@ -106626,9 +106758,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 2469071.9052311,
-              "massOutKgPerDay": 2469071.9052311,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 785611.52462769,
+              "massOutKgPerDay": 785611.52462769,
               "residualKgPerDay": 0
             },
             {
@@ -111421,13 +111553,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 732985.73897963
+              "kgPerDay": 700826.35455463
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 32159.384425002
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 284366.08804513
+              "kgPerDay": 252206.70362013
             },
             {
               "material": "ilmenite-concentrate",
@@ -111463,9 +111601,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 732985.73897963,
-              "massOutKgPerDay": 732985.73897963,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 700826.35455463,
+              "massOutKgPerDay": 700826.35455463,
               "residualKgPerDay": 0
             },
             {
@@ -116401,13 +116539,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 3244203.849919
+              "kgPerDay": 1762688.6407811
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 1481515.209138
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 3159065.2123806
+              "kgPerDay": 1677550.0032426
             },
             {
               "material": "ilmenite-concentrate",
@@ -116443,9 +116587,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 3244203.849919,
-              "massOutKgPerDay": 3244203.849919,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 1762688.6407811,
+              "massOutKgPerDay": 1762688.6407811,
               "residualKgPerDay": 0
             },
             {
@@ -121248,13 +121392,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 4038087.0313198
+              "kgPerDay": 1185190.7469219
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 2852896.2843979
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 3408128.2536178
+              "kgPerDay": 555231.96921985
             },
             {
               "material": "ilmenite-concentrate",
@@ -121290,9 +121440,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 4038087.0313198,
-              "massOutKgPerDay": 4038087.0313198,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 1185190.7469219,
+              "massOutKgPerDay": 1185190.7469219,
               "residualKgPerDay": 0
             },
             {
@@ -129961,13 +130111,19 @@
               "material": "regolith",
               "from": "terrain",
               "to": "beneficiation",
-              "kgPerDay": 186295.14800901
+              "kgPerDay": 88490.195304279
+            },
+            {
+              "material": "layer-rejects",
+              "from": "terrain",
+              "to": "tailings",
+              "kgPerDay": 97804.952704729
             },
             {
               "material": "tailings",
               "from": "beneficiation",
               "to": "tailings",
-              "kgPerDay": 174589.12949049
+              "kgPerDay": 76784.17678576
             },
             {
               "material": "ilmenite-concentrate",
@@ -130003,9 +130159,9 @@
           "balances": [
             {
               "id": "ilmenite-beneficiation",
-              "label": "Soil sizing and ilmenite separation",
-              "massInKgPerDay": 186295.14800901,
-              "massOutKgPerDay": 186295.14800901,
+              "label": "Basalt crushing, grinding, and ilmenite separation",
+              "massInKgPerDay": 88490.195304279,
+              "massOutKgPerDay": 88490.195304279,
               "residualKgPerDay": 0
             },
             {
