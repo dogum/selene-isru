@@ -244,7 +244,8 @@ export function makesLanderPropellant(params: Pick<SimParams, "site" | "enableSa
 /** Liquefier mass input for each liquefied product stream. */
 export const LIQUEFIER_PARAM: Record<string, keyof SimParams> = {
   lox: "kLiquefierLox",
-  lh2: "kLiquefierLh2"
+  lh2: "kLiquefierLh2",
+  lch4: "kLiquefierCh4"
 };
 
 const LIQUEFIER_KEYS = new Set<string>(Object.values(LIQUEFIER_PARAM));

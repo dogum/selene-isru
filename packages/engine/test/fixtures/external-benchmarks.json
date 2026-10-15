@@ -110,15 +110,15 @@
     {
       "id": "kleinhenz-paz-2017-sabatier-block",
       "kind": "calibration",
-      "quantity": "Sabatier reactor and gas-handling mass per kg/day of methane",
-      "inputs": { "atmosphereProcessingKg": 450, "methaneKg": 6978, "productionDays": 480 },
-      "expected": 31,
+      "quantity": "Sabatier reactor, gas-handling, and methane dryer mass per kg/day of methane; methane liquefier mass",
+      "inputs": { "atmosphereProcessingKg": 450, "methaneDryerKg": 25, "methaneLiquefactionKg": 50, "methaneKg": 6978, "productionDays": 480 },
+      "expected": 33,
       "unit": "kg/(kg/day)",
       "relativeTolerance": 0.05,
       "source": "Kleinhenz & Paz 2017, An ISRU Propellant Production System for a Fully Fueled Mars Ascent Vehicle, AIAA 2017-0423",
       "sourceUrl": "https://ntrs.nasa.gov/citations/20170001421",
-      "sourceLocator": "Fig. 2 (6,978 kg of CH4 over 480 days of continuous operation); Fig. 10A, case 2 (atmosphere processing about 450 kg, read off the bar between about 900 and 1,350 kg, with 15% structural and 20% growth margins)",
-      "modelSimplification": "Calibration anchor: the default is this block divided by the methane rate. The block includes the Mars CO2 freezer that a lunar loop fed from an imported CO2 store does not need, and this model charges that store in its cryo block too, so the default errs heavy."
+      "sourceLocator": "Fig. 2 (6,978 kg of CH4 over 480 days of continuous operation); Fig. 10A, case 2, read off the bar's pixels (atmosphere processing about 450 kg between about 900 and 1,350 kg; CH4 dryer about 25 kg; CH4 liquefaction about 50 kg; all with 15% structural and 20% growth margins)",
+      "modelSimplification": "Calibration anchor: kSabatierMass is the block plus the methane dryer divided by the methane rate, and kLiquefierCh4 the methane liquefaction bar divided by it. The thin dryer and liquefaction bars read to about +-8 kg. The block includes the Mars CO2 freezer that a lunar loop fed from an imported CO2 store does not need, and this model charges that store in its cryo block too, so the default errs heavy."
     },
     {
       "id": "pnnl-2005-sabatier-reactor",

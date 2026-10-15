@@ -110,7 +110,15 @@ function pendingInventory(
   // Liquefaction hardware scales with the liquefied product rate; storage
   // buffers and feeds are not liquefied here.
   const liquefierKgPerKgDay =
-    demand.role !== "product" ? 0 : demand.stream === "lox" ? params.kLiquefierLox : demand.stream === "lh2" ? params.kLiquefierLh2 : 0;
+    demand.role !== "product"
+      ? 0
+      : demand.stream === "lox"
+        ? params.kLiquefierLox
+        : demand.stream === "lh2"
+          ? params.kLiquefierLh2
+          : demand.stream === "lch4"
+            ? params.kLiquefierCh4
+            : 0;
 
   return {
     id: demand.id,

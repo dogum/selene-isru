@@ -96,7 +96,7 @@ describe("regression anchors", () => {
     // v0.13 moved the return from 0.796: the loop's own plant mass is lighter.
     const sabatier = simulate({ site: "polar", enableSabatier: true }).campaign;
     expect(sabatier.paybackDays).toBeNull();
-    expectRel(sabatier.returnRatio, 0.7976, 0.001);
+    expectRel(sabatier.returnRatio, 0.7971, 0.001);
   });
 
   test("polar propellant mode splits water into LOX and LH2 (v0.6)", () => {
@@ -125,7 +125,7 @@ describe("regression anchors", () => {
     const p = sabatier.production;
     expect(sabatier.logistics.productKgPerDay).toBe(p.o2KgPerDay + p.ch4KgPerDay + p.h2KgPerDay);
     // v0.13 moved it from 213.4x: the loop no longer borrows the MRE reactor mass.
-    expectRel(sabatier.logistics.leverageL, 229.5, 0.001);
+    expectRel(sabatier.logistics.leverageL, 224.6, 0.001);
     expect(propellant.materials.maxAbsResidualKgPerDay).toBe(0);
     expect(energy.maxAbsResidualW).toBe(0);
   });
@@ -213,13 +213,14 @@ describe("regression anchors", () => {
 
   test("Sabatier plant mass is its own, sized on methane (v0.13)", () => {
     // New and deliberate: the loop no longer borrows the MRE reactor's 12 kg
-    // per kg/day of water. It carries the water electrolyzer and a Sabatier
-    // block of 31 kg per kg/day of methane (Kleinhenz & Paz 2017).
+    // per kg/day of water. It carries the water electrolyzer, a Sabatier block
+    // of 33 kg per kg/day of methane, and a methane liquefier of 3.4
+    // (Kleinhenz & Paz 2017).
     const sabatier = simulate({ site: "polar", enableSabatier: true });
     const plant = sabatier.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
     expectRel(sabatier.production.ch4KgPerDay, 211.1, 0.001);
-    expectRel(plant / 1000, 12.80, 0.001);
-    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 52.76, 0.001);
+    expectRel(plant / 1000, 13.23, 0.001);
+    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 53.90, 0.001);
     // MRE and polar water plants do not move.
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 51.83, 0.001);
   });

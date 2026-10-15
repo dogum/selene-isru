@@ -29,13 +29,18 @@ propellant mode, splitting the same water, charges it.
 ## What the model computes
 
 ```
-Sabatier plant = kElectrolyzerMass · water fed + kSabatierMass · methane made   [kg]
+Sabatier plant  = kElectrolyzerMass · water fed + kSabatierMass · methane made   [kg]
+methane liquefier = kLiquefierCh4 · liquid methane stored                          [kg]
 ```
 
 - **Water electrolyzer:** the existing `kElectrolyzerMass`, 1.46 kg per kg/day
   of water. It is NASA's polar propellant electrolyzer and dryers (Kleinhenz &
   Paz 2020), the same electrolyzer propellant mode carries.
 - **Sabatier block:** a new input, `kSabatierMass`, per kg/day of methane.
+  It covers the reactor, gas handling, and the methane dryer.
+- **Methane liquefier:** a new input, `kLiquefierCh4`, in the cryo block beside
+  the LOX and LH₂ liquefiers. The loop already stored liquid methane and paid
+  its conditioning energy but landed no liquefier.
 - **Water extractor:** carried as before.
 - **MRE reactor:** `kReactorMass` now applies to the MRE plant alone.
 
@@ -43,7 +48,8 @@ Sabatier plant = kElectrolyzerMass · water fed + kSabatierMass · methane made 
 
 | Key | Default | Range | Unit | Basis |
 |---|---|---|---|---|
-| `kSabatierMass` | 31 | 1–60 | kg/(kg/day) of methane | Kleinhenz & Paz 2017, Fig. 10A |
+| `kSabatierMass` | 33 | 1–60 | kg/(kg/day) of methane | Kleinhenz & Paz 2017, Fig. 10A |
+| `kLiquefierCh4` | 3.4 | 0–20 | kg/(kg/day) of methane | Kleinhenz & Paz 2017, Fig. 10A |
 
 The rail now shows the electrolyzer mass when the Sabatier loop is on, since
 it acts there.
@@ -61,9 +67,12 @@ sized an oxygen-and-methane plant for a Mars ascent vehicle.
   - a condenser
   - a water separator
   - a CH₄/H₂ separator
-- **Margins:** the block carries the study's 15% structural and 20% growth
+- **Methane dryer and liquefaction:** about 25 and 50 kg, separate thin bars
+  above the electrolysis bar. They read to about ±8 kg each.
+- **Margins:** every bar carries the study's 15% structural and 20% growth
   margins.
-- **Result:** 450 / 14.5 = 31 kg per kg/day of methane.
+- **Result:** the Sabatier block is (450 + 25) / 14.5 = 33 kg per kg/day of
+  methane, and the liquefier 50 / 14.5 = 3.4.
 
 The default is that block, so it errs heavy. A lunar loop fed from imported CO₂
 does not need the freezer, and this model already sizes the CO₂ feed store in
@@ -92,25 +101,26 @@ after.
 
 | Case | Plant (t) | Landed (t) | Landings | Leverage | Campaign return |
 |---|---|---|---|---|---|
-| 1 t/day of water (default) | 16.80 → **12.80** | 56.76 → **52.76** | 1 | 213× → **230×** | 0.796 → **0.798** |
-| 100 kg/day | 1.68 → **1.28** | 7.10 → **6.70** | 1 | 171× → **181×** | 0.460 → **0.461** |
-| 5 t/day | 84.0 → **64.0** | 276.8 → **256.9** | 4 → **3** | 219× → **236×** | 0.810 → **0.825** |
+| 1 t/day of water (default) | 16.80 → **13.23** | 56.76 → **53.90** | 1 | 213× → **225×** | 0.796 → **0.797** |
+| 100 kg/day | 1.68 → **1.32** | 7.10 → **6.82** | 1 | 171× → **178×** | 0.460 → **0.461** |
+| 5 t/day | 84.0 → **66.1** | 276.8 → **262.6** | 4 | 219× → **231×** | 0.810 → **0.811** |
 
 - **The loop is lighter.** At the default it makes 211 kg/day of methane:
-  - a 6.5 t Sabatier block
+  - a 7.0 t Sabatier block
   - a 1.5 t electrolyzer
   - the 4.8 t extractor
+  - a new 0.7 t methane liquefier, in the cryo block
 
-  Together that is 4 t less than the borrowed MRE coefficient. At the reactor
-  alone (`kSabatierMass` = 2.3) it would land about 6 t less again.
+  Together that is 2.9 t less than before. At the reactor alone
+  (`kSabatierMass` = 2.3) it would land about 6.5 t less again.
 - **It still never pays back.** The imported CO₂ outweighs the product saving
   either way, so the campaign return barely moves.
 - **Nothing else moves.**
 
 Regression anchors moved deliberately in `regression.test.ts` and
 `test_regression.py`:
-- **v0.5:** the Sabatier campaign return, 0.796 → 0.798.
-- **v0.6:** the Sabatier leverage, 213.4× → 229.5×.
+- **v0.5:** the Sabatier campaign return, 0.796 → 0.797.
+- **v0.6:** the Sabatier leverage, 213.4× → 224.6×.
 - **v0.13:** new anchors for the plant and landed mass.
 
 Golden vectors were regenerated.
@@ -126,6 +136,8 @@ languages.
 
 - **Rail:** the electrolyzer mass shows in the propellant group when the
   Sabatier loop is on.
+- **Rail:** the methane liquefier mass shows in the cryogenics group when
+  liquid methane is stored.
 - **Inspector:** the beam receiver and Sabatier plant offers the Sabatier
   block mass as a control. Its assumptions name the block's basis and the CO₂
   freezer it over-counts.

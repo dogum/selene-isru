@@ -81,7 +81,7 @@ def test_campaign_ledger_equatorial_payback_v05() -> None:
     sabatier = simulate({"site": "polar", "enableSabatier": True})["campaign"]
     assert sabatier["paybackDays"] is None
     # v0.13: the loop's own plant mass is lighter, so the return moves from 0.796.
-    assert_rel(sabatier["returnRatio"], 0.7976, 0.001)
+    assert_rel(sabatier["returnRatio"], 0.7971, 0.001)
 
 
 def test_polar_propellant_mode_v06() -> None:
@@ -98,7 +98,7 @@ def test_polar_propellant_mode_v06() -> None:
     assert_rel(result["logistics"]["leverageL"], 115.1, 0.001)
     sabatier = simulate({"site": "polar", "enableSabatier": True})
     # v0.13: no longer borrows the MRE reactor mass, so leverage moves from 213.4x.
-    assert_rel(sabatier["logistics"]["leverageL"], 229.5, 0.001)
+    assert_rel(sabatier["logistics"]["leverageL"], 224.6, 0.001)
 
 
 def test_refuelling_demand_v07() -> None:
@@ -256,11 +256,12 @@ def test_whole_excavators_from_rassor_kinematics_v012() -> None:
 
 
 def test_sabatier_plant_mass_on_methane_v013() -> None:
-    # New and deliberate: water electrolyzer plus a 31 kg per kg/day-of-methane
-    # Sabatier block (Kleinhenz & Paz 2017) replace the borrowed MRE coefficient.
+    # New and deliberate: water electrolyzer, a 33 kg per kg/day-of-methane
+    # Sabatier block, and a methane liquefier (Kleinhenz & Paz 2017) replace the
+    # borrowed MRE coefficient.
     result = simulate({"site": "polar", "enableSabatier": True})
     plant = next(row["massKg"] for row in result["logistics"]["manifest"] if row["subsystem"] == "reactor/plant")
     assert_rel(result["production"]["ch4KgPerDay"], 211.1, 0.001)
-    assert_rel(plant / 1000, 12.80, 0.001)
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 52.76, 0.001)
+    assert_rel(plant / 1000, 13.23, 0.001)
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 53.90, 0.001)
     assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 51.83, 0.001)

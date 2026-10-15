@@ -62,6 +62,8 @@ def _pending_inventory(params: dict[str, Any], demand: dict[str, Any], profile: 
         liquefier_kg_per_kg_day = params["kLiquefierLox"]
     elif demand["stream"] == "lh2":
         liquefier_kg_per_kg_day = params["kLiquefierLh2"]
+    elif demand["stream"] == "lch4":
+        liquefier_kg_per_kg_day = params["kLiquefierCh4"]
     else:
         liquefier_kg_per_kg_day = 0
     return {
