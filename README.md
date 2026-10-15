@@ -244,6 +244,10 @@ The v0.13 Sabatier plant mass (the water electrolyzer plus a Sabatier block per
 kg/day of methane from NASA's 2017 Mars propellant plant, in place of the
 borrowed MRE coefficient) is in
 [`docs/model-sabatier-mass-v013.md`](docs/model-sabatier-mass-v013.md).
+The v0.14 electrolysis balance of plant (pumps, deionizer, dryers, and controls
+as a fraction of stack power, calibrated to NASA's polar electrolyzer and
+cross-checked against DOE's PEM targets) is in
+[`docs/model-electrolysis-bop-v014.md`](docs/model-electrolysis-bop-v014.md).
 
 ## Architecture
 

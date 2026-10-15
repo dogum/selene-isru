@@ -69,7 +69,7 @@ describe("oxygen process rail", () => {
     }
     expect(inputActivity(ilmenite, "EaIlmReduction").activity).toBe("no-effect");
     // The shared inputs the ilmenite group borrows drive its results.
-    for (const key of ["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"] as const) {
+    for (const key of ["Tambient", "Vel", "etaFaradayEl", "fElectrolysisBop", "kElectrolyzerMass"] as const) {
       expect(inputActivity(ilmenite, key).activity, key).toBe("drives-results");
     }
     // MRE and slag construction inputs leave the ilmenite plant's results alone.

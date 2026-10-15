@@ -28,12 +28,17 @@ export interface WaterElectrolysisOutput {
   o2KgPerDay: number;
 }
 
-/** 2 H2O → 2 H2 + O2 at cell voltage Vel and Faradaic efficiency etaFaradayEl. */
+/**
+ * 2 H2O → 2 H2 + O2 at cell voltage Vel and Faradaic efficiency etaFaradayEl,
+ * plus the balance of plant (pumps, deionizer, dryers, controls) as a
+ * fraction of stack power.
+ */
 export function simulateWaterElectrolysis(params: SimParams, waterKgPerDay: number): WaterElectrolysisOutput {
   return {
     secWaterElectrolysis_JPerKg:
-      (params.Vel * 2 * PHYSICAL_CONSTANTS.F.value) /
-      (PHYSICAL_CONSTANTS.M_H2O.value * params.etaFaradayEl),
+      ((params.Vel * 2 * PHYSICAL_CONSTANTS.F.value) /
+        (PHYSICAL_CONSTANTS.M_H2O.value * params.etaFaradayEl)) *
+      (1 + params.fElectrolysisBop),
     grossH2KgPerDay: waterKgPerDay * (PHYSICAL_CONSTANTS.M_H2.value / PHYSICAL_CONSTANTS.M_H2O.value),
     o2KgPerDay: waterKgPerDay * ((PHYSICAL_CONSTANTS.M_O2.value / 2) / PHYSICAL_CONSTANTS.M_H2O.value)
   };

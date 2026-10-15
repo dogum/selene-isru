@@ -119,6 +119,12 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Polar propellant mode, and the refuelling demand at either site",
     defaultUncertainty: 0.05
   },
+  fElectrolysisBop: {
+    rangeRationale: "From the stack alone to well past NASA's small lunar design. DOE's PEM targets put large terrestrial systems at 6–8% over the stack; NASA's 67 kg/day polar unit comes to 10.7%.",
+    validity: "Pumps, water deionizer, gas dryers, and controls, charged as a fraction of stack power wherever water is split. Calibrated so the model reproduces NASA's 17.5 kW electrolyzer (20% power margin removed) in its polar propellant case; it ends up as waste heat in the energy ledger.",
+    applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis",
+    defaultUncertainty: 0.3
+  },
   kElectrolyzerMass: {
     rangeRationale: "Bounded around the NASA case's PEM electrolyzer and gas dryers.",
     validity: "Derived from one small (67 kg/day) design and scaled linearly with water processed; storage tanks are sized separately in the cryo block.",

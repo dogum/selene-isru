@@ -97,6 +97,28 @@ describe("external analytical benchmarks (separate from implementation parity)",
     }
   });
 
+  test("electrolysis balance of plant: NASA's small lunar design sits above DOE's terrestrial systems", () => {
+    const item = benchmark("doe-pem-electrolysis-bop");
+    expect(item.kind).toBe("documentation-only");
+    const i = item.inputs as Record<string, number>;
+    const bop = [
+      i.system2022KWhPerKg! / i.stack2022KWhPerKg! - 1,
+      i.system2026KWhPerKg! / i.stack2026KWhPerKg! - 1,
+      i.systemUltimateKWhPerKg! / i.stackUltimateKWhPerKg! - 1
+    ];
+    expectRelative2(bop[0]!, item.expected as number, 0.01);
+    for (const value of bop) {
+      expect(value).toBeGreaterThan(0.05);
+      expect(value).toBeLessThan(DEFAULTS.fElectrolysisBop);
+    }
+    // The NASA-calibrated term is within a factor of two of DOE's.
+    expect(DEFAULTS.fElectrolysisBop / bop[0]!).toBeLessThan(2);
+    // It closes the old gap: stack power alone ran about 10% under NASA's 17.5 kW.
+    const stackOnly = simulate({ site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26, fElectrolysisBop: 0 });
+    const stackKw = stackOnly.energy.balances.find((row) => row.id === "water-electrolysis-energy")!.electricalInputW / 1000;
+    expectRelative2(stackKw * (1 + DEFAULTS.fElectrolysisBop), 17.5, 0.005);
+  });
+
   test("polar excavation compares with the NASA mine: whole margined vehicles, not a different rate", () => {
     const item = benchmark("kleinhenz-paz-2020-polar-excavation");
     expect(item.kind).toBe("documentation-only");

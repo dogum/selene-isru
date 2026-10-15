@@ -1059,6 +1059,16 @@
     "description": "Vehicle mixture ratio (O/F)",
     "source": "Kleinhenz & Paz 2020, AIAA 2020-4042, Table 1 mixture ratio"
   },
+  "fElectrolysisBop": {
+    "value": 0.107,
+    "min": 0,
+    "max": 0.4,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "propellant",
+    "description": "Electrolysis balance-of-plant power as a fraction of stack power",
+    "source": "derived from Kleinhenz & Paz 2020, AIAA 2020-4042, Fig. 8: electrolyzer 21.0 kW with its 20% power margin, 17.5 kW without, against 15.8 kW of stack power from 1.8 V at 95% Faradaic efficiency for 67.26 kg/day of water; DOE Hydrogen Program, Technical Targets for Proton Exchange Membrane Electrolysis: system 55 kWh/kg against stack 51 kWh/kg H2 (2022 status)"
+  },
   "kElectrolyzerMass": {
     "value": 1.46,
     "min": 0.5,

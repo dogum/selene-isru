@@ -73,14 +73,14 @@ describe("input activity", () => {
 
   it("only hides propellant-plant inputs where they cannot act", () => {
     const group = GROUPS.find((item) => item.id === "propellant")!;
-    const keys = ["Vel", "etaFaradayEl", "mixtureRatio", "kElectrolyzerMass"] as const;
+    const keys = ["Vel", "etaFaradayEl", "mixtureRatio", "fElectrolysisBop", "kElectrolyzerMass"] as const;
     const shown = (params: SimParams) => railParamsForGroup(group, params).map((def) => String(def.key));
     const water = { ...polar, enableSabatier: false, polarProduct: "water" as const };
     const sabatier = { ...polar, enableSabatier: true };
     const propellant = { ...polar, enableSabatier: false, polarProduct: "propellant" as const };
     expect(shown(water)).toEqual([]);
     // v0.13: the Sabatier loop carries the propellant-mode electrolyzer.
-    expect(shown(sabatier)).toEqual(["Vel", "etaFaradayEl", "kElectrolyzerMass"]);
+    expect(shown(sabatier)).toEqual(["Vel", "etaFaradayEl", "fElectrolysisBop", "kElectrolyzerMass"]);
     expect(shown(propellant)).toEqual([...keys]);
     for (const [params, visible] of [[water, shown(water)], [sabatier, shown(sabatier)], [propellant, shown(propellant)]] as const) {
       for (const key of keys) {

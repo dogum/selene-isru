@@ -13,9 +13,10 @@ def sabatier_kp(temp: float) -> float:
 
 
 def simulate_water_electrolysis(params: dict[str, Any], water_kg_per_day: float) -> dict[str, float]:
-    """2 H2O -> 2 H2 + O2 at cell voltage Vel and Faradaic efficiency etaFaradayEl."""
+    """2 H2O -> 2 H2 + O2 at Vel and etaFaradayEl, plus balance of plant as a fraction of stack power."""
     return {
-        "secWaterElectrolysis_JPerKg": params["Vel"] * 2 * c("F") / (c("M_H2O") * params["etaFaradayEl"]),
+        "secWaterElectrolysis_JPerKg": (params["Vel"] * 2 * c("F") / (c("M_H2O") * params["etaFaradayEl"]))
+        * (1 + params["fElectrolysisBop"]),
         "grossH2KgPerDay": water_kg_per_day * (c("M_H2") / c("M_H2O")),
         "o2KgPerDay": water_kg_per_day * ((c("M_O2") / 2) / c("M_H2O")),
     }
