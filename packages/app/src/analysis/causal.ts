@@ -30,6 +30,9 @@ interface Observation {
 const OBSERVATIONS: Observation[] = [
   { id: "excavation-force", label: "Cutting-force equation", category: "equation", unit: "N", value: (r) => r.excavation.cuttingForceN },
   { id: "excavation-power", label: "Excavation drive", category: "process", unit: "W", value: (r) => r.excavation.mechPowerW },
+  { id: "excavation-trips", label: "Excavator trips per shift", category: "equation", unit: "trips/day", value: (r) => r.excavation.excavatorTripsPerDay },
+  { id: "excavation-rate", label: "Soil one excavator moves", category: "process", unit: "kg/day", value: (r) => r.excavation.excavatorKgPerDay },
+  { id: "excavation-count", label: "Whole excavators landed", category: "process", unit: "vehicles", value: (r) => r.excavation.excavatorCount },
   { id: "excavation-mass", label: "Excavation fleet sizing", category: "process", unit: "kg", value: (r) => r.excavation.fleetMassKg },
   { id: "mre-yield", label: "MRE oxide recovery", category: "equation", unit: "kg/kg", value: (r) => r.electrolysis.xO2Effective },
   { id: "mre-current", label: "Faraday current", category: "equation", unit: "A", value: (r) => r.electrolysis.currentA },

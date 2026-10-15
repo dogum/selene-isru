@@ -11,6 +11,17 @@ describe("model-depth UI utilities", () => {
     expect(trace.nodes.some((node) => node.category === "kpi")).toBe(true);
   });
 
+  test("traces fleet inputs that change trips without changing the whole-vehicle fleet", () => {
+    // A 1% faster excavator fits 35 trips instead of 34; the two vehicles stay two.
+    const speed = traceParameter("excavatorSpeedMps", DEFAULTS);
+    const ids = speed.nodes.map((node) => node.id);
+    expect(ids).toEqual(expect.arrayContaining(["excavation-trips", "excavation-rate"]));
+    expect(ids).not.toContain("excavation-mass");
+    for (const key of ["excavatorPayloadKg", "excavatorHoursPerDay"] as const) {
+      expect(traceParameter(key, DEFAULTS).nodes.some((node) => node.id === "excavation-rate"), key).toBe(true);
+    }
+  });
+
   test("runtime causal trace uses a genuinely local numeric perturbation", () => {
     const trace = traceParameter("targetKgPerDay", DEFAULTS);
     expect(trace.before).toBe(1000);
