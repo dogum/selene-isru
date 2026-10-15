@@ -198,6 +198,8 @@ export interface SimParams {
   excavatorHoursPerDay: number;
   /** [m] each leg of the mine → plant → tailings → mine loop */
   haulDistanceM: number;
+  /** [day] days of mining whose overburden is stripped before production starts */
+  stripAheadDays: number;
   /** [kg/kg] polar dry overburden moved per kg of icy regolith mined */
   overburdenRatio: number;
   chiIce: number;
@@ -492,7 +494,7 @@ export interface CampaignResult {
   leoMassPerLandedKg: number;
   /** last infrastructure landing [day] */
   deploymentDays: number;
-  /** production start: deployment + commissioning [day] */
+  /** production start: deployment, then commissioning or the initial overburden strip, whichever is longer [day] */
   firstProductDay: number;
   /** end of `missionYears` of production [day] */
   campaignEndDay: number;
@@ -661,6 +663,8 @@ export interface SimResult {
     excavatorTripsPerDay: number;
     /** [kg/day] soil one excavator moves */
     excavatorKgPerDay: number;
+    /** [day] the whole fleet stripping the first stripAheadDays of overburden; 0 without overburden */
+    initialStripDays: number;
     /** [kg/day] soil the fleet moves: the plant's feed plus any overburden */
     soilMovedKgPerDay: number;
     /** [kg/day] overburden stripped: polar dry regolith over the ice, or the soil over an ilmenite plant's basalt; 0 otherwise */

@@ -38,6 +38,7 @@ def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = N
     soil_moved_per_kg = regolith_per_kg + overburden_per_kg
     soil_moved_kg_per_day = params["targetKgPerDay"] * soil_moved_per_kg
     fleet = excavator_fleet(params, soil_moved_kg_per_day)
+    overburden_kg_per_day = params["targetKgPerDay"] * overburden_per_kg
 
     return {
         "cuttingForceN": cutting_force_n,
@@ -47,8 +48,11 @@ def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = N
         "regolithPerKgProduct": regolith_per_kg,
         "soilMovedPerKgProduct": soil_moved_per_kg,
         "soilMovedKgPerDay": soil_moved_kg_per_day,
-        "overburdenKgPerDay": params["targetKgPerDay"] * overburden_per_kg,
+        "overburdenKgPerDay": overburden_kg_per_day,
         "excavatorCount": fleet["count"],
         "excavatorTripsPerDay": fleet["tripsPerDay"],
         "excavatorKgPerDay": fleet["kgPerDayEach"],
+        # Before the first ore, the whole fleet strips the cover over the first
+        # stripAheadDays of mining (Kleinhenz & Paz 2020 strip the whole pit).
+        "initialStripDays": (params["stripAheadDays"] * overburden_kg_per_day) / (fleet["count"] * fleet["kgPerDayEach"]),
     }

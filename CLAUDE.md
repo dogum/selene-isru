@@ -465,6 +465,7 @@ in `assets/ASSET_LICENSES.md`.
 | Whole excavators, trips per shift, haul distance, RASSOR rate calibration | v0.12 anchors in `regression.test.ts` / `test_regression.py`, `guerrero-zabel-2023-rassor-rate` in `external-benchmarks.test.ts` |
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
+| Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
 | Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
 | Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
@@ -523,7 +524,7 @@ script run on a clean checkout at all.
   `model-ilmenite-v08.md` → `model-excavation-v09.md` →
   `model-ilmenite-reactor-v010.md` → `model-basalt-feed-v011.md` →
   `model-excavators-v012.md` → `model-sabatier-mass-v013.md` →
-  `model-electrolysis-bop-v014.md`) is
+  `model-electrolysis-bop-v014.md` → `model-overburden-timing-v015.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -570,6 +571,9 @@ script run on a clean checkout at all.
 - [`docs/model-electrolysis-bop-v014.md`](docs/model-electrolysis-bop-v014.md) —
   electrolysis balance of plant as a fraction of stack power, the NASA
   calibration, and DOE's PEM cross-check.
+- [`docs/model-overburden-timing-v015.md`](docs/model-overburden-timing-v015.md) —
+  the initial overburden strip run alongside commissioning, and when it
+  delays the first product.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

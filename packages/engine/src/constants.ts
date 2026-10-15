@@ -659,6 +659,16 @@ export const PARAM_META = {
     "description": "Distance between mine, plant, and tailings site",
     "source": "Guerrero-Gonzalez & Zabel 2023, Acta Astronautica 203:187-201 (doi:10.1016/j.actaastro.2022.11.050), Sec. 3.4.1: excavation and disposal sites each 100 m from the plant and from each other; Kleinhenz & Paz 2020, AIAA 2020-4042, Sec. III-C: mine site 100 m from the water extractor"
   },
+  "stripAheadDays": {
+    "value": 30,
+    "min": 0,
+    "max": 730,
+    "unit": "day",
+    "kind": "parameter",
+    "group": "excavation",
+    "description": "Days of mining whose overburden is stripped before production",
+    "source": "design assumption; Kleinhenz & Paz 2020, AIAA 2020-4042, Sec. IV-C: overburden is removed and access ramps built before any ice is delivered, for the whole 32 m pit; Eagle Engineering 1988, Conceptual Design of a Lunar Oxygen Pilot Plant, EEI 88-182 (NTRS 19890004515), Sec. 6 and Sec. 9: mine site preparation and overburden removal begin during plant set-up, and stripping continues alongside basalt mining"
+  },
   "overburdenRatio": {
     "value": 0.667,
     "min": 0,
@@ -2333,6 +2343,7 @@ export const DEFAULTS = {
   "excavatorLoadingMin": 9,
   "excavatorHoursPerDay": 16,
   "haulDistanceM": 100,
+  "stripAheadDays": 30,
   "overburdenRatio": 0.667,
   "chiIce": 0.05,
   "cpRegCold": 800,

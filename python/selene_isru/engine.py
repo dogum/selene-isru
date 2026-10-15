@@ -195,6 +195,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             + storage_loss_kg_per_day(is_feed),
             "usedKgPerDay": None if refuel is None else refuel["usedKgPerDay"],
             "sortieIntervalDays": None if refuel is None else refuel["sortieIntervalDays"],
+            "initialStripDays": excavation["initialStripDays"],
         },
     )
     campaign_warnings = campaign.pop("warnings")
@@ -237,6 +238,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "excavatorCount": excavation["excavatorCount"],
             "excavatorTripsPerDay": excavation["excavatorTripsPerDay"],
             "excavatorKgPerDay": excavation["excavatorKgPerDay"],
+            "initialStripDays": excavation["initialStripDays"],
             "soilMovedKgPerDay": excavation["soilMovedKgPerDay"],
             "overburdenKgPerDay": excavation["overburdenKgPerDay"],
         },

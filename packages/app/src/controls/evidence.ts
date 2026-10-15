@@ -291,9 +291,15 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · deployment campaign",
     defaultUncertainty: 0.3
   },
+  stripAheadDays: {
+    rangeRationale: "From mining as soon as the face is exposed to two years of cover stripped first. NASA's polar case strips its whole 223-day pit before any ice is delivered; Eagle begins stripping during plant set-up and keeps going alongside mining. The 30-day default is a month of working face.",
+    validity: "The whole fleet strips this much cover before the first ore, alongside commissioning: production waits for whichever takes longer. After that, stripping runs at a steady rate with mining. Ramp building and a separate overburden haul route are not modelled.",
+    applicability: "Polar pit mine, and an ilmenite plant mining basalt under its soil",
+    defaultUncertainty: 0.5
+  },
   commissioningDays: {
     rangeRationale: "Immediate start to a full year of checkout. NASA's polar case study assumes 48 hours; the 30-day default allows for a first-of-a-kind plant.",
-    validity: "One block of time after the last landing with no output. Partial early operation and phased start-up are not modelled.",
+    validity: "One block of time after the last landing with no output, run alongside the fleet's initial overburden strip; production starts when both are done. Partial early operation and phased start-up are not modelled.",
     applicability: "Both sites · deployment campaign",
     defaultUncertainty: 0.5
   },

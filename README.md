@@ -248,6 +248,9 @@ The v0.14 electrolysis balance of plant (pumps, deionizer, dryers, and controls
 as a fraction of stack power, calibrated to NASA's polar electrolyzer and
 cross-checked against DOE's PEM targets) is in
 [`docs/model-electrolysis-bop-v014.md`](docs/model-electrolysis-bop-v014.md).
+The v0.15 overburden timing (the fleet's initial strip run alongside
+commissioning, delaying production when it takes longer) is in
+[`docs/model-overburden-timing-v015.md`](docs/model-overburden-timing-v015.md).
 
 ## Architecture
 

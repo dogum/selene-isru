@@ -265,3 +265,19 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     assert_rel(plant / 1000, 13.23, 0.001)
     assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.65, 0.001)  # v0.14: electrolysis balance of plant
     assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 51.83, 0.001)
+
+
+def test_initial_overburden_strip_runs_alongside_commissioning_v015() -> None:
+    # New and deliberate: the default strips finish inside commissioning.
+    polar = simulate({"site": "polar"})
+    assert_rel(polar["excavation"]["initialStripDays"], 11.54, 0.001)
+    assert polar["campaign"]["firstProductDay"] == DEFAULTS["commissioningDays"]
+    assert simulate({})["excavation"]["initialStripDays"] == 0
+    basalt = simulate({"equatorialProcess": "ilmenite", "ilmFeed": "basalt", "stripAheadDays": 90})
+    assert_rel(basalt["campaign"]["firstProductDay"], 47.09, 0.001)
+    assert_rel(basalt["campaign"]["paybackDays"], 262.7, 0.001)
+    nasa = simulate({
+        "site": "polar", "polarProduct": "propellant", "targetKgPerDay": 67.26,
+        "plantAvailability": 0.611, "commissioningDays": 2, "stripAheadDays": 223,
+    })
+    assert_rel(nasa["campaign"]["firstProductDay"], 49.04, 0.001)
