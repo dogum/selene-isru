@@ -87,7 +87,9 @@ describe("ilmenite reduction", () => {
     expectRel(rich.soilKgPerDay, base.soilKgPerDay / 2, 1e-12);
     expectRel(rich.secMining_JPerKg, base.secMining_JPerKg / 2, 1e-12);
     expectRel(rich.beneficiationMassKg, base.beneficiationMassKg / 2, 1e-12);
-    expectRel(rich.miningMassKg, base.miningMassKg / 2, 1e-12);
+    // Whole excavators: 121 vehicles for the mare soil, 61 at twice the grade.
+    expect(base.miningMassKg).toBe(121 * 66);
+    expect(rich.miningMassKg).toBe(61 * 66);
     expect(rich.concentrateKgPerDay).toBe(base.concentrateKgPerDay);
     expect(rich.secSensible_JPerKg).toBe(base.secSensible_JPerKg);
     expect(rich.reactorMassKg).toBe(base.reactorMassKg);
@@ -126,7 +128,8 @@ describe("ilmenite reduction", () => {
     const ilmenite = result.ilmenite!;
     const row = (subsystem: string) => result.logistics.manifest.find((item) => item.subsystem === subsystem)!.massKg;
     expect(row("excavation fleet")).toBe(ilmenite.miningMassKg);
-    expectRel(ilmenite.miningMassKg, params.kMiningMass * ilmenite.soilKgPerDay, 1e-12);
+    expect(ilmenite.miningMassKg).toBe(result.excavation.fleetMassKg);
+    expect(ilmenite.miningMassKg).toBe(Math.ceil(ilmenite.soilKgPerDay / result.excavation.excavatorKgPerDay) * params.excavatorMassKg);
     expect(row("beneficiation plant")).toBe(ilmenite.beneficiationMassKg);
     expect(row("reactor/plant")).toBe(ilmenite.reactorMassKg + ilmenite.electrolyzerMassKg);
     expect(result.production.regolithKgPerDay).toBe(ilmenite.soilKgPerDay);
@@ -154,9 +157,9 @@ describe("ilmenite reduction", () => {
     // The polar site has no ilmenite plant.
     expect(simulate({ site: "polar", equatorialProcess: "ilmenite" })).toEqual(simulate({ site: "polar" }));
     // Mining is shared: both plants move soil with the same fleet (v0.9).
-    const heavier = simulate({ ...ILMENITE, eMining: 50_000, kMiningMass: 0.1 });
+    const heavier = simulate({ ...ILMENITE, eMining: 50_000, excavatorMassKg: 100 });
     expect(heavier.energy.secTotal_kWhPerKg).toBeGreaterThan(ilmenite.energy.secTotal_kWhPerKg);
-    expectRel(heavier.ilmenite!.miningMassKg, 0.1 * heavier.ilmenite!.soilKgPerDay, 1e-12);
+    expect(heavier.ilmenite!.miningMassKg).toBe(heavier.excavation.excavatorCount * 100);
   });
 
   test("a Sabatier switch left over from a polar case adds nothing at the equator", () => {

@@ -236,6 +236,10 @@ The v0.11 basalt feed (Eagle's crushed high-Ti basalt as a second ilmenite
 feedstock, with crushing, grinding, and overburden, calibrated to Eagle's
 basalt-fed plant) is in
 [`docs/model-basalt-feed-v011.md`](docs/model-basalt-feed-v011.md).
+The v0.12 excavator fleet (whole RASSOR-class vehicles sized from their payload,
+speed, loading time, shift, and haul distance, calibrated to Guerrero-Gonzalez &
+Zabel's 2.7 t/day) is in
+[`docs/model-excavators-v012.md`](docs/model-excavators-v012.md).
 
 ## Architecture
 

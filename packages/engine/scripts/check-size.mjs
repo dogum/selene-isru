@@ -19,7 +19,11 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 // model with its soil, energy, and mass chain, and the fourteen cited Eagle
 // 1988 and Guerrero-Gonzalez & Zabel 2023 parameters that ship with it. Still
 // zero runtime dependencies.
-const limitBytes = 192 * 1024;
+// 192 -> 208 KiB (v0.11-v0.12 feedstock and fleet): the basalt feed's chain
+// and seven cited Eagle 1988 inputs, and whole excavators sized from RASSOR
+// kinematics with their six cited Guerrero-Gonzalez & Zabel 2023 inputs.
+// Still zero runtime dependencies.
+const limitBytes = 208 * 1024;
 
 function jsSize(dir) {
   let total = 0;

@@ -25,9 +25,10 @@ describe("campaign status wording", () => {
   });
 
   it("separates a late payback, no payback, and nothing landed", () => {
+    // v0.12: the pilot lands a whole 66 kg excavator, so payback slips from day 22,182.
     expect(campaignStatus(run({ site: "polar", targetKgPerDay: 10 }).result.campaign)).toMatchObject({
       payback: "NOT IN CAMPAIGN",
-      paybackDetail: expect.stringMatching(/^Would need day 22,182 \(60\.8 yr\)$/)
+      paybackDetail: expect.stringMatching(/^Would need day 22,268 \(61\.0 yr\)$/)
     });
     const outpaced = run({ site: "polar", targetKgPerDay: 10, gearRatio: 2, plantAvailability: 0.5, sparesFracPerYear: 0.3, chiIce: 0.005 });
     expect(campaignStatus(outpaced.result.campaign)).toMatchObject({

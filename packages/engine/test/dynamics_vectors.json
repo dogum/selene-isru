@@ -643,10 +643,10 @@
       },
       "result": {
         "plantMassThroughputDays": {
-          "p10": 51.648514207634,
-          "p50": 51.778113312035,
-          "p90": 51.951355911034,
-          "mean": 51.799206716511
+          "p10": 51.658835418996,
+          "p50": 51.799065638812,
+          "p90": 51.987308546679,
+          "mean": 51.822121979966
         },
         "secTotal": {
           "p10": 23.753955865091,
@@ -661,10 +661,10 @@
           "mean": 1.0
         },
         "leverageL": {
-          "p10": 210.77409455272,
-          "p50": 211.47931659407,
-          "p90": 212.00997789409,
-          "mean": 211.39437969891
+          "p10": 210.62833042976,
+          "p50": 211.39377493904,
+          "p90": 211.96762014949,
+          "mean": 211.30111180898
         }
       }
     },
@@ -689,10 +689,10 @@
       },
       "result": {
         "plantMassThroughputDays": {
-          "p10": 19.267441230721,
-          "p50": 21.535305071502,
-          "p90": 24.279489442551,
-          "mean": 21.645350109909
+          "p10": 19.273206006944,
+          "p50": 21.567065416732,
+          "p90": 24.287257171988,
+          "mean": 21.673811610681
         },
         "secTotal": {
           "p10": 5.7150172787353,
@@ -707,10 +707,10 @@
           "mean": 1.0
         },
         "leverageL": {
-          "p10": 451.00329659619,
-          "p50": 508.46806100936,
-          "p90": 568.31629453747,
-          "mean": 509.85406696946
+          "p10": 450.85798379921,
+          "p50": 507.71913658398,
+          "p90": 568.14629807776,
+          "mean": 509.15855231301
         }
       }
     }
@@ -927,7 +927,7 @@
         {
           "tDays": 912.5,
           "landers": 6,
-          "landedMassKg": 503897.19580382,
+          "landedMassKg": 503934.75135937,
           "productKg": 0.0,
           "usedKg": 0.0,
           "leoMassSpentKg": 6600000.0,
@@ -937,7 +937,7 @@
         {
           "tDays": 942.5,
           "landers": 6,
-          "landedMassKg": 503897.19580382,
+          "landedMassKg": 503934.75135937,
           "productKg": 0.0,
           "usedKg": 0.0,
           "leoMassSpentKg": 6600000.0,
@@ -947,220 +947,220 @@
         {
           "tDays": 990.0,
           "landers": 6,
-          "landedMassKg": 510454.76205058,
+          "landedMassKg": 510492.80634282,
           "productKg": 427500.0,
           "usedKg": 427500.0,
-          "leoMassSpentKg": 6684054.8349074,
+          "leoMassSpentKg": 6684061.0995305,
           "leoMassSavedKg": 2565000.0,
           "event": ""
         },
         {
-          "tDays": 1068.8631314432,
+          "tDays": 1068.863450523,
           "landers": 6,
-          "landedMassKg": 521342.13486881,
-          "productKg": 1137268.1829889,
-          "usedKg": 1137268.1829889,
-          "leoMassSpentKg": 6823609.0979335,
-          "leoMassSavedKg": 6823609.0979335,
+          "landedMassKg": 521381.03465258,
+          "productKg": 1137271.0547068,
+          "usedKg": 1137271.0547068,
+          "leoMassSpentKg": 6823626.3282407,
+          "leoMassSavedKg": 6823626.3282406,
           "event": "payback"
         },
         {
           "tDays": 1080.0,
           "landers": 6,
-          "landedMassKg": 522879.62441287,
+          "landedMassKg": 522918.5947325,
           "productKg": 1237500.0,
           "usedKg": 1237500.0,
-          "leoMassSpentKg": 6843316.6273635,
+          "leoMassSpentKg": 6843334.7617989,
           "leoMassSavedKg": 7425000.0,
           "event": ""
         },
         {
           "tDays": 1170.0,
           "landers": 6,
-          "landedMassKg": 535304.48677515,
+          "landedMassKg": 535344.38312218,
           "productKg": 2047500.0,
           "usedKg": 2047500.0,
-          "leoMassSpentKg": 7002578.4198196,
+          "leoMassSpentKg": 7002608.4240672,
           "leoMassSavedKg": 12285000.0,
           "event": ""
         },
         {
           "tDays": 1260.0,
           "landers": 6,
-          "landedMassKg": 547729.34913744,
+          "landedMassKg": 547770.17151187,
           "productKg": 2857500.0,
           "usedKg": 2857500.0,
-          "leoMassSpentKg": 7161840.2122758,
+          "leoMassSpentKg": 7161882.0863355,
           "leoMassSavedKg": 17145000.0,
           "event": ""
         },
         {
           "tDays": 1350.0,
           "landers": 6,
-          "landedMassKg": 560154.21149972,
+          "landedMassKg": 560195.95990155,
           "productKg": 3667500.0,
           "usedKg": 3667500.0,
-          "leoMassSpentKg": 7321102.0047319,
+          "leoMassSpentKg": 7321155.7486039,
           "leoMassSavedKg": 22005000.0,
           "event": ""
         },
         {
           "tDays": 1440.0,
           "landers": 6,
-          "landedMassKg": 572579.07386201,
+          "landedMassKg": 572621.74829123,
           "productKg": 4477500.0,
           "usedKg": 4477500.0,
-          "leoMassSpentKg": 7480363.797188,
+          "leoMassSpentKg": 7480429.4108722,
           "leoMassSavedKg": 26865000.0,
           "event": ""
         },
         {
           "tDays": 1530.0,
           "landers": 6,
-          "landedMassKg": 585003.93622429,
+          "landedMassKg": 585047.53668092,
           "productKg": 5287500.0,
           "usedKg": 5287500.0,
-          "leoMassSpentKg": 7639625.5896441,
+          "leoMassSpentKg": 7639703.0731406,
           "leoMassSavedKg": 31725000.0,
           "event": ""
         },
         {
           "tDays": 1620.0,
           "landers": 6,
-          "landedMassKg": 597428.79858658,
+          "landedMassKg": 597473.3250706,
           "productKg": 6097500.0,
           "usedKg": 6097500.0,
-          "leoMassSpentKg": 7798887.3821002,
+          "leoMassSpentKg": 7798976.7354089,
           "leoMassSavedKg": 36585000.0,
           "event": ""
         },
         {
           "tDays": 1710.0,
           "landers": 6,
-          "landedMassKg": 609853.66094887,
+          "landedMassKg": 609899.11346028,
           "productKg": 6907500.0,
           "usedKg": 6907500.0,
-          "leoMassSpentKg": 7958149.1745563,
+          "leoMassSpentKg": 7958250.3976773,
           "leoMassSavedKg": 41445000.0,
           "event": ""
         },
         {
           "tDays": 1800.0,
           "landers": 6,
-          "landedMassKg": 622278.52331115,
+          "landedMassKg": 622324.90184997,
           "productKg": 7717500.0,
           "usedKg": 7717500.0,
-          "leoMassSpentKg": 8117410.9670125,
+          "leoMassSpentKg": 8117524.0599456,
           "leoMassSavedKg": 46305000.0,
           "event": ""
         },
         {
           "tDays": 1890.0,
           "landers": 6,
-          "landedMassKg": 634703.38567344,
+          "landedMassKg": 634750.69023965,
           "productKg": 8527500.0,
           "usedKg": 8527500.0,
-          "leoMassSpentKg": 8276672.7594686,
+          "leoMassSpentKg": 8276797.7222139,
           "leoMassSavedKg": 51165000.0,
           "event": ""
         },
         {
           "tDays": 1980.0,
           "landers": 6,
-          "landedMassKg": 647128.24803572,
+          "landedMassKg": 647176.47862933,
           "productKg": 9337500.0,
           "usedKg": 9337500.0,
-          "leoMassSpentKg": 8435934.5519247,
+          "leoMassSpentKg": 8436071.3844823,
           "leoMassSavedKg": 56025000.0,
           "event": ""
         },
         {
           "tDays": 2070.0,
           "landers": 6,
-          "landedMassKg": 659553.11039801,
+          "landedMassKg": 659602.26701901,
           "productKg": 10147500.0,
           "usedKg": 10147500.0,
-          "leoMassSpentKg": 8595196.3443808,
+          "leoMassSpentKg": 8595345.0467506,
           "leoMassSavedKg": 60885000.0,
           "event": ""
         },
         {
           "tDays": 2160.0,
           "landers": 6,
-          "landedMassKg": 671977.9727603,
+          "landedMassKg": 672028.0554087,
           "productKg": 10957500.0,
           "usedKg": 10957500.0,
-          "leoMassSpentKg": 8754458.1368369,
+          "leoMassSpentKg": 8754618.709019,
           "leoMassSavedKg": 65745000.0,
           "event": ""
         },
         {
           "tDays": 2250.0,
           "landers": 6,
-          "landedMassKg": 684402.83512258,
+          "landedMassKg": 684453.84379838,
           "productKg": 11767500.0,
           "usedKg": 11767500.0,
-          "leoMassSpentKg": 8913719.9292931,
+          "leoMassSpentKg": 8913892.3712873,
           "leoMassSavedKg": 70605000.0,
           "event": ""
         },
         {
           "tDays": 2340.0,
           "landers": 6,
-          "landedMassKg": 696827.69748487,
+          "landedMassKg": 696879.63218806,
           "productKg": 12577500.0,
           "usedKg": 12577500.0,
-          "leoMassSpentKg": 9072981.7217492,
+          "leoMassSpentKg": 9073166.0335557,
           "leoMassSavedKg": 75465000.0,
           "event": ""
         },
         {
           "tDays": 2430.0,
           "landers": 6,
-          "landedMassKg": 709252.55984715,
+          "landedMassKg": 709305.42057775,
           "productKg": 13387500.0,
           "usedKg": 13387500.0,
-          "leoMassSpentKg": 9232243.5142053,
+          "leoMassSpentKg": 9232439.695824,
           "leoMassSavedKg": 80325000.0,
           "event": ""
         },
         {
           "tDays": 2520.0,
           "landers": 6,
-          "landedMassKg": 721677.42220944,
+          "landedMassKg": 721731.20896743,
           "productKg": 14197500.0,
           "usedKg": 14197500.0,
-          "leoMassSpentKg": 9391505.3066614,
+          "leoMassSpentKg": 9391713.3580923,
           "leoMassSavedKg": 85185000.0,
           "event": ""
         },
         {
           "tDays": 2610.0,
           "landers": 6,
-          "landedMassKg": 734102.28457173,
+          "landedMassKg": 734156.99735711,
           "productKg": 15007500.0,
           "usedKg": 15007500.0,
-          "leoMassSpentKg": 9550767.0991175,
+          "leoMassSpentKg": 9550987.0203607,
           "leoMassSavedKg": 90045000.0,
           "event": ""
         },
         {
           "tDays": 2700.0,
           "landers": 6,
-          "landedMassKg": 746527.14693401,
+          "landedMassKg": 746582.7857468,
           "productKg": 15817500.0,
           "usedKg": 15817500.0,
-          "leoMassSpentKg": 9710028.8915737,
+          "leoMassSpentKg": 9710260.682629,
           "leoMassSavedKg": 94905000.0,
           "event": ""
         },
         {
           "tDays": 2767.5,
           "landers": 6,
-          "landedMassKg": 755845.79370573,
+          "landedMassKg": 755902.12703906,
           "productKg": 16425000.0,
           "usedKg": 16425000.0,
-          "leoMassSpentKg": 9829475.2359157,
+          "leoMassSpentKg": 9829715.9293303,
           "leoMassSavedKg": 98550000.0,
           "event": "campaign end"
         }
@@ -1178,190 +1178,190 @@
         {
           "tDays": 0.0,
           "landers": 1,
-          "landedMassKg": 1236.5559093528,
+          "landedMassKg": 1291.7092960195,
           "productKg": 0.0,
           "usedKg": 0.0,
-          "leoMassSpentKg": 15850.164360252,
+          "leoMassSpentKg": 16557.120056375,
           "leoMassSavedKg": 0.0,
           "event": "landing 1"
         },
         {
           "tDays": 30.0,
           "landers": 1,
-          "landedMassKg": 1236.5559093528,
+          "landedMassKg": 1291.7092960195,
           "productKg": 0.0,
           "usedKg": 0.0,
-          "leoMassSpentKg": 15850.164360252,
+          "leoMassSpentKg": 16557.120056375,
           "leoMassSavedKg": 0.0,
           "event": "production start"
         },
         {
           "tDays": 120.0,
           "landers": 1,
-          "landedMassKg": 1267.0463290355,
+          "landedMassKg": 1323.5596622227,
           "productKg": 810.0,
           "usedKg": 810.0,
-          "leoMassSpentKg": 16240.990330779,
+          "leoMassSpentKg": 16965.377811189,
           "leoMassSavedKg": 4860.0,
           "event": ""
         },
         {
           "tDays": 240.0,
           "landers": 1,
-          "landedMassKg": 1307.7002219457,
+          "landedMassKg": 1366.0268171604,
           "productKg": 1890.0,
           "usedKg": 1890.0,
-          "leoMassSpentKg": 16762.091624814,
+          "leoMassSpentKg": 17509.721484276,
           "leoMassSavedKg": 11340.0,
           "event": ""
         },
         {
-          "tDays": 349.18980621813,
-          "landers": 1,
-          "landedMassKg": 1344.6918110198,
-          "productKg": 2872.7082559632,
-          "usedKg": 2872.7082559632,
-          "leoMassSpentKg": 17236.249535779,
-          "leoMassSavedKg": 17236.249535779,
-          "event": "payback"
-        },
-        {
           "tDays": 360.0,
           "landers": 1,
-          "landedMassKg": 1348.354114856,
+          "landedMassKg": 1408.493972098,
           "productKg": 2970.0,
           "usedKg": 2970.0,
-          "leoMassSpentKg": 17283.19291885,
+          "leoMassSpentKg": 18054.065157362,
           "leoMassSavedKg": 17820.0,
           "event": ""
         },
         {
+          "tDays": 364.73204938704,
+          "landers": 1,
+          "landedMassKg": 1410.1686110521,
+          "productKg": 3012.5884444833,
+          "usedKg": 3012.5884444833,
+          "leoMassSpentKg": 18075.5306669,
+          "leoMassSavedKg": 18075.5306669,
+          "event": "payback"
+        },
+        {
           "tDays": 480.0,
           "landers": 1,
-          "landedMassKg": 1389.0080077662,
+          "landedMassKg": 1450.9611270356,
           "productKg": 4050.0,
           "usedKg": 4050.0,
-          "leoMassSpentKg": 17804.294212886,
+          "leoMassSpentKg": 18598.408830448,
           "leoMassSavedKg": 24300.0,
           "event": ""
         },
         {
           "tDays": 600.0,
           "landers": 1,
-          "landedMassKg": 1429.6619006764,
+          "landedMassKg": 1493.4282819732,
           "productKg": 5130.0,
           "usedKg": 5130.0,
-          "leoMassSpentKg": 18325.395506921,
+          "leoMassSpentKg": 19142.752503535,
           "leoMassSavedKg": 30780.0,
           "event": ""
         },
         {
           "tDays": 720.0,
           "landers": 1,
-          "landedMassKg": 1470.3157935867,
+          "landedMassKg": 1535.8954369109,
           "productKg": 6210.0,
           "usedKg": 6210.0,
-          "leoMassSpentKg": 18846.496800957,
+          "leoMassSpentKg": 19687.096176621,
           "leoMassSavedKg": 37260.0,
           "event": ""
         },
         {
           "tDays": 840.0,
           "landers": 1,
-          "landedMassKg": 1510.9696864969,
+          "landedMassKg": 1578.3625918485,
           "productKg": 7290.0,
           "usedKg": 7290.0,
-          "leoMassSpentKg": 19367.598094993,
+          "leoMassSpentKg": 20231.439849707,
           "leoMassSavedKg": 43740.0,
           "event": ""
         },
         {
           "tDays": 960.0,
           "landers": 1,
-          "landedMassKg": 1551.6235794071,
+          "landedMassKg": 1620.8297467861,
           "productKg": 8370.0,
           "usedKg": 8370.0,
-          "leoMassSpentKg": 19888.699389028,
+          "leoMassSpentKg": 20775.783522793,
           "leoMassSavedKg": 50220.0,
           "event": ""
         },
         {
           "tDays": 1080.0,
           "landers": 1,
-          "landedMassKg": 1592.2774723174,
+          "landedMassKg": 1663.2969017238,
           "productKg": 9450.0,
           "usedKg": 9450.0,
-          "leoMassSpentKg": 20409.800683064,
+          "leoMassSpentKg": 21320.12719588,
           "leoMassSavedKg": 56700.0,
           "event": ""
         },
         {
           "tDays": 1200.0,
           "landers": 1,
-          "landedMassKg": 1632.9313652276,
+          "landedMassKg": 1705.7640566614,
           "productKg": 10530.0,
           "usedKg": 10530.0,
-          "leoMassSpentKg": 20930.9019771,
+          "leoMassSpentKg": 21864.470868966,
           "leoMassSavedKg": 63180.0,
           "event": ""
         },
         {
           "tDays": 1320.0,
           "landers": 1,
-          "landedMassKg": 1673.5852581378,
+          "landedMassKg": 1748.231211599,
           "productKg": 11610.0,
           "usedKg": 11610.0,
-          "leoMassSpentKg": 21452.003271136,
+          "leoMassSpentKg": 22408.814542052,
           "leoMassSavedKg": 69660.0,
           "event": ""
         },
         {
           "tDays": 1440.0,
           "landers": 1,
-          "landedMassKg": 1714.2391510481,
+          "landedMassKg": 1790.6983665366,
           "productKg": 12690.0,
           "usedKg": 12690.0,
-          "leoMassSpentKg": 21973.104565171,
+          "leoMassSpentKg": 22953.158215139,
           "leoMassSavedKg": 76140.0,
           "event": ""
         },
         {
           "tDays": 1560.0,
           "landers": 1,
-          "landedMassKg": 1754.8930439583,
+          "landedMassKg": 1833.1655214743,
           "productKg": 13770.0,
           "usedKg": 13770.0,
-          "leoMassSpentKg": 22494.205859207,
+          "leoMassSpentKg": 23497.501888225,
           "leoMassSavedKg": 82620.0,
           "event": ""
         },
         {
           "tDays": 1680.0,
           "landers": 1,
-          "landedMassKg": 1795.5469368685,
+          "landedMassKg": 1875.6326764119,
           "productKg": 14850.0,
           "usedKg": 14850.0,
-          "leoMassSpentKg": 23015.307153243,
+          "leoMassSpentKg": 24041.845561311,
           "leoMassSavedKg": 89100.0,
           "event": ""
         },
         {
           "tDays": 1800.0,
           "landers": 1,
-          "landedMassKg": 1836.2008297787,
+          "landedMassKg": 1918.0998313495,
           "productKg": 15930.0,
           "usedKg": 15930.0,
-          "leoMassSpentKg": 23536.408447278,
+          "leoMassSpentKg": 24586.189234397,
           "leoMassSavedKg": 95580.0,
           "event": ""
         },
         {
           "tDays": 1855.0,
           "landers": 1,
-          "landedMassKg": 1854.8338640293,
+          "landedMassKg": 1937.5639440293,
           "productKg": 16425.0,
           "usedKg": 16425.0,
-          "leoMassSpentKg": 23775.246540378,
+          "leoMassSpentKg": 24835.680084562,
           "leoMassSavedKg": 98550.0,
           "event": "campaign end"
         }

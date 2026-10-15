@@ -30,13 +30,15 @@ const ILMENITE_CONFIG: Record<string, AssetConfig> = {
     module: "excavation",
     controlLabels: {
       eMining: "Mining energy",
-      kMiningMass: "Fleet mass per soil moved"
+      haulDistanceM: "Haul distance",
+      excavatorMassKg: "Mass per excavator"
     },
     note: "The hauler shuttles between trench and plant with a throughput-scaled load. Every fleet scales with the soil it moves, and an ilmenite plant moves hundreds of kilograms of soil per kilogram of oxygen. A basalt mine also strips the soil lying over the basalt.",
     metrics: (r, p) => [
       { label: p.ilmFeed === "basalt" ? "Basalt layer mined" : "Soil moved", value: formatQtyText(r.ilmenite?.soilKgPerDay ?? 0, "kg/day") },
       ...(p.ilmFeed === "basalt" ? [{ label: "Overburden stripped", value: formatQtyText(r.excavation.overburdenKgPerDay, "kg/day") }] : []),
       { label: p.ilmFeed === "basalt" ? "Layer per kg O₂" : "Soil per kg O₂", value: formatQtyText(r.ilmenite?.soilPerKgO2 ?? 0, "kg/kg") },
+      { label: "Excavators", value: `${r.excavation.excavatorCount} × ${formatQtyText(r.excavation.excavatorKgPerDay, "kg/day")}` },
       { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") },
       { label: "Mining energy", value: formatQtyText((r.ilmenite?.secMining_JPerKg ?? 0) / 3.6e6, "kWh/kg") }
     ]
@@ -132,6 +134,7 @@ const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
       { label: "Regolith feed", value: formatQtyText(r.production.regolithKgPerDay, "kg/day") },
       { label: "Cutting force", value: formatQtyText(r.excavation.cuttingForceN, "N") },
       { label: "Mechanical power", value: formatQtyText(r.excavation.mechPowerW, "W") },
+      { label: "Excavators", value: `${r.excavation.excavatorCount} × ${formatQtyText(r.excavation.excavatorKgPerDay, "kg/day")}` },
       { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") }
     ]
   },
@@ -142,13 +145,14 @@ const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
     module: "excavation",
     controlLabels: {
       eMining: "Mining energy",
-      kMiningMass: "Fleet mass per soil moved",
+      haulDistanceM: "Haul distance",
       vCut: "Excavation speed",
       etaDrive: "Drive efficiency"
     },
     note: "The hauler shuttles between trench and reactor, carries a throughput-scaled load, and raises its dump bed at the process handoff.",
     metrics: (r) => [
       { label: "Regolith moved", value: formatQtyText(r.excavation.soilMovedKgPerDay, "kg/day") },
+      { label: "Excavators", value: `${r.excavation.excavatorCount} × ${formatQtyText(r.excavation.excavatorKgPerDay, "kg/day")}` },
       { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") },
       { label: "Grid demand", value: formatQtyText(r.energy.gridPowerW, "W") },
       { label: "Product target", value: formatQtyText(r.production.targetKgPerDay, "kg/day") }
@@ -285,13 +289,14 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     controlLabels: {
       overburdenRatio: "Overburden per kg mined",
       eMining: "Mining energy",
-      kMiningMass: "Fleet mass per soil moved",
+      haulDistanceM: "Haul distance",
       zDepth: "Cut depth"
     },
     note: "The pit mine strips dry overburden before it reaches icy regolith, so the fleet moves both. Tracked ground contact, articulated cutter depth, auger speed, route cadence, and dust respond to the excavation load instead of looping as decoration.",
     metrics: (r) => [
       { label: "Icy feed", value: formatQtyText(r.production.regolithKgPerDay, "kg/day") },
       { label: "Overburden stripped", value: formatQtyText(r.excavation.overburdenKgPerDay, "kg/day") },
+      { label: "Excavators", value: `${r.excavation.excavatorCount} × ${formatQtyText(r.excavation.excavatorKgPerDay, "kg/day")}` },
       { label: "Fleet mass", value: formatQtyText(r.excavation.fleetMassKg, "kg") },
       { label: "Cutting force", value: formatQtyText(r.excavation.cuttingForceN, "N") }
     ]

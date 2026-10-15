@@ -104,19 +104,26 @@ describe("external analytical benchmarks (separate from implementation parity)",
     const { excavation } = simulate({ site: "polar", ...item.inputs });
     // 398 t of icy regolith over the 223 production days, plus its overburden.
     expectRelative2(excavation.soilMovedKgPerDay, (67.26 / (0.05 * 0.75)) * 1.667, 1e-12);
-    // A RASSOR moves 2.7 t/day and weighs 66 kg (Guerrero-Gonzalez & Zabel
-    // 2023): the study's two whole vehicles with 20% growth margin reproduce
-    // its Fig. 8 bar, so the gap is rounding and margin.
-    const wholeVehicles = Math.ceil(excavation.soilMovedKgPerDay / 2700);
-    expect(wholeVehicles).toBe(2);
-    expectRelative2(wholeVehicles * 66 * 1.2, expected.excavatorMassKg!, 0.05);
-    // The model's continuous, unmargined fleet is lighter, by less than 2.5x.
-    expect(excavation.fleetMassKg).toBeLessThan(expected.excavatorMassKg!);
-    expect(excavation.fleetMassKg).toBeGreaterThan(expected.excavatorMassKg! / 2.5);
+    // The model lands the study's two whole RASSORs (v0.12); its 20% growth
+    // margin closes the gap to the Fig. 8 bar.
+    expect(excavation.excavatorCount).toBe(2);
+    expect(excavation.fleetMassKg).toBe(132);
+    expectRelative2(excavation.fleetMassKg * 1.2, expected.excavatorMassKg!, 0.05);
     // Mining power is the same order: within a factor of two.
     const miningPowerW = (DEFAULTS.eMining * excavation.soilMovedKgPerDay) / 86_400;
     expect(miningPowerW / expected.excavatorPowerW!).toBeGreaterThan(0.5);
     expect(miningPowerW / expected.excavatorPowerW!).toBeLessThan(2);
+  });
+
+  test("one RASSOR moves Guerrero-Gonzalez & Zabel's 2.7 t/day on 100 m hauls", () => {
+    const item = benchmark("guerrero-zabel-2023-rassor-rate");
+    expect(item.kind).toBe("calibration");
+    for (const [key, value] of Object.entries(item.inputs!)) expect(DEFAULTS[key as keyof typeof DEFAULTS], key).toBe(value);
+    const { excavation } = simulate(item.inputs as Partial<typeof DEFAULTS>);
+    // A 300 m loop at 0.27 m/s plus 9 min of digging and dumping is 27.5 min:
+    // 34 whole trips in 16 h.
+    expect(excavation.excavatorTripsPerDay).toBe(34);
+    expectRelative(excavation.excavatorKgPerDay, item);
   });
 
   test("ilmenite bed mass reproduces Eagle's no-separation trade", () => {

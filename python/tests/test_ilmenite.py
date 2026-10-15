@@ -83,9 +83,9 @@ def test_each_process_ignores_the_others_inputs() -> None:
     assert changed["logistics"] == ilmenite["logistics"]
     assert simulate({"site": "polar", "equatorialProcess": "ilmenite"}) == simulate({"site": "polar"})
     # Mining is shared: both plants move soil with the same fleet (v0.9).
-    heavier = simulate({**ILMENITE, "eMining": 50_000, "kMiningMass": 0.1})
+    heavier = simulate({**ILMENITE, "eMining": 50_000, "excavatorMassKg": 100})
     assert heavier["energy"]["secTotal_kWhPerKg"] > ilmenite["energy"]["secTotal_kWhPerKg"]
-    assert heavier["ilmenite"]["miningMassKg"] == pytest.approx(0.1 * heavier["ilmenite"]["soilKgPerDay"], rel=1e-12)
+    assert heavier["ilmenite"]["miningMassKg"] == heavier["excavation"]["excavatorCount"] * 100
 
 
 def test_no_castable_slag_and_a_beneficiation_row() -> None:
@@ -95,6 +95,7 @@ def test_no_castable_slag_and_a_beneficiation_row() -> None:
     rows = {row["subsystem"]: row["massKg"] for row in result["logistics"]["manifest"]}
     assert rows["beneficiation plant"] == result["ilmenite"]["beneficiationMassKg"]
     assert rows["excavation fleet"] == result["ilmenite"]["miningMassKg"]
+    assert result["ilmenite"]["miningMassKg"] == result["excavation"]["fleetMassKg"]
 
 
 def test_leftover_sabatier_switch_adds_nothing_at_the_equator() -> None:

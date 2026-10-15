@@ -85,10 +85,11 @@ describe("oxygen process rail", () => {
     // Mining is shared (v0.9): both plants show and use the soil-basis inputs,
     // and only the pole strips overburden.
     for (const params of [mre, ilmenite]) {
-      expect(shown("excavation", params)).toEqual(expect.arrayContaining(["eMining", "kMiningMass"]));
+      expect(shown("excavation", params)).toEqual(expect.arrayContaining(["eMining", "excavatorMassKg", "haulDistanceM"]));
       expect(shown("excavation", params)).not.toContain("overburdenRatio");
       expect(inputActivity(params, "eMining").activity).toBe("drives-results");
-      expect(inputActivity(params, "kMiningMass").activity).toBe("drives-results");
+      expect(inputActivity(params, "excavatorMassKg").activity).toBe("drives-results");
+      expect(inputActivity(params, "haulDistanceM").activity).toBe("drives-results");
     }
     const polar: SimParams = { ...DEFAULTS, site: "polar" };
     expect(shown("excavation", polar)).toContain("overburdenRatio");

@@ -1,5 +1,6 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
 import type { IlmeniteResult, SimParams } from "../types";
+import { excavatorFleet } from "./fleet";
 import { simulateWaterElectrolysis } from "./sabatier";
 
 /** Oxygen removed per kg of ilmenite reduced, FeTiO3 + H2 → Fe + TiO2 + H2O [kg/kg]. */
@@ -148,7 +149,7 @@ export function simulateIlmenite(params: SimParams, o2KgPerDay: number): Ilmenit
     secReaction_JPerKg,
     secReactorLoss_JPerKg: params.fIlmHeatLoss * (secSensible_JPerKg + secReaction_JPerKg),
     secWaterElectrolysis_JPerKg: water.secWaterElectrolysis_JPerKg * waterPerKgO2,
-    miningMassKg: params.kMiningMass * (o2KgPerDay * movedPerKgO2),
+    miningMassKg: excavatorFleet(params, o2KgPerDay * movedPerKgO2).massKg,
     beneficiationMassKg: beneficiationMassCoefficient * o2KgPerDay * beneficiatedPerKgO2,
     bedHoldupKg,
     bedMassKg,

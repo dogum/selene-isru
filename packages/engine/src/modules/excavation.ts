@@ -1,5 +1,6 @@
 import { PHYSICAL_CONSTANTS } from "../constants";
 import type { SimParams } from "../types";
+import { excavatorFleet } from "./fleet";
 import { ilmeniteOverburdenPerKgO2, ilmeniteSoilPerKgO2, reducesIlmenite } from "./ilmenite";
 
 export interface ExcavationOutput {
@@ -14,6 +15,12 @@ export interface ExcavationOutput {
   soilMovedKgPerDay: number;
   /** [kg/day] */
   overburdenKgPerDay: number;
+  /** [1] */
+  excavatorCount: number;
+  /** [1/day] */
+  excavatorTripsPerDay: number;
+  /** [kg/day] */
+  excavatorKgPerDay: number;
 }
 
 export function regolithPerKgProduct(params: SimParams, xO2Effective?: number): number {
@@ -47,15 +54,19 @@ export function simulateExcavation(params: SimParams, xO2Effective?: number): Ex
         : 0;
   const soilMovedPerKg = regolithPerKg + overburdenPerKg;
   const soilMovedKgPerDay = params.targetKgPerDay * soilMovedPerKg;
+  const fleet = excavatorFleet(params, soilMovedKgPerDay);
 
   return {
     cuttingForceN,
     mechPowerW,
-    fleetMassKg: params.kMiningMass * soilMovedKgPerDay,
+    fleetMassKg: fleet.massKg,
     secExcavation_JPerKg: params.eMining * soilMovedPerKg,
     regolithPerKgProduct: regolithPerKg,
     soilMovedPerKgProduct: soilMovedPerKg,
     soilMovedKgPerDay,
-    overburdenKgPerDay: params.targetKgPerDay * overburdenPerKg
+    overburdenKgPerDay: params.targetKgPerDay * overburdenPerKg,
+    excavatorCount: fleet.count,
+    excavatorTripsPerDay: fleet.tripsPerDay,
+    excavatorKgPerDay: fleet.kgPerDayEach
   };
 }

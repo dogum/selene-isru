@@ -186,8 +186,18 @@ export interface SimParams {
   etaDrive: number;
   /** [J/kg-regolith] excavation and haul, per kg of soil moved */
   eMining: number;
-  /** [kg/(kg-regolith/day)] excavation fleet, per kg/day of soil moved */
-  kMiningMass: number;
+  /** [kg] one excavator */
+  excavatorMassKg: number;
+  /** [kg] soil one excavator carries per trip */
+  excavatorPayloadKg: number;
+  /** [m/s] excavator average driving speed */
+  excavatorSpeedMps: number;
+  /** [min] digging and dumping per trip */
+  excavatorLoadingMin: number;
+  /** [h/day] operating hours per excavator between recharges */
+  excavatorHoursPerDay: number;
+  /** [m] each leg of the mine → plant → tailings → mine loop */
+  haulDistanceM: number;
   /** [kg/kg] polar dry overburden moved per kg of icy regolith mined */
   overburdenRatio: number;
   chiIce: number;
@@ -637,8 +647,14 @@ export interface SimResult {
     cuttingForceN: number;
     /** [W] */
     mechPowerW: number;
-    /** [kg] */
+    /** [kg] whole excavators × mass of one */
     fleetMassKg: number;
+    /** [1] whole excavators, at least one */
+    excavatorCount: number;
+    /** [1/day] whole loops one excavator completes in its operating hours */
+    excavatorTripsPerDay: number;
+    /** [kg/day] soil one excavator moves */
+    excavatorKgPerDay: number;
     /** [kg/day] soil the fleet moves: the plant's feed plus any overburden */
     soilMovedKgPerDay: number;
     /** [kg/day] overburden stripped: polar dry regolith over the ice, or the soil over an ilmenite plant's basalt; 0 otherwise */

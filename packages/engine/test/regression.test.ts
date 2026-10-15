@@ -65,13 +65,14 @@ describe("regression anchors", () => {
     // v0.4 deliberately moved these from 2.814 kWh/kg and 19.5 t: the polar
     // chain had no capture loss, a lower-bound heater, and no extractor mass.
     // v0.9 moved them from 7.24 kWh/kg and 29.85 t: mining energy and fleet
-    // scale with soil moved, overburden included.
+    // scale with soil moved, overburden included. v0.12 moved landed mass
+    // from 21.48 t: the fleet is 17 whole RASSORs, 1,122 kg against 1,085.
     const polar = simulate({ site: "polar" });
     expect(polar.production.regolithKgPerDay).toBeCloseTo(1000 / (0.05 * 0.75), 9);
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
     expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.48, 0.001);
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.52, 0.001);
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
@@ -171,15 +172,41 @@ describe("regression anchors", () => {
     const soil = equatorial.production.regolithKgPerDay;
     expect(equatorial.excavation.soilMovedKgPerDay).toBe(soil);
     expect(equatorial.excavation.overburdenKgPerDay).toBe(0);
-    expectRel(equatorial.excavation.fleetMassKg, 0.0244 * soil, 1e-12);
-    expectRel(equatorial.excavation.fleetMassKg, 108.4, 0.001);
+    // v0.12: whole RASSORs (2 x 66 kg) replace the continuous 108.4 kg fleet.
+    expect(equatorial.excavation.fleetMassKg).toBe(132);
     const polar = simulate({ site: "polar" });
     const ore = polar.production.regolithKgPerDay;
     expectRel(polar.excavation.overburdenKgPerDay, 0.667 * ore, 1e-12);
     expectRel(polar.excavation.soilMovedKgPerDay, 1.667 * ore, 1e-12);
-    expectRel(polar.excavation.fleetMassKg, 1085, 0.001);
+    expect(polar.excavation.fleetMassKg).toBe(1122);
     // A lean deposit no longer pays 120 kJ per kg of soil: 24.54 -> 20.72 kWh/kg.
     expectRel(simulate({ site: "polar", chiIce: 0.01 }).energy.secTotal_kWhPerKg, 20.72, 0.001);
+  });
+
+  test("whole excavators sized from RASSOR kinematics (v0.12)", () => {
+    // New and deliberate: Guerrero-Gonzalez & Zabel 2023's RASSOR makes 34
+    // whole 300 m loops in a 16 h shift, 2.72 t/day, and only whole vehicles
+    // land. Most landed masses move by tens of kilograms.
+    const equatorial = simulate({});
+    expect(equatorial.excavation.excavatorTripsPerDay).toBe(34);
+    expect(equatorial.excavation.excavatorKgPerDay).toBe(2720);
+    expect(equatorial.excavation.excavatorCount).toBe(2);
+    expectRel(equatorial.logistics.totalInfraMassKg / 1000, 51.83, 0.001);
+    // A small plant still lands a whole excavator.
+    const small = simulate({ targetKgPerDay: 100 });
+    expect(small.excavation.excavatorCount).toBe(1);
+    expect(small.excavation.fleetMassKg).toBe(66);
+    // Haul distance sets the fleet: 500 m legs leave 9 trips a day, so 7 vehicles.
+    const far = simulate({ haulDistanceM: 500 });
+    expect(far.excavation.excavatorTripsPerDay).toBe(9);
+    expect(far.excavation.excavatorCount).toBe(7);
+    expect(far.energy.secTotal_kWhPerKg).toBe(equatorial.energy.secTotal_kWhPerKg);
+    // The ilmenite plant's 327 t/day takes 121 vehicles; its landing count
+    // and payback do not move.
+    const ilmenite = simulate({ equatorialProcess: "ilmenite" });
+    expect(ilmenite.excavation.excavatorCount).toBe(121);
+    expect(ilmenite.ilmenite!.miningMassKg).toBe(ilmenite.excavation.fleetMassKg);
+    expectRel(ilmenite.campaign.paybackDays!, 585.5, 0.001);
   });
 
   test("ilmenite conversion from kinetics and reactor mass from bed hold-up (v0.10)", () => {
