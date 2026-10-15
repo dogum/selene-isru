@@ -96,7 +96,7 @@ describe("regression anchors", () => {
     // v0.13 moved the return from 0.796: the loop's own plant mass is lighter.
     const sabatier = simulate({ site: "polar", enableSabatier: true }).campaign;
     expect(sabatier.paybackDays).toBeNull();
-    expectRel(sabatier.returnRatio, 0.7971, 0.001);
+    expectRel(sabatier.returnRatio, 0.7968, 0.001);  // v0.14: electrolysis balance of plant
   });
 
   test("polar propellant mode splits water into LOX and LH2 (v0.6)", () => {
@@ -111,21 +111,21 @@ describe("regression anchors", () => {
     expect(cryo.inventories.map((item) => item.stream)).toEqual(["water-ice", "lox", "lh2"]);
     expectRel(cryo.inventories[2]!.liquefierMassKg, 233 * production.h2KgPerDay, 1e-12);
     // v0.9 moved these from 20.78 kWh/kg, 82.35 t and day 311.3.
-    expectRel(energy.secTotal_kWhPerKg, 20.01, 0.001);
-    expectRel(logistics.totalInfraMassKg / 1000, 73.97, 0.001);
-    expectRel(campaign.paybackDays!, 309.2, 0.001);
+    expectRel(energy.secTotal_kWhPerKg, 20.62, 0.001);  // v0.14: electrolysis balance of plant
+    expectRel(logistics.totalInfraMassKg / 1000, 74.77, 0.001);  // v0.14: electrolysis balance of plant
+    expectRel(campaign.paybackDays!, 309.4, 0.001);  // v0.14: electrolysis balance of plant
     // Leverage and throughput days are measured against usable propellant,
     // not the water processed (deliberately moved from 133x and 82.4 days;
     // v0.9 then moved leverage from 103.4x).
     expect(logistics.productKgPerDay).toBe(production.propellantKgPerDay);
     expectRel(logistics.plantMassThroughputDays, logistics.totalInfraMassKg / production.propellantKgPerDay, 1e-12);
-    expectRel(logistics.leverageL, 115.1, 0.001);
+    expectRel(logistics.leverageL, 113.9, 0.001);  // v0.14: electrolysis balance of plant
     // The Sabatier loop is measured against its products, imported carbon included.
     const sabatier = simulate({ site: "polar", enableSabatier: true });
     const p = sabatier.production;
     expect(sabatier.logistics.productKgPerDay).toBe(p.o2KgPerDay + p.ch4KgPerDay + p.h2KgPerDay);
     // v0.13 moved it from 213.4x: the loop no longer borrows the MRE reactor mass.
-    expectRel(sabatier.logistics.leverageL, 224.6, 0.001);
+    expectRel(sabatier.logistics.leverageL, 221.5, 0.001);  // v0.14: electrolysis balance of plant
     expect(propellant.materials.maxAbsResidualKgPerDay).toBe(0);
     expect(energy.maxAbsResidualW).toBe(0);
   });
@@ -157,10 +157,10 @@ describe("regression anchors", () => {
     // Eagle Table 6-5.
     const ilmenite = simulate({ equatorialProcess: "ilmenite" });
     expectRel(ilmenite.ilmenite!.soilPerKgO2, 327.3, 0.001);
-    expectRel(ilmenite.energy.secTotal_kWhPerKg, 19.81, 0.001);
-    expectRel(ilmenite.energy.gridPowerW / 1000, 825.3, 0.001);
-    expectRel(ilmenite.logistics.totalInfraMassKg / 1000, 93.75, 0.001);
-    expectRel(ilmenite.campaign.paybackDays!, 585.5, 0.001);
+    expectRel(ilmenite.energy.secTotal_kWhPerKg, 20.49, 0.001);  // v0.14: electrolysis balance of plant
+    expectRel(ilmenite.energy.gridPowerW / 1000, 853.6, 0.001);
+    expectRel(ilmenite.logistics.totalInfraMassKg / 1000, 94.60, 0.001);  // v0.14: electrolysis balance of plant
+    expectRel(ilmenite.campaign.paybackDays!, 585.8, 0.001);  // v0.14: electrolysis balance of plant
     // High-Ti mare soil halves the soil handled and matches MRE's payback.
     const highTi = simulate({ equatorialProcess: "ilmenite", fIlmenite: 0.15 });
     expectRel(highTi.campaign.paybackDays!, 243.3, 0.001);
@@ -208,7 +208,7 @@ describe("regression anchors", () => {
     const ilmenite = simulate({ equatorialProcess: "ilmenite" });
     expect(ilmenite.excavation.excavatorCount).toBe(121);
     expect(ilmenite.ilmenite!.miningMassKg).toBe(ilmenite.excavation.fleetMassKg);
-    expectRel(ilmenite.campaign.paybackDays!, 585.5, 0.001);
+    expectRel(ilmenite.campaign.paybackDays!, 585.8, 0.001);  // v0.14: electrolysis balance of plant
   });
 
   test("Sabatier plant mass is its own, sized on methane (v0.13)", () => {
@@ -220,7 +220,7 @@ describe("regression anchors", () => {
     const plant = sabatier.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
     expectRel(sabatier.production.ch4KgPerDay, 211.1, 0.001);
     expectRel(plant / 1000, 13.23, 0.001);
-    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 53.90, 0.001);
+    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.65, 0.001);  // v0.14: electrolysis balance of plant
     // MRE and polar water plants do not move.
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 51.83, 0.001);
   });
@@ -235,16 +235,16 @@ describe("regression anchors", () => {
     // 100 °C cooler reduces 73%, so the plant mines and heats more soil.
     const cool = at({ TIlmReactor: 1173 });
     expectRel(cool.ilmenite!.conversion, 0.7286, 0.001);
-    expectRel(cool.energy.secTotal_kWhPerKg, 22.14, 0.001);
+    expectRel(cool.energy.secTotal_kWhPerKg, 22.82, 0.001);  // v0.14: electrolysis balance of plant
     // A 1 h stay reduces 53%; 8 h reduces 97% and lands less despite a heavier bed.
     expectRel(at({ tIlmResidenceH: 1 }).ilmenite!.conversion, 0.5327, 0.001);
     const long = at({ tIlmResidenceH: 8 });
     expectRel(long.ilmenite!.conversion, 0.9724, 0.001);
-    expectRel(long.logistics.totalInfraMassKg / 1000, 90.83, 0.001);
+    expectRel(long.logistics.totalInfraMassKg / 1000, 91.68, 0.001);  // v0.14: electrolysis balance of plant
     // Feeding Eagle's mare soil unseparated: a 31.5 t reactor and 44.3 kWh/kg.
     const unseparated = at({ ilmConcentrateGrade: 0.075 });
     expectRel(unseparated.ilmenite!.reactorMassKg / 1000, 31.48, 0.001);
-    expectRel(unseparated.energy.secTotal_kWhPerKg, 44.33, 0.001);
+    expectRel(unseparated.energy.secTotal_kWhPerKg, 45.01, 0.001);  // v0.14: electrolysis balance of plant
   });
 
   test("basalt feed for the ilmenite plant (v0.11)", () => {
@@ -256,12 +256,12 @@ describe("regression anchors", () => {
     expectRel(ilmenite.basaltFedKgPerDay / 1000, 88.49, 0.001);
     // 1.1 kg of overburden per kg of layer mined, moved by the shared fleet.
     expectRel(basalt.excavation.overburdenKgPerDay, 1.1 * ilmenite.soilKgPerDay, 1e-12);
-    expectRel(basalt.energy.secTotal_kWhPerKg, 16.23, 0.001);
-    expectRel(basalt.energy.gridPowerW / 1000, 676.3, 0.001);
-    expectRel(basalt.logistics.totalInfraMassKg / 1000, 84.24, 0.001);
+    expectRel(basalt.energy.secTotal_kWhPerKg, 16.91, 0.001);  // v0.14: electrolysis balance of plant
+    expectRel(basalt.energy.gridPowerW / 1000, 704.6, 0.001);
+    expectRel(basalt.logistics.totalInfraMassKg / 1000, 85.04, 0.001);  // v0.14: electrolysis balance of plant
     // It fits one lander where the soil plant needs two: payback day 586 -> 246.
     expect(basalt.logistics.nMissions).toBe(1);
-    expectRel(basalt.campaign.paybackDays!, 245.5, 0.001);
+    expectRel(basalt.campaign.paybackDays!, 245.6, 0.001);  // v0.14: electrolysis balance of plant
     // Fed whole, the ground basalt loses nothing to liberation: less is mined.
     const unseparated = simulate({ equatorialProcess: "ilmenite", ilmFeed: "basalt", ilmConcentrateGrade: 0.33 });
     expectRel(unseparated.ilmenite!.soilPerKgO2, 118.1, 0.001);

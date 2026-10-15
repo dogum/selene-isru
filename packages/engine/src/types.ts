@@ -266,6 +266,8 @@ export interface SimParams {
   polarProduct: PolarProduct;
   /** vehicle O/F by mass [kg/kg] */
   mixtureRatio: number;
+  /** [1] pumps, deionizer, dryers, and controls, as a fraction of stack power */
+  fElectrolysisBop: number;
   /** [kg/(kg/day)] per water processed */
   kElectrolyzerMass: number;
   fConversion: number;

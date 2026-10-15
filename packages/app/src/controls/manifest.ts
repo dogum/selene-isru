@@ -279,7 +279,7 @@ export function railParamsForGroup(
     // The ilmenite plant heats its feed from the same ambient temperature as
     // the MRE melt, and splits its water with the propellant plant's
     // electrolyzer, whose groups are not shown on this route.
-    const shared = new Set<keyof SimParams>(["Tambient", "Vel", "etaFaradayEl", "kElectrolyzerMass"]);
+    const shared = new Set<keyof SimParams>(["Tambient", "Vel", "etaFaradayEl", "fElectrolysisBop", "kElectrolyzerMass"]);
     const otherFeed = params.ilmFeed === "basalt" ? SOIL_FEED_ONLY : BASALT_FEED_ONLY;
     return [
       ...all.filter((def) => !otherFeed.has(def.key)),

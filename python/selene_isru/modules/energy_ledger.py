@@ -42,7 +42,9 @@ def energy_ledger(
     def water_electrolysis_balance() -> dict[str, Any]:
         electrolysis_input = power_for("electrolysis", "product")
         fraction = min(1, c("VthermoneutralWater") * params["etaFaradayEl"] / params["Vel"])
-        chemical = electrolysis_input * fraction
+        # Only the stack's power goes into the water's chemical energy; balance of
+        # plant (pumps, deionizer, dryers, controls) leaves entirely as heat.
+        chemical = (electrolysis_input / (1 + params["fElectrolysisBop"])) * fraction
         return _balance("water-electrolysis-energy", "Water electrolysis", electrolysis_input, 0, chemical, electrolysis_input - chemical, 0)
 
     if ilmenite is not None:

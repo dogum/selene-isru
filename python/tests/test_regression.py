@@ -81,7 +81,7 @@ def test_campaign_ledger_equatorial_payback_v05() -> None:
     sabatier = simulate({"site": "polar", "enableSabatier": True})["campaign"]
     assert sabatier["paybackDays"] is None
     # v0.13: the loop's own plant mass is lighter, so the return moves from 0.796.
-    assert_rel(sabatier["returnRatio"], 0.7971, 0.001)
+    assert_rel(sabatier["returnRatio"], 0.7968, 0.001)  # v0.14: electrolysis balance of plant
 
 
 def test_polar_propellant_mode_v06() -> None:
@@ -91,14 +91,14 @@ def test_polar_propellant_mode_v06() -> None:
     assert_rel(production["excessO2KgPerDay"], production["o2KgPerDay"] - 6 * production["h2KgPerDay"], 1e-12)
     assert [item["stream"] for item in result["cryo"]["inventories"]] == ["water-ice", "lox", "lh2"]
     # v0.9 moved these from 20.78 kWh/kg, 82.35 t, day 311.3, 103.4x and 186.0x.
-    assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.01, 0.001)
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 73.97, 0.001)
-    assert_rel(result["campaign"]["paybackDays"], 309.2, 0.001)
+    assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.62, 0.001)  # v0.14: electrolysis balance of plant
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 74.77, 0.001)  # v0.14: electrolysis balance of plant
+    assert_rel(result["campaign"]["paybackDays"], 309.4, 0.001)  # v0.14: electrolysis balance of plant
     assert result["logistics"]["productKgPerDay"] == production["propellantKgPerDay"]
-    assert_rel(result["logistics"]["leverageL"], 115.1, 0.001)
+    assert_rel(result["logistics"]["leverageL"], 113.9, 0.001)  # v0.14: electrolysis balance of plant
     sabatier = simulate({"site": "polar", "enableSabatier": True})
     # v0.13: no longer borrows the MRE reactor mass, so leverage moves from 213.4x.
-    assert_rel(sabatier["logistics"]["leverageL"], 224.6, 0.001)
+    assert_rel(sabatier["logistics"]["leverageL"], 221.5, 0.001)  # v0.14: electrolysis balance of plant
 
 
 def test_refuelling_demand_v07() -> None:
@@ -116,10 +116,10 @@ def test_refuelling_demand_v07() -> None:
 def test_ilmenite_reduction_v08() -> None:
     ilmenite = simulate({"equatorialProcess": "ilmenite"})
     assert_rel(ilmenite["ilmenite"]["soilPerKgO2"], 327.3, 0.001)
-    assert_rel(ilmenite["energy"]["secTotal_kWhPerKg"], 19.81, 0.001)
-    assert_rel(ilmenite["energy"]["gridPowerW"] / 1000, 825.3, 0.001)
-    assert_rel(ilmenite["logistics"]["totalInfraMassKg"] / 1000, 93.75, 0.001)
-    assert_rel(ilmenite["campaign"]["paybackDays"], 585.5, 0.001)
+    assert_rel(ilmenite["energy"]["secTotal_kWhPerKg"], 20.49, 0.001)  # v0.14: electrolysis balance of plant
+    assert_rel(ilmenite["energy"]["gridPowerW"] / 1000, 853.6, 0.001)
+    assert_rel(ilmenite["logistics"]["totalInfraMassKg"] / 1000, 94.60, 0.001)  # v0.14: electrolysis balance of plant
+    assert_rel(ilmenite["campaign"]["paybackDays"], 585.8, 0.001)  # v0.14: electrolysis balance of plant
     high_ti = simulate({"equatorialProcess": "ilmenite", "fIlmenite": 0.15})
     assert_rel(high_ti["campaign"]["paybackDays"], 243.3, 0.001)
 
@@ -152,14 +152,14 @@ def test_ilmenite_kinetics_and_bed_hold_up_v010() -> None:
     assert_rel(base["ilmenite"]["reactorMassKg"] / 1000, 18.60, 0.001)
     cool = at({"TIlmReactor": 1173})
     assert_rel(cool["ilmenite"]["conversion"], 0.7286, 0.001)
-    assert_rel(cool["energy"]["secTotal_kWhPerKg"], 22.14, 0.001)
+    assert_rel(cool["energy"]["secTotal_kWhPerKg"], 22.82, 0.001)  # v0.14: electrolysis balance of plant
     assert_rel(at({"tIlmResidenceH": 1})["ilmenite"]["conversion"], 0.5327, 0.001)
     long = at({"tIlmResidenceH": 8})
     assert_rel(long["ilmenite"]["conversion"], 0.9724, 0.001)
-    assert_rel(long["logistics"]["totalInfraMassKg"] / 1000, 90.83, 0.001)
+    assert_rel(long["logistics"]["totalInfraMassKg"] / 1000, 91.68, 0.001)  # v0.14: electrolysis balance of plant
     unseparated = at({"ilmConcentrateGrade": 0.075})
     assert_rel(unseparated["ilmenite"]["reactorMassKg"] / 1000, 31.48, 0.001)
-    assert_rel(unseparated["energy"]["secTotal_kWhPerKg"], 44.33, 0.001)
+    assert_rel(unseparated["energy"]["secTotal_kWhPerKg"], 45.01, 0.001)  # v0.14: electrolysis balance of plant
 
 
 def test_basalt_feed_v011() -> None:
@@ -168,11 +168,11 @@ def test_basalt_feed_v011() -> None:
     assert_rel(ilmenite["soilPerKgO2"], 186.3, 0.001)
     assert_rel(ilmenite["basaltFedKgPerDay"] / 1000, 88.49, 0.001)
     assert_rel(basalt["excavation"]["overburdenKgPerDay"], 1.1 * ilmenite["soilKgPerDay"], 1e-12)
-    assert_rel(basalt["energy"]["secTotal_kWhPerKg"], 16.23, 0.001)
-    assert_rel(basalt["energy"]["gridPowerW"] / 1000, 676.3, 0.001)
-    assert_rel(basalt["logistics"]["totalInfraMassKg"] / 1000, 84.24, 0.001)
+    assert_rel(basalt["energy"]["secTotal_kWhPerKg"], 16.91, 0.001)  # v0.14: electrolysis balance of plant
+    assert_rel(basalt["energy"]["gridPowerW"] / 1000, 704.6, 0.001)
+    assert_rel(basalt["logistics"]["totalInfraMassKg"] / 1000, 85.04, 0.001)  # v0.14: electrolysis balance of plant
     assert basalt["logistics"]["nMissions"] == 1
-    assert_rel(basalt["campaign"]["paybackDays"], 245.5, 0.001)
+    assert_rel(basalt["campaign"]["paybackDays"], 245.6, 0.001)  # v0.14: electrolysis balance of plant
     unseparated = simulate({"equatorialProcess": "ilmenite", "ilmFeed": "basalt", "ilmConcentrateGrade": 0.33})
     assert_rel(unseparated["ilmenite"]["soilPerKgO2"], 118.1, 0.001)
     assert_rel(unseparated["ilmenite"]["reactorMassKg"] / 1000, 20.62, 0.001)
@@ -252,7 +252,7 @@ def test_whole_excavators_from_rassor_kinematics_v012() -> None:
     ilmenite = simulate({"equatorialProcess": "ilmenite"})
     assert ilmenite["excavation"]["excavatorCount"] == 121
     assert ilmenite["ilmenite"]["miningMassKg"] == ilmenite["excavation"]["fleetMassKg"]
-    assert_rel(ilmenite["campaign"]["paybackDays"], 585.5, 0.001)
+    assert_rel(ilmenite["campaign"]["paybackDays"], 585.8, 0.001)  # v0.14: electrolysis balance of plant
 
 
 def test_sabatier_plant_mass_on_methane_v013() -> None:
@@ -263,5 +263,5 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     plant = next(row["massKg"] for row in result["logistics"]["manifest"] if row["subsystem"] == "reactor/plant")
     assert_rel(result["production"]["ch4KgPerDay"], 211.1, 0.001)
     assert_rel(plant / 1000, 13.23, 0.001)
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 53.90, 0.001)
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.65, 0.001)  # v0.14: electrolysis balance of plant
     assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 51.83, 0.001)

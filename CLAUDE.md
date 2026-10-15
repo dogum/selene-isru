@@ -464,6 +464,7 @@ in `assets/ASSET_LICENSES.md`.
 | Basalt feed chain, per-feed inputs, Eagle basalt calibration | v0.11 tests in `ilmenite.test.ts` / `test_ilmenite.py`, v0.11 anchors in `regression.test.ts`, `eagle-1988-basalt-feed` in `external-benchmarks.test.ts`, basalt route in `ilmenite-app.test.tsx` |
 | Whole excavators, trips per shift, haul distance, RASSOR rate calibration | v0.12 anchors in `regression.test.ts` / `test_regression.py`, `guerrero-zabel-2023-rassor-rate` in `external-benchmarks.test.ts` |
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
+| Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
 | Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
@@ -521,7 +522,8 @@ script run on a clean checkout at all.
   `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md` →
   `model-ilmenite-v08.md` → `model-excavation-v09.md` →
   `model-ilmenite-reactor-v010.md` → `model-basalt-feed-v011.md` →
-  `model-excavators-v012.md` → `model-sabatier-mass-v013.md`) is
+  `model-excavators-v012.md` → `model-sabatier-mass-v013.md` →
+  `model-electrolysis-bop-v014.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -565,6 +567,9 @@ script run on a clean checkout at all.
 - [`docs/model-sabatier-mass-v013.md`](docs/model-sabatier-mass-v013.md) — the
   Sabatier loop's own plant mass: its water electrolyzer and a Sabatier block
   sized on methane, and why the default errs heavy.
+- [`docs/model-electrolysis-bop-v014.md`](docs/model-electrolysis-bop-v014.md) —
+  electrolysis balance of plant as a fraction of stack power, the NASA
+  calibration, and DOE's PEM cross-check.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),
