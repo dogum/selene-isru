@@ -408,7 +408,7 @@ function RefuelModeControls(): React.JSX.Element {
 /**
  * Sets the plant target from the demand: the engine's sizeToDemand() finds
  * the smallest plant that meets the lander's demand for everything it makes.
- * It runs the engine some forty times, so only on a click; the change goes
+ * It runs the engine up to about a hundred times, so only on a click; the change goes
  * through applyPatch, which takes the whole case, and is one undo step.
  *
  * Authored cases only: a Custom Site's output comes from its placed

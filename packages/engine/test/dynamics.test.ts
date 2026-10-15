@@ -63,7 +63,7 @@ describe("phase 2 dynamics parity", () => {
     expect(dynamics.uncertainty).toHaveLength(2);
     expect(dynamics.campaign).toHaveLength(2);
     expect(dynamics.refuel).toHaveLength(2);
-    expect(dynamics.sizing).toHaveLength(8);
+    expect(dynamics.sizing).toHaveLength(9);
   });
 
   test.each(dynamics.timeseries)("$name timeseries", (vector) => {

@@ -308,6 +308,20 @@ describe("sizing the plant to its demand", () => {
     expect(sizeToDemand(thin)).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "hydrogen", bound: "max" });
   });
 
+  test("a capacity-limited cooler: the smallest plant that meets the demand, not the largest", () => {
+    // Above about 200 kg/day the stores outgrow a 3 kW cooler and boil off all
+    // their hydrogen, so the largest plant meets nothing while a small one does.
+    const cooled = { ...PROPELLANT, sortiesPerYear: 0.5, cryoControlMode: "capacity-limited", Nmli: 10, coolerCapacityW: 3000, reserveDays: 120 } as const;
+    expect(simulate({ ...cooled, targetKgPerDay: PARAM_META.targetKgPerDay.max }).refuel!.supplyH2KgPerDay).toBe(0);
+    const sizing = sizeToDemand(cooled)!;
+    expect(sizing.bound).toBe("within");
+    expect(sizing.limitedBy).toBe("hydrogen");
+    expectRel(sizing.targetKgPerDay, 84, 0.05);
+    const sized = simulate({ ...cooled, targetKgPerDay: sizing.targetKgPerDay }).refuel!;
+    expectRel(sized.isruFuelKgPerDay, sized.demandFuelKgPerDay, 1e-9);
+    expect(simulate({ ...cooled, targetKgPerDay: sizing.targetKgPerDay * 0.99 }).refuel!.supplyH2KgPerDay).toBeLessThan(sized.demandFuelKgPerDay);
+  });
+
   test("inputs are clamped before sizing, and the current target does not matter", () => {
     expect(sizeToDemand({ ...EQUATORIAL, sortiesPerYear: 500 })).toEqual(sizeToDemand({ ...EQUATORIAL, sortiesPerYear: 52 }));
     expect(sizeToDemand({ ...EQUATORIAL, targetKgPerDay: 50 })).toEqual(sizeToDemand(EQUATORIAL));

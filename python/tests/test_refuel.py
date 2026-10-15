@@ -193,6 +193,22 @@ def test_the_target_is_held_at_its_bounds_when_the_demand_lies_outside_them() ->
     assert size_to_demand(thin) == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "hydrogen", "bound": "max"}
 
 
+def test_a_capacity_limited_cooler_sizes_the_smallest_plant_that_meets_the_demand() -> None:
+    cooled = {
+        **PROPELLANT, "sortiesPerYear": 0.5, "cryoControlMode": "capacity-limited", "Nmli": 10,
+        "coolerCapacityW": 3000, "reserveDays": 120,
+    }
+    assert simulate({**cooled, "targetKgPerDay": PARAM_META["targetKgPerDay"]["max"]})["refuel"]["supplyH2KgPerDay"] == 0
+    sizing = size_to_demand(cooled)
+    assert sizing["bound"] == "within"
+    assert sizing["limitedBy"] == "hydrogen"
+    assert_rel(sizing["targetKgPerDay"], 84, 0.05)
+    sized = simulate({**cooled, "targetKgPerDay": sizing["targetKgPerDay"]})["refuel"]
+    assert_rel(sized["isruFuelKgPerDay"], sized["demandFuelKgPerDay"], 1e-9)
+    smaller = simulate({**cooled, "targetKgPerDay": sizing["targetKgPerDay"] * 0.99})["refuel"]
+    assert smaller["supplyH2KgPerDay"] < sized["demandFuelKgPerDay"]
+
+
 def test_inputs_are_clamped_before_sizing_and_the_current_target_does_not_matter() -> None:
     assert size_to_demand({**EQUATORIAL, "sortiesPerYear": 500}) == size_to_demand({**EQUATORIAL, "sortiesPerYear": 52})
     assert size_to_demand({**EQUATORIAL, "targetKgPerDay": 50}) == size_to_demand(EQUATORIAL)

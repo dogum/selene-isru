@@ -49,12 +49,22 @@ sized target            = smallest targetKgPerDay where min(coverage of each mad
   all the hydrogen at any size. The target then holds at its maximum, limited
   by hydrogen, rather than claiming the demand is met.
 
-**How it solves.** Supply rises monotonically with the target, because storage
-losses grow more slowly than output. On passive storage, small plants can
-lose all of it. So a bisection over the target's bounds finds the size.
-- **Cost:** about 45 engine runs, a few tens of milliseconds, only when asked.
+**How it solves.** Coverage need not rise with the target.
+- **Zero-boil-off and passive storage:** coverage rises with size, because
+  storage losses grow more slowly than output; small passive plants can lose
+  all of it.
+- **Capacity-limited cooler:** the stores grow with the plant and can outgrow
+  the cooler. In one such case, half a crewed sortie a year with a 3 kW cooler,
+  coverage reaches 2.2 at about 200 kg/day and falls to zero by 450 kg/day,
+  when all the hydrogen boils off.
+- **Search:** so the solver scans 64 log-spaced sizes across the bounds, about
+  13% apart, for the first that meets the demand, then bisects inside that step.
+  A demand no scanned size meets holds the target at its maximum.
+- **Cost:** about 100 engine runs at most, a few tens of milliseconds, only when
+  asked.
 - **Result:** it returns the bracket's low end, under a part in 10¹² short of
   the demand, so float noise never shows up as surplus.
+- **Limit:** a feasible window narrower than one grid step could be missed.
 
 The result (`DemandSizing`) carries:
 - `targetKgPerDay`
@@ -134,11 +144,14 @@ Screenshot: [the polar plant sized to one crewed sortie a year](screenshots/size
   - the polar size leaves only oxygen over, and the plant supplies the whole
     demand
   - the bounds hold, inputs are clamped first, and no demand means no size
+  - under a capacity-limited cooler that loses all its hydrogen at large sizes,
+    the solver finds the small plant that works (about 83 kg/day) rather than
+    holding at the maximum
 - **Regression (v0.16):** anchors in both suites for the sized equatorial and
   polar crewed cases and the 20-sortie polar case.
-- **Parity:** eight sizing vectors in `dynamics_vectors.json`, compared leaf by
+- **Parity:** nine sizing vectors in `dynamics_vectors.json`, compared leaf by
   leaf. They include both bounds, a polar plant that boils off all its
-  hydrogen, and a plant with no demand. Golden vectors do
+  hydrogen, the capacity-limited cooler case, and a plant with no demand. Golden vectors do
   not change, since `simulate()` does not.
 - **App:** `control-rail.test.tsx` checks:
   - the click sets the engine's size and leaves no surplus

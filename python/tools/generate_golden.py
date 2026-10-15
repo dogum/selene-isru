@@ -202,6 +202,19 @@ SIZING_VECTORS: list[tuple[str, dict[str, Any]]] = [
         "polar-passive-thin-mli-at-max",
         {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander", "cryoControlMode": "passive", "Nmli": 5},
     ),
+    (
+        "polar-capacity-limited-cooler-interior",
+        {
+            "site": "polar",
+            "polarProduct": "propellant",
+            "refuelDemand": "lander",
+            "sortiesPerYear": 0.5,
+            "cryoControlMode": "capacity-limited",
+            "Nmli": 10,
+            "coolerCapacityW": 3000,
+            "reserveDays": 120,
+        },
+    ),
     ("polar-water-no-demand", {"site": "polar", "refuelDemand": "lander"}),
 ]
 

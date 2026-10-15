@@ -622,13 +622,16 @@ def sample_uncertainty(
 
 # Bisection stops once the bracket is this narrow relative to its top [1].
 SIZING_REL_TOL = 1e-12
-# A guard on the bisection; the 10 kg/day to 20 t/day bounds need about 45 halvings.
+# A guard on the bisection; one grid step needs about 40 halvings.
 SIZING_MAX_STEPS = 200
+# Log-spaced sizes scanned across the target's bounds, about 13% apart.
+SIZING_GRID_STEPS = 64
 
 
 def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
     """Size the plant to its refuelling demand: the smallest target at which every
-    component the plant makes meets the lander's demand for it. Mirrors
+    component the plant makes meets the lander's demand for it (the first on a log grid,
+    refined by bisection). Mirrors
     `sizeToDemand` in the TypeScript engine; None when no demand applies."""
     params, _ = normalize_params(input_params)
 
@@ -643,11 +646,10 @@ def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
             else 0,
         }
 
-    low = PARAM_META["targetKgPerDay"]["min"]
-    high = PARAM_META["targetKgPerDay"]["max"]
-    low_cover = coverage(low)
-    high_cover = coverage(high)
-    if low_cover is None or high_cover is None:
+    min_target = PARAM_META["targetKgPerDay"]["min"]
+    max_target = PARAM_META["targetKgPerDay"]["max"]
+    low_cover = coverage(min_target)
+    if low_cover is None:
         return None
     # The components the plant makes, from its mode: oxygen at the equator, both in polar
     # propellant mode. Not from what is delivered: a store that boils off all its hydrogen still owes it.
@@ -665,9 +667,25 @@ def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
         return cover[limiting(cover)]
 
     if covered(low_cover) >= 1:
-        return {"targetKgPerDay": low, "limitedBy": limiting(low_cover), "bound": "min"}
-    if covered(high_cover) < 1:
-        return {"targetKgPerDay": high, "limitedBy": limiting(high_cover), "bound": "max"}
+        return {"targetKgPerDay": min_target, "limitedBy": limiting(low_cover), "bound": "min"}
+    # Coverage need not rise with the target: a capacity-limited cooler can lose all the hydrogen once
+    # the stores outgrow it. Scan a log grid for the first size that meets the demand, then bisect there.
+    low = min_target
+    high = None
+    index = 1
+    while index <= SIZING_GRID_STEPS and high is None:
+        size = (
+            max_target
+            if index == SIZING_GRID_STEPS
+            else min_target * (max_target / min_target) ** (index / SIZING_GRID_STEPS)
+        )
+        if covered(coverage(size)) >= 1:
+            high = size
+        else:
+            low = size
+        index += 1
+    if high is None:
+        return {"targetKgPerDay": max_target, "limitedBy": limiting(coverage(max_target)), "bound": "max"}
     step = 0
     while step < SIZING_MAX_STEPS and high - low > high * SIZING_REL_TOL:
         middle = (low + high) / 2
