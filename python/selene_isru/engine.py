@@ -649,8 +649,9 @@ def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
     high_cover = coverage(high)
     if low_cover is None or high_cover is None:
         return None
-    # The components the plant makes at all: oxygen at the equator, both in propellant mode.
-    made = [component for component in ("oxygen", "hydrogen") if high_cover[component] > 0]
+    # The components the plant makes, from its mode: oxygen at the equator, both in polar
+    # propellant mode. Not from what is delivered: a store that boils off all its hydrogen still owes it.
+    made = ["oxygen", "hydrogen"] if params["site"] == "polar" else ["oxygen"]
 
     def limiting(cover: dict[str, float]) -> str:
         last = made[0]

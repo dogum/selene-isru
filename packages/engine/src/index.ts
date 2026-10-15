@@ -979,8 +979,10 @@ export function sizeToDemand(input: Partial<SimParams>): DemandSizing | null {
   const lowCover = coverage(low);
   const highCover = coverage(high);
   if (lowCover === null || highCover === null) return null;
-  // The components the plant makes at all: oxygen at the equator, both in propellant mode.
-  const made = (["oxygen", "hydrogen"] as const).filter((component) => highCover[component] > 0);
+  // The components the plant makes, from its mode: oxygen at the equator, both
+  // in polar propellant mode, the only polar plant a demand applies to. Not from
+  // what is delivered: a store that boils off all its hydrogen still owes it.
+  const made: DemandSizing["limitedBy"][] = params.site === "polar" ? ["oxygen", "hydrogen"] : ["oxygen"];
   const limiting = (cover: Coverage): DemandSizing["limitedBy"] =>
     made.reduce((last, component) => (cover[component] < cover[last] ? component : last));
   const covered = (cover: Coverage): number => cover[limiting(cover)];

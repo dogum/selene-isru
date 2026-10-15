@@ -301,6 +301,11 @@ describe("sizing the plant to its demand", () => {
       ...EQUATORIAL, sortiesPerYear: 52, McargoDown: 60000, McargoUp: 30000, dvDescent: 3200, dvAscent: 3000, IspReusable: 350
     })!;
     expect(heavy).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "oxygen", bound: "max" });
+    // Passive stores with the thinnest blanket boil off all the hydrogen at any
+    // size: the demand cannot be met, so the target holds at its maximum.
+    const thin = { ...PROPELLANT, cryoControlMode: "passive", Nmli: 5 } as const;
+    expect(simulate({ ...thin, targetKgPerDay: PARAM_META.targetKgPerDay.max }).refuel!.supplyH2KgPerDay).toBe(0);
+    expect(sizeToDemand(thin)).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "hydrogen", bound: "max" });
   });
 
   test("inputs are clamped before sizing, and the current target does not matter", () => {

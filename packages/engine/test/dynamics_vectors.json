@@ -1930,6 +1930,21 @@
       }
     },
     {
+      "name": "polar-passive-thin-mli-at-max",
+      "params": {
+        "site": "polar",
+        "polarProduct": "propellant",
+        "refuelDemand": "lander",
+        "cryoControlMode": "passive",
+        "Nmli": 5
+      },
+      "result": {
+        "targetKgPerDay": 20000,
+        "limitedBy": "hydrogen",
+        "bound": "max"
+      }
+    },
+    {
       "name": "polar-water-no-demand",
       "params": {
         "site": "polar",

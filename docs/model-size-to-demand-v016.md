@@ -44,6 +44,10 @@ sized target            = smallest targetKgPerDay where min(coverage of each mad
   the Sabatier loop), the solver returns null.
 - **Bounds:** a demand outside the target's 10 kg/day–20 t/day bounds holds the
   target at the bound. The result says which bound it hit.
+- **What the plant owes:** the components come from the plant's mode, not from
+  what survives storage. Passive stores with the thinnest MLI blanket boil off
+  all the hydrogen at any size. The target then holds at its maximum, limited
+  by hydrogen, rather than claiming the demand is met.
 
 **How it solves.** Supply rises monotonically with the target, because storage
 losses grow more slowly than output. On passive storage, small plants can
@@ -132,8 +136,9 @@ Screenshot: [the polar plant sized to one crewed sortie a year](screenshots/size
   - the bounds hold, inputs are clamped first, and no demand means no size
 - **Regression (v0.16):** anchors in both suites for the sized equatorial and
   polar crewed cases and the 20-sortie polar case.
-- **Parity:** seven sizing vectors in `dynamics_vectors.json`, including both
-  bounds and a plant with no demand, compared leaf by leaf. Golden vectors do
+- **Parity:** eight sizing vectors in `dynamics_vectors.json`, compared leaf by
+  leaf. They include both bounds, a polar plant that boils off all its
+  hydrogen, and a plant with no demand. Golden vectors do
   not change, since `simulate()` does not.
 - **App:** `control-rail.test.tsx` checks:
   - the click sets the engine's size and leaves no surplus

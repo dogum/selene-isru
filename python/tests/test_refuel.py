@@ -188,6 +188,9 @@ def test_the_target_is_held_at_its_bounds_when_the_demand_lies_outside_them() ->
         "dvDescent": 3200, "dvAscent": 3000, "IspReusable": 350,
     })
     assert heavy == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "oxygen", "bound": "max"}
+    thin = {**PROPELLANT, "cryoControlMode": "passive", "Nmli": 5}
+    assert simulate({**thin, "targetKgPerDay": PARAM_META["targetKgPerDay"]["max"]})["refuel"]["supplyH2KgPerDay"] == 0
+    assert size_to_demand(thin) == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "hydrogen", "bound": "max"}
 
 
 def test_inputs_are_clamped_before_sizing_and_the_current_target_does_not_matter() -> None:
