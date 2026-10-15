@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { campaignTimeline, DEFAULTS, normalizeParams, refuelTimeline, sampleUncertainty, simulate, simulateTimeseries } from "../src/index";
+import { campaignTimeline, DEFAULTS, normalizeParams, refuelTimeline, sampleUncertainty, simulate, simulateTimeseries, sizeToDemand } from "../src/index";
 import type { SimParams, TimeseriesOptions, UncertaintySpec } from "../src/types";
 
 interface TimeseriesVector {
@@ -31,6 +31,12 @@ interface RefuelVector {
   result: unknown;
 }
 
+interface SizingVector {
+  name: string;
+  params: Partial<SimParams>;
+  result: unknown;
+}
+
 interface DynamicsFile {
   schemaVersion: number;
   seed: number;
@@ -38,6 +44,7 @@ interface DynamicsFile {
   uncertainty: UncertaintyVector[];
   campaign: CampaignVector[];
   refuel: RefuelVector[];
+  sizing: SizingVector[];
 }
 
 const dynamics = JSON.parse(
@@ -56,6 +63,7 @@ describe("phase 2 dynamics parity", () => {
     expect(dynamics.uncertainty).toHaveLength(2);
     expect(dynamics.campaign).toHaveLength(2);
     expect(dynamics.refuel).toHaveLength(2);
+    expect(dynamics.sizing).toHaveLength(9);
   });
 
   test.each(dynamics.timeseries)("$name timeseries", (vector) => {
@@ -74,6 +82,10 @@ describe("phase 2 dynamics parity", () => {
   test.each(dynamics.refuel)("$name refuel drawdown", (vector) => {
     const params = normalizeParams(vector.params).params;
     compareLeaves(refuelTimeline(params, simulate(params)), vector.result, vector.name);
+  });
+
+  test.each(dynamics.sizing)("$name demand sizing", (vector) => {
+    compareLeaves(sizeToDemand(vector.params), vector.result, vector.name);
   });
 });
 

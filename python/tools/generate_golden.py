@@ -17,6 +17,7 @@ from selene_isru import (  # noqa: E402
     sample_uncertainty,
     simulate,
     simulate_timeseries,
+    size_to_demand,
 )
 from selene_isru.normalize import normalize_params  # noqa: E402
 
@@ -164,6 +165,64 @@ def _refuel_vector(name: str, params: dict[str, Any]) -> dict[str, Any]:
     return {"name": name, "params": params, "result": refuel_timeline(normalized, simulate(normalized))}
 
 
+SIZING_VECTORS: list[tuple[str, dict[str, Any]]] = [
+    ("equatorial-crew-sortie-sized", {"refuelDemand": "lander"}),
+    ("equatorial-ilmenite-tanker-sized", {"equatorialProcess": "ilmenite", "refuelDemand": "lander", "sortiesPerYear": 8, "McargoDown": 5000}),
+    ("polar-propellant-crew-sized", {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander"}),
+    (
+        "polar-propellant-passive-sized",
+        {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander", "cryoControlMode": "passive", "sortiesPerYear": 4},
+    ),
+    (
+        "equatorial-light-lander-at-min",
+        {
+            "refuelDemand": "lander",
+            "sortiesPerYear": 0.5,
+            "McargoDown": 0,
+            "McargoUp": 0,
+            "MdryReusable": 2000,
+            "dvDescent": 1800,
+            "dvAscent": 1700,
+            "IspReusable": 465,
+        },
+    ),
+    (
+        "equatorial-heavy-weekly-at-max",
+        {
+            "refuelDemand": "lander",
+            "sortiesPerYear": 52,
+            "McargoDown": 60000,
+            "McargoUp": 30000,
+            "dvDescent": 3200,
+            "dvAscent": 3000,
+            "IspReusable": 350,
+        },
+    ),
+    (
+        "polar-passive-thin-mli-at-max",
+        {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander", "cryoControlMode": "passive", "Nmli": 5},
+    ),
+    (
+        "polar-capacity-limited-cooler-interior",
+        {
+            "site": "polar",
+            "polarProduct": "propellant",
+            "refuelDemand": "lander",
+            "sortiesPerYear": 0.5,
+            "cryoControlMode": "capacity-limited",
+            "Nmli": 10,
+            "coolerCapacityW": 3000,
+            "reserveDays": 120,
+        },
+    ),
+    ("polar-water-no-demand", {"site": "polar", "refuelDemand": "lander"}),
+]
+
+
+def _sizing_vector(name: str, params: dict[str, Any]) -> dict[str, Any]:
+    return {"name": name, "params": params, "result": size_to_demand(params)}
+
+
 def _profile_default(site: str) -> dict[str, Any]:
     return {"site": site, "enableSabatier": site == "polar"}
 
@@ -262,6 +321,7 @@ def main() -> None:
         ],
         "campaign": [_campaign_vector(name, params, step) for name, params, step in CAMPAIGN_VECTORS],
         "refuel": [_refuel_vector(name, params) for name, params in REFUEL_VECTORS],
+        "sizing": [_sizing_vector(name, params) for name, params in SIZING_VECTORS],
     }
     with DYNAMICS_OUT_PATH.open("w", encoding="utf-8") as handle:
         json.dump(canonicalize_numbers(dynamics), handle, indent=2, allow_nan=False)

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { DEFAULTS } from "@selene-isru/engine";
+import { DEFAULTS, sizeToDemand } from "@selene-isru/engine";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ControlGroups } from "../src/components/ControlRail";
@@ -114,6 +114,55 @@ describe("control rail search, changed filter, and reset", () => {
     render(<ControlGroups />);
     expect(screen.queryByRole("button", { name: /Refuelling demand/ })).toBeNull();
     expect(screen.getByRole("button", { name: "CHANGED · 0" })).toBeTruthy();
+    useStore.getState().applyPatch({ ...DEFAULTS });
+  });
+
+  it("sizes the plant to its demand in one undoable step", () => {
+    useStore.getState().applyPatch({ ...DEFAULTS, refuelDemand: "lander" });
+    useStore.setState({ paramHistory: { past: [], future: [] } });
+    render(<ControlGroups />);
+    fireEvent.click(screen.getByRole("button", { name: /Refuelling demand/ }));
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "SIZE PLANT TO DEMAND" }));
+    });
+    const sized = sizeToDemand({ ...DEFAULTS, refuelDemand: "lander" })!;
+    expect(useStore.getState().params.targetKgPerDay).toBe(sized.targetKgPerDay);
+    expect(useStore.getState().result.refuel!.surplusKgPerDay).toBe(0);
+    expect(screen.getByRole("status").textContent).toMatch(/^Target set to 111\u2009kg\/day of oxygen: the lander burns all of it\.$/);
+    // One undo step back to the hand-set plant, and the note goes with it.
+    expect(useStore.getState().paramHistory.past).toHaveLength(1);
+    act(() => useStore.getState().undoParams());
+    expect(useStore.getState().params.targetKgPerDay).toBe(DEFAULTS.targetKgPerDay);
+    expect(screen.queryByRole("status")).toBeNull();
+    cleanup();
+
+    // At the pole the target is water.
+    useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", polarProduct: "propellant", refuelDemand: "lander" });
+    render(<ControlGroups />);
+    fireEvent.click(screen.getByRole("button", { name: /Refuelling demand/ }));
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "SIZE PLANT TO DEMAND" }));
+    });
+    // Water splits richer in oxygen than the lander burns, so the hydrogen sets the size.
+    expect(screen.getByRole("status").textContent).toMatch(/^Target set to 167\u2009kg\/day of water: it meets the lander's oxygen and hydrogen demand, with 33\.3\u2009kg\/day of oxygen left over\.$/);
+    expect(useStore.getState().result.refuel!.isruShare).toBeCloseTo(1, 9);
+    // A demand that falls under the smallest plant holds the target at its minimum.
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS, refuelDemand: "lander", sortiesPerYear: 0.5, McargoDown: 0, McargoUp: 0, MdryReusable: 2000, dvDescent: 1800, dvAscent: 1700, IspReusable: 465 }));
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "SIZE PLANT TO DEMAND" }));
+    });
+    expect(useStore.getState().params.targetKgPerDay).toBe(10);
+    expect(screen.getByRole("status").textContent).toMatch(/minimum: even the smallest plant meets the lander's demand\.$/);
+    cleanup();
+
+    // A Custom Site's output comes from its equipment, so it is not sized here.
+    act(() => useStore.getState().enterCustomSite());
+    act(() => useStore.getState().setParam("refuelDemand", "lander"));
+    render(<ControlGroups />);
+    fireEvent.click(screen.getByRole("button", { name: /Refuelling demand/ }));
+    expect(screen.getByDisplayValue("REFUELLED LANDER")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "SIZE PLANT TO DEMAND" })).toBeNull();
+    act(() => useStore.getState().enterAuthoredSite("equatorial"));
     useStore.getState().applyPatch({ ...DEFAULTS });
   });
 

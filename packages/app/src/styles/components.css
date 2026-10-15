@@ -419,6 +419,22 @@ body.selene-photo-mode .app {
   line-height: 1.4;
 }
 
+.rail-sizing {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rail-sizing button {
+  padding: 7px;
+  border: 1px solid var(--line);
+  color: var(--text-low);
+  font: 500 var(--fs-10)/1 var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.rail-sizing button:hover { border-color: var(--cryo); color: var(--cryo); }
+
 .rail-group-gated {
   font-size: var(--fs-11);
   color: var(--text-low);

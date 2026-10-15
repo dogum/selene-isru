@@ -896,3 +896,13 @@ export interface UncertaintyBand {
 }
 
 export type UncertaintyResult = Record<"plantMassThroughputDays" | "secTotal" | "nMissions" | "leverageL", UncertaintyBand>;
+
+/** The plant target sized to a refuelling demand, from `sizeToDemand()`. */
+export interface DemandSizing {
+  /** smallest plant target at which every component the plant makes meets its demand; in the product the target is set in [kg/day] */
+  targetKgPerDay: number;
+  /** the component that meets its demand last, and so sets the size: hydrogen in polar propellant mode, oxygen at the equator */
+  limitedBy: "oxygen" | "hydrogen";
+  /** "within" the target's bounds, or the bound the target was held at: "min" when even the smallest plant meets the demand, "max" when the largest still falls short */
+  bound: "within" | "min" | "max";
+}

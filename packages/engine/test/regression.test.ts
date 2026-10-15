@@ -9,7 +9,8 @@ import {
   secElecJPerKg,
   secSubJPerKg,
   shieldFullBalanceM,
-  simulate
+  simulate,
+  sizeToDemand
 } from "../src/index";
 import { simulateConstruction } from "../src/modules/construction";
 import { simulatePower } from "../src/modules/power";
@@ -223,6 +224,38 @@ describe("regression anchors", () => {
     expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.65, 0.001);  // v0.14: electrolysis balance of plant
     // MRE and polar water plants do not move.
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 51.83, 0.001);
+  });
+
+  test("sizing the plant to its refuelling demand (v0.16)", () => {
+    // New and deliberate: sizeToDemand finds the smallest target at which every
+    // component the plant makes meets the lander's demand. simulate() does not
+    // change, so no earlier anchor moves.
+    const crew = { refuelDemand: "lander" } as const;
+    const crewSize = sizeToDemand(crew)!;
+    expectRel(crewSize.targetKgPerDay, 111.14, 0.001);
+    const crewSized = simulate({ ...crew, targetKgPerDay: crewSize.targetKgPerDay });
+    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 13.91, 0.001);
+    // A right-sized plant for one crewed sortie a year still does not pay back.
+    expectRel(crewSized.campaign.returnRatio, 0.9211, 0.001);
+    expect(crewSized.campaign.paysBackInCampaign).toBe(false);
+    // At the pole the hydrogen sets the size; it pays back on the campaign's
+    // last sortie, where 1 t/day never did.
+    const polar = { site: "polar", polarProduct: "propellant", refuelDemand: "lander" } as const;
+    const polarSize = sizeToDemand(polar)!;
+    expect(polarSize.limitedBy).toBe("hydrogen");
+    expectRel(polarSize.targetKgPerDay, 166.71, 0.001);
+    const polarSized = simulate({ ...polar, targetKgPerDay: polarSize.targetKgPerDay });
+    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.42, 0.001);
+    expectRel(polarSized.campaign.returnRatio, 1.0275, 0.001);
+    expect(polarSized.campaign.paybackDays).toBe(polarSized.campaign.campaignEndDay);
+    expect(simulate(polar).campaign.paysBackInCampaign).toBe(false);
+    // Twenty sorties a year need 3.3 t/day: three landings and a lower return, but more saved.
+    const busy = { ...polar, sortiesPerYear: 20 };
+    const busySized = simulate({ ...busy, targetKgPerDay: sizeToDemand(busy)!.targetKgPerDay });
+    expectRel(busySized.production.targetKgPerDay, 3334.3, 0.001);
+    expect(busySized.logistics.nMissions).toBe(3);
+    expectRel(busySized.campaign.returnRatio, 5.250, 0.001);
+    expect(busySized.campaign.netLeoMassKg).toBeGreaterThan(simulate(busy).campaign.netLeoMassKg);
   });
 
   test("the initial overburden strip runs alongside commissioning (v0.15)", () => {

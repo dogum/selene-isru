@@ -4,8 +4,8 @@ import math
 
 import pytest
 
-from selene_isru import campaign_at, campaign_timeline, refuel_timeline, simulate, sortie_propellant_kg
-from selene_isru.constants import c
+from selene_isru import campaign_at, campaign_timeline, refuel_timeline, simulate, size_to_demand, sortie_propellant_kg
+from selene_isru.constants import PARAM_META, c
 from selene_isru.normalize import normalize_params
 
 EQUATORIAL = {"refuelDemand": "lander"}
@@ -134,3 +134,87 @@ def test_every_sortie_is_marked_at_the_highest_cadence() -> None:
     assert len(sorties) == 1040
     assert_rel(sorties[-1]["usedKg"], result["campaign"]["cumulativeUsedKg"], 1e-12)
 
+
+
+@pytest.mark.parametrize(
+    ("overrides", "limited_by"),
+    [
+        (EQUATORIAL, "oxygen"),
+        ({**EQUATORIAL, "sortiesPerYear": 8, "McargoDown": 5000}, "oxygen"),
+        ({**EQUATORIAL, "equatorialProcess": "ilmenite", "ilmFeed": "basalt"}, "oxygen"),
+        (PROPELLANT, "hydrogen"),
+        ({**PROPELLANT, "cryoControlMode": "passive", "sortiesPerYear": 4}, "hydrogen"),
+    ],
+)
+def test_the_smallest_plant_that_meets_the_demand_for_all_it_makes(overrides: dict, limited_by: str) -> None:
+    sizing = size_to_demand(overrides)
+    assert sizing["bound"] == "within"
+    assert sizing["limitedBy"] == limited_by
+
+    def at(scale: float) -> dict:
+        return simulate({**overrides, "targetKgPerDay": sizing["targetKgPerDay"] * scale})["refuel"]
+
+    sized = at(1)
+    assert_rel(sized["isruO2KgPerDay"], sized["demandO2KgPerDay"], 1e-9)
+    if sized["supplyH2KgPerDay"] > 0:
+        assert_rel(sized["isruFuelKgPerDay"], sized["demandFuelKgPerDay"], 1e-9)
+    assert_rel(at(1.01)["usedKgPerDay"], sized["usedKgPerDay"], 1e-9)
+    assert at(0.99)["usedKgPerDay"] < sized["usedKgPerDay"] * (1 - 1e-4)
+
+
+def test_without_storage_losses_the_equatorial_plant_is_the_oxygen_demand_over_availability() -> None:
+    params, result = run(EQUATORIAL)
+    sizing = size_to_demand(EQUATORIAL)
+    assert_rel(sizing["targetKgPerDay"], result["refuel"]["demandO2KgPerDay"] / params["plantAvailability"], 1e-9)
+    assert simulate({**EQUATORIAL, "targetKgPerDay": sizing["targetKgPerDay"]})["refuel"]["surplusKgPerDay"] == 0
+
+
+def test_the_polar_plant_sized_to_its_hydrogen_leaves_oxygen_over() -> None:
+    sized = simulate({**PROPELLANT, "targetKgPerDay": size_to_demand(PROPELLANT)["targetKgPerDay"]})["refuel"]
+    assert_rel(sized["surplusKgPerDay"], sized["supplyO2KgPerDay"] - sized["demandO2KgPerDay"], 1e-9)
+    assert sized["surplusKgPerDay"] > 0
+    assert sized["earthPropellantKgPerYear"] < 1e-6
+    assert_rel(sized["isruShare"], 1, 1e-9)
+
+
+def test_the_target_is_held_at_its_bounds_when_the_demand_lies_outside_them() -> None:
+    light = size_to_demand({
+        **EQUATORIAL, "sortiesPerYear": 0.5, "McargoDown": 0, "McargoUp": 0, "MdryReusable": 2000,
+        "dvDescent": 1800, "dvAscent": 1700, "IspReusable": 465,
+    })
+    assert light == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["min"], "limitedBy": "oxygen", "bound": "min"}
+    heavy = size_to_demand({
+        **EQUATORIAL, "sortiesPerYear": 52, "McargoDown": 60000, "McargoUp": 30000,
+        "dvDescent": 3200, "dvAscent": 3000, "IspReusable": 350,
+    })
+    assert heavy == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "oxygen", "bound": "max"}
+    thin = {**PROPELLANT, "cryoControlMode": "passive", "Nmli": 5}
+    assert simulate({**thin, "targetKgPerDay": PARAM_META["targetKgPerDay"]["max"]})["refuel"]["supplyH2KgPerDay"] == 0
+    assert size_to_demand(thin) == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "hydrogen", "bound": "max"}
+
+
+def test_a_capacity_limited_cooler_sizes_the_smallest_plant_that_meets_the_demand() -> None:
+    cooled = {
+        **PROPELLANT, "sortiesPerYear": 0.5, "cryoControlMode": "capacity-limited", "Nmli": 10,
+        "coolerCapacityW": 3000, "reserveDays": 120,
+    }
+    assert simulate({**cooled, "targetKgPerDay": PARAM_META["targetKgPerDay"]["max"]})["refuel"]["supplyH2KgPerDay"] == 0
+    sizing = size_to_demand(cooled)
+    assert sizing["bound"] == "within"
+    assert sizing["limitedBy"] == "hydrogen"
+    assert_rel(sizing["targetKgPerDay"], 84, 0.05)
+    sized = simulate({**cooled, "targetKgPerDay": sizing["targetKgPerDay"]})["refuel"]
+    assert_rel(sized["isruFuelKgPerDay"], sized["demandFuelKgPerDay"], 1e-9)
+    smaller = simulate({**cooled, "targetKgPerDay": sizing["targetKgPerDay"] * 0.99})["refuel"]
+    assert smaller["supplyH2KgPerDay"] < sized["demandFuelKgPerDay"]
+
+
+def test_inputs_are_clamped_before_sizing_and_the_current_target_does_not_matter() -> None:
+    assert size_to_demand({**EQUATORIAL, "sortiesPerYear": 500}) == size_to_demand({**EQUATORIAL, "sortiesPerYear": 52})
+    assert size_to_demand({**EQUATORIAL, "targetKgPerDay": 50}) == size_to_demand(EQUATORIAL)
+
+
+def test_no_demand_means_nothing_to_size() -> None:
+    assert size_to_demand({}) is None
+    assert size_to_demand({"site": "polar", "refuelDemand": "lander"}) is None
+    assert size_to_demand({"site": "polar", "enableSabatier": True, "polarProduct": "propellant", "refuelDemand": "lander"}) is None

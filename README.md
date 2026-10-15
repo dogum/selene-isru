@@ -251,6 +251,9 @@ cross-checked against DOE's PEM targets) is in
 The v0.15 overburden timing (the fleet's initial strip run alongside
 commissioning, delaying production when it takes longer) is in
 [`docs/model-overburden-timing-v015.md`](docs/model-overburden-timing-v015.md).
+The v0.16 demand sizing (a solver and a rail control that set the plant target
+to the smallest plant meeting a refuelling demand for everything it makes) is
+in [`docs/model-size-to-demand-v016.md`](docs/model-size-to-demand-v016.md).
 
 ## Architecture
 

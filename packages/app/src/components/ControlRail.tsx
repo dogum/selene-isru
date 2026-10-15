@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import type { SimParams, Warning } from "@selene-isru/engine";
+import { sizeToDemand } from "@selene-isru/engine";
+import type { DemandSizing, RefuelResult, SimParams, Warning } from "@selene-isru/engine";
 import {
   groupsForSite,
   isChangedFromDefault,
@@ -13,7 +14,7 @@ import {
   type NumericParamDef
 } from "../controls/manifest";
 import { GROUP_CAMERA } from "../viewer/bindings";
-import { formatQtyText } from "../lib/format";
+import { formatQtyProse, formatQtyText } from "../lib/format";
 import { canonicalProfileJson, parseSiteProfileText, SAMPLE_POLAR_PROFILE } from "../lib/siteProfile";
 import { useStore } from "../state/store";
 import { ParamRow } from "./ParamRow";
@@ -399,8 +400,61 @@ function RefuelModeControls(): React.JSX.Element {
           the propellant it burns{site === "equatorial" ? "; its hydrogen comes from Earth" : ""}.
         </p>
       )}
+      {demand === "lander" && <SizeToDemandControl />}
     </div>
   );
+}
+
+/**
+ * Sets the plant target from the demand: the engine's sizeToDemand() finds
+ * the smallest plant that meets the lander's demand for everything it makes.
+ * It runs the engine up to about a hundred times, so only on a click; the change goes
+ * through applyPatch, which takes the whole case, and is one undo step.
+ *
+ * Authored cases only: a Custom Site's output comes from its placed
+ * equipment, not the plain model the solver runs, and its inputs belong to
+ * the design rather than the authored case applyPatch replaces.
+ */
+function SizeToDemandControl(): React.JSX.Element | null {
+  const params = useStore((s) => s.params);
+  const applies = useStore((s) => s.workspaceMode === "authored" && s.result.refuel !== null);
+  const applyPatch = useStore((s) => s.applyPatch);
+  // The note describes the case it sized; any later edit retires it.
+  const [note, setNote] = useState<{ params: SimParams; text: string } | null>(null);
+  if (!applies) return null;
+
+  const size = (): void => {
+    const sizing = sizeToDemand(params);
+    if (sizing === null) return;
+    applyPatch({ ...params, targetKgPerDay: sizing.targetKgPerDay });
+    const after = useStore.getState();
+    setNote({ params: after.params, text: sizingNote(sizing, after.params, after.result.refuel) });
+  };
+
+  return (
+    <div className="rail-sizing">
+      <button type="button" onClick={size} title="Set the plant target to the smallest plant that meets the lander's demand for everything it makes">
+        SIZE PLANT TO DEMAND
+      </button>
+      {note !== null && note.params === params && <p className="rail-mode-note" role="status">{note.text}</p>}
+    </div>
+  );
+}
+
+function sizingNote(sizing: DemandSizing, params: SimParams, refuel: RefuelResult | null): string {
+  const target = formatQtyProse(sizing.targetKgPerDay, "kg/day");
+  if (sizing.bound === "min") {
+    return `Target held at its ${target} minimum: even the smallest plant meets the lander's demand.`;
+  }
+  if (sizing.bound === "max") {
+    return `Target held at its ${target} maximum: the largest plant still falls short of the lander's ${sizing.limitedBy}.`;
+  }
+  if (params.site === "equatorial") return `Target set to ${target} of oxygen: the lander burns all of it.`;
+  const surplus = refuel === null ? 0 : refuel.surplusKgPerDay;
+  const over = sizing.limitedBy === "hydrogen" ? "oxygen" : "hydrogen";
+  return `Target set to ${target} of water: it meets the lander's oxygen and hydrogen demand${
+    surplus > 0 ? `, with ${formatQtyProse(surplus, "kg/day")} of ${over} left over` : ""
+  }.`;
 }
 
 function PolarSiteProfileControls(): React.JSX.Element {

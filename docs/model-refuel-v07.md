@@ -208,4 +208,4 @@ Screenshots: [campaign ledger](screenshots/refuel/refuel-crew-campaign.png),
 - **Vehicle losses.** Boil-off between sorties, reserves, and hover margins
   beyond the delta-v figures.
 - **Sizing to demand.** A control that sets the plant target from the demand
-  instead of by hand.
+  instead of by hand. *(v0.16: done; see [`model-size-to-demand-v016.md`](model-size-to-demand-v016.md).)*

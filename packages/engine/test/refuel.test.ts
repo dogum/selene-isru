@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { campaignAt, campaignTimeline, normalizeParams, PHYSICAL_CONSTANTS, refuelTimeline, simulate, sortiePropellantKg } from "../src/index";
+import { campaignAt, campaignTimeline, normalizeParams, PARAM_META, PHYSICAL_CONSTANTS, refuelTimeline, simulate, sizeToDemand, sortiePropellantKg } from "../src/index";
 import type { SimParams } from "../src/types";
 
 function run(input: Partial<SimParams>): { params: SimParams; result: ReturnType<typeof simulate> } {
@@ -250,5 +250,86 @@ describe("tank drawdown agrees with the demand", () => {
   test("no demand, no drawdown", () => {
     const { params, result } = run({});
     expect(refuelTimeline(params, result)).toEqual([]);
+  });
+});
+
+describe("sizing the plant to its demand", () => {
+  test.each([
+    ["equatorial crewed sortie", EQUATORIAL, "oxygen"],
+    ["equatorial tanker", { ...EQUATORIAL, sortiesPerYear: 8, McargoDown: 5000 }, "oxygen"],
+    ["ilmenite on basalt", { ...EQUATORIAL, equatorialProcess: "ilmenite", ilmFeed: "basalt" }, "oxygen"],
+    ["polar propellant", PROPELLANT, "hydrogen"],
+    ["polar propellant, passive storage", { ...PROPELLANT, cryoControlMode: "passive", sortiesPerYear: 4 }, "hydrogen"]
+  ] as [string, Partial<SimParams>, string][])("%s: the smallest plant that meets the demand for all it makes", (_name, input, limitedBy) => {
+    const sizing = sizeToDemand(input)!;
+    expect(sizing.bound).toBe("within");
+    expect(sizing.limitedBy).toBe(limitedBy);
+    const at = (scale: number) => simulate({ ...input, targetKgPerDay: sizing.targetKgPerDay * scale }).refuel!;
+    const sized = at(1);
+    // Each component the plant makes meets its demand...
+    expectRel(sized.isruO2KgPerDay, sized.demandO2KgPerDay, 1e-9);
+    if (sized.supplyH2KgPerDay > 0) expectRel(sized.isruFuelKgPerDay, sized.demandFuelKgPerDay, 1e-9);
+    // ...a larger plant adds nothing the lander burns, and a smaller one supplies less.
+    expectRel(at(1.01).usedKgPerDay, sized.usedKgPerDay, 1e-9);
+    expect(at(0.99).usedKgPerDay).toBeLessThan(sized.usedKgPerDay * (1 - 1e-4));
+  });
+
+  test("without storage losses the equatorial plant is the oxygen demand over availability", () => {
+    const { params, result } = run(EQUATORIAL);
+    const sizing = sizeToDemand(EQUATORIAL)!;
+    expectRel(sizing.targetKgPerDay, result.refuel!.demandO2KgPerDay / params.plantAvailability, 1e-9);
+    // Sized from below, so no float residue shows as surplus.
+    expect(simulate({ ...EQUATORIAL, targetKgPerDay: sizing.targetKgPerDay }).refuel!.surplusKgPerDay).toBe(0);
+  });
+
+  test("the polar plant sized to its hydrogen leaves oxygen over", () => {
+    // Water splits richer in oxygen than the lander's O/F 6 burns it, so the
+    // hydrogen sets the size and the plant meets the whole demand.
+    const sized = simulate({ ...PROPELLANT, targetKgPerDay: sizeToDemand(PROPELLANT)!.targetKgPerDay }).refuel!;
+    expectRel(sized.surplusKgPerDay, sized.supplyO2KgPerDay - sized.demandO2KgPerDay, 1e-9);
+    expect(sized.surplusKgPerDay).toBeGreaterThan(0);
+    expect(sized.earthPropellantKgPerYear).toBeLessThan(1e-6);
+    expectRel(sized.isruShare, 1, 1e-9);
+  });
+
+  test("the target is held at its bounds when the demand lies outside them", () => {
+    const light = sizeToDemand({
+      ...EQUATORIAL, sortiesPerYear: 0.5, McargoDown: 0, McargoUp: 0, MdryReusable: 2000, dvDescent: 1800, dvAscent: 1700, IspReusable: 465
+    })!;
+    expect(light).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.min, limitedBy: "oxygen", bound: "min" });
+    const heavy = sizeToDemand({
+      ...EQUATORIAL, sortiesPerYear: 52, McargoDown: 60000, McargoUp: 30000, dvDescent: 3200, dvAscent: 3000, IspReusable: 350
+    })!;
+    expect(heavy).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "oxygen", bound: "max" });
+    // Passive stores with the thinnest blanket boil off all the hydrogen at any
+    // size: the demand cannot be met, so the target holds at its maximum.
+    const thin = { ...PROPELLANT, cryoControlMode: "passive", Nmli: 5 } as const;
+    expect(simulate({ ...thin, targetKgPerDay: PARAM_META.targetKgPerDay.max }).refuel!.supplyH2KgPerDay).toBe(0);
+    expect(sizeToDemand(thin)).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "hydrogen", bound: "max" });
+  });
+
+  test("a capacity-limited cooler: the smallest plant that meets the demand, not the largest", () => {
+    // Above about 200 kg/day the stores outgrow a 3 kW cooler and boil off all
+    // their hydrogen, so the largest plant meets nothing while a small one does.
+    const cooled = { ...PROPELLANT, sortiesPerYear: 0.5, cryoControlMode: "capacity-limited", Nmli: 10, coolerCapacityW: 3000, reserveDays: 120 } as const;
+    expect(simulate({ ...cooled, targetKgPerDay: PARAM_META.targetKgPerDay.max }).refuel!.supplyH2KgPerDay).toBe(0);
+    const sizing = sizeToDemand(cooled)!;
+    expect(sizing.bound).toBe("within");
+    expect(sizing.limitedBy).toBe("hydrogen");
+    expectRel(sizing.targetKgPerDay, 84, 0.05);
+    const sized = simulate({ ...cooled, targetKgPerDay: sizing.targetKgPerDay }).refuel!;
+    expectRel(sized.isruFuelKgPerDay, sized.demandFuelKgPerDay, 1e-9);
+    expect(simulate({ ...cooled, targetKgPerDay: sizing.targetKgPerDay * 0.99 }).refuel!.supplyH2KgPerDay).toBeLessThan(sized.demandFuelKgPerDay);
+  });
+
+  test("inputs are clamped before sizing, and the current target does not matter", () => {
+    expect(sizeToDemand({ ...EQUATORIAL, sortiesPerYear: 500 })).toEqual(sizeToDemand({ ...EQUATORIAL, sortiesPerYear: 52 }));
+    expect(sizeToDemand({ ...EQUATORIAL, targetKgPerDay: 50 })).toEqual(sizeToDemand(EQUATORIAL));
+  });
+
+  test("no demand applies: nothing to size", () => {
+    expect(sizeToDemand({})).toBeNull();
+    expect(sizeToDemand({ site: "polar", refuelDemand: "lander" })).toBeNull();
+    expect(sizeToDemand({ site: "polar", enableSabatier: true, polarProduct: "propellant", refuelDemand: "lander" })).toBeNull();
   });
 });

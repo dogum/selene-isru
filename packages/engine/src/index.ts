@@ -23,6 +23,7 @@ import type {
   SiteDesignEvaluation
 } from "./site-design/types";
 import type {
+  DemandSizing,
   FlowEdge,
   IlmeniteResult,
   PowerStrategy,
@@ -84,6 +85,7 @@ export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 export { secSubDeliveredJPerKg, secSubJPerKg } from "./modules/thermal";
 export type {
   CampaignResult,
+  DemandSizing,
   DeploymentManifest,
   EquatorialProcess,
   FlowEdge,
@@ -937,6 +939,75 @@ export function sampleUncertainty(
     nMissions: summarize(samples.nMissions),
     leverageL: summarize(samples.leverageL)
   };
+}
+
+/** Bisection stops once the bracket is this narrow relative to its top [1]. */
+const SIZING_REL_TOL = 1e-12;
+/** A guard on the bisection; one grid step needs about 40 halvings. */
+const SIZING_MAX_STEPS = 200;
+/** Log-spaced sizes scanned across the target's bounds, about 13% apart. */
+const SIZING_GRID_STEPS = 64;
+
+/**
+ * Size the plant to its refuelling demand: the smallest target at which every
+ * component the plant makes meets the lander's demand for it, so the plant
+ * supplies all the demand it can and Earth only what the plant cannot make.
+ * Each component's coverage is its supply after storage losses and downtime
+ * over its demand; the plant is sized where the smaller coverage reaches 1.
+ * A larger plant only adds product the lander does not burn. Water splits
+ * richer in oxygen than the lander burns it, so a plant sized to its hydrogen
+ * leaves oxygen over.
+ *
+ * Coverage need not rise with the target: under a capacity-limited cooler the
+ * stores can outgrow the cooler and boil off all their hydrogen, so a plant
+ * that meets the demand can sit below a larger one that cannot. The solver
+ * scans a log grid over the target's bounds for the first size that meets the
+ * demand, then bisects inside that step. It returns the bracket's low end,
+ * short by under a part in 1e12, so float noise never shows as surplus. A
+ * demand no grid size meets holds the target at its maximum. Returns null when
+ * no demand applies.
+ */
+export function sizeToDemand(input: Partial<SimParams>): DemandSizing | null {
+  const params = normalizeParams(input).params;
+  type Coverage = Record<DemandSizing["limitedBy"], number>;
+  const coverage = (targetKgPerDay: number): Coverage | null => {
+    const refuel = simulate({ ...params, targetKgPerDay }).refuel;
+    if (refuel === null) return null;
+    return {
+      oxygen: refuel.demandO2KgPerDay > 0 ? refuel.supplyO2KgPerDay / refuel.demandO2KgPerDay : 0,
+      hydrogen: refuel.demandFuelKgPerDay > 0 ? refuel.supplyH2KgPerDay / refuel.demandFuelKgPerDay : 0
+    };
+  };
+
+  const min: number = PARAM_META.targetKgPerDay.min;
+  const max: number = PARAM_META.targetKgPerDay.max;
+  const lowCover = coverage(min);
+  if (lowCover === null) return null;
+  // The components the plant makes, from its mode: oxygen at the equator, both
+  // in polar propellant mode, the only polar plant a demand applies to. Not from
+  // what is delivered: a store that boils off all its hydrogen still owes it.
+  const made: DemandSizing["limitedBy"][] = params.site === "polar" ? ["oxygen", "hydrogen"] : ["oxygen"];
+  const limiting = (cover: Coverage): DemandSizing["limitedBy"] =>
+    made.reduce((last, component) => (cover[component] < cover[last] ? component : last));
+  const covered = (cover: Coverage): number => cover[limiting(cover)];
+
+  if (covered(lowCover) >= 1) return { targetKgPerDay: min, limitedBy: limiting(lowCover), bound: "min" };
+  // The first grid size that meets the demand, and the one below it.
+  let low = min;
+  let feasible: number | null = null;
+  for (let index = 1; index <= SIZING_GRID_STEPS && feasible === null; index += 1) {
+    const size = index === SIZING_GRID_STEPS ? max : min * (max / min) ** (index / SIZING_GRID_STEPS);
+    if (covered(coverage(size)!) >= 1) feasible = size;
+    else low = size;
+  }
+  if (feasible === null) return { targetKgPerDay: max, limitedBy: limiting(coverage(max)!), bound: "max" };
+  let high: number = feasible;
+  for (let step = 0; step < SIZING_MAX_STEPS && high - low > high * SIZING_REL_TOL; step += 1) {
+    const middle = (low + high) / 2;
+    if (covered(coverage(middle)!) >= 1) high = middle;
+    else low = middle;
+  }
+  return { targetKgPerDay: low, limitedBy: limiting(coverage(low)!), bound: "within" };
 }
 
 const U64_MASK = (1n << 64n) - 1n;
