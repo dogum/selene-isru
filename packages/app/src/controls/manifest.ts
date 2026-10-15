@@ -244,7 +244,8 @@ export function makesLanderPropellant(params: Pick<SimParams, "site" | "enableSa
 /** Liquefier mass input for each liquefied product stream. */
 export const LIQUEFIER_PARAM: Record<string, keyof SimParams> = {
   lox: "kLiquefierLox",
-  lh2: "kLiquefierLh2"
+  lh2: "kLiquefierLh2",
+  lch4: "kLiquefierCh4"
 };
 
 const LIQUEFIER_KEYS = new Set<string>(Object.values(LIQUEFIER_PARAM));
@@ -267,9 +268,10 @@ export function railParamsForGroup(
     (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === params.site)
   );
   if (group.id === "propellant") {
-    // Electrolysis runs in propellant mode or inside the Sabatier loop; the
-    // mixture ratio and electrolyzer mass belong to propellant mode alone.
-    if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio" && def.key !== "kElectrolyzerMass");
+    // Electrolysis runs in propellant mode or inside the Sabatier loop, which
+    // carries the same electrolyzer (v0.13); the mixture ratio belongs to
+    // propellant mode alone.
+    if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio");
     return params.polarProduct === "propellant" ? all : [];
   }
   if (group.id === "oxygen-process") {

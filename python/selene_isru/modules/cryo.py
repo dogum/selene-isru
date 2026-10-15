@@ -62,6 +62,8 @@ def _pending_inventory(params: dict[str, Any], demand: dict[str, Any], profile: 
         liquefier_kg_per_kg_day = params["kLiquefierLox"]
     elif demand["stream"] == "lh2":
         liquefier_kg_per_kg_day = params["kLiquefierLh2"]
+    elif demand["stream"] == "lch4":
+        liquefier_kg_per_kg_day = params["kLiquefierCh4"]
     else:
         liquefier_kg_per_kg_day = 0
     return {
@@ -89,7 +91,12 @@ def simulate_cryo(params: dict[str, Any], demands: list[dict[str, Any]], profile
         removal_budget = total_leak
     cryocooler_power = 0.0
     for item in pending:
-        item["qRemovedW"] = removal_budget * item["qLeakW"] / total_leak if total_leak > 0 else 0
+        # A budget that covers the whole leak removes each store's leak exactly,
+        # so no roundoff residual is left to boil off.
+        if removal_budget >= total_leak:
+            item["qRemovedW"] = item["qLeakW"]
+        else:
+            item["qRemovedW"] = removal_budget * item["qLeakW"] / total_leak if total_leak > 0 else 0
         item["qResidualW"] = max(0, item["qLeakW"] - item["qRemovedW"])
         loss_factor = 86400 / item["latentHeatJPerKg"] if item["phaseLossEnabled"] else 0
         item["unmitigatedLossKgPerDay"] = item["qLeakW"] * loss_factor

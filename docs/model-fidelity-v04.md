@@ -129,7 +129,9 @@ Regression anchors for the polar default were added deliberately in
   [`model-propellant-v06.md`](model-propellant-v06.md).)*
 - **Sabatier plant mass** reuses the MRE reactor coefficient (`kReactorMass`).
   The NASA study's ridge propellant system is about 39 kg per kg/day of water,
-  dominated by hydrogen liquefaction.
+  dominated by hydrogen liquefaction. *(v0.13: done; the loop carries the
+  water electrolyzer and a Sabatier block per kg/day of methane. See
+  [`model-sabatier-mass-v013.md`](model-sabatier-mass-v013.md).)*
 - **Polar architecture.** NASA's case processes water on the illuminated ridge
   and hauls it from the crater by tanker; this model beams power to a crater
   floor plant. Both are legitimate; only one is modelled.

@@ -108,6 +108,31 @@
       "modelSimplification": "Comparison, not calibration: since v0.12 the model also lands two whole 66 kg RASSORs here (132 kg), without margin. The study adds its 20% growth margin (2 x 66 x 1.2 = 158 kg). Its excavators also idle while the extractor hopper is full, so they draw less power than the model's 10.1 kJ per kg of soil moved."
     },
     {
+      "id": "kleinhenz-paz-2017-sabatier-block",
+      "kind": "calibration",
+      "quantity": "Sabatier reactor, gas-handling, and methane dryer mass per kg/day of methane; methane liquefier mass",
+      "inputs": { "atmosphereProcessingKg": 450, "methaneDryerKg": 25, "methaneLiquefactionKg": 50, "methaneKg": 6978, "productionDays": 480 },
+      "expected": 33,
+      "unit": "kg/(kg/day)",
+      "relativeTolerance": 0.05,
+      "source": "Kleinhenz & Paz 2017, An ISRU Propellant Production System for a Fully Fueled Mars Ascent Vehicle, AIAA 2017-0423",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20170001421",
+      "sourceLocator": "Fig. 2 (6,978 kg of CH4 over 480 days of continuous operation); Fig. 10A, case 2, read off the bar's pixels (atmosphere processing about 450 kg between about 900 and 1,350 kg; CH4 dryer about 25 kg; CH4 liquefaction about 50 kg; all with 15% structural and 20% growth margins)",
+      "modelSimplification": "Calibration anchor: kSabatierMass is the block plus the methane dryer divided by the methane rate, and kLiquefierCh4 the methane liquefaction bar divided by it. The thin dryer and liquefaction bars read to about +-8 kg. The block includes the Mars CO2 freezer that a lunar loop fed from an imported CO2 store does not need, and this model charges that store in its cryo block too, so the default errs heavy."
+    },
+    {
+      "id": "pnnl-2005-sabatier-reactor",
+      "kind": "documentation-only",
+      "quantity": "Sabatier reactor alone, with its recuperator, per kg/day of methane",
+      "inputs": { "reactorKg": 22, "propellantKg": 14200, "productionDays": 300, "oxygenToMethane": 3.8 },
+      "expected": 2.3,
+      "unit": "kg/(kg/day)",
+      "source": "Brooks, Rassat & TeGrotenhuis 2005, Development of a Microchannel In Situ Propellant Production System, PNNL-15456",
+      "sourceUrl": "https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-15456.pdf",
+      "sourceLocator": "Sec. 6 and Fig. 6.5: human-scale Mars plant, 14,200 kg of propellant at O2:CH4 3.8 in 300 days; JSC-baseline Sabatier about 22 kg, microchannel about 11 kg; the CO2 compressor dominates",
+      "modelSimplification": "Cross-check only: the reactor is a small part of the Sabatier side; CO2 acquisition and gas separation make up most of Kleinhenz & Paz's block. The input's range reaches down to this reactor-only figure."
+    },
+    {
       "id": "guerrero-zabel-2023-rassor-rate",
       "kind": "calibration",
       "quantity": "soil one RASSOR excavator moves per day on 100 m hauls",

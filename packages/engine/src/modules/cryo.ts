@@ -110,7 +110,15 @@ function pendingInventory(
   // Liquefaction hardware scales with the liquefied product rate; storage
   // buffers and feeds are not liquefied here.
   const liquefierKgPerKgDay =
-    demand.role !== "product" ? 0 : demand.stream === "lox" ? params.kLiquefierLox : demand.stream === "lh2" ? params.kLiquefierLh2 : 0;
+    demand.role !== "product"
+      ? 0
+      : demand.stream === "lox"
+        ? params.kLiquefierLox
+        : demand.stream === "lh2"
+          ? params.kLiquefierLh2
+          : demand.stream === "lch4"
+            ? params.kLiquefierCh4
+            : 0;
 
   return {
     id: demand.id,
@@ -164,7 +172,10 @@ export function simulateCryo(
         : totalLeakW;
   let cryocoolerPowerW = 0;
   for (const item of pending) {
-    item.qRemovedW = totalLeakW > 0 ? removalBudgetW * item.qLeakW / totalLeakW : 0;
+    // A budget that covers the whole leak removes each store's leak exactly,
+    // so no roundoff residual is left to boil off.
+    item.qRemovedW =
+      removalBudgetW >= totalLeakW ? item.qLeakW : totalLeakW > 0 ? removalBudgetW * item.qLeakW / totalLeakW : 0;
     item.qResidualW = Math.max(0, item.qLeakW - item.qRemovedW);
     const lossFactor = item.phaseLossEnabled ? 86_400 / item.latentHeatJPerKg : 0;
     item.unmitigatedLossKgPerDay = item.qLeakW * lossFactor;

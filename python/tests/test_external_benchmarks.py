@@ -91,6 +91,32 @@ def test_polar_excavation_compares_with_nasa_mine() -> None:
     assert 0.5 < mining_power_w / expected["excavatorPowerW"] < 2
 
 
+def test_sabatier_block_from_nasa_mars_plant() -> None:
+    block = item("kleinhenz-paz-2017-sabatier-block")
+    assert block["kind"] == "calibration"
+    i = block["inputs"]
+    methane = i["methaneKg"] / i["productionDays"]
+    derived = (i["atmosphereProcessingKg"] + i["methaneDryerKg"]) / methane
+    assert derived == pytest.approx(block["expected"], rel=block["relativeTolerance"])
+    assert DEFAULTS["kLiquefierCh4"] == pytest.approx(i["methaneLiquefactionKg"] / methane, rel=0.05)
+    assert DEFAULTS["kSabatierMass"] == pytest.approx(block["expected"], rel=block["relativeTolerance"])
+    reactor = item("pnnl-2005-sabatier-reactor")
+    r = reactor["inputs"]
+    reactor_methane = r["propellantKg"] / (1 + r["oxygenToMethane"]) / r["productionDays"]
+    assert r["reactorKg"] / reactor_methane == pytest.approx(reactor["expected"], rel=0.05)
+    assert PARAM_META["kSabatierMass"]["min"] < reactor["expected"]
+    result = simulate({"site": "polar", "enableSabatier": True})
+    plant = next(row["massKg"] for row in result["logistics"]["manifest"] if row["subsystem"] == "reactor/plant")
+    expected = (
+        result["thermal"]["extractorMassKg"]
+        + DEFAULTS["kElectrolyzerMass"] * DEFAULTS["targetKgPerDay"]
+        + DEFAULTS["kSabatierMass"] * result["production"]["ch4KgPerDay"]
+    )
+    assert plant == pytest.approx(expected, rel=1e-12)
+    store = next(item for item in result["cryo"]["inventories"] if item["stream"] == "lch4")
+    assert store["liquefierMassKg"] == pytest.approx(DEFAULTS["kLiquefierCh4"] * result["production"]["ch4KgPerDay"], rel=1e-12)
+
+
 def test_one_rassor_moves_guerrero_zabel_rate() -> None:
     row = item("guerrero-zabel-2023-rassor-rate")
     assert row["kind"] == "calibration"

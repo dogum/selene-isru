@@ -329,7 +329,8 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
       Vel: "Electrolyzer voltage",
       etaFaradayEl: "Faradaic efficiency",
       fConversion: "Sabatier conversion",
-      Tsabatier: "Reactor temperature"
+      Tsabatier: "Reactor temperature",
+      kSabatierMass: "Sabatier block mass"
     },
     note: "The beam and receiver are active only when the mass-selected architecture is solar; nuclear cases no longer imply a hypothetical beamed-power supply.",
     metrics: (r) => [

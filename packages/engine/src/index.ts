@@ -200,15 +200,16 @@ export function simulate(
     siteProfile.profile,
     options.powerStrategy ?? "auto"
   );
-  // Polar plants always carry the water extractor; the Sabatier loop adds its
-  // reactor on top, and propellant mode its electrolyzer. Equatorial plants
-  // are the MRE reactor, or the ilmenite reactor and its electrolyzer, whose
-  // beneficiation plant is listed apart. Liquefiers are part of the cryo block.
+  // Polar plants always carry the water extractor; propellant mode and the
+  // Sabatier loop add the water electrolyzer, and the loop its reactor and gas
+  // handling, sized on the methane it makes. Equatorial plants are the MRE
+  // reactor, or the ilmenite reactor and its electrolyzer, whose beneficiation
+  // plant is listed apart. Liquefiers and the CO2 feed store are part of the
+  // cryo block.
   const reactorMassKg =
-    (mre || sabatier !== null
-      ? params.kReactorMass * params.targetKgPerDay
-      : 0) +
-    (propellant !== null ? params.kElectrolyzerMass * params.targetKgPerDay : 0) +
+    (mre ? params.kReactorMass * params.targetKgPerDay : 0) +
+    (propellant !== null || sabatier !== null ? params.kElectrolyzerMass * params.targetKgPerDay : 0) +
+    (sabatier !== null ? params.kSabatierMass * sabatier.ch4KgPerDay : 0) +
     (ilmenite !== null ? ilmenite.reactorMassKg + ilmenite.electrolyzerMassKg : 0) +
     thermal.extractorMassKg;
   // The product each landed kilogram is measured against, before storage

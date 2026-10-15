@@ -122,8 +122,14 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   kElectrolyzerMass: {
     rangeRationale: "Bounded around the NASA case's PEM electrolyzer and gas dryers.",
     validity: "Derived from one small (67 kg/day) design and scaled linearly with water processed; storage tanks are sized separately in the cryo block.",
-    applicability: "Polar propellant mode, and the equatorial ilmenite plant's water electrolysis",
+    applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis",
     defaultUncertainty: 0.3
+  },
+  kSabatierMass: {
+    rangeRationale: "From the Sabatier reactor alone with its recuperator, about 1–2.3 kg per kg/day of methane in PNNL's human-scale Mars plant, to twice NASA's whole Mars atmosphere-processing block.",
+    validity: "Reactor, condenser, water separator, CH₄/H₂ separation, and the methane dryer, scaled linearly with methane made; the methane liquefier is a separate input. The default is NASA's 2017 Mars block with its margins, which also carries a CO₂ freezer that a loop fed from imported CO₂ does not need; the CO₂ feed store is sized separately in the cryo block, so the default errs heavy.",
+    applicability: "Polar site · Sabatier loop",
+    defaultUncertainty: 0.5
   },
   Vel: {
     applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis"
@@ -254,6 +260,12 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Derived from one small design (7.5 kg/day H2) and scaled linearly, which is conservative for large plants; applies to stored liquid-hydrogen product only.",
     applicability: "Both sites · liquid-hydrogen product",
     defaultUncertainty: 0.4
+  },
+  kLiquefierCh4: {
+    rangeRationale: "No liquefaction hardware up to several times the methane liquefier in NASA's 2017 Mars plant.",
+    validity: "Derived from one Mars design (14.5 kg/day of methane) with its margins and scaled linearly; applies to stored liquid-methane product, made only by the Sabatier loop.",
+    applicability: "Polar site · Sabatier loop · liquid-methane product",
+    defaultUncertainty: 0.5
   },
   secCondLox: {
     rangeRationale: "From an efficient large liquefier to a small, poorly integrated one.",

@@ -271,6 +271,8 @@ export interface SimParams {
   fConversion: number;
   /** [K] */
   Tsabatier: number;
+  /** [kg/(kg/day)] Sabatier reactor, gas handling, and methane dryer, per kg/day of methane */
+  kSabatierMass: number;
   /** [day] */
   reserveDays: number;
   storageStream: StorageStreamSelection;
@@ -319,6 +321,8 @@ export interface SimParams {
   kLiquefierLox: number;
   /** [kg/(kg/day)] per LH2 product */
   kLiquefierLh2: number;
+  /** [kg/(kg/day)] per liquid-methane product */
+  kLiquefierCh4: number;
   polarIlluminationFraction: number;
   /** [h] */
   polarLongestShadowHours: number;

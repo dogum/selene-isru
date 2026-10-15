@@ -123,7 +123,7 @@ const KNOWLEDGE: Record<SimParams["site"], Record<string, AssetKnowledge>> = {
       inputs: ["Recovered water", "Beamed or nuclear power", "Electrolyzer voltage", "Sabatier conversion"],
       assumptions: [
         "The optional Sabatier loop uses a fixed single-pass conversion; equilibrium is diagnostic only.",
-        "CO₂ import and recycled water are reported explicitly, but their supply/cleanup hardware, catalyst aging, and gas cleanup remain outside the mass manifest."
+        "The Sabatier block (reactor, condenser, water and CH₄/H₂ separation) is charged per kg/day of methane from NASA's 2017 Mars design, which also carries a CO₂ freezer this loop does not need; catalyst aging is not modelled."
       ],
       maturity: "LITERATURE-DERIVED"
     },
