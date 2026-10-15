@@ -164,7 +164,10 @@ export function simulateCryo(
         : totalLeakW;
   let cryocoolerPowerW = 0;
   for (const item of pending) {
-    item.qRemovedW = totalLeakW > 0 ? removalBudgetW * item.qLeakW / totalLeakW : 0;
+    // A budget that covers the whole leak removes each store's leak exactly,
+    // so no roundoff residual is left to boil off.
+    item.qRemovedW =
+      removalBudgetW >= totalLeakW ? item.qLeakW : totalLeakW > 0 ? removalBudgetW * item.qLeakW / totalLeakW : 0;
     item.qResidualW = Math.max(0, item.qLeakW - item.qRemovedW);
     const lossFactor = item.phaseLossEnabled ? 86_400 / item.latentHeatJPerKg : 0;
     item.unmitigatedLossKgPerDay = item.qLeakW * lossFactor;

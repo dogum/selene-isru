@@ -122,8 +122,14 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   kElectrolyzerMass: {
     rangeRationale: "Bounded around the NASA case's PEM electrolyzer and gas dryers.",
     validity: "Derived from one small (67 kg/day) design and scaled linearly with water processed; storage tanks are sized separately in the cryo block.",
-    applicability: "Polar propellant mode, and the equatorial ilmenite plant's water electrolysis",
+    applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis",
     defaultUncertainty: 0.3
+  },
+  kSabatierMass: {
+    rangeRationale: "From the Sabatier reactor alone with its recuperator, about 1–2.3 kg per kg/day of methane in PNNL's human-scale Mars plant, to twice NASA's whole Mars atmosphere-processing block.",
+    validity: "Reactor, condenser, water separator, and CH₄/H₂ separation, scaled linearly with methane made. The default is NASA's 2017 Mars block with its margins, which also carries a CO₂ freezer that a loop fed from imported CO₂ does not need; the CO₂ feed store is sized separately in the cryo block, so the default errs heavy.",
+    applicability: "Polar site · Sabatier loop",
+    defaultUncertainty: 0.5
   },
   Vel: {
     applicability: "Polar propellant mode and Sabatier loop, and the equatorial ilmenite plant's water electrolysis"

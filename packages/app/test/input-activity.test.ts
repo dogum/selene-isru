@@ -79,7 +79,8 @@ describe("input activity", () => {
     const sabatier = { ...polar, enableSabatier: true };
     const propellant = { ...polar, enableSabatier: false, polarProduct: "propellant" as const };
     expect(shown(water)).toEqual([]);
-    expect(shown(sabatier)).toEqual(["Vel", "etaFaradayEl"]);
+    // v0.13: the Sabatier loop carries the propellant-mode electrolyzer.
+    expect(shown(sabatier)).toEqual(["Vel", "etaFaradayEl", "kElectrolyzerMass"]);
     expect(shown(propellant)).toEqual([...keys]);
     for (const [params, visible] of [[water, shown(water)], [sabatier, shown(sabatier)], [propellant, shown(propellant)]] as const) {
       for (const key of keys) {

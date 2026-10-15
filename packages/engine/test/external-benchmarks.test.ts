@@ -115,6 +115,31 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expect(miningPowerW / expected.excavatorPowerW!).toBeLessThan(2);
   });
 
+  test("Sabatier block mass comes from NASA's Mars plant; the reactor alone is a small part of it", () => {
+    const block = benchmark("kleinhenz-paz-2017-sabatier-block");
+    expect(block.kind).toBe("calibration");
+    const input = block.inputs as Record<string, number>;
+    const derived = input.atmosphereProcessingKg! / (input.methaneKg! / input.productionDays!);
+    expectRelative(derived, block);
+    expectRelative(DEFAULTS.kSabatierMass, block);
+    const reactor = benchmark("pnnl-2005-sabatier-reactor");
+    expect(reactor.kind).toBe("documentation-only");
+    const r = reactor.inputs as Record<string, number>;
+    const methaneKgPerDay = r.propellantKg! / (1 + r.oxygenToMethane!) / r.productionDays!;
+    expectRelative2(r.reactorKg! / methaneKgPerDay, reactor.expected as number, 0.05);
+    // The input's range reaches the reactor alone; the default carries the whole block.
+    expect(PARAM_META.kSabatierMass.min).toBeLessThan(reactor.expected as number);
+    expect(DEFAULTS.kSabatierMass / (reactor.expected as number)).toBeGreaterThan(10);
+    // The loop's plant is the water electrolyzer plus this block on the methane made.
+    const sabatier = simulate({ site: "polar", enableSabatier: true });
+    const plant = sabatier.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
+    expectRelative2(
+      plant,
+      sabatier.thermal.extractorMassKg + DEFAULTS.kElectrolyzerMass * DEFAULTS.targetKgPerDay + DEFAULTS.kSabatierMass * sabatier.production.ch4KgPerDay,
+      1e-12
+    );
+  });
+
   test("one RASSOR moves Guerrero-Gonzalez & Zabel's 2.7 t/day on 100 m hauls", () => {
     const item = benchmark("guerrero-zabel-2023-rassor-rate");
     expect(item.kind).toBe("calibration");

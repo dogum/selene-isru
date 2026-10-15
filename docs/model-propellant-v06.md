@@ -209,5 +209,6 @@ Screenshots: [rail](screenshots/propellant/propellant-rail.png),
 - **Electrolysis balance of plant.** The cell-voltage model runs about 10% below
   NASA's system power. A separate auxiliary term would close that gap.
 - **Sabatier plant mass** still reuses the MRE reactor coefficient (v0.4 item).
+  *(v0.13: done. See [`model-sabatier-mass-v013.md`](model-sabatier-mass-v013.md).)*
 - **Water cleanup** before electrolysis is not modelled. NASA's case does not
   model it either.

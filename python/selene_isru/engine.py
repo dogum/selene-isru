@@ -74,11 +74,14 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, water_electrolysis, ilmenite
     )
     power = simulate_power(params, grid_power_w, site_profile["profile"])
+    # Propellant mode and the Sabatier loop add the water electrolyzer, and the
+    # loop its reactor and gas handling, sized on the methane it makes.
     # Equatorial plants are the MRE reactor, or the ilmenite reactor and its
     # electrolyzer, whose beneficiation plant is listed apart.
     reactor_mass_kg = (
-        (params["kReactorMass"] * params["targetKgPerDay"] if mre or sabatier is not None else 0)
-        + (params["kElectrolyzerMass"] * params["targetKgPerDay"] if propellant is not None else 0)
+        (params["kReactorMass"] * params["targetKgPerDay"] if mre else 0)
+        + (params["kElectrolyzerMass"] * params["targetKgPerDay"] if propellant is not None or sabatier is not None else 0)
+        + (params["kSabatierMass"] * sabatier["ch4KgPerDay"] if sabatier is not None else 0)
         + (ilmenite["reactorMassKg"] + ilmenite["electrolyzerMassKg"] if ilmenite is not None else 0)
         + thermal["extractorMassKg"]
     )

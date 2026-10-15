@@ -240,6 +240,10 @@ The v0.12 excavator fleet (whole RASSOR-class vehicles sized from their payload,
 speed, loading time, shift, and haul distance, calibrated to Guerrero-Gonzalez &
 Zabel's 2.7 t/day) is in
 [`docs/model-excavators-v012.md`](docs/model-excavators-v012.md).
+The v0.13 Sabatier plant mass (the water electrolyzer plus a Sabatier block per
+kg/day of methane from NASA's 2017 Mars propellant plant, in place of the
+borrowed MRE coefficient) is in
+[`docs/model-sabatier-mass-v013.md`](docs/model-sabatier-mass-v013.md).
 
 ## Architecture
 

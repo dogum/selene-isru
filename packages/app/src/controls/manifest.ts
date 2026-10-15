@@ -267,9 +267,10 @@ export function railParamsForGroup(
     (SITE_ONLY_PARAMS[def.key] === undefined || SITE_ONLY_PARAMS[def.key] === params.site)
   );
   if (group.id === "propellant") {
-    // Electrolysis runs in propellant mode or inside the Sabatier loop; the
-    // mixture ratio and electrolyzer mass belong to propellant mode alone.
-    if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio" && def.key !== "kElectrolyzerMass");
+    // Electrolysis runs in propellant mode or inside the Sabatier loop, which
+    // carries the same electrolyzer (v0.13); the mixture ratio belongs to
+    // propellant mode alone.
+    if (params.enableSabatier) return all.filter((def) => def.key !== "mixtureRatio");
     return params.polarProduct === "propellant" ? all : [];
   }
   if (group.id === "oxygen-process") {

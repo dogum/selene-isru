@@ -271,6 +271,8 @@ export interface SimParams {
   fConversion: number;
   /** [K] */
   Tsabatier: number;
+  /** [kg/(kg/day)] Sabatier reactor and gas handling, per kg/day of methane */
+  kSabatierMass: number;
   /** [day] */
   reserveDays: number;
   storageStream: StorageStreamSelection;

@@ -1085,6 +1085,16 @@ export const PARAM_META = {
     "description": "Sabatier conversion fraction",
     "source": "spec"
   },
+  "kSabatierMass": {
+    "value": 31,
+    "min": 1,
+    "max": 60,
+    "unit": "kg/(kg/day)",
+    "kind": "parameter",
+    "group": "sabatier",
+    "description": "Sabatier reactor and gas-handling mass per kg/day of methane",
+    "source": "derived from Kleinhenz & Paz 2017, An ISRU Propellant Production System for a Fully Fueled Mars Ascent Vehicle, AIAA 2017-0423 (NTRS 20170001421), Fig. 10A: atmosphere processing (CO2 freezer, microchannel Sabatier reactor, condenser, water and CH4/H2 separators) about 450 kg for 6,978 kg of methane in 480 days, margins included; Brooks et al. 2005, PNNL-15456, Fig. 6.5: the Sabatier reactor alone about 22 kg for 9.9 kg/day of methane"
+  },
   "Tsabatier": {
     "value": 623,
     "min": 523,
@@ -2346,6 +2356,7 @@ export const DEFAULTS = {
   "mixtureRatio": 6,
   "kElectrolyzerMass": 1.46,
   "fConversion": 0.95,
+  "kSabatierMass": 31,
   "Tsabatier": 623,
   "reserveDays": 30,
   "storageStream": "auto",
