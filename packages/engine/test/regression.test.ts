@@ -225,6 +225,25 @@ describe("regression anchors", () => {
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 51.83, 0.001);
   });
 
+  test("the initial overburden strip runs alongside commissioning (v0.15)", () => {
+    // New and deliberate: before the first ore the whole fleet strips the cover
+    // over the first stripAheadDays of mining. At the defaults the polar strip
+    // (11.5 days) and the basalt strip (15.7) finish inside commissioning, so
+    // no earlier number moves.
+    const polar = simulate({ site: "polar" });
+    expectRel(polar.excavation.initialStripDays, 11.54, 0.001);
+    expect(polar.campaign.firstProductDay).toBe(DEFAULTS.commissioningDays);
+    expect(simulate({}).excavation.initialStripDays).toBe(0);
+    // A longer strip delays production: 90 days of basalt cover takes 47.1 days.
+    const basalt = simulate({ equatorialProcess: "ilmenite", ilmFeed: "basalt", stripAheadDays: 90 });
+    expectRel(basalt.campaign.firstProductDay, 47.09, 0.001);
+    expectRel(basalt.campaign.paybackDays!, 262.7, 0.001);
+    // NASA's sequencing strips the whole 223-day pit first: 266 t at two RASSORs' 5.44 t/day.
+    const nasa = simulate({ site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26, plantAvailability: 0.611, commissioningDays: 2, stripAheadDays: 223 });
+    expectRel(nasa.excavation.initialStripDays, (223 * nasa.excavation.overburdenKgPerDay) / (2 * 2720), 1e-12);
+    expectRel(nasa.campaign.firstProductDay, 49.04, 0.001);
+  });
+
   test("ilmenite conversion from kinetics and reactor mass from bed hold-up (v0.10)", () => {
     // New and deliberate. Eagle's design point is unchanged: 90% at 1,000 °C
     // and 4 h, and an 18.6 t reactor at 1 t/day, so v0.8's anchors hold.

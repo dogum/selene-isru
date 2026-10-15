@@ -218,6 +218,7 @@ Screenshots: [polar rail and overburden evidence](screenshots/excavation/polar-r
   is unproven.
 - **Overburden timing.** The first strip delays production (Kleinhenz & Paz,
   Fig. 9C). The campaign's commissioning time could carry it.
+  *(v0.15: done; see [`model-overburden-timing-v015.md`](model-overburden-timing-v015.md).)*
 - **Carried from v0.8:** reactor mass with feed, conversion from kinetics, iron
   and tailings credit, a dedicated ilmenite scene, and basalt feed. *(v0.10
   took up the first two; see

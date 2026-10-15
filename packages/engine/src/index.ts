@@ -295,7 +295,8 @@ export function simulate(
           : usablePropellantKgPerDay(netO2KgPerDay, netH2KgPerDay, params.mixtureRatio),
     importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed),
     usedKgPerDay: refuelOutput === null ? null : refuelOutput.refuel.usedKgPerDay,
-    sortieIntervalDays: refuelOutput === null ? null : refuelOutput.refuel.sortieIntervalDays
+    sortieIntervalDays: refuelOutput === null ? null : refuelOutput.refuel.sortieIntervalDays,
+    initialStripDays: excavation.initialStripDays
   });
   const construction = simulateConstruction(params, production.slagKgPerDay);
   const materials = materialLedger(params, production, ilmenite);
@@ -364,6 +365,7 @@ export function simulate(
       excavatorCount: excavation.excavatorCount,
       excavatorTripsPerDay: excavation.excavatorTripsPerDay,
       excavatorKgPerDay: excavation.excavatorKgPerDay,
+      initialStripDays: excavation.initialStripDays,
       soilMovedKgPerDay: excavation.soilMovedKgPerDay,
       overburdenKgPerDay: excavation.overburdenKgPerDay
     },

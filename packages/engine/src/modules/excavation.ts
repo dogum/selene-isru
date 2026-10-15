@@ -21,6 +21,8 @@ export interface ExcavationOutput {
   excavatorTripsPerDay: number;
   /** [kg/day] */
   excavatorKgPerDay: number;
+  /** [day] */
+  initialStripDays: number;
 }
 
 export function regolithPerKgProduct(params: SimParams, xO2Effective?: number): number {
@@ -55,6 +57,7 @@ export function simulateExcavation(params: SimParams, xO2Effective?: number): Ex
   const soilMovedPerKg = regolithPerKg + overburdenPerKg;
   const soilMovedKgPerDay = params.targetKgPerDay * soilMovedPerKg;
   const fleet = excavatorFleet(params, soilMovedKgPerDay);
+  const overburdenKgPerDay = params.targetKgPerDay * overburdenPerKg;
 
   return {
     cuttingForceN,
@@ -64,9 +67,12 @@ export function simulateExcavation(params: SimParams, xO2Effective?: number): Ex
     regolithPerKgProduct: regolithPerKg,
     soilMovedPerKgProduct: soilMovedPerKg,
     soilMovedKgPerDay,
-    overburdenKgPerDay: params.targetKgPerDay * overburdenPerKg,
+    overburdenKgPerDay,
     excavatorCount: fleet.count,
     excavatorTripsPerDay: fleet.tripsPerDay,
-    excavatorKgPerDay: fleet.kgPerDayEach
+    excavatorKgPerDay: fleet.kgPerDayEach,
+    // Before the first ore, the whole fleet strips the cover over the first
+    // stripAheadDays of mining (Kleinhenz & Paz 2020 strip the whole pit).
+    initialStripDays: (params.stripAheadDays * overburdenKgPerDay) / (fleet.count * fleet.kgPerDayEach)
   };
 }

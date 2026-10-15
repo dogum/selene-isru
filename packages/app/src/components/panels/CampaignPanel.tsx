@@ -58,7 +58,12 @@ export function CampaignPanel(): React.JSX.Element {
 
   const phases = [
     { id: "deploy", label: "DEPLOY", from: 0, to: campaign.deploymentDays },
-    { id: "commission", label: "COMMISSION", from: campaign.deploymentDays, to: campaign.firstProductDay },
+    {
+      id: "commission",
+      label: result.excavation.initialStripDays > params.commissioningDays ? "STRIP OVERBURDEN" : "COMMISSION",
+      from: campaign.deploymentDays,
+      to: campaign.firstProductDay
+    },
     { id: "operate", label: "OPERATE", from: campaign.firstProductDay, to: campaign.campaignEndDay }
   ].filter((phase) => phase.to - phase.from > 0);
 
@@ -167,8 +172,11 @@ export function CampaignPanel(): React.JSX.Element {
           Both sides are mass in low Earth orbit. Spent is {dedicated ? "one full stack per infrastructure lander" : "the plant's share of each lander"},
           plus spares at {formatQtyProse(campaign.leoMassPerLandedKg, "kg/kg", 4)} per kg landed. Saved is{" "}
           {refuel === null ? "product delivered" : "the product the refuelled lander burns"} × gear ratio {params.gearRatio}. Production
-          starts on day {Math.round(campaign.firstProductDay)}, after the last landing and {params.commissioningDays} days of
-          commissioning, and averages {formatQtyProse(campaign.deliveredKgPerDay, "kg/day")} at{" "}
+          starts on day {Math.round(campaign.firstProductDay)}, after the last landing and{" "}
+          {result.excavation.initialStripDays > params.commissioningDays
+            ? `a ${Math.round(result.excavation.initialStripDays)}-day initial overburden strip, which outlasts ${params.commissioningDays} days of commissioning,`
+            : `${params.commissioningDays} days of commissioning`}{" "}
+          and averages {formatQtyProse(campaign.deliveredKgPerDay, "kg/day")} at{" "}
           {Math.round(params.plantAvailability * 100)}% availability
           {refuel === null
             ? "."

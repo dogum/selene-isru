@@ -206,6 +206,7 @@ Screenshots:
   sends more fines out of the reactor window. The two fractions are separate
   inputs here; a grind-size model would couple them.
 - **Overburden timing.** The first strip delays production (in [`backlog.md`](backlog.md)).
+  *(v0.15: done; see [`model-overburden-timing-v015.md`](model-overburden-timing-v015.md).)*
 - **A surveyed deposit.** Eagle's mined-layer and overburden fractions are its
   own estimates for a mare flow under a few metres of soil.
 - **Still open from v0.8 and v0.10:** iron and tailings credit, a dedicated

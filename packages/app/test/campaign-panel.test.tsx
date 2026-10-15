@@ -9,6 +9,7 @@ import { COMPARE_METRICS } from "../src/analysis/compare";
 import { campaignCsv, refuelCsv } from "../src/analysis/panelExports";
 import { caseSummary } from "../src/analysis/summary";
 import { CampaignPanel } from "../src/components/panels/CampaignPanel";
+import { GROUPS, railParamsForGroup } from "../src/controls/manifest";
 import { parseParams, serializeParams } from "../src/lib/url";
 import { useStore } from "../src/state/store";
 
@@ -108,6 +109,31 @@ describe("campaign panel", () => {
     expect(shared).toBeLessThan(242);
     expect(screen.getByText(`PAYS BACK ON DAY ${Math.round(shared)}`)).toBeTruthy();
     expect(screen.getByRole("button", { name: "SHARED MANIFEST" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("names the initial overburden strip when it outlasts commissioning (v0.15)", () => {
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS, site: "polar" }));
+    render(<CampaignPanel />);
+    // The default polar strip (11.5 days) hides inside 30 days of commissioning.
+    expect(screen.getByText(/after the last landing and 30 days of commissioning/)).toBeTruthy();
+    cleanup();
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", stripAheadDays: 90 }));
+    render(<CampaignPanel />);
+    expect(screen.getByText(/a 35-day initial overburden strip, which outlasts 30 days of commissioning/)).toBeTruthy();
+    cleanup();
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS }));
+  });
+
+  it("shows the strip input only where a mine strips overburden", () => {
+    const shown = (patch: Partial<SimParams>) =>
+      railParamsForGroup(GROUPS.find((group) => group.id === "excavation")!, { ...DEFAULTS, ...patch }).map((def) => def.key);
+    expect(shown({})).not.toContain("stripAheadDays");
+    expect(shown({ equatorialProcess: "ilmenite" })).not.toContain("stripAheadDays");
+    expect(shown({ site: "polar" })).toContain("stripAheadDays");
+    expect(shown({ equatorialProcess: "ilmenite", ilmFeed: "basalt" })).toContain("stripAheadDays");
+    // Hidden means inert: no overburden, no strip.
+    expect(inputActivity({ ...DEFAULTS }, "stripAheadDays").activity).toBe("no-effect");
+    expect(inputActivity({ ...DEFAULTS, site: "polar" }, "stripAheadDays").activity).toBe("drives-results");
   });
 
   it("shows the refuelling demand only when one is set, and credits only what the lander burns", () => {

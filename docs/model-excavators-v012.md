@@ -169,6 +169,7 @@ Screenshots:
   ledger charges spares plant-wide; a spare excavator is not landed.
 - **Overburden route.** NASA's mine strips overburden on a shorter route to
   the tailings site (half the mine length plus 10 m), before production
-  starts. Overburden timing is still on the backlog.
+  starts. Overburden timing is still on the backlog. *(v0.15: the initial strip
+  now delays production; see [`model-overburden-timing-v015.md`](model-overburden-timing-v015.md).)*
 - **Queueing and hopper waits.** NASA's excavators idle while the extractor
   hopper is full; the model assumes steady delivery.

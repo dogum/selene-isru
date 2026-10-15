@@ -299,6 +299,12 @@ export function railParamsForGroup(
   if (group.id === "power" && params.site === "polar" && params.polarProfileMode === "profile") {
     return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
   }
+  if (group.id === "excavation") {
+    // Only a mine that strips overburden (the polar pit, or a basalt layer
+    // under its soil) has an initial strip to schedule.
+    const strips = params.site === "polar" || (reducesIlmenite(params) && params.ilmFeed === "basalt");
+    return strips ? all : all.filter((def) => def.key !== "stripAheadDays");
+  }
   if (group.id !== "cryo") {
     return all;
   }
