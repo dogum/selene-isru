@@ -1839,5 +1839,103 @@
         }
       ]
     }
+  ],
+  "sizing": [
+    {
+      "name": "equatorial-crew-sortie-sized",
+      "params": {
+        "refuelDemand": "lander"
+      },
+      "result": {
+        "targetKgPerDay": 111.14273466744,
+        "limitedBy": "oxygen",
+        "bound": "within"
+      }
+    },
+    {
+      "name": "equatorial-ilmenite-tanker-sized",
+      "params": {
+        "equatorialProcess": "ilmenite",
+        "refuelDemand": "lander",
+        "sortiesPerYear": 8,
+        "McargoDown": 5000
+      },
+      "result": {
+        "targetKgPerDay": 360.75669746874,
+        "limitedBy": "oxygen",
+        "bound": "within"
+      }
+    },
+    {
+      "name": "polar-propellant-crew-sized",
+      "params": {
+        "site": "polar",
+        "polarProduct": "propellant",
+        "refuelDemand": "lander"
+      },
+      "result": {
+        "targetKgPerDay": 166.71410200114,
+        "limitedBy": "hydrogen",
+        "bound": "within"
+      }
+    },
+    {
+      "name": "polar-propellant-passive-sized",
+      "params": {
+        "site": "polar",
+        "polarProduct": "propellant",
+        "refuelDemand": "lander",
+        "cryoControlMode": "passive",
+        "sortiesPerYear": 4
+      },
+      "result": {
+        "targetKgPerDay": 1367.0891847703,
+        "limitedBy": "hydrogen",
+        "bound": "within"
+      }
+    },
+    {
+      "name": "equatorial-light-lander-at-min",
+      "params": {
+        "refuelDemand": "lander",
+        "sortiesPerYear": 0.5,
+        "McargoDown": 0,
+        "McargoUp": 0,
+        "MdryReusable": 2000,
+        "dvDescent": 1800,
+        "dvAscent": 1700,
+        "IspReusable": 465
+      },
+      "result": {
+        "targetKgPerDay": 10,
+        "limitedBy": "oxygen",
+        "bound": "min"
+      }
+    },
+    {
+      "name": "equatorial-heavy-weekly-at-max",
+      "params": {
+        "refuelDemand": "lander",
+        "sortiesPerYear": 52,
+        "McargoDown": 60000,
+        "McargoUp": 30000,
+        "dvDescent": 3200,
+        "dvAscent": 3000,
+        "IspReusable": 350
+      },
+      "result": {
+        "targetKgPerDay": 20000,
+        "limitedBy": "oxygen",
+        "bound": "max"
+      }
+    },
+    {
+      "name": "polar-water-no-demand",
+      "params": {
+        "site": "polar",
+        "refuelDemand": "lander"
+      },
+      "result": null
+    }
   ]
 }

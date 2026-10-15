@@ -2,7 +2,7 @@
 
 Open items gathered from every "left for later" and "remaining" section in the
 audit trail ([`model-audit-v02.md`](model-audit-v02.md) through
-[`model-overburden-timing-v015.md`](model-overburden-timing-v015.md)), plus the
+[`model-size-to-demand-v016.md`](model-size-to-demand-v016.md)), plus the
 visual and Custom Site notes. Each item names the doc it came from. When an item
 ships, delete it here and annotate the source doc, as the audit trail already
 does.
@@ -20,8 +20,7 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 
 | # | Item | Size | Source in hand | From |
 |---|---|---|---|---|
-| 1 | **Sizing the plant to its demand.** A control that sets the target from the refuelling demand. | S | — (model already has the demand) | v0.7 |
-| 2 | **Radiator area into fission mass.** Computed but not charged; `alphaSpecific` lumps it today. | S | needs a radiator areal-mass source | v0.4 |
+| 1 | **Radiator area into fission mass.** Computed but not charged; `alphaSpecific` lumps it today. | S | needs a radiator areal-mass source | v0.4 |
 
 ## Model depth, larger
 
@@ -30,6 +29,7 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 | Polar ridge-and-tanker architecture (NASA's: process on the lit ridge, haul water from the crater) beside today's beamed-power crater plant | L | v0.4, v0.6 |
 | Phased start-up: production as each modular train lands, and on the first exposed face while stripping continues | M | v0.5, v0.15 |
 | Lander reuse: delivery landers refuelled with ISRU propellant lower `M0leo` after the first landing | M | v0.5, v0.7 |
+| Sizing for return or to fill the landings a plant needs, and a target that follows the demand live | S | v0.16 |
 | Methalox landers fed by the Sabatier loop (own mixture ratio and Isp) | M | v0.7 |
 | Propellant export to a depot, credited at an in-orbit gear ratio | M | v0.7 |
 | Ilmenite grain size through a shrinking-core rate | M | v0.10 |

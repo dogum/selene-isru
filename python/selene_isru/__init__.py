@@ -1,5 +1,5 @@
 from .constants import DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS
-from .engine import sample_uncertainty, simulate, simulate_timeseries
+from .engine import sample_uncertainty, simulate, simulate_timeseries, size_to_demand
 from .modules.campaign import campaign_at, campaign_timeline
 from .modules.construction import shield_full_balance_m
 from .modules.electrolysis import (
@@ -53,5 +53,6 @@ __all__ = [
     "shield_full_balance_m",
     "simulate",
     "simulate_timeseries",
+    "size_to_demand",
     "sortie_propellant_kg",
 ]

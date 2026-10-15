@@ -23,6 +23,7 @@ import type {
   SiteDesignEvaluation
 } from "./site-design/types";
 import type {
+  DemandSizing,
   FlowEdge,
   IlmeniteResult,
   PowerStrategy,
@@ -84,6 +85,7 @@ export { resolvePolarProfile, samplePolarProfile } from "./modules/siteProfile";
 export { secSubDeliveredJPerKg, secSubJPerKg } from "./modules/thermal";
 export type {
   CampaignResult,
+  DemandSizing,
   DeploymentManifest,
   EquatorialProcess,
   FlowEdge,
@@ -937,6 +939,60 @@ export function sampleUncertainty(
     nMissions: summarize(samples.nMissions),
     leverageL: summarize(samples.leverageL)
   };
+}
+
+/** Bisection stops once the bracket is this narrow relative to its top [1]. */
+const SIZING_REL_TOL = 1e-12;
+/** A guard on the bisection; the 10 kg/day to 20 t/day bounds need about 45 halvings. */
+const SIZING_MAX_STEPS = 200;
+
+/**
+ * Size the plant to its refuelling demand: the smallest target at which every
+ * component the plant makes meets the lander's demand for it, so the plant
+ * supplies all the demand it can and Earth only what the plant cannot make.
+ * Each component's coverage is its supply after storage losses and downtime
+ * over its demand; the plant is sized where the smaller coverage reaches 1.
+ * A larger plant only adds product the lander does not burn. Water splits
+ * richer in oxygen than the lander burns it, so a plant sized to its hydrogen
+ * leaves oxygen over.
+ *
+ * Supply rises monotonically with the target (storage losses grow more slowly
+ * than output, and small plants on passive storage can lose all of it), so a
+ * bisection over the target's bounds finds the size. It returns the bracket's
+ * low end, short by under a part in 1e12, so float noise never shows as
+ * surplus. Returns null when no demand applies.
+ */
+export function sizeToDemand(input: Partial<SimParams>): DemandSizing | null {
+  const params = normalizeParams(input).params;
+  type Coverage = Record<DemandSizing["limitedBy"], number>;
+  const coverage = (targetKgPerDay: number): Coverage | null => {
+    const refuel = simulate({ ...params, targetKgPerDay }).refuel;
+    if (refuel === null) return null;
+    return {
+      oxygen: refuel.demandO2KgPerDay > 0 ? refuel.supplyO2KgPerDay / refuel.demandO2KgPerDay : 0,
+      hydrogen: refuel.demandFuelKgPerDay > 0 ? refuel.supplyH2KgPerDay / refuel.demandFuelKgPerDay : 0
+    };
+  };
+
+  let low: number = PARAM_META.targetKgPerDay.min;
+  let high: number = PARAM_META.targetKgPerDay.max;
+  const lowCover = coverage(low);
+  const highCover = coverage(high);
+  if (lowCover === null || highCover === null) return null;
+  // The components the plant makes at all: oxygen at the equator, both in propellant mode.
+  const made = (["oxygen", "hydrogen"] as const).filter((component) => highCover[component] > 0);
+  const limiting = (cover: Coverage): DemandSizing["limitedBy"] =>
+    made.reduce((last, component) => (cover[component] < cover[last] ? component : last));
+  const covered = (cover: Coverage): number => cover[limiting(cover)];
+
+  if (covered(lowCover) >= 1) return { targetKgPerDay: low, limitedBy: limiting(lowCover), bound: "min" };
+  if (covered(highCover) < 1) return { targetKgPerDay: high, limitedBy: limiting(highCover), bound: "max" };
+  for (let step = 0; step < SIZING_MAX_STEPS && high - low > high * SIZING_REL_TOL; step += 1) {
+    const middle = (low + high) / 2;
+    if (covered(coverage(middle)!) >= 1) high = middle;
+    else low = middle;
+  }
+  return { targetKgPerDay: low, limitedBy: limiting(coverage(low)!), bound: "within" };
 }
 
 const U64_MASK = (1n << 64n) - 1n;

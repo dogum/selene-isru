@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from selene_isru import sample_uncertainty, simulate, simulate_timeseries
+from selene_isru import sample_uncertainty, simulate, simulate_timeseries, size_to_demand
 from selene_isru.constants import DEFAULTS
 from selene_isru.modules.construction import shield_full_balance_m, simulate_construction
 from selene_isru.modules.electrolysis import melt_heat_j_per_kg, oxide_model_yield, sec_elec_j_per_kg
@@ -265,6 +265,33 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     assert_rel(plant / 1000, 13.23, 0.001)
     assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.65, 0.001)  # v0.14: electrolysis balance of plant
     assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 51.83, 0.001)
+
+
+def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
+    # New and deliberate: size_to_demand finds the smallest target at which every
+    # component the plant makes meets the lander's demand; simulate() does not change.
+    crew = {"refuelDemand": "lander"}
+    crew_size = size_to_demand(crew)
+    assert_rel(crew_size["targetKgPerDay"], 111.14, 0.001)
+    crew_sized = simulate({**crew, "targetKgPerDay": crew_size["targetKgPerDay"]})
+    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 13.91, 0.001)
+    assert_rel(crew_sized["campaign"]["returnRatio"], 0.9211, 0.001)
+    assert crew_sized["campaign"]["paysBackInCampaign"] is False
+    polar = {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander"}
+    polar_size = size_to_demand(polar)
+    assert polar_size["limitedBy"] == "hydrogen"
+    assert_rel(polar_size["targetKgPerDay"], 166.71, 0.001)
+    polar_sized = simulate({**polar, "targetKgPerDay": polar_size["targetKgPerDay"]})
+    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.42, 0.001)
+    assert_rel(polar_sized["campaign"]["returnRatio"], 1.0275, 0.001)
+    assert polar_sized["campaign"]["paybackDays"] == polar_sized["campaign"]["campaignEndDay"]
+    assert simulate(polar)["campaign"]["paysBackInCampaign"] is False
+    busy = {**polar, "sortiesPerYear": 20}
+    busy_sized = simulate({**busy, "targetKgPerDay": size_to_demand(busy)["targetKgPerDay"]})
+    assert_rel(busy_sized["production"]["targetKgPerDay"], 3334.3, 0.001)
+    assert busy_sized["logistics"]["nMissions"] == 3
+    assert_rel(busy_sized["campaign"]["returnRatio"], 5.250, 0.001)
+    assert busy_sized["campaign"]["netLeoMassKg"] > simulate(busy)["campaign"]["netLeoMassKg"]
 
 
 def test_initial_overburden_strip_runs_alongside_commissioning_v015() -> None:

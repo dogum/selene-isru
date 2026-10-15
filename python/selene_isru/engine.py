@@ -5,6 +5,7 @@ import sys
 from collections.abc import Callable
 from typing import Any
 
+from .constants import PARAM_META
 from .modules.campaign import simulate_campaign
 from .modules.construction import simulate_construction
 from .modules.cryo import simulate_cryo
@@ -617,6 +618,67 @@ def sample_uncertainty(
         "nMissions": _summarize(samples["nMissions"]),
         "leverageL": _summarize(samples["leverageL"]),
     }
+
+
+# Bisection stops once the bracket is this narrow relative to its top [1].
+SIZING_REL_TOL = 1e-12
+# A guard on the bisection; the 10 kg/day to 20 t/day bounds need about 45 halvings.
+SIZING_MAX_STEPS = 200
+
+
+def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
+    """Size the plant to its refuelling demand: the smallest target at which every
+    component the plant makes meets the lander's demand for it. Mirrors
+    `sizeToDemand` in the TypeScript engine; None when no demand applies."""
+    params, _ = normalize_params(input_params)
+
+    def coverage(target_kg_per_day: float) -> dict[str, float] | None:
+        refuel = simulate({**params, "targetKgPerDay": target_kg_per_day})["refuel"]
+        if refuel is None:
+            return None
+        return {
+            "oxygen": refuel["supplyO2KgPerDay"] / refuel["demandO2KgPerDay"] if refuel["demandO2KgPerDay"] > 0 else 0,
+            "hydrogen": refuel["supplyH2KgPerDay"] / refuel["demandFuelKgPerDay"]
+            if refuel["demandFuelKgPerDay"] > 0
+            else 0,
+        }
+
+    low = PARAM_META["targetKgPerDay"]["min"]
+    high = PARAM_META["targetKgPerDay"]["max"]
+    low_cover = coverage(low)
+    high_cover = coverage(high)
+    if low_cover is None or high_cover is None:
+        return None
+    # The components the plant makes at all: oxygen at the equator, both in propellant mode.
+    made = [component for component in ("oxygen", "hydrogen") if high_cover[component] > 0]
+
+    def limiting(cover: dict[str, float]) -> str:
+        last = made[0]
+        for component in made[1:]:
+            if cover[component] < cover[last]:
+                last = component
+        return last
+
+    def covered(cover: dict[str, float] | None) -> float:
+        assert cover is not None
+        return cover[limiting(cover)]
+
+    if covered(low_cover) >= 1:
+        return {"targetKgPerDay": low, "limitedBy": limiting(low_cover), "bound": "min"}
+    if covered(high_cover) < 1:
+        return {"targetKgPerDay": high, "limitedBy": limiting(high_cover), "bound": "max"}
+    step = 0
+    while step < SIZING_MAX_STEPS and high - low > high * SIZING_REL_TOL:
+        middle = (low + high) / 2
+        if covered(coverage(middle)) >= 1:
+            high = middle
+        else:
+            low = middle
+        step += 1
+    # The low end is short by under a part in 1e12, so float noise never shows as surplus.
+    low_end = coverage(low)
+    assert low_end is not None
+    return {"targetKgPerDay": low, "limitedBy": limiting(low_end), "bound": "within"}
 
 
 class SplitMix64:
