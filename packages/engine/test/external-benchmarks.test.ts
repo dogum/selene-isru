@@ -117,6 +117,17 @@ describe("external analytical benchmarks (separate from implementation parity)",
     const stackOnly = simulate({ site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26, fElectrolysisBop: 0 });
     const stackKw = stackOnly.energy.balances.find((row) => row.id === "water-electrolysis-energy")!.electricalInputW / 1000;
     expectRelative2(stackKw * (1 + DEFAULTS.fElectrolysisBop), 17.5, 0.005);
+    // Balance of plant leaves as heat: the water's chemical energy is the
+    // stack's alone, and every added watt is rejected.
+    const withBop = simulate({ site: "polar", polarProduct: "propellant", targetKgPerDay: 67.26 });
+    const ledger = (r: typeof withBop) => r.energy.balances.find((row) => row.id === "water-electrolysis-energy")!;
+    expectRelative2(ledger(withBop).usefulOutputW, ledger(stackOnly).usefulOutputW, 1e-12);
+    expectRelative2(
+      ledger(withBop).rejectedHeatW - ledger(stackOnly).rejectedHeatW,
+      ledger(withBop).electricalInputW - ledger(stackOnly).electricalInputW,
+      1e-9
+    );
+    expect(ledger(withBop).residualW).toBe(0);
   });
 
   test("polar excavation compares with the NASA mine: whole margined vehicles, not a different rate", () => {

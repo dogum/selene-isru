@@ -92,6 +92,13 @@ def test_electrolysis_bop_against_doe_pem_targets() -> None:
     stack_only = simulate({"site": "polar", "polarProduct": "propellant", "targetKgPerDay": 67.26, "fElectrolysisBop": 0})
     stack = next(entry for entry in stack_only["energy"]["balances"] if entry["id"] == "water-electrolysis-energy")
     assert stack["electricalInputW"] / 1000 * (1 + DEFAULTS["fElectrolysisBop"]) == pytest.approx(17.5, rel=0.005)
+    with_bop = simulate({"site": "polar", "polarProduct": "propellant", "targetKgPerDay": 67.26})
+    full = next(entry for entry in with_bop["energy"]["balances"] if entry["id"] == "water-electrolysis-energy")
+    assert full["usefulOutputW"] == pytest.approx(stack["usefulOutputW"], rel=1e-12)
+    assert full["rejectedHeatW"] - stack["rejectedHeatW"] == pytest.approx(
+        full["electricalInputW"] - stack["electricalInputW"], rel=1e-9
+    )
+    assert full["residualW"] == 0
 
 
 def test_polar_excavation_compares_with_nasa_mine() -> None:

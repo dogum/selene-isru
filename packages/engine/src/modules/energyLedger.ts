@@ -81,7 +81,9 @@ export function energyLedger(
       1,
       PHYSICAL_CONSTANTS.VthermoneutralWater.value * params.etaFaradayEl / params.Vel
     );
-    const chemicalW = waterElectrolysisW * thermoneutralFraction;
+    // Only the stack's power goes into the water's chemical energy; balance of
+    // plant (pumps, deionizer, dryers, controls) leaves entirely as heat.
+    const chemicalW = (waterElectrolysisW / (1 + params.fElectrolysisBop)) * thermoneutralFraction;
     return balance("water-electrolysis-energy", "Water electrolysis", waterElectrolysisW, 0, chemicalW, waterElectrolysisW - chemicalW, 0);
   };
 
