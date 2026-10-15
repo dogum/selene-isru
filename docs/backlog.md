@@ -2,7 +2,7 @@
 
 Open items gathered from every "left for later" and "remaining" section in the
 audit trail ([`model-audit-v02.md`](model-audit-v02.md) through
-[`model-basalt-feed-v011.md`](model-basalt-feed-v011.md)), plus the
+[`model-excavators-v012.md`](model-excavators-v012.md)), plus the
 visual and Custom Site notes. Each item names the doc it came from. When an item
 ships, delete it here and annotate the source doc, as the audit trail already
 does.
@@ -20,12 +20,11 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 
 | # | Item | Size | Source in hand | From |
 |---|---|---|---|---|
-| 1 | **Whole excavators and haul distance.** Fleet output from RASSOR kinematics (speed, payload, cycle time) and haul length, rounded up to whole vehicles; small plants get at least one. | M | Guerrero-Gonzalez & Zabel 2023, Kleinhenz & Paz 2020 | v0.9 |
-| 2 | **Sabatier plant mass.** Still borrows the MRE reactor coefficient; give it its own, sourced. | S | NASA polar propellant case (partial) | v0.4, v0.6 |
-| 3 | **Electrolysis balance of plant.** The cell model runs about 10% under NASA's system power; add an auxiliary term. | S | Kleinhenz & Paz 2020 | v0.6 |
-| 4 | **Overburden timing.** The first strip, at the pole or over an ilmenite plant's basalt, delays production; carry it in the campaign's commissioning time. | S | Kleinhenz & Paz 2020, Fig. 9C | v0.9, v0.11 |
-| 5 | **Sizing the plant to its demand.** A control that sets the target from the refuelling demand. | S | — (model already has the demand) | v0.7 |
-| 6 | **Radiator area into fission mass.** Computed but not charged; `alphaSpecific` lumps it today. | S | needs a radiator areal-mass source | v0.4 |
+| 1 | **Sabatier plant mass.** Still borrows the MRE reactor coefficient; give it its own, sourced. | S | NASA polar propellant case (partial) | v0.4, v0.6 |
+| 2 | **Electrolysis balance of plant.** The cell model runs about 10% under NASA's system power; add an auxiliary term. | S | Kleinhenz & Paz 2020 | v0.6 |
+| 3 | **Overburden timing.** The first strip, at the pole or over an ilmenite plant's basalt, delays production; carry it in the campaign's commissioning time. | S | Kleinhenz & Paz 2020, Fig. 9C | v0.9, v0.11 |
+| 4 | **Sizing the plant to its demand.** A control that sets the target from the refuelling demand. | S | — (model already has the demand) | v0.7 |
+| 5 | **Radiator area into fission mass.** Computed but not charged; `alphaSpecific` lumps it today. | S | needs a radiator areal-mass source | v0.4 |
 
 ## Model depth, larger
 
@@ -38,6 +37,7 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 | Propellant export to a depot, credited at an in-orbit gear ratio | M | v0.7 |
 | Ilmenite grain size through a shrinking-core rate | M | v0.10 |
 | Basalt grind size coupling liberation and fines lost | M | v0.11 |
+| Haul energy: mining energy that grows with haul distance (split `eMining` into digging and driving) | S | v0.12 |
 | Ilmenite stage count as a design input (Eagle's single-stage case) | S | v0.10 |
 | Reduction of TiO₂ and of FeO in other minerals | M | v0.8, v0.10 |
 | Iron and tailings credit (iron product, bagged or bermed tailings as shielding) | M | v0.8 |

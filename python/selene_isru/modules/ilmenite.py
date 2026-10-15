@@ -4,6 +4,7 @@ import math
 from typing import Any
 
 from ..constants import c
+from .fleet import excavator_fleet
 from .sabatier import simulate_water_electrolysis
 
 
@@ -118,7 +119,7 @@ def simulate_ilmenite(params: dict[str, Any], o2_kg_per_day: float) -> dict[str,
         "secReaction_JPerKg": sec_reaction,
         "secReactorLoss_JPerKg": params["fIlmHeatLoss"] * (sec_sensible + sec_reaction),
         "secWaterElectrolysis_JPerKg": water["secWaterElectrolysis_JPerKg"] * water_per_kg_o2,
-        "miningMassKg": params["kMiningMass"] * (o2_kg_per_day * moved_per_kg_o2),
+        "miningMassKg": excavator_fleet(params, o2_kg_per_day * moved_per_kg_o2)["massKg"],
         "beneficiationMassKg": beneficiation_mass_coefficient * o2_kg_per_day * beneficiated_per_kg_o2,
         "bedHoldupKg": bed_holdup_kg,
         "bedMassKg": bed_mass_kg,

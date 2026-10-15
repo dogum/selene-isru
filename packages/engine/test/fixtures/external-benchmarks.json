@@ -105,7 +105,20 @@
       "source": "Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water, AIAA 2020-4042",
       "sourceUrl": "https://ntrs.nasa.gov/api/citations/20205007966/downloads/PolarWaterISRUstudy_Kleinhenz_final.pdf",
       "sourceLocator": "Table 3 (398 t of icy regolith over 225 days less 48 h commissioning; 20 cm of overburden over a 30 cm mined depth); Sec. IV.C (two RASSOR excavators); Fig. 8 excavator mass (~161 kg) and mine power (~212 W), measured on the log axes, both including the study's margins.",
-      "modelSimplification": "Comparison, not calibration: the model sizes a continuous fleet at 0.0244 kg per kg/day of soil moved with no margin (Guerrero-Gonzalez & Zabel 2023), about 73 kg here. The study rounds up to two whole 66 kg RASSORs and adds its 20% growth margin (2 x 66 x 1.2 = 158 kg). Its excavators also idle while the extractor hopper is full, so they draw less power than the model's 10.1 kJ per kg of soil moved."
+      "modelSimplification": "Comparison, not calibration: since v0.12 the model also lands two whole 66 kg RASSORs here (132 kg), without margin. The study adds its 20% growth margin (2 x 66 x 1.2 = 158 kg). Its excavators also idle while the extractor hopper is full, so they draw less power than the model's 10.1 kJ per kg of soil moved."
+    },
+    {
+      "id": "guerrero-zabel-2023-rassor-rate",
+      "kind": "calibration",
+      "quantity": "soil one RASSOR excavator moves per day on 100 m hauls",
+      "inputs": { "haulDistanceM": 100, "excavatorSpeedMps": 0.27, "excavatorLoadingMin": 9, "excavatorHoursPerDay": 16, "excavatorPayloadKg": 80 },
+      "expected": 2700,
+      "unit": "kg/day",
+      "relativeTolerance": 0.01,
+      "source": "Guerrero-Gonzalez & Zabel 2023, System analysis of an ISRU production plant: extraction of metals and oxygen from lunar regolith, Acta Astronautica 203:187-201",
+      "sourceUrl": "https://doi.org/10.1016/j.actaastro.2022.11.050",
+      "sourceLocator": "Sec. 3.4.1: 80 kg payload, 16 h of operation, mine, plant, and disposal site 100 m apart, 0.27 m/s, 9 min of excavation and disposal maneuvers per trip, 2.7 t/d per vehicle",
+      "modelSimplification": "Calibration anchor: the inputs are the paper's, so agreement confirms the loop arithmetic (34 whole 27.5 min trips), not the vehicle. The paper rounds to 2.7 t/d; the model's 2,720 kg/day is the 34 whole trips."
     },
     {
       "id": "eagle-1988-no-separation-trade",

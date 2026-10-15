@@ -458,13 +458,39 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   // drums cancel the reaction force a blade would need traction to resist.
   eMining: {
     rangeRationale: "From a busy RASSOR fleet on 100 m hauls (10.1 kJ/kg) and Eagle's front-end loaders (11.9 kJ/kg) up to the 120 kJ/kg fleet figure this model used before v0.9. NASA's polar mine implies 5–6 kJ/kg, its excavators idling while the extractor hopper is full.",
-    validity: "Energy per kg of soil moved, haul to the plant and tailings back included, for every plant: MRE, ilmenite, and the polar mine. Longer hauls cost more. RASSOR-class drums have dug icy simulant, but performance near ice saturation is unproven (Kleinhenz & Paz 2020).",
+    validity: "Energy per kg of soil moved, haul to the plant and tailings back included, for every plant: MRE, ilmenite, and the polar mine. Calibrated on 100 m hauls: a longer haul needs more excavators, but this energy does not yet grow with it. RASSOR-class drums have dug icy simulant, but performance near ice saturation is unproven (Kleinhenz & Paz 2020).",
     defaultUncertainty: 0.3
   },
-  kMiningMass: {
-    rangeRationale: "From Eagle's front-end loaders (0.014) to NASA's polar mine (about 0.1), which rounds up to two whole RASSORs and adds a 20% growth margin.",
-    validity: "A continuous fleet of RASSOR-class excavators, 66 kg moving 2.7 t a day each, with no margin and no spare vehicle. Small plants need at least one whole vehicle, which this does not round up to.",
+  excavatorMassKg: {
+    rangeRationale: "From a lighter RASSOR-class vehicle to a several-hundred-kilogram loader. NASA's polar mine carries its two 66 kg RASSORs with a 20% growth margin.",
+    validity: "Landed per whole excavator, with no growth margin and no spare vehicle. Spares are charged plant-wide in the campaign ledger.",
+    defaultUncertainty: 0.2
+  },
+  excavatorPayloadKg: {
+    rangeRationale: "From a small prototype bucket to a larger hauler. RASSOR 2.0 carries 80 kg in its two drums.",
+    validity: "Soil carried per trip. The fleet is the soil moved divided by what one vehicle carries in its whole trips a day, rounded up to whole vehicles.",
+    defaultUncertainty: 0.2
+  },
+  excavatorSpeedMps: {
+    rangeRationale: "From slow driving over rough or icy ground to about 1 m/s. RASSOR averages 0.27 m/s.",
+    validity: "Average speed over the loop, loaded and empty. Hazard avoidance is not modelled; NASA's polar study multiplies traverses in the crater by 1.5, which this speed can stand in for.",
+    defaultUncertainty: 0.2
+  },
+  excavatorLoadingMin: {
+    rangeRationale: "From quick digging in loose soil to an hour in compacted or icy regolith. Guerrero-Gonzalez & Zabel allow 9 min for digging and dumping.",
+    validity: "Digging at the mine plus dumping at the plant and the tailings site, per trip.",
     defaultUncertainty: 0.3
+  },
+  excavatorHoursPerDay: {
+    rangeRationale: "From long recharges to near-continuous work. RASSOR runs 16 h and recharges 8; NASA's polar study recharges for 5 h.",
+    validity: "Only whole trips fit in the shift, so the fleet steps as trips drop out.",
+    defaultUncertainty: 0.15
+  },
+  haulDistanceM: {
+    rangeRationale: "From a mine beside the plant to a kilometre away. Both Guerrero-Gonzalez & Zabel and NASA's polar study put the mine 100 m from the plant.",
+    validity: "Each leg of the loop: mine to plant, plant to tailings site, tailings site back to the mine, all equal. It sets how many trips each excavator makes and so how many excavators land. Mining energy does not yet grow with it.",
+    applicability: "Every plant: MRE, ilmenite, and the polar mine",
+    defaultUncertainty: 0.5
   },
   overburdenRatio: {
     rangeRationale: "From an ice deposit at the surface (0) to a metre of dry overburden over a 20 cm mined layer (5). NASA's baseline strips 20 cm to mine 30 cm.",

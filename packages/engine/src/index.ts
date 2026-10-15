@@ -360,6 +360,9 @@ export function simulate(
       cuttingForceN: excavation.cuttingForceN,
       mechPowerW: excavation.mechPowerW,
       fleetMassKg: excavation.fleetMassKg,
+      excavatorCount: excavation.excavatorCount,
+      excavatorTripsPerDay: excavation.excavatorTripsPerDay,
+      excavatorKgPerDay: excavation.excavatorKgPerDay,
       soilMovedKgPerDay: excavation.soilMovedKgPerDay,
       overburdenKgPerDay: excavation.overburdenKgPerDay
     },

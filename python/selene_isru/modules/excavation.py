@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..constants import c
+from .fleet import excavator_fleet
 from .ilmenite import ilmenite_overburden_per_kg_o2, ilmenite_soil_per_kg_o2, reduces_ilmenite
 
 
@@ -26,8 +27,7 @@ def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = N
     mech_power_w = cutting_force_n * params["vCut"] / params["etaDrive"]
     regolith_per_kg = regolith_per_kg_product(params, x_o2_effective)
     # Every plant's mining energy and fleet scale with the soil it moves. The
-    # polar pit mine also strips dry overburden to reach the icy regolith.
-    # The polar pit mine strips dry overburden to reach the icy regolith, and a
+    # polar pit mine strips dry overburden to reach the icy regolith, and a
     # basalt mine the soil over the bedrock.
     if params["site"] == "polar":
         overburden_per_kg = params["overburdenRatio"] * regolith_per_kg
@@ -37,14 +37,18 @@ def simulate_excavation(params: dict[str, Any], x_o2_effective: float | None = N
         overburden_per_kg = 0
     soil_moved_per_kg = regolith_per_kg + overburden_per_kg
     soil_moved_kg_per_day = params["targetKgPerDay"] * soil_moved_per_kg
+    fleet = excavator_fleet(params, soil_moved_kg_per_day)
 
     return {
         "cuttingForceN": cutting_force_n,
         "mechPowerW": mech_power_w,
-        "fleetMassKg": params["kMiningMass"] * soil_moved_kg_per_day,
+        "fleetMassKg": fleet["massKg"],
         "secExcavation_JPerKg": params["eMining"] * soil_moved_per_kg,
         "regolithPerKgProduct": regolith_per_kg,
         "soilMovedPerKgProduct": soil_moved_per_kg,
         "soilMovedKgPerDay": soil_moved_kg_per_day,
         "overburdenKgPerDay": params["targetKgPerDay"] * overburden_per_kg,
+        "excavatorCount": fleet["count"],
+        "excavatorTripsPerDay": fleet["tripsPerDay"],
+        "excavatorKgPerDay": fleet["kgPerDayEach"],
     }

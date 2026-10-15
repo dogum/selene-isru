@@ -31,7 +31,7 @@ packages/engine              TypeScript physics engine (zero runtime deps, pure 
   src/site-design/             Custom Site: schema, catalog, connections, placement,
                                validate, evaluate (TS-only screening layer)
   scripts/gen-constants.ts     codegen + `--check` mode used by CI
-  scripts/check-size.mjs       192 KiB ratchet on built JS output (see below)
+  scripts/check-size.mjs       208 KiB ratchet on built JS output (see below)
   test/                        parity, conservation, regression, benchmarks, site-design
 packages/app                 React 18 + Three.js frontend (Vite)
   src/state/store.ts           zustand store: setParam → simulate() → render + URL sync
@@ -217,7 +217,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 
 - Zero runtime dependencies, pure ESM, strict TS (`exactOptionalPropertyTypes`,
   `noUncheckedIndexedAccess`).
-- `scripts/check-size.mjs` enforces a **192 KiB** comment/whitespace-stripped JS
+- `scripts/check-size.mjs` enforces a **208 KiB** comment/whitespace-stripped JS
   budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
   a tripwire against accidental bulk, not a load-time target.
 - **Units are mixed and explicitly annotated — there is no SI invariant, not
@@ -246,7 +246,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 #### The size budget is a ratchet, not a ceiling
 
 `limitBytes` in `check-size.mjs` is not derived from a load-time target or any
-measurement. It has been raised seven times — 50 → 96 → 112 → 128 → 144 → 160 → 176 → 192 KiB —
+measurement. It has been raised eight times — 50 → 96 → 112 → 128 → 144 → 160 → 176 → 192 → 208 KiB —
 each time to a round number just above what the engine then weighed, with a
 comment naming the feature that caused the growth. Nothing breaks one KiB over;
 `three.js` alone is roughly 9× the whole engine, so the engine has never been
@@ -257,7 +257,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~187 KB of ~196.6 KB. A ratchet normally reads nearly
+The current build sits at ~199 KB of ~213 KB. A ratchet normally reads nearly
 full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -462,6 +462,7 @@ in `assets/ASSET_LICENSES.md`.
 | Excavation on soil moved, polar overburden, NASA mine comparison | v0.9 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2020-polar-excavation` in `external-benchmarks.test.ts` |
 | Ilmenite conversion kinetics, bed hold-up, Eagle no-separation calibration | v0.10 tests in `ilmenite.test.ts` / `test_ilmenite.py`, v0.10 anchors in `regression.test.ts`, `eagle-1988-no-separation-trade` in `external-benchmarks.test.ts` |
 | Basalt feed chain, per-feed inputs, Eagle basalt calibration | v0.11 tests in `ilmenite.test.ts` / `test_ilmenite.py`, v0.11 anchors in `regression.test.ts`, `eagle-1988-basalt-feed` in `external-benchmarks.test.ts`, basalt route in `ilmenite-app.test.tsx` |
+| Whole excavators, trips per shift, haul distance, RASSOR rate calibration | v0.12 anchors in `regression.test.ts` / `test_regression.py`, `guerrero-zabel-2023-rassor-rate` in `external-benchmarks.test.ts` |
 | Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
 | Ilmenite route in the app: rail, labels, scene, exports | `ilmenite-app.test.tsx` |
 | Campaign panel, status wording, CSV, URL | `campaign-panel.test.tsx` |
@@ -518,7 +519,8 @@ script run on a clean checkout at all.
   (`model-audit-v02.md` → `model-depth-v03.md` → `model-fidelity-v04.md` →
   `model-campaign-v05.md` → `model-propellant-v06.md` → `model-refuel-v07.md` →
   `model-ilmenite-v08.md` → `model-excavation-v09.md` →
-  `model-ilmenite-reactor-v010.md` → `model-basalt-feed-v011.md`) is
+  `model-ilmenite-reactor-v010.md` → `model-basalt-feed-v011.md` →
+  `model-excavators-v012.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -556,6 +558,9 @@ script run on a clean checkout at all.
 - [`docs/model-basalt-feed-v011.md`](docs/model-basalt-feed-v011.md) — crushed
   high-Ti basalt as a second ilmenite feedstock: liberation, sizing, the mined
   layer and its overburden, and the comparison with Eagle's soil-fed plant.
+- [`docs/model-excavators-v012.md`](docs/model-excavators-v012.md) — whole
+  excavators sized from RASSOR kinematics and haul distance, the retired
+  fleet coefficient, and what moved.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

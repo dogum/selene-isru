@@ -9,7 +9,7 @@ import { parseParams } from "../src/lib/url";
 
 // What a library case saved before v0.9 holds: every input, the retired ones included.
 function savedBeforeV09(params: Partial<SimParams>, legacy: Record<string, number> = {}): Record<string, unknown> {
-  const { kMiningMass: _kMiningMass, overburdenRatio: _overburdenRatio, ...current } = { ...DEFAULTS, ...params };
+  const { overburdenRatio: _overburdenRatio, ...current } = { ...DEFAULTS, ...params };
   return { ...current, eMining: 120_000, kExcFleet: 8.5, eIlmMining: 10_100, kIlmMiningMass: 0.0244, ...legacy };
 }
 
@@ -19,12 +19,12 @@ describe("inputs renamed or retired in v0.9", () => {
     vi.resetModules();
   });
 
-  it("moves an ilmenite case's mining inputs onto the shared keys and drops the product-scaled fleet", () => {
+  it("moves an ilmenite case's mining energy onto the shared key and drops the fleet coefficients", () => {
     const ilmenite = upgradeLegacyParams(savedBeforeV09({ equatorialProcess: "ilmenite" }));
     expect(ilmenite.eMining).toBe(10_100);
-    expect(ilmenite.kMiningMass).toBe(0.0244);
-    for (const key of ["eIlmMining", "kIlmMiningMass", "kExcFleet"]) expect(ilmenite).not.toHaveProperty(key);
-    // The ilmenite plant reads exactly what it read before.
+    // v0.12 lands whole excavators, so no per-kg fleet coefficient survives.
+    for (const key of ["eIlmMining", "kIlmMiningMass", "kMiningMass", "kExcFleet"]) expect(ilmenite).not.toHaveProperty(key);
+    // The ilmenite plant reads what the default ilmenite case reads.
     expect(simulate({ ...DEFAULTS, ...ilmenite } as SimParams)).toEqual(simulate({ ...DEFAULTS, equatorialProcess: "ilmenite" }));
   });
 
@@ -33,7 +33,6 @@ describe("inputs renamed or retired in v0.9", () => {
       const upgraded = upgradeLegacyParams(savedBeforeV09({ site }));
       // Energy per kg of soil meant the same thing before; only its default moved.
       expect(upgraded.eMining).toBe(120_000);
-      expect(upgraded).not.toHaveProperty("kMiningMass");
       for (const key of ["eIlmMining", "kIlmMiningMass", "kExcFleet"]) expect(upgraded).not.toHaveProperty(key);
     }
     // An ilmenite choice left over at the pole never reduced ilmenite.
@@ -55,11 +54,18 @@ describe("inputs renamed or retired in v0.9", () => {
     expect(result.conversion).toBeCloseTo(0.9, 12);
   });
 
+  it("drops the continuous fleet coefficient v0.12 replaced with whole excavators", () => {
+    // A v0.9-v0.11 case carries kMiningMass; one vehicle's mass means something else.
+    const upgraded = upgradeLegacyParams({ ...DEFAULTS, kMiningMass: 0.05 });
+    expect(upgraded).not.toHaveProperty("kMiningMass");
+    expect(simulate({ ...DEFAULTS, ...upgraded } as SimParams)).toEqual(simulate(DEFAULTS));
+    expect(parseParams("kMiningMass=0.05&haulDistanceM=300")).toEqual({ haulDistanceM: 300 });
+  });
+
   it("reads a shared link made before v0.9", () => {
     expect(parseParams("equatorialProcess=ilmenite&eIlmMining=50000&kIlmMiningMass=0.1")).toEqual({
       equatorialProcess: "ilmenite",
-      eMining: 50_000,
-      kMiningMass: 0.1
+      eMining: 50_000
     });
     expect(parseParams("kExcFleet=12&eIlmMining=50000&targetKgPerDay=500")).toEqual({ targetKgPerDay: 500 });
   });
@@ -84,7 +90,7 @@ describe("inputs renamed or retired in v0.9", () => {
       case: { name: "Old ilmenite", kind: "authored" },
       params: savedBeforeV09({ equatorialProcess: "ilmenite" }, { kIlmMiningMass: 0.05 })
     });
-    expect(caseFile.scenarios[0]!.params.kMiningMass).toBe(0.05);
+    expect(caseFile.scenarios[0]!.params).not.toHaveProperty("kMiningMass");
     expect(caseFile.scenarios[0]!.params).not.toHaveProperty("kExcFleet");
   });
 
@@ -97,7 +103,8 @@ describe("inputs renamed or retired in v0.9", () => {
     const { useStore } = await import("../src/state/store");
     const saved = useStore.getState().scenarioLibrary.find((scenario) => scenario.id === "old-ilmenite")!;
     expect(saved.params.eMining).toBe(40_000);
-    expect(saved.params.kMiningMass).toBe(DEFAULTS.kMiningMass);
+    expect(saved.params).not.toHaveProperty("kMiningMass");
+    expect(saved.params.excavatorMassKg).toBe(DEFAULTS.excavatorMassKg);
     expect(saved.params).not.toHaveProperty("eIlmMining");
   });
 });

@@ -208,9 +208,12 @@ Screenshots: [polar rail and overburden evidence](screenshots/excavation/polar-r
 ## Left for later
 
 - **Whole vehicles.** A small plant still needs one excavator, so a minimum
-  fleet would matter below about 100 kg/day of product.
+  fleet would matter below about 100 kg/day of product. *(v0.12: done; the
+  fleet is whole RASSORs, at least one. See
+  [`model-excavators-v012.md`](model-excavators-v012.md).)*
 - **Haul distance.** Both studies assume about 100 m. Energy and fleet rate
-  both scale with it, and it is not an input.
+  both scale with it, and it is not an input. *(v0.12: an input that sets the
+  fleet; its effect on mining energy remains open.)*
 - **Digging icy regolith near saturation.** No data; RASSOR performance there
   is unproven.
 - **Overburden timing.** The first strip delays production (Kleinhenz & Paz,

@@ -59,7 +59,8 @@ def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
     assert_rel(polar["thermal"]["extractorMassKg"], 4800, 1e-9)
     assert_rel(polar["thermal"]["secSub_JPerKg"] / J_PER_KWH, 1.78 / 0.75, 0.01)
     assert_rel(polar["energy"]["secTotal_kWhPerKg"], 6.478, 0.001)
-    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.48, 0.001)
+    # v0.12: 17 whole RASSORs, 1,122 kg against 1,085, move landed mass from 21.48 t.
+    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.52, 0.001)
     assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
@@ -129,13 +130,13 @@ def test_excavation_on_soil_moved_v09() -> None:
     soil = equatorial["production"]["regolithKgPerDay"]
     assert equatorial["excavation"]["soilMovedKgPerDay"] == soil
     assert equatorial["excavation"]["overburdenKgPerDay"] == 0
-    assert_rel(equatorial["excavation"]["fleetMassKg"], 0.0244 * soil, 1e-12)
-    assert_rel(equatorial["excavation"]["fleetMassKg"], 108.4, 0.001)
+    # v0.12: whole RASSORs (2 x 66 kg) replace the continuous 108.4 kg fleet.
+    assert equatorial["excavation"]["fleetMassKg"] == 132
     polar = simulate({"site": "polar"})
     ore = polar["production"]["regolithKgPerDay"]
     assert_rel(polar["excavation"]["overburdenKgPerDay"], 0.667 * ore, 1e-12)
     assert_rel(polar["excavation"]["soilMovedKgPerDay"], 1.667 * ore, 1e-12)
-    assert_rel(polar["excavation"]["fleetMassKg"], 1085, 0.001)
+    assert polar["excavation"]["fleetMassKg"] == 1122
     assert_rel(simulate({"site": "polar", "chiIce": 0.01})["energy"]["secTotal_kWhPerKg"], 20.72, 0.001)
 
 
@@ -207,7 +208,8 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     )
     assert result["plantMassThroughputDays"]["p10"] <= result["plantMassThroughputDays"]["p50"] <= result["plantMassThroughputDays"]["p90"]
     assert result["secTotal"]["p10"] <= result["secTotal"]["p50"] <= result["secTotal"]["p90"]
-    assert_rel(result["plantMassThroughputDays"]["p50"], 51.77811331203485, 1e-12)
+    # v0.12: whole excavators.
+    assert_rel(result["plantMassThroughputDays"]["p50"], 51.79906563881232, 1e-12)
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -228,3 +230,24 @@ def test_direct_warning_branches_unreachable_by_bounded_public_params() -> None:
     power_params.update({"alphaSpecific": 1000})
     power = simulate_power(power_params, 1000)
     assert "beta-le-alpha" in {warning["id"] for warning in power["warnings"]}
+
+
+def test_whole_excavators_from_rassor_kinematics_v012() -> None:
+    # New and deliberate: 34 whole 300 m loops in a 16 h shift, 2.72 t/day per
+    # RASSOR (Guerrero-Gonzalez & Zabel 2023), and only whole vehicles land.
+    equatorial = simulate({})
+    assert equatorial["excavation"]["excavatorTripsPerDay"] == 34
+    assert equatorial["excavation"]["excavatorKgPerDay"] == 2720
+    assert equatorial["excavation"]["excavatorCount"] == 2
+    assert_rel(equatorial["logistics"]["totalInfraMassKg"] / 1000, 51.83, 0.001)
+    small = simulate({"targetKgPerDay": 100})
+    assert small["excavation"]["excavatorCount"] == 1
+    assert small["excavation"]["fleetMassKg"] == 66
+    far = simulate({"haulDistanceM": 500})
+    assert far["excavation"]["excavatorTripsPerDay"] == 9
+    assert far["excavation"]["excavatorCount"] == 7
+    assert far["energy"]["secTotal_kWhPerKg"] == equatorial["energy"]["secTotal_kWhPerKg"]
+    ilmenite = simulate({"equatorialProcess": "ilmenite"})
+    assert ilmenite["excavation"]["excavatorCount"] == 121
+    assert ilmenite["ilmenite"]["miningMassKg"] == ilmenite["excavation"]["fleetMassKg"]
+    assert_rel(ilmenite["campaign"]["paybackDays"], 585.5, 0.001)
