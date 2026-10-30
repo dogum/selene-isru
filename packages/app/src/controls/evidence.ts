@@ -55,6 +55,11 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
     section: "NASA Architecture Workshop 2023 · Merancy, How: NRHO, The Artemis Orbit (cis-lunar delta-v, slides 6 and 9)"
   },
   {
+    match: /^Mason, Poston & Qualls 2008/,
+    url: "https://ntrs.nasa.gov/citations/20080013229",
+    section: "Mason, Poston & Qualls 2008, System Concepts for Affordable Fission Surface Power (NASA/TM-2008-215166), Table II and Heat Rejection"
+  },
+  {
     match: /Kleinhenz/i,
     url: "https://ntrs.nasa.gov/citations/20205007966",
     section: "NASA · Kleinhenz & Paz 2020, Case Studies for Lunar ISRU Systems Utilizing Polar Water (AIAA 2020-4042)"
@@ -451,10 +456,16 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     defaultUncertainty: 0.08
   },
   alphaSpecific: {
-    rangeRationale: "Advanced-to-conservative fission system specific-mass envelope excluding shielding.",
-    validity: "Linear mass scaling; packaging, redundancy, and minimum unit size are not resolved.",
+    rangeRationale: "Advanced-to-conservative fission system specific-mass envelope excluding the shield and the radiator.",
+    validity: "Reactor, power conversion, and power management per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. The radiator is charged separately by its area. Since v0.17 the default is 28 kg/kW: the old 30 less the 2 kg/kW its 600 K radiator carried. NASA's 40 kWe surface power design comes to 45 kg/kW on the same basis, but small units are heavier per kW.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.2
+  },
+  kRadiatorKgPerM2: {
+    rangeRationale: "Lunar fission radiator concepts span about 5–11 kg/m^2 per panel; NASA's 40 kWe design charges its whole heat-rejection subsystem at 3.9 kg per m^2 of radiating area, panels radiating from both faces.",
+    validity: "Charged per m^2 of radiating area, which the model sizes from the waste heat, the radiator temperature, its environment, emissivity, and fin efficiency. Includes pumps, coolant loops, and deployment. Calibrated to NASA's 615 kg heat-rejection subsystem for 159 m^2 before its 10% area margin; a hotter radiator than that design's 380 K would need different heat pipes.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
   },
   etaIceCapture: {
     rangeRationale: "From heavy capture loss (40%) to ideal capture; the NASA polar-water case study assumes 75%.",

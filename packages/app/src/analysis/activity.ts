@@ -50,6 +50,8 @@ const LABELS: Record<string, string> = {
   "power.solarMassKg": "solar option mass",
   "power.nuclearMassKg": "nuclear option mass",
   "power.radiatorM2": "radiator area",
+  "power.radiatorMassKg": "radiator mass",
+  "power.nuclearSpecificKgPerKw": "fission specific mass",
   "production.propellantKgPerDay": "usable propellant",
   "production.excessO2KgPerDay": "surplus oxygen",
   "campaign.paybackDays": "payback day",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { nuclearSlopeAtYear, pCritDynamicKw, solarSlopeAtYear } from "../src/index";
+import { normalizeParams, nuclearSlopeAtYear, nuclearSpecificKgPerKw, pCritDynamicKw, simulate, solarSlopeAtYear } from "../src/index";
 
 /**
  * The power-trade chart plots the two aging slopes and marks the crossover.
@@ -34,5 +34,23 @@ describe("aging slopes agree with the dynamic crossover", () => {
 
   test("a non-positive denominator has no crossover", () => {
     expect(pCritDynamicKw(4000, 5, 12, 0.01, 0.02, 1)).toBeNull();
+  });
+});
+
+/**
+ * The chart's nuclear slope is the engine's: the fission specific mass with its
+ * radiator. The engine's own crossover and nuclear mass must be rebuilt from it.
+ */
+describe("the nuclear slope carries the radiator", () => {
+  test.each([{}, { Tsink: 400 }, { site: "polar" as const, kRadiatorKgPerM2: 10 }])("%o", (input) => {
+    const params = normalizeParams(input).params;
+    const result = simulate(params);
+    const kw = result.energy.gridPowerW / 1000;
+    const alpha = result.power.nuclearSpecificKgPerKw;
+    expect(alpha).toBe(nuclearSpecificKgPerKw(params));
+    expect(Math.abs(result.power.nuclearMassKg - (params.MshieldKg + alpha * kw))).toBeLessThan(1e-9 * result.power.nuclearMassKg);
+    const beta = result.power.solarMassKg / kw;
+    const dynamic = pCritDynamicKw(params.MshieldKg, beta, alpha, params.dSolar, params.dNuclear, params.missionYears);
+    expect(result.power.pCritDynamicW).toBe(dynamic === null ? 0 : dynamic * 1000);
   });
 });

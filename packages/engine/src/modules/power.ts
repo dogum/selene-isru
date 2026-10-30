@@ -13,6 +13,8 @@ export interface PowerOutput {
   nuclearMassKg: number;
   solarArrayM2: number;
   radiatorM2: number;
+  radiatorMassKg: number;
+  nuclearSpecificKgPerKw: number;
   pCritW: number;
   pCritDynamicW: number;
   beamedFloorPowerW: number | null;
@@ -61,6 +63,26 @@ export function pCritDynamicKw(
     return null;
   }
   return MshieldKg / denominator;
+}
+
+/**
+ * Fission radiating area per kW of electrical output [m^2/kW]: the waste heat
+ * per kW over the radiator's net flux to its environment.
+ */
+export function radiatorM2PerKw(params: SimParams): number {
+  const etaTherm = Math.max(1e-9, (1 - params.Tsink / params.Tsource) * params.etaMech);
+  const fluxWPerM2 =
+    params.etaRad * params.epsRad * PHYSICAL_CONSTANTS.sigma.value * (params.Tsink ** 4 - params.Tenv ** 4);
+  return (1000 * (1 / etaTherm - 1)) / Math.max(1e-9, fluxWPerM2);
+}
+
+/**
+ * Fission specific mass excluding the shield, radiator included [kg/kW]: the
+ * slope the power trade and its crossover use. Exported so charts plot the
+ * same slope the engine charges.
+ */
+export function nuclearSpecificKgPerKw(params: SimParams): number {
+  return params.alphaSpecific + params.kRadiatorKgPerM2 * radiatorM2PerKw(params);
 }
 
 export function siteCycleHours(params: SimParams, profile?: PolarProfileSummary): { dayHours: number; nightHours: number } {
@@ -122,16 +144,20 @@ export function simulatePower(
     PHYSICAL_CONSTANTS.sigma.value *
     (params.Tsink ** 4 - params.Tenv ** 4);
   const radiatorM2 = Qreject / Math.max(1e-9, radiatorDenominator);
-  const nuclearMassKg = params.MshieldKg + params.alphaSpecific * (Pgrid / 1000);
+  // The radiator is charged by its area, so it follows the temperatures; the
+  // rest of the fission system scales with electrical output.
+  const radiatorMassKg = params.kRadiatorKgPerM2 * radiatorM2;
+  const nuclearMassKg = params.MshieldKg + params.alphaSpecific * (Pgrid / 1000) + radiatorMassKg;
+  const alphaWithRadiator = nuclearSpecificKgPerKw(params);
   const architecture = strategy === "auto"
     ? solarMassKg <= nuclearMassKg ? "solar" : "nuclear"
     : strategy;
   const selectedPowerMassKg = architecture === "solar" ? solarMassKg : nuclearMassKg;
-  const pCrit = pCritKw(params.MshieldKg, betaSolar, params.alphaSpecific);
+  const pCrit = pCritKw(params.MshieldKg, betaSolar, alphaWithRadiator);
   const pCritDynamic = pCritDynamicKw(
     params.MshieldKg,
     betaSolar,
-    params.alphaSpecific,
+    alphaWithRadiator,
     params.dSolar,
     params.dNuclear,
     params.missionYears
@@ -145,7 +171,7 @@ export function simulatePower(
       module: "power",
       message: "Solar specific mass is less than or equal to nuclear specific mass.",
       value: betaSolar,
-      limit: params.alphaSpecific
+      limit: alphaWithRadiator
     });
   }
   if (params.Tsource <= params.Tsink) {
@@ -200,6 +226,8 @@ export function simulatePower(
     nuclearMassKg,
     solarArrayM2,
     radiatorM2,
+    radiatorMassKg,
+    nuclearSpecificKgPerKw: alphaWithRadiator,
     pCritW: pCrit === null ? 0 : pCrit * 1000,
     pCritDynamicW: pCritDynamic === null ? 0 : pCritDynamic * 1000,
     beamedFloorPowerW,

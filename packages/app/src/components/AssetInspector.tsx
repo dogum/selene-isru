@@ -230,14 +230,15 @@ const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
       thetaSun: "Solar incidence",
       etaCell: "Cell efficiency",
       SEstorage: "Storage specific energy",
-      alphaSpecific: "Nuclear specific mass"
+      alphaSpecific: "Fission specific mass, ex. radiator",
+      kRadiatorKgPerM2: "Radiator mass per m²"
     },
     note: "The selected solar or nuclear branch shares a switchgear deck; trackers follow the lunar cycle and radiator span follows rejected heat.",
     metrics: (r) => [
       { label: "Architecture", value: r.power.architecture.toUpperCase() },
       { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
       { label: "Solar array", value: formatQtyText(r.power.solarArrayM2, "m²") },
-      { label: "Radiator area", value: formatQtyText(r.power.radiatorM2, "m²") }
+      { label: "Radiator", value: `${formatQtyText(r.power.radiatorM2, "m²")} · ${formatQtyText(r.power.radiatorMassKg, "kg")}` }
     ]
   },
   pad: {
@@ -390,7 +391,8 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     controlLabels: {
       Tsource: "Hot-side temperature",
       Tsink: "Sink temperature",
-      alphaSpecific: "Nuclear specific mass",
+      alphaSpecific: "Fission specific mass, ex. radiator",
+      kRadiatorKgPerM2: "Radiator mass per m²",
       epsRad: "Radiator emissivity"
     },
     note: "The rim reactor appears for the nuclear architecture; its radiator span scales with rejected heat and its switchgear lighting follows grid demand.",
@@ -398,7 +400,7 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
       { label: "Architecture", value: r.power.architecture.toUpperCase() },
       { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
       { label: "Nuclear mass", value: formatQtyText(r.power.nuclearMassKg, "kg") },
-      { label: "Radiator area", value: formatQtyText(r.power.radiatorM2, "m²") }
+      { label: "Radiator", value: `${formatQtyText(r.power.radiatorM2, "m²")} · ${formatQtyText(r.power.radiatorMassKg, "kg")}` }
     ]
   },
   habitat: {

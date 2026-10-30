@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from selene_isru import simulate
+from selene_isru import radiator_m2_per_kw, simulate
 from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -75,6 +75,27 @@ def test_polar_propellant_calibration_reproduces_nasa_baseline() -> None:
     }
     for key, value in row["expected"].items():
         assert actual[key] == pytest.approx(value, rel=row["relativeTolerance"]), key
+
+
+def test_fission_radiator_mass_per_area_from_nasa_fsp() -> None:
+    row = item("mason-2008-fsp-radiator")
+    assert row["kind"] == "calibration"
+    i = row["inputs"]
+    fsp_area_m2 = i["radiatingAreaWithMarginM2"] / (1 + i["areaMargin"])
+    areal = i["heatRejectionMassKg"] / fsp_area_m2
+    assert areal == pytest.approx(row["expected"], rel=0.001)
+    assert DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(areal, rel=0.002)
+    fsp = {
+        "Tsource": i["stirlingHotK"],
+        "Tsink": i["radiatorEffectiveK"],
+        "Tenv": i["sinkK"],
+        "etaMech": i["grossPowerKwe"] / i["reactorThermalKw"] / (1 - i["radiatorEffectiveK"] / i["stirlingHotK"]),
+    }
+    area_m2 = radiator_m2_per_kw({**DEFAULTS, **fsp}) * i["userPowerKwe"]
+    assert area_m2 == pytest.approx(fsp_area_m2, rel=0.05)
+    assert area_m2 * DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(i["heatRejectionMassKg"], rel=0.05)
+    power = simulate(fsp)["power"]
+    assert power["radiatorMassKg"] == pytest.approx(power["radiatorM2"] * DEFAULTS["kRadiatorKgPerM2"], rel=1e-12)
 
 
 def test_electrolysis_bop_against_doe_pem_targets() -> None:

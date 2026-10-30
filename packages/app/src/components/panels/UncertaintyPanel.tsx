@@ -32,7 +32,7 @@ const OPTIONS: UncertaintyOption[] = [
   { key: "reserveDays", label: "Reserve duration", rel: 0.1 },
   { key: "Nmli", label: "MLI construction", rel: 0.15 },
   { key: "etaCell", label: "PV efficiency", rel: 0.08 },
-  { key: "alphaSpecific", label: "Nuclear specific mass", rel: 0.2 },
+  { key: "alphaSpecific", label: "Fission specific mass, ex. radiator", rel: 0.2 },
   { key: "Vcell", label: "MRE cell voltage", rel: 0.08, site: "equatorial", process: "mre" },
   { key: "etaCurrent", label: "MRE current efficiency", rel: 0.12, site: "equatorial", process: "mre" },
   { key: "xO2", label: "Regolith O₂ fraction", rel: 0.12, site: "equatorial", process: "mre" },

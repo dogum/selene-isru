@@ -109,6 +109,28 @@
       "modelSimplification": "Cross-check only: large terrestrial systems carry 6-8% balance of plant over the stack. The model's 10.7%, calibrated to NASA's small lunar polar design, sits above that, as a small unit with its own pumps, deionizer, and dryers would."
     },
     {
+      "id": "mason-2008-fsp-radiator",
+      "kind": "calibration",
+      "quantity": "Fission radiator mass per m^2 of radiating area, and the model's radiator area at the FSP design point",
+      "inputs": {
+        "heatRejectionMassKg": 615,
+        "radiatingAreaWithMarginM2": 175,
+        "areaMargin": 0.1,
+        "userPowerKwe": 40,
+        "grossPowerKwe": 48,
+        "reactorThermalKw": 175,
+        "stirlingHotK": 830,
+        "radiatorEffectiveK": 380,
+        "sinkK": 250
+      },
+      "expected": 3.866,
+      "unit": "kg/m^2",
+      "source": "Mason, Poston & Qualls 2008, System Concepts for Affordable Fission Surface Power, NASA/TM-2008-215166",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20080013229",
+      "sourceLocator": "Table II (reference concept mass summary): heat rejection 615 kg, 175 m^2 total area; text: total two-sided radiator area 175 m^2 including a 10 percent area margin, effective radiator temperature 380 K, effective sink about 250 K, 175 kWt reactor, 48 kWe gross for 40 kWe of user loads, Stirling hot end 830 K",
+      "modelSimplification": "The heat rejection subsystem (panels, heat pipes, pumped water loops, deployment) is charged per m^2 of radiating area before margin: 615 / (175 / 1.1) = 3.87 kg/m^2. At FSP's temperatures and 27.4% gross conversion the model sizes 152 m^2 for 40 kWe, against FSP's 159 m^2 before margin: the model rejects only the waste heat behind the delivered power, not the 8 kWe of FSP's electrical losses and parasitic loads. Radiator emissivity and fin efficiency are the model defaults; FSP does not state them."
+    },
+    {
       "id": "kleinhenz-paz-2020-polar-excavation",
       "kind": "documentation-only",
       "quantity": "polar mine excavator mass and power for the NASA baseline case",
