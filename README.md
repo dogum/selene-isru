@@ -254,6 +254,9 @@ commissioning, delaying production when it takes longer) is in
 The v0.16 demand sizing (a solver and a rail control that set the plant target
 to the smallest plant meeting a refuelling demand for everything it makes) is
 in [`docs/model-size-to-demand-v016.md`](docs/model-size-to-demand-v016.md).
+The v0.17 radiator mass (the fission radiator charged by its area, calibrated to
+NASA's 40 kWe fission surface power design) is in
+[`docs/model-radiator-mass-v017.md`](docs/model-radiator-mass-v017.md).
 
 ## Architecture
 

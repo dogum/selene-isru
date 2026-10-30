@@ -121,7 +121,8 @@ describe("phase 2 dynamics regression anchors", () => {
     expect(result.secTotal.p50).toBeLessThanOrEqual(result.secTotal.p90);
     // v0.6: LOX conditioning and liquefier mass recalibrated (see regression.test.ts).
     // v0.12: whole excavators (see regression.test.ts).
-    expectRel(result.plantMassThroughputDays.p50, 51.79906563881232, 1e-12);
+    // v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
+    expectRel(result.plantMassThroughputDays.p50, 51.78056574665898, 1e-12);
     expectRel(result.secTotal.p50, 23.758063285514478, 1e-12);
   });
 });

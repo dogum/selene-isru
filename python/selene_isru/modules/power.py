@@ -24,6 +24,18 @@ def p_crit_dynamic_kw(m_shield_kg: float, beta: float, alpha: float, d_solar: fl
     return None if denominator <= 0 else m_shield_kg / denominator
 
 
+def radiator_m2_per_kw(params: dict[str, Any]) -> float:
+    """Fission radiating area per kW of electrical output [m^2/kW]."""
+    eta_therm = max(1e-9, (1 - params["Tsink"] / params["Tsource"]) * params["etaMech"])
+    flux_w_per_m2 = params["etaRad"] * params["epsRad"] * c("sigma") * (params["Tsink"] ** 4 - params["Tenv"] ** 4)
+    return (1000 * (1 / eta_therm - 1)) / max(1e-9, flux_w_per_m2)
+
+
+def nuclear_specific_kg_per_kw(params: dict[str, Any]) -> float:
+    """Fission specific mass excluding the shield, radiator included [kg/kW]."""
+    return params["alphaSpecific"] + params["kRadiatorKgPerM2"] * radiator_m2_per_kw(params)
+
+
 def site_cycle_hours(params: dict[str, Any], profile: dict[str, Any] | None = None) -> tuple[float, float]:
     if params["site"] == "equatorial":
         return c("tDay"), c("tNight")
@@ -65,14 +77,18 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     q_reject = q_fission - p_grid
     radiator_denominator = params["etaRad"] * params["epsRad"] * c("sigma") * (params["Tsink"] ** 4 - params["Tenv"] ** 4)
     radiator_m2 = q_reject / max(1e-9, radiator_denominator)
-    nuclear_mass_kg = params["MshieldKg"] + params["alphaSpecific"] * (p_grid / 1000)
+    radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
+    nuclear_mass_kg = params["MshieldKg"] + params["alphaSpecific"] * (p_grid / 1000) + radiator_mass_kg
+    alpha_with_radiator = nuclear_specific_kg_per_kw(params)
     architecture = "solar" if solar_mass_kg <= nuclear_mass_kg else "nuclear"
     selected_power_mass_kg = solar_mass_kg if architecture == "solar" else nuclear_mass_kg
-    p_crit = p_crit_kw(params["MshieldKg"], beta_solar, params["alphaSpecific"])
-    p_crit_dynamic = p_crit_dynamic_kw(params["MshieldKg"], beta_solar, params["alphaSpecific"], params["dSolar"], params["dNuclear"], params["missionYears"])
+    p_crit = p_crit_kw(params["MshieldKg"], beta_solar, alpha_with_radiator)
+    p_crit_dynamic = p_crit_dynamic_kw(
+        params["MshieldKg"], beta_solar, alpha_with_radiator, params["dSolar"], params["dNuclear"], params["missionYears"]
+    )
     warnings: list[dict[str, Any]] = []
     if p_crit is None:
-        warnings.append({"id": "beta-le-alpha", "severity": "caution", "module": "power", "message": "Solar specific mass is less than or equal to nuclear specific mass.", "value": beta_solar, "limit": params["alphaSpecific"]})
+        warnings.append({"id": "beta-le-alpha", "severity": "caution", "module": "power", "message": "Solar specific mass is less than or equal to nuclear specific mass.", "value": beta_solar, "limit": alpha_with_radiator})
     if params["Tsource"] <= params["Tsink"]:
         warnings.append({"id": "power-hot-side", "severity": "alarm", "module": "power", "message": "Fission hot-side temperature must exceed sink temperature.", "value": params["Tsource"], "limit": params["Tsink"]})
     if params["Tsink"] <= params["Tenv"]:
@@ -89,6 +105,8 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "nuclearMassKg": nuclear_mass_kg,
         "solarArrayM2": solar_array_m2,
         "radiatorM2": radiator_m2,
+        "radiatorMassKg": radiator_mass_kg,
+        "nuclearSpecificKgPerKw": alpha_with_radiator,
         "pCritW": 0 if p_crit is None else p_crit * 1000,
         "pCritDynamicW": 0 if p_crit_dynamic is None else p_crit_dynamic * 1000,
         "beamedFloorPowerW": beamed_floor_power_w,

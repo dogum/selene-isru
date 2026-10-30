@@ -226,6 +226,26 @@ describe("regression anchors", () => {
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 51.83, 0.001);
   });
 
+  test("the fission radiator is charged by its area (v0.17)", () => {
+    // New and deliberate: fission mass is shield + alphaSpecific per kW +
+    // kRadiatorKgPerM2 per m^2 of radiator. alphaSpecific drops from 30 to
+    // 28 kg/kW, the share the default 600 K radiator carried, so the default
+    // moves by 0.02 kg/kW.
+    const base = simulate({});
+    expectRel(base.power.radiatorM2, 506.8, 0.001);
+    expectRel(base.power.radiatorMassKg / 1000, 1.961, 0.001);
+    expectRel(base.power.nuclearSpecificKgPerKw, 29.98, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 31.18, 0.001);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 51.81, 0.001);
+    // The radiator now follows its temperature: at 400 K it is 1,924 m^2 and 7.4 t.
+    const cold = simulate({ Tsink: 400 });
+    expectRel(cold.power.radiatorMassKg / 1000, 7.446, 0.001);
+    expectRel(cold.power.nuclearMassKg / 1000, 36.66, 0.001);
+    expectRel(cold.logistics.totalInfraMassKg / 1000, 57.29, 0.001);
+    // The power trade's slope carries the radiator too.
+    expectRel(cold.power.nuclearSpecificKgPerKw, DEFAULTS.alphaSpecific + DEFAULTS.kRadiatorKgPerM2 * cold.power.radiatorM2 / (cold.energy.gridPowerW / 1000), 1e-9);
+  });
+
   test("sizing the plant to its refuelling demand (v0.16)", () => {
     // New and deliberate: sizeToDemand finds the smallest target at which every
     // component the plant makes meets the lander's demand. simulate() does not

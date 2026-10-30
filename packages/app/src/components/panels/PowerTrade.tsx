@@ -28,7 +28,8 @@ export function PowerTrade(): React.JSX.Element {
   const comparePGridKw = compareResult.energy.gridPowerW / 1000;
   // β from the engine's own solar sizing at the operating point (no re-derivation)
   const beta = pGridKw > 0 ? result.power.solarMassKg / pGridKw : 0;
-  const alpha = params.alphaSpecific;
+  // α from the engine: the fission system's kg/kW with its radiator, the slope it charges
+  const alpha = result.power.nuclearSpecificKgPerKw;
   const mShield = params.MshieldKg;
 
   // degradation-adjusted slopes at scrubber time t, from the same engine
@@ -209,7 +210,7 @@ export function PowerTrade(): React.JSX.Element {
           ARRAY <b className="num">{formatQtyText(result.power.solarArrayM2, "m^2")}</b>
         </div>
         <div>
-          RADIATOR <b className="num">{formatQtyText(result.power.radiatorM2, "m^2")}</b>
+          RADIATOR <b className="num">{formatQtyText(result.power.radiatorM2, "m^2")} · {formatQtyText(result.power.radiatorMassKg, "kg")}</b>
         </div>
         {result.power.beamedFloorPowerW !== null && (
           <div>

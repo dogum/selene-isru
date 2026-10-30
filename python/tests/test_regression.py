@@ -211,7 +211,8 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     assert result["plantMassThroughputDays"]["p10"] <= result["plantMassThroughputDays"]["p50"] <= result["plantMassThroughputDays"]["p90"]
     assert result["secTotal"]["p10"] <= result["secTotal"]["p50"] <= result["secTotal"]["p90"]
     # v0.12: whole excavators.
-    assert_rel(result["plantMassThroughputDays"]["p50"], 51.79906563881232, 1e-12)
+    # v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
+    assert_rel(result["plantMassThroughputDays"]["p50"], 51.78056574665898, 1e-12)
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -265,6 +266,24 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     assert_rel(plant / 1000, 13.23, 0.001)
     assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.65, 0.001)  # v0.14: electrolysis balance of plant
     assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 51.83, 0.001)
+
+
+def test_fission_radiator_charged_by_its_area_v017() -> None:
+    # New and deliberate: alphaSpecific 30 -> 28 kg/kW plus kRadiatorKgPerM2 per m^2 of radiator.
+    base = simulate({})
+    assert_rel(base["power"]["radiatorM2"], 506.8, 0.001)
+    assert_rel(base["power"]["radiatorMassKg"] / 1000, 1.961, 0.001)
+    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 29.98, 0.001)
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 31.18, 0.001)
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 51.81, 0.001)
+    cold = simulate({"Tsink": 400})
+    assert_rel(cold["power"]["radiatorMassKg"] / 1000, 7.446, 0.001)
+    assert_rel(cold["power"]["nuclearMassKg"] / 1000, 36.66, 0.001)
+    assert_rel(cold["logistics"]["totalInfraMassKg"] / 1000, 57.29, 0.001)
+    expected_slope = DEFAULTS["alphaSpecific"] + DEFAULTS["kRadiatorKgPerM2"] * cold["power"]["radiatorM2"] / (
+        cold["energy"]["gridPowerW"] / 1000
+    )
+    assert_rel(cold["power"]["nuclearSpecificKgPerKw"], expected_slope, 1e-9)
 
 
 def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:

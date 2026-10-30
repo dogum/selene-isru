@@ -358,6 +358,7 @@ export interface SimParams {
   MshieldKg: number;
   /** [kg/kW] */
   alphaSpecific: number;
+  kRadiatorKgPerM2: number;
   /** [1/yr] */
   dSolar: number;
   /** [1/yr] */
@@ -764,8 +765,12 @@ export interface SimResult {
     nuclearMassKg: number;
     /** [m^2] */
     solarArrayM2: number;
-    /** [m^2] */
+    /** fission radiating area [m^2] */
     radiatorM2: number;
+    /** fission radiator mass, part of nuclearMassKg [kg] */
+    radiatorMassKg: number;
+    /** fission specific mass excluding the shield, radiator included: the power trade's nuclear slope [kg/kW] */
+    nuclearSpecificKgPerKw: number;
     /** [W] */
     pCritW: number;
     /** [W] */

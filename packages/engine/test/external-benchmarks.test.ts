@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
+import { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -95,6 +95,36 @@ describe("external analytical benchmarks (separate from implementation parity)",
     for (const [key, value] of Object.entries(expected)) {
       expect(Math.abs(actual[key]! - value), key).toBeLessThanOrEqual(value * item.relativeTolerance!);
     }
+  });
+
+  test("fission radiator mass per area, from NASA's 40 kWe surface power design", () => {
+    const item = benchmark("mason-2008-fsp-radiator");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    // 615 kg over the 159 m^2 radiating area before FSP's 10% area margin.
+    const arealKgPerM2 = i.heatRejectionMassKg! / (i.radiatingAreaWithMarginM2! / (1 + i.areaMargin!));
+    expectRelative2(arealKgPerM2, item.expected as number, 0.001);
+    expectRelative2(DEFAULTS.kRadiatorKgPerM2, arealKgPerM2, 0.002);
+    // At FSP's temperatures and 27.4% gross conversion, the model's radiator
+    // for 40 kWe is within 5% of FSP's area before margin, and so is its mass.
+    const fsp = {
+      Tsource: i.stirlingHotK!,
+      Tsink: i.radiatorEffectiveK!,
+      Tenv: i.sinkK!,
+      etaMech: i.grossPowerKwe! / i.reactorThermalKw! / (1 - i.radiatorEffectiveK! / i.stirlingHotK!)
+    };
+    const areaM2 = radiatorM2PerKw({ ...DEFAULTS, ...fsp }) * i.userPowerKwe!;
+    const fspAreaM2 = i.radiatingAreaWithMarginM2! / (1 + i.areaMargin!);
+    expectRelative2(areaM2, fspAreaM2, 0.05);
+    expectRelative2(areaM2 * DEFAULTS.kRadiatorKgPerM2, i.heatRejectionMassKg!, 0.05);
+    // The engine charges that area to the fission system.
+    const run = simulate(fsp);
+    expectRelative2(run.power.radiatorMassKg, run.power.radiatorM2 * DEFAULTS.kRadiatorKgPerM2, 1e-12);
+    expectRelative2(
+      run.power.nuclearMassKg,
+      DEFAULTS.MshieldKg + DEFAULTS.alphaSpecific * (run.energy.gridPowerW / 1000) + run.power.radiatorMassKg,
+      1e-12
+    );
   });
 
   test("electrolysis balance of plant: NASA's small lunar design sits above DOE's terrestrial systems", () => {

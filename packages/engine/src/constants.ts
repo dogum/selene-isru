@@ -1618,14 +1618,24 @@ export const PARAM_META = {
     "source": "spec"
   },
   "alphaSpecific": {
-    "value": 30,
+    "value": 28,
     "min": 8,
     "max": 90,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
-    "description": "Fission system specific mass excluding shielding",
-    "source": "spec"
+    "description": "Fission system specific mass excluding shielding and radiator",
+    "source": "spec; 30 kg/kW less the 2 kg/kW the default 600 K radiator carried before v0.17"
+  },
+  "kRadiatorKgPerM2": {
+    "value": 3.87,
+    "min": 2,
+    "max": 12,
+    "unit": "kg/m^2",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Fission radiator mass per square metre of radiating area",
+    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: 615 kg heat rejection for 175 m^2 radiating area incl. 10% margin"
   },
   "dSolar": {
     "value": 0.05,
@@ -2440,7 +2450,8 @@ export const DEFAULTS = {
   "etaRad": 0.85,
   "epsRad": 0.85,
   "MshieldKg": 1500,
-  "alphaSpecific": 30,
+  "alphaSpecific": 28,
+  "kRadiatorKgPerM2": 3.87,
   "dSolar": 0.05,
   "dNuclear": 0.01,
   "w0Beam": 0.05,

@@ -136,7 +136,8 @@ Regression anchors for the polar default were added deliberately in
   and hauls it from the crater by tanker; this model beams power to a crater
   floor plant. Both are legitimate; only one is modelled.
 - **Radiator area** is computed but does not feed fission system mass, which is
-  carried by the lumped `alphaSpecific`.
+  carried by the lumped `alphaSpecific`. *(v0.17: the radiator is now charged by
+  its area; see [`model-radiator-mass-v017.md`](model-radiator-mass-v017.md).)*
 
 The v0.3 list of remaining validation work still applies; item 3 (polar vapor
 capture and lower-bound extraction) is now partly addressed by the capture and
