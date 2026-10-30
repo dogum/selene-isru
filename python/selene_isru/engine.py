@@ -631,7 +631,7 @@ SIZING_GRID_STEPS = 64
 def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
     """Size the plant to its refuelling demand: the smallest target at which every
     component the plant makes meets the lander's demand for it (the first on a log grid,
-    refined by bisection). Mirrors
+    or at a peak between grid sizes, refined by bisection). Mirrors
     `sizeToDemand` in the TypeScript engine; None when no demand applies."""
     params, _ = normalize_params(input_params)
 
@@ -668,36 +668,92 @@ def size_to_demand(input_params: dict[str, Any]) -> dict[str, Any] | None:
 
     if covered(low_cover) >= 1:
         return {"targetKgPerDay": min_target, "limitedBy": limiting(low_cover), "bound": "min"}
-    # Coverage need not rise with the target: a capacity-limited cooler can lose all the hydrogen once
-    # the stores outgrow it. Scan a log grid for the first size that meets the demand, then bisect there.
-    low = min_target
-    high = None
-    index = 1
-    while index <= SIZING_GRID_STEPS and high is None:
-        size = (
-            max_target
-            if index == SIZING_GRID_STEPS
-            else min_target * (max_target / min_target) ** (index / SIZING_GRID_STEPS)
-        )
-        if covered(coverage(size)) >= 1:
-            high = size
+
+    # Log-spaced sizes across the bounds, evaluated as the scan reaches them.
+    sizes = [
+        min_target
+        if index == 0
+        else max_target
+        if index == SIZING_GRID_STEPS
+        else min_target * (max_target / min_target) ** (index / SIZING_GRID_STEPS)
+        for index in range(SIZING_GRID_STEPS + 1)
+    ]
+    covers = [covered(low_cover)]
+
+    def cover_at(index: int) -> float:
+        while len(covers) <= index:
+            covers.append(covered(coverage(sizes[len(covers)])))
+        return covers[index]
+
+    def covered_at(size: float) -> float:
+        return covered(coverage(size))
+
+    def bisect(short: float, meets: float) -> dict[str, Any]:
+        low, high = short, meets
+        step = 0
+        while step < SIZING_MAX_STEPS and high - low > high * SIZING_REL_TOL:
+            middle = (low + high) / 2
+            if covered_at(middle) >= 1:
+                high = middle
+            else:
+                low = middle
+            step += 1
+        # The low end is short by under a part in 1e12, so float noise never shows as surplus.
+        low_end = coverage(low)
+        assert low_end is not None
+        return {"targetKgPerDay": low, "limitedBy": limiting(low_end), "bound": "within"}
+
+    # The size that comes closest, in case none meets the demand; ties go to the larger.
+    best = {"size": min_target, "cover": covers[0]}
+
+    def consider(size: float, cover: float) -> None:
+        if cover >= best["cover"]:
+            best["size"] = size
+            best["cover"] = cover
+
+    for index in range(SIZING_GRID_STEPS + 1):
+        cover = cover_at(index)
+        consider(sizes[index], cover)
+        if cover >= 1:
+            return bisect(sizes[index - 1], sizes[index])
+        # A rise that turns over between grid sizes can peak above 1 unseen (a capacity-limited cooler).
+        left = covers[index - 1] if index > 0 else -math.inf
+        right = cover_at(index + 1) if index < SIZING_GRID_STEPS else -math.inf
+        if cover > 0 and cover > left and cover >= right:
+            start = sizes[max(0, index - 1)]
+            peak_size, peak_cover = _golden_peak(covered_at, start, sizes[min(SIZING_GRID_STEPS, index + 1)])
+            consider(peak_size, peak_cover)
+            if peak_cover >= 1:
+                return bisect(start, peak_size)
+    return {"targetKgPerDay": best["size"], "limitedBy": limiting(coverage(best["size"])), "bound": "unmet"}
+
+
+# Golden-section steps; two grid steps narrow to under a part in 1e12.
+GOLDEN_STEPS = 60
+GOLDEN_RATIO = (math.sqrt(5) - 1) / 2
+
+
+def _golden_peak(value: Callable[[float], float], start: float, stop: float) -> tuple[float, float]:
+    """The highest value of a single-peaked function between two sizes, by golden-section search."""
+    a, b = start, stop
+    c = b - GOLDEN_RATIO * (b - a)
+    d = a + GOLDEN_RATIO * (b - a)
+    value_c = value(c)
+    value_d = value(d)
+    for _ in range(GOLDEN_STEPS):
+        if value_c >= value_d:
+            b = d
+            d = c
+            value_d = value_c
+            c = b - GOLDEN_RATIO * (b - a)
+            value_c = value(c)
         else:
-            low = size
-        index += 1
-    if high is None:
-        return {"targetKgPerDay": max_target, "limitedBy": limiting(coverage(max_target)), "bound": "max"}
-    step = 0
-    while step < SIZING_MAX_STEPS and high - low > high * SIZING_REL_TOL:
-        middle = (low + high) / 2
-        if covered(coverage(middle)) >= 1:
-            high = middle
-        else:
-            low = middle
-        step += 1
-    # The low end is short by under a part in 1e12, so float noise never shows as surplus.
-    low_end = coverage(low)
-    assert low_end is not None
-    return {"targetKgPerDay": low, "limitedBy": limiting(low_end), "bound": "within"}
+            a = c
+            c = d
+            value_c = value_d
+            d = a + GOLDEN_RATIO * (b - a)
+            value_d = value(d)
+    return (c, value_c) if value_c >= value_d else (d, value_d)
 
 
 class SplitMix64:

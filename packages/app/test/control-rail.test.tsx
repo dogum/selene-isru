@@ -153,6 +153,13 @@ describe("control rail search, changed filter, and reset", () => {
     });
     expect(useStore.getState().params.targetKgPerDay).toBe(10);
     expect(screen.getByRole("status").textContent).toMatch(/minimum: even the smallest plant meets the lander's demand\.$/);
+    // A demand no size meets says so, and names the size that comes closest.
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS, refuelDemand: "lander", sortiesPerYear: 52, McargoDown: 60000, McargoUp: 30000, dvDescent: 3200, dvAscent: 3000, IspReusable: 350 }));
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "SIZE PLANT TO DEMAND" }));
+    });
+    expect(useStore.getState().params.targetKgPerDay).toBe(20000);
+    expect(screen.getByRole("status").textContent).toBe("No plant size up to the 20\u2009t/day maximum meets the lander's oxygen demand; target set to 20\u2009t/day, which comes closest.");
     cleanup();
 
     // A Custom Site's output comes from its equipment, so it is not sized here.

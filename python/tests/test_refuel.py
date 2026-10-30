@@ -187,10 +187,46 @@ def test_the_target_is_held_at_its_bounds_when_the_demand_lies_outside_them() ->
         **EQUATORIAL, "sortiesPerYear": 52, "McargoDown": 60000, "McargoUp": 30000,
         "dvDescent": 3200, "dvAscent": 3000, "IspReusable": 350,
     })
-    assert heavy == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "oxygen", "bound": "max"}
+    assert heavy == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "oxygen", "bound": "unmet"}
     thin = {**PROPELLANT, "cryoControlMode": "passive", "Nmli": 5}
     assert simulate({**thin, "targetKgPerDay": PARAM_META["targetKgPerDay"]["max"]})["refuel"]["supplyH2KgPerDay"] == 0
-    assert size_to_demand(thin) == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "hydrogen", "bound": "max"}
+    assert size_to_demand(thin) == {"targetKgPerDay": PARAM_META["targetKgPerDay"]["max"], "limitedBy": "hydrogen", "bound": "unmet"}
+
+
+COOLED = {**PROPELLANT, "cryoControlMode": "capacity-limited", "Nmli": 10, "coolerCapacityW": 3000, "reserveDays": 120}
+
+
+def covered_at(overrides: dict, target_kg_per_day: float) -> float:
+    refuel = simulate({**overrides, "targetKgPerDay": target_kg_per_day})["refuel"]
+    return min(
+        refuel["supplyO2KgPerDay"] / refuel["demandO2KgPerDay"],
+        refuel["supplyH2KgPerDay"] / refuel["demandFuelKgPerDay"],
+    )
+
+
+def test_a_window_narrower_than_a_grid_step_is_found_at_the_peak() -> None:
+    narrow = {**COOLED, "sortiesPerYear": 1.17}
+    assert covered_at(narrow, 194.74) < 1
+    assert covered_at(narrow, 219.3) < 1
+    sizing = size_to_demand(narrow)
+    assert sizing["bound"] == "within"
+    assert sizing["limitedBy"] == "hydrogen"
+    assert_rel(sizing["targetKgPerDay"], 195.06, 0.001)
+    assert_rel(covered_at(narrow, sizing["targetKgPerDay"]), 1, 1e-9)
+    assert covered_at(narrow, sizing["targetKgPerDay"] * 0.99) < 1
+
+
+def test_a_demand_no_size_meets_returns_the_size_that_comes_closest() -> None:
+    short = {**COOLED, "sortiesPerYear": 2}
+    sizing = size_to_demand(short)
+    assert sizing["bound"] == "unmet"
+    assert sizing["limitedBy"] == "hydrogen"
+    assert_rel(sizing["targetKgPerDay"], 197.26, 0.001)
+    closest = covered_at(short, sizing["targetKgPerDay"])
+    assert closest < 1
+    for scale in (0.98, 1.02):
+        assert covered_at(short, sizing["targetKgPerDay"] * scale) < closest
+    assert covered_at(short, PARAM_META["targetKgPerDay"]["max"]) < closest
 
 
 def test_a_capacity_limited_cooler_sizes_the_smallest_plant_that_meets_the_demand() -> None:

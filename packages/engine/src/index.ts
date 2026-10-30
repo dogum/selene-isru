@@ -962,10 +962,12 @@ const SIZING_GRID_STEPS = 64;
  * stores can outgrow the cooler and boil off all their hydrogen, so a plant
  * that meets the demand can sit below a larger one that cannot. The solver
  * scans a log grid over the target's bounds for the first size that meets the
- * demand, then bisects inside that step. It returns the bracket's low end,
- * short by under a part in 1e12, so float noise never shows as surplus. A
- * demand no grid size meets holds the target at its maximum. Returns null when
- * no demand applies.
+ * demand, then bisects inside that step. Where the coverage rises and turns
+ * over between grid sizes, a golden-section search finds the peak, which can
+ * meet the demand in a window narrower than a grid step. It returns the
+ * bracket's low end, short by under a part in 1e12, so float noise never shows
+ * as surplus. When no size meets the demand it returns the one that comes
+ * closest, marked "unmet". Returns null when no demand applies.
  */
 export function sizeToDemand(input: Partial<SimParams>): DemandSizing | null {
   const params = normalizeParams(input).params;
@@ -992,22 +994,80 @@ export function sizeToDemand(input: Partial<SimParams>): DemandSizing | null {
   const covered = (cover: Coverage): number => cover[limiting(cover)];
 
   if (covered(lowCover) >= 1) return { targetKgPerDay: min, limitedBy: limiting(lowCover), bound: "min" };
-  // The first grid size that meets the demand, and the one below it.
-  let low = min;
-  let feasible: number | null = null;
-  for (let index = 1; index <= SIZING_GRID_STEPS && feasible === null; index += 1) {
-    const size = index === SIZING_GRID_STEPS ? max : min * (max / min) ** (index / SIZING_GRID_STEPS);
-    if (covered(coverage(size)!) >= 1) feasible = size;
-    else low = size;
+
+  // Log-spaced sizes across the bounds, evaluated as the scan reaches them.
+  const sizes = Array.from({ length: SIZING_GRID_STEPS + 1 }, (_, index) =>
+    index === 0 ? min : index === SIZING_GRID_STEPS ? max : min * (max / min) ** (index / SIZING_GRID_STEPS)
+  );
+  const covers: number[] = [covered(lowCover)];
+  const coverAt = (index: number): number => {
+    while (covers.length <= index) covers.push(covered(coverage(sizes[covers.length]!)!));
+    return covers[index]!;
+  };
+  const coveredAt = (size: number): number => covered(coverage(size)!);
+  // The smallest size meeting the demand between a size that falls short and one that meets it.
+  const bisect = (short: number, meets: number): DemandSizing => {
+    let low = short;
+    let high = meets;
+    for (let step = 0; step < SIZING_MAX_STEPS && high - low > high * SIZING_REL_TOL; step += 1) {
+      const middle = (low + high) / 2;
+      if (coveredAt(middle) >= 1) high = middle;
+      else low = middle;
+    }
+    return { targetKgPerDay: low, limitedBy: limiting(coverage(low)!), bound: "within" };
+  };
+
+  // The size that comes closest, in case none meets the demand; ties go to the larger.
+  let best = { size: min, cover: covers[0]! };
+  const consider = (size: number, cover: number): void => {
+    if (cover >= best.cover) best = { size, cover };
+  };
+  for (let index = 0; index <= SIZING_GRID_STEPS; index += 1) {
+    const cover = coverAt(index);
+    consider(sizes[index]!, cover);
+    if (cover >= 1) return bisect(sizes[index - 1]!, sizes[index]!);
+    // A rise that turns over between grid sizes can peak above 1 unseen: a
+    // capacity-limited cooler's stores outgrow it and the coverage falls away.
+    const left = index > 0 ? covers[index - 1]! : -Infinity;
+    const right = index < SIZING_GRID_STEPS ? coverAt(index + 1) : -Infinity;
+    if (cover > 0 && cover > left && cover >= right) {
+      const from = sizes[Math.max(0, index - 1)]!;
+      const peak = goldenPeak(coveredAt, from, sizes[Math.min(SIZING_GRID_STEPS, index + 1)]!);
+      consider(peak.size, peak.cover);
+      if (peak.cover >= 1) return bisect(from, peak.size);
+    }
   }
-  if (feasible === null) return { targetKgPerDay: max, limitedBy: limiting(coverage(max)!), bound: "max" };
-  let high: number = feasible;
-  for (let step = 0; step < SIZING_MAX_STEPS && high - low > high * SIZING_REL_TOL; step += 1) {
-    const middle = (low + high) / 2;
-    if (covered(coverage(middle)!) >= 1) high = middle;
-    else low = middle;
+  return { targetKgPerDay: best.size, limitedBy: limiting(coverage(best.size)!), bound: "unmet" };
+}
+
+/** Golden-section steps; two grid steps narrow to under a part in 1e12. */
+const GOLDEN_STEPS = 60;
+const GOLDEN_RATIO = (Math.sqrt(5) - 1) / 2;
+
+/** The highest value of a single-peaked function between two sizes, by golden-section search. */
+function goldenPeak(value: (size: number) => number, from: number, to: number): { size: number; cover: number } {
+  let a = from;
+  let b = to;
+  let c = b - GOLDEN_RATIO * (b - a);
+  let d = a + GOLDEN_RATIO * (b - a);
+  let valueC = value(c);
+  let valueD = value(d);
+  for (let step = 0; step < GOLDEN_STEPS; step += 1) {
+    if (valueC >= valueD) {
+      b = d;
+      d = c;
+      valueD = valueC;
+      c = b - GOLDEN_RATIO * (b - a);
+      valueC = value(c);
+    } else {
+      a = c;
+      c = d;
+      valueC = valueD;
+      d = a + GOLDEN_RATIO * (b - a);
+      valueD = value(d);
+    }
   }
-  return { targetKgPerDay: low, limitedBy: limiting(coverage(low)!), bound: "within" };
+  return valueC >= valueD ? { size: c, cover: valueC } : { size: d, cover: valueD };
 }
 
 const U64_MASK = (1n << 64n) - 1n;

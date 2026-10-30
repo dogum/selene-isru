@@ -903,6 +903,6 @@ export interface DemandSizing {
   targetKgPerDay: number;
   /** the component that meets its demand last, and so sets the size: hydrogen in polar propellant mode, oxygen at the equator */
   limitedBy: "oxygen" | "hydrogen";
-  /** "within" the target's bounds, or the bound the target was held at: "min" when even the smallest plant meets the demand, "max" when the largest still falls short */
-  bound: "within" | "min" | "max";
+  /** "within" the target's bounds; "min" when even the smallest plant meets the demand; "unmet" when no size within the bounds meets it, and the target is the size that comes closest */
+  bound: "within" | "min" | "unmet";
 }

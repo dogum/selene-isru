@@ -1926,7 +1926,7 @@
       "result": {
         "targetKgPerDay": 20000,
         "limitedBy": "oxygen",
-        "bound": "max"
+        "bound": "unmet"
       }
     },
     {
@@ -1941,7 +1941,7 @@
       "result": {
         "targetKgPerDay": 20000,
         "limitedBy": "hydrogen",
-        "bound": "max"
+        "bound": "unmet"
       }
     },
     {
@@ -1960,6 +1960,42 @@
         "targetKgPerDay": 83.357051000545,
         "limitedBy": "hydrogen",
         "bound": "within"
+      }
+    },
+    {
+      "name": "polar-capacity-limited-cooler-narrow-window",
+      "params": {
+        "site": "polar",
+        "polarProduct": "propellant",
+        "refuelDemand": "lander",
+        "sortiesPerYear": 1.17,
+        "cryoControlMode": "capacity-limited",
+        "Nmli": 10,
+        "coolerCapacityW": 3000,
+        "reserveDays": 120
+      },
+      "result": {
+        "targetKgPerDay": 195.05549934123,
+        "limitedBy": "hydrogen",
+        "bound": "within"
+      }
+    },
+    {
+      "name": "polar-capacity-limited-cooler-unmet",
+      "params": {
+        "site": "polar",
+        "polarProduct": "propellant",
+        "refuelDemand": "lander",
+        "sortiesPerYear": 2,
+        "cryoControlMode": "capacity-limited",
+        "Nmli": 10,
+        "coolerCapacityW": 3000,
+        "reserveDays": 120
+      },
+      "result": {
+        "targetKgPerDay": 197.26339792441,
+        "limitedBy": "hydrogen",
+        "bound": "unmet"
       }
     },
     {
