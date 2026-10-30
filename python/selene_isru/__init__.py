@@ -19,7 +19,7 @@ from .modules.ilmenite import (
     reduces_ilmenite,
 )
 from .modules.logistics import payload_per_mission_kg
-from .modules.power import nuclear_specific_kg_per_kw, p_crit_dynamic_kw, p_crit_kw, radiator_m2_per_kw
+from .modules.power import fission_efficiency, nuclear_specific_kg_per_kw, p_crit_dynamic_kw, p_crit_kw, radiator_m2_per_kw
 from .modules.refuel import refuel_timeline, sortie_propellant_kg
 from .modules.sabatier import sabatier_kp
 from .modules.thermal import sec_sub_delivered_j_per_kg, sec_sub_j_per_kg
@@ -31,6 +31,7 @@ __all__ = [
     "campaign_at",
     "campaign_timeline",
     "cp_regolith_j_per_kg_k",
+    "fission_efficiency",
     "melt_heat_j_per_kg",
     "nuclear_specific_kg_per_kw",
     "oxide_decomposition_voltage",

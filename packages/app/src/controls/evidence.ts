@@ -455,11 +455,17 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · solar architecture",
     defaultUncertainty: 0.08
   },
-  alphaSpecific: {
-    rangeRationale: "Advanced-to-conservative fission system specific-mass envelope excluding the shield and the radiator.",
-    validity: "Reactor, power conversion, and power management per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. The radiator is charged separately by its area. Since v0.17 the default is 28 kg/kW: the old 30 less the 2 kg/kW its 600 K radiator carried. NASA's 40 kWe surface power design comes to 45 kg/kW on the same basis, but small units are heavier per kW.",
+  kReactorKgPerKwt: {
+    rangeRationale: "From an advanced megawatt-class reactor to past NASA's 40 kWe design, whose 913 kg reactor makes 175 kWt (5.2 kg/kWt).",
+    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. The default keeps NASA FSP's split, the reactor half of reactor, conversion and power management, scaled to the model's 28 kg/kW at 27.5% efficiency; that scale is an assumption, not a megawatt-class design.",
     applicability: "Both sites · nuclear architecture",
-    defaultUncertainty: 0.2
+    defaultUncertainty: 0.3
+  },
+  kConversionKgPerKwe: {
+    rangeRationale: "From advanced megawatt-class conversion to past NASA's 40 kWe design, whose Stirling converters and power management come to 22.6 kg/kW.",
+    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Default from NASA FSP's split, scaled to the model's 28 kg/kW at 27.5% efficiency.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
   },
   kRadiatorKgPerM2: {
     rangeRationale: "Lunar fission radiator concepts span about 5–11 kg/m^2 per panel; NASA's 40 kWe design charges its whole heat-rejection subsystem at 3.9 kg per m^2 of radiating area, panels radiating from both faces.",

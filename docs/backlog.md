@@ -2,7 +2,7 @@
 
 Open items gathered from every "left for later" and "remaining" section in the
 audit trail ([`model-audit-v02.md`](model-audit-v02.md) through
-[`model-radiator-mass-v017.md`](model-radiator-mass-v017.md)), plus the
+[`model-reactor-per-kwt-v018.md`](model-reactor-per-kwt-v018.md)), plus the
 visual and Custom Site notes. Each item names the doc it came from. When an item
 ships, delete it here and annotate the source doc, as the audit trail already
 does.
@@ -20,8 +20,7 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 
 | # | Item | Size | Source in hand | From |
 |---|---|---|---|---|
-| 1 | **Megawatt-class fission calibration.** The 1,200/600 K temperatures, 28 kg/kW, and 1.5 t shield are uncited; anchor them to a megawatt-class surface fission study, and replace the linear slope with a power scaling. | M | needs a source (NASA FSP's 40 kWe design covers the radiator only) | v0.17 |
-| 2 | **Reactor mass per kW of heat.** Split `alphaSpecific` into reactor per kWt and conversion per kWe, so conversion efficiency costs reactor mass and the radiator temperature has an optimum. | S | — | v0.17 |
+| 1 | **Megawatt-class fission calibration.** The 1,200/600 K temperatures, the scale of the reactor (3.87 kg/kWt) and conversion (13.93 kg/kW) terms, and the 1.5 t shield are uncited; anchor them to a megawatt-class surface fission study, and replace the linear slopes with a power scaling. | M | needs a source (NASA FSP's 40 kWe design gives the radiator and the split only) | v0.17, v0.18 |
 
 ## Model depth, larger
 

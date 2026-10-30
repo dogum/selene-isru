@@ -96,7 +96,7 @@ describe("phase 2 dynamics regression anchors", () => {
       MshieldKg: 8000,
       Rarray: 5,
       SEstorage: 1500,
-      alphaSpecific: 90
+      kConversionKgPerKwe: 60
     };
     const result = simulateTimeseries(solarParams, { cycles: 1, samplesPerCycle: 12 });
     expect(result.points).toHaveLength(13);
@@ -122,7 +122,8 @@ describe("phase 2 dynamics regression anchors", () => {
     // v0.6: LOX conditioning and liquefier mass recalibrated (see regression.test.ts).
     // v0.12: whole excavators (see regression.test.ts).
     // v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
-    expectRel(result.plantMassThroughputDays.p50, 51.78056574665898, 1e-12);
+    // v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
+    expectRel(result.plantMassThroughputDays.p50, 51.78326567856924, 1e-12);
     expectRel(result.secTotal.p50, 23.758063285514478, 1e-12);
   });
 });

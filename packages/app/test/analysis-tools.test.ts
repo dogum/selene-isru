@@ -53,7 +53,7 @@ describe("analysis grids stay inside the engine bounds", () => {
       const grid = briefGrid(site);
       expectInBounds("reserveDays", grid.reserves);
       expectInBounds("etaCell", grid.pvEfficiencies);
-      expectInBounds("alphaSpecific", grid.nuclearSpecificMass);
+      expectInBounds("kConversionKgPerKwe", grid.conversionSpecificMass);
       expectInBounds(site === "equatorial" ? "Vcell" : "chiIce", grid.processA);
       expectInBounds(site === "equatorial" ? "etaCurrent" : "cpRegCold", grid.processB);
     }

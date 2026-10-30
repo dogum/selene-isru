@@ -230,7 +230,7 @@ const EQUATORIAL_CONFIG: Record<string, AssetConfig> = {
       thetaSun: "Solar incidence",
       etaCell: "Cell efficiency",
       SEstorage: "Storage specific energy",
-      alphaSpecific: "Fission specific mass, ex. radiator",
+      kReactorKgPerKwt: "Reactor mass per kWt",
       kRadiatorKgPerM2: "Radiator mass per m²"
     },
     note: "The selected solar or nuclear branch shares a switchgear deck; trackers follow the lunar cycle and radiator span follows rejected heat.",
@@ -391,7 +391,7 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     controlLabels: {
       Tsource: "Hot-side temperature",
       Tsink: "Sink temperature",
-      alphaSpecific: "Fission specific mass, ex. radiator",
+      kReactorKgPerKwt: "Reactor mass per kWt",
       kRadiatorKgPerM2: "Radiator mass per m²",
       epsRad: "Radiator emissivity"
     },
@@ -399,6 +399,7 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     metrics: (r) => [
       { label: "Architecture", value: r.power.architecture.toUpperCase() },
       { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
+      { label: "Reactor heat", value: formatQtyText(r.power.fissionThermalW, "W") },
       { label: "Nuclear mass", value: formatQtyText(r.power.nuclearMassKg, "kg") },
       { label: "Radiator", value: `${formatQtyText(r.power.radiatorM2, "m²")} · ${formatQtyText(r.power.radiatorMassKg, "kg")}` }
     ]

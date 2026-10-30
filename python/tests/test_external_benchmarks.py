@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from selene_isru import radiator_m2_per_kw, simulate
+from selene_isru import fission_efficiency, radiator_m2_per_kw, simulate
 from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -94,6 +94,9 @@ def test_fission_radiator_mass_per_area_from_nasa_fsp() -> None:
     area_m2 = radiator_m2_per_kw({**DEFAULTS, **fsp}) * i["userPowerKwe"]
     assert area_m2 == pytest.approx(fsp_area_m2, rel=0.05)
     assert area_m2 * DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(i["heatRejectionMassKg"], rel=0.05)
+    fsp_reactor_share = i["reactorMassKg"] / (i["reactorMassKg"] + i["conversionMassKg"] + i["powerManagementMassKg"])
+    reactor_per_kwe = DEFAULTS["kReactorKgPerKwt"] / fission_efficiency(DEFAULTS)
+    assert reactor_per_kwe / (reactor_per_kwe + DEFAULTS["kConversionKgPerKwe"]) == pytest.approx(fsp_reactor_share, rel=0.005)
     power = simulate(fsp)["power"]
     assert power["radiatorMassKg"] == pytest.approx(power["radiatorM2"] * DEFAULTS["kRadiatorKgPerM2"], rel=1e-12)
 

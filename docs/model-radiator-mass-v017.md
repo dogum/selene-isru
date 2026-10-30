@@ -157,7 +157,8 @@ Screenshot: [the power panel with a 400 K radiator, and the new input's evidence
 
 - **Reactor mass per kW of heat.** Splitting `alphaSpecific` into reactor mass
   per kWt and conversion per kWe would make conversion efficiency cost reactor
-  mass, and give the radiator temperature a real optimum.
+  mass, and give the radiator temperature a real optimum. *(v0.18: done; see
+  [`model-reactor-per-kwt-v018.md`](model-reactor-per-kwt-v018.md).)*
 - **Megawatt-class calibration.** The 1,200/600 K temperatures, 28 kg/kW, and
   1.5 t shield are uncited. A megawatt-class surface fission study would anchor
   them, and FSP's power scaling would replace the linear slope.

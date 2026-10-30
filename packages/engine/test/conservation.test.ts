@@ -48,7 +48,7 @@ describe("conservation and operating-mode invariants", () => {
       site: "polar",
       targetKgPerDay: 10,
       MshieldKg: 8000,
-      alphaSpecific: 90,
+      kConversionKgPerKwe: 60,
       Rarray: 5,
       SEstorage: 1500
     });
