@@ -148,7 +148,7 @@ export function bandsCsv(
 
 /** Every Brief candidate in ranked order, not just the three shown. */
 export function briefCandidatesCsv(candidates: readonly Candidate[]): string {
-  const keys: Array<keyof SimParams> = ["site", "reserveDays", "etaCell", "alphaSpecific", "Vcell", "etaCurrent", "chiIce", "cpRegCold", "enableSabatier", "targetKgPerDay", "missionYears"];
+  const keys: Array<keyof SimParams> = ["site", "reserveDays", "etaCell", "kConversionKgPerKwe", "Vcell", "etaCurrent", "chiIce", "cpRegCold", "enableSabatier", "targetKgPerDay", "missionYears"];
   const ranks = new Map(candidates.map((candidate, index) => [candidate, index + 1]));
   return toCsv<Candidate>(
     [

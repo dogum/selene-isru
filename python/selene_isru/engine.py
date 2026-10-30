@@ -292,6 +292,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "solarArrayM2": power["solarArrayM2"],
             "radiatorM2": power["radiatorM2"],
             "radiatorMassKg": power["radiatorMassKg"],
+            "fissionThermalW": power["fissionThermalW"],
             "nuclearSpecificKgPerKw": power["nuclearSpecificKgPerKw"],
             "pCritW": power["pCritW"],
             "pCritDynamicW": power["pCritDynamicW"],

@@ -21,11 +21,17 @@
  * fleet coefficient `kMiningMass` (kg per kg/day of soil) has no equivalent:
  * one vehicle's mass is a different quantity. It is dropped, along with the
  * ilmenite key v0.9 mapped onto it, and the case takes the default fleet.
+ *
+ * v0.18 charges the fission reactor per kW of heat and its conversion per kW
+ * of output, so `alphaSpecific` (one mass per kW of output, excluding the
+ * shield and radiator) has no single equivalent. It is dropped and the case
+ * takes the new defaults, which reproduce its 28 kg/kW at the default
+ * efficiency.
  */
 const RENAMED: Readonly<Record<string, string>> = {
   eIlmMining: "eMining"
 };
-const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass", "kMiningMass", "kIlmMiningMass"];
+const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass", "kMiningMass", "kIlmMiningMass", "alphaSpecific"];
 
 export function upgradeLegacyParams<T extends object>(raw: T): T {
   const renamed = Object.keys(RENAMED).filter((key) => key in raw);

@@ -257,6 +257,9 @@ in [`docs/model-size-to-demand-v016.md`](docs/model-size-to-demand-v016.md).
 The v0.17 radiator mass (the fission radiator charged by its area, calibrated to
 NASA's 40 kWe fission surface power design) is in
 [`docs/model-radiator-mass-v017.md`](docs/model-radiator-mass-v017.md).
+The v0.18 reactor mass (the fission reactor charged per kW of heat and its
+conversion per kW of output, so conversion efficiency costs reactor mass) is in
+[`docs/model-reactor-per-kwt-v018.md`](docs/model-reactor-per-kwt-v018.md).
 
 ## Architecture
 

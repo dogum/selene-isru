@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
+import { DEFAULTS, fissionEfficiency, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -117,12 +117,20 @@ describe("external analytical benchmarks (separate from implementation parity)",
     const fspAreaM2 = i.radiatingAreaWithMarginM2! / (1 + i.areaMargin!);
     expectRelative2(areaM2, fspAreaM2, 0.05);
     expectRelative2(areaM2 * DEFAULTS.kRadiatorKgPerM2, i.heatRejectionMassKg!, 0.05);
+    // v0.18: the default reactor/conversion split is FSP's: the reactor is half
+    // of reactor, conversion and power management at the default efficiency.
+    const fspReactorShare = i.reactorMassKg! / (i.reactorMassKg! + i.conversionMassKg! + i.powerManagementMassKg!);
+    const defaultReactorPerKwe = DEFAULTS.kReactorKgPerKwt / fissionEfficiency(DEFAULTS);
+    expectRelative2(defaultReactorPerKwe / (defaultReactorPerKwe + DEFAULTS.kConversionKgPerKwe), fspReactorShare, 0.005);
     // The engine charges that area to the fission system.
     const run = simulate(fsp);
     expectRelative2(run.power.radiatorMassKg, run.power.radiatorM2 * DEFAULTS.kRadiatorKgPerM2, 1e-12);
     expectRelative2(
       run.power.nuclearMassKg,
-      DEFAULTS.MshieldKg + DEFAULTS.alphaSpecific * (run.energy.gridPowerW / 1000) + run.power.radiatorMassKg,
+      DEFAULTS.MshieldKg +
+        DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) +
+        DEFAULTS.kConversionKgPerKwe * (run.energy.gridPowerW / 1000) +
+        run.power.radiatorMassKg,
       1e-12
     );
   });

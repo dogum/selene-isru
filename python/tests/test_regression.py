@@ -192,7 +192,7 @@ def test_timeseries_solar_selected_cycle_anchor() -> None:
         "MshieldKg": 8000,
         "Rarray": 5,
         "SEstorage": 1500,
-        "alphaSpecific": 90,
+        "kConversionKgPerKwe": 60,
     }
     result = simulate_timeseries(solar_params, {"cycles": 1, "samplesPerCycle": 12})
     assert len(result["points"]) == 13
@@ -212,7 +212,8 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     assert result["secTotal"]["p10"] <= result["secTotal"]["p50"] <= result["secTotal"]["p90"]
     # v0.12: whole excavators.
     # v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
-    assert_rel(result["plantMassThroughputDays"]["p50"], 51.78056574665898, 1e-12)
+    # v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
+    assert_rel(result["plantMassThroughputDays"]["p50"], 51.78326567856924, 1e-12)
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -230,7 +231,7 @@ def test_direct_warning_branches_unreachable_by_bounded_public_params() -> None:
     assert "pad-shear" in {warning["id"] for warning in construction["warnings"]}
 
     power_params = dict(DEFAULTS)
-    power_params.update({"alphaSpecific": 1000})
+    power_params.update({"kConversionKgPerKwe": 1000})
     power = simulate_power(power_params, 1000)
     assert "beta-le-alpha" in {warning["id"] for warning in power["warnings"]}
 
@@ -278,12 +279,32 @@ def test_fission_radiator_charged_by_its_area_v017() -> None:
     assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 51.81, 0.001)
     cold = simulate({"Tsink": 400})
     assert_rel(cold["power"]["radiatorMassKg"] / 1000, 7.446, 0.001)
-    assert_rel(cold["power"]["nuclearMassKg"] / 1000, 36.66, 0.001)
-    assert_rel(cold["logistics"]["totalInfraMassKg"] / 1000, 57.29, 0.001)
-    expected_slope = DEFAULTS["alphaSpecific"] + DEFAULTS["kRadiatorKgPerM2"] * cold["power"]["radiatorM2"] / (
-        cold["energy"]["gridPowerW"] / 1000
-    )
-    assert_rel(cold["power"]["nuclearSpecificKgPerKw"], expected_slope, 1e-9)
+    # v0.18: the colder cycle's reactor is lighter: 36.66 -> 33.18 t, 57.29 -> 53.82 t landed.
+    assert_rel(cold["power"]["nuclearMassKg"] / 1000, 33.18, 0.001)
+    assert_rel(cold["logistics"]["totalInfraMassKg"] / 1000, 53.82, 0.001)
+
+
+def test_fission_reactor_charged_on_its_heat_v018() -> None:
+    # New and deliberate: alphaSpecific split into reactor per kWt and conversion per kWe.
+    base = simulate({})
+    assert_rel(base["power"]["fissionThermalW"] / 1e6, 3.600, 0.001)
+    assert_rel(DEFAULTS["kReactorKgPerKwt"] * base["power"]["fissionThermalW"] / 1e6, 13.93, 0.001)
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 31.18, 0.001)
+    for run in (base, simulate({"Tsink": 400})):
+        kw = run["energy"]["gridPowerW"] / 1000
+        slope = (
+            DEFAULTS["kReactorKgPerKwt"] * (run["power"]["fissionThermalW"] / 1000) / kw
+            + DEFAULTS["kConversionKgPerKwe"]
+            + DEFAULTS["kRadiatorKgPerM2"] * run["power"]["radiatorM2"] / kw
+        )
+        assert_rel(run["power"]["nuclearSpecificKgPerKw"], slope, 1e-9)
+
+    def at(tsink: float) -> float:
+        return simulate({"Tsink": tsink})["power"]["nuclearMassKg"]
+
+    assert at(520) < at(400)
+    assert at(520) < at(600)
+    assert_rel(at(520) / 1000, 30.57, 0.001)
 
 
 def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:

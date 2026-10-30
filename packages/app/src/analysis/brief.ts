@@ -119,7 +119,8 @@ export function violations(result: SimResult, constraints: MissionConstraints): 
 export interface BriefGrid {
   reserves: number[];
   pvEfficiencies: number[];
-  nuclearSpecificMass: number[];
+  /** fission conversion and power management (kg/kW): the nuclear option's lever */
+  conversionSpecificMass: number[];
   /** Vcell (V) at the equatorial site, chiIce (kg/kg) at the polar site. */
   processA: number[];
   /** etaCurrent at the equatorial site, cpRegCold (J/(kg*K)) at the polar site. */
@@ -135,7 +136,7 @@ export function briefGrid(site: SimParams["site"]): BriefGrid {
   return {
     reserves: [5, 14, 30],
     pvEfficiencies: [0.2, 0.29, 0.38],
-    nuclearSpecificMass: [8, 25, 60],
+    conversionSpecificMass: [4, 12, 30],
     processA: site === "equatorial" ? [3.6, 4.2, 4.8] : [0.01, 0.03, 0.06, 0.1],
     processB: site === "equatorial" ? [0.62, 0.8, 0.93] : [650, 800, 1050]
   };
@@ -145,11 +146,11 @@ export function optimize(base: SimParams, constraints: MissionConstraints): Opti
   const sites: SimParams["site"][] = constraints.site === "either" ? ["equatorial", "polar"] : [constraints.site];
   const candidates: Candidate[] = [];
   for (const site of sites) {
-    const { reserves, pvEfficiencies, nuclearSpecificMass, processA, processB } = briefGrid(site);
+    const { reserves, pvEfficiencies, conversionSpecificMass, processA, processB } = briefGrid(site);
     const sabatierStates = site === "polar" && constraints.allowSabatier ? [false, true] : [false];
     for (const reserveDays of reserves) {
       for (const etaCell of pvEfficiencies) {
-        for (const alphaSpecific of nuclearSpecificMass) {
+        for (const kConversionKgPerKwe of conversionSpecificMass) {
           for (const a of processA) {
             for (const b of processB) {
               for (const enableSabatier of sabatierStates) {
@@ -160,7 +161,7 @@ export function optimize(base: SimParams, constraints: MissionConstraints): Opti
                   missionYears: constraints.missionYears,
                   reserveDays,
                   etaCell,
-                  alphaSpecific,
+                  kConversionKgPerKwe,
                   enableSabatier,
                   // The equatorial levers are MRE's, so its candidates run MRE.
                   ...(site === "equatorial" ? { equatorialProcess: "mre" as const, Vcell: a, etaCurrent: b } : { chiIce: a, cpRegCold: b })
@@ -211,7 +212,7 @@ export function candidateDetail(candidate: Candidate): string {
     : `${(candidate.params.chiIce * 100).toFixed(1)}% ice · ${candidate.params.cpRegCold.toFixed(0)} J/(kg·K)`;
   const power = candidate.result.power.architecture === "solar"
     ? `PV η ${Math.round(candidate.params.etaCell * 100)}%`
-    : `${candidate.params.alphaSpecific.toFixed(0)} kg/kW nuclear`;
+    : `${candidate.result.power.nuclearSpecificKgPerKw.toFixed(0)} kg/kW nuclear`;
   return `${candidate.params.reserveDays} d reserve · ${process} · ${power}`;
 }
 

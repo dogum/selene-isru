@@ -17,7 +17,7 @@ describe("tour captions follow the engine", () => {
 
   it("narrate rim solar when the engine selects it", () => {
     // Free night storage and a cheap array make the solar option the lighter one.
-    const params = { ...DEFAULTS, site: "polar" as const, polarLongestShadowHours: 1, polarIlluminationFraction: 0.95, Rarray: 5, SEstorage: 1500, alphaSpecific: 90 };
+    const params = { ...DEFAULTS, site: "polar" as const, polarLongestShadowHours: 1, polarIlluminationFraction: 0.95, Rarray: 5, SEstorage: 1500, kConversionKgPerKwe: 60 };
     expect(simulate(params).power.architecture).toBe("solar");
     expect(caption(0, params)).toMatch(/rim solar power feeds/);
     expect(caption(1, params)).toMatch(/beamed to the floor at 24% delivery/);

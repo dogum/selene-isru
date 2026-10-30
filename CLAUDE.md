@@ -179,7 +179,7 @@ from parity vectors — parity agreeing does not mean the physics is right.
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `campaignTimeline`, `refuelTimeline`, `sizeToDemand`, `DEFAULTS`,
 `PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
 helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
-`beamEfficiency`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
+`beamEfficiency`, `fissionEfficiency`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
@@ -257,7 +257,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~207 KB of ~213 KB. A ratchet normally reads nearly
+The current build sits at ~208 KB of ~213 KB. A ratchet normally reads nearly
 full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -466,6 +466,7 @@ in `assets/ASSET_LICENSES.md`.
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
+| Fission reactor per kWt and conversion per kWe, radiator-temperature optimum | v0.18 anchors in `regression.test.ts` / `test_regression.py`, the split check in `mason-2008-fsp-radiator`, `legacy-params.test.ts` |
 | Fission radiator mass, FSP calibration, power-trade slope agreement | v0.17 anchors in `regression.test.ts` / `test_regression.py`, `mason-2008-fsp-radiator` in `external-benchmarks.test.ts`, `power-slopes.test.ts` |
 | Plant sized to its demand: solver, bounds, sizing parity, rail button | sizing tests in `refuel.test.ts` / `test_refuel.py`, v0.16 anchors in `regression.test.ts`, sizing vectors in `dynamics_vectors.json`, `control-rail.test.tsx` |
 | Renamed and retired inputs in saved cases, files, and links | `legacy-params.test.ts` |
@@ -527,7 +528,8 @@ script run on a clean checkout at all.
   `model-ilmenite-reactor-v010.md` → `model-basalt-feed-v011.md` →
   `model-excavators-v012.md` → `model-sabatier-mass-v013.md` →
   `model-electrolysis-bop-v014.md` → `model-overburden-timing-v015.md` →
-  `model-size-to-demand-v016.md` → `model-radiator-mass-v017.md`) is
+  `model-size-to-demand-v016.md` → `model-radiator-mass-v017.md` →
+  `model-reactor-per-kwt-v018.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -584,6 +586,9 @@ script run on a clean checkout at all.
 - [`docs/model-radiator-mass-v017.md`](docs/model-radiator-mass-v017.md) — the
   fission radiator charged by its area, calibrated to NASA's 40 kWe surface
   power design, and what stays uncited.
+- [`docs/model-reactor-per-kwt-v018.md`](docs/model-reactor-per-kwt-v018.md) —
+  the fission reactor charged on its heat and conversion on its output, in
+  NASA FSP's split, and the radiator-temperature optimum that follows.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

@@ -1617,15 +1617,25 @@ export const PARAM_META = {
     "description": "Nuclear shielding mass",
     "source": "spec"
   },
-  "alphaSpecific": {
-    "value": 28,
-    "min": 8,
-    "max": 90,
+  "kReactorKgPerKwt": {
+    "value": 3.87,
+    "min": 1,
+    "max": 15,
+    "unit": "kg/kWt",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
+    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: the reactor is 913 kg of the 1,816 kg of reactor, conversion and power management; the split is scaled to the model's 28 kg/kWe at 27.5% efficiency (assumption)"
+  },
+  "kConversionKgPerKwe": {
+    "value": 13.93,
+    "min": 3,
+    "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
-    "description": "Fission system specific mass excluding shielding and radiator",
-    "source": "spec; 30 kg/kW less the 2 kg/kW the default 600 K radiator carried before v0.17"
+    "description": "Fission power conversion and power management mass per kW of electrical output",
+    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: the reactor is 913 kg of the 1,816 kg of reactor, conversion and power management; the split is scaled to the model's 28 kg/kWe at 27.5% efficiency (assumption)"
   },
   "kRadiatorKgPerM2": {
     "value": 3.87,
@@ -2450,7 +2460,8 @@ export const DEFAULTS = {
   "etaRad": 0.85,
   "epsRad": 0.85,
   "MshieldKg": 1500,
-  "alphaSpecific": 28,
+  "kReactorKgPerKwt": 3.87,
+  "kConversionKgPerKwe": 13.93,
   "kRadiatorKgPerM2": 3.87,
   "dSolar": 0.05,
   "dNuclear": 0.01,

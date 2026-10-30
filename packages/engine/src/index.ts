@@ -74,6 +74,7 @@ export type { RefuelSource, RefuelTimelinePoint, SortiePropellant } from "./modu
 export {
   beamedPowerW,
   beamEfficiency,
+  fissionEfficiency,
   nuclearSlopeAtYear,
   nuclearSpecificKgPerKw,
   pCritDynamicKw,
@@ -422,6 +423,7 @@ export function simulate(
       solarArrayM2: power.solarArrayM2,
       radiatorM2: power.radiatorM2,
       radiatorMassKg: power.radiatorMassKg,
+      fissionThermalW: power.fissionThermalW,
       nuclearSpecificKgPerKw: power.nuclearSpecificKgPerKw,
       pCritW: power.pCritW,
       pCritDynamicW: power.pCritDynamicW,

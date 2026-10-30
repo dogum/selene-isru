@@ -240,10 +240,35 @@ describe("regression anchors", () => {
     // The radiator now follows its temperature: at 400 K it is 1,924 m^2 and 7.4 t.
     const cold = simulate({ Tsink: 400 });
     expectRel(cold.power.radiatorMassKg / 1000, 7.446, 0.001);
-    expectRel(cold.power.nuclearMassKg / 1000, 36.66, 0.001);
-    expectRel(cold.logistics.totalInfraMassKg / 1000, 57.29, 0.001);
-    // The power trade's slope carries the radiator too.
-    expectRel(cold.power.nuclearSpecificKgPerKw, DEFAULTS.alphaSpecific + DEFAULTS.kRadiatorKgPerM2 * cold.power.radiatorM2 / (cold.energy.gridPowerW / 1000), 1e-9);
+    // v0.18: the colder cycle is more efficient, so its reactor is lighter:
+    // 36.66 -> 33.18 t of fission system, 57.29 -> 53.82 t landed.
+    expectRel(cold.power.nuclearMassKg / 1000, 33.18, 0.001);
+    expectRel(cold.logistics.totalInfraMassKg / 1000, 53.82, 0.001);
+  });
+
+  test("the fission reactor is charged on its heat (v0.18)", () => {
+    // New and deliberate: alphaSpecific (kg/kWe) is split into the reactor per
+    // kW of heat and conversion per kW of output, in NASA FSP's proportion and
+    // at the old 28 kg/kWe at the default 27.5% efficiency.
+    const base = simulate({});
+    expectRel(base.power.fissionThermalW / 1e6, 3.600, 0.001);
+    expectRel(DEFAULTS.kReactorKgPerKwt * (base.power.fissionThermalW / 1000) / 1000, 13.93, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 31.18, 0.001);
+    // The power trade's slope: reactor on the heat, conversion on the output, radiator on its area.
+    for (const run of [base, simulate({ Tsink: 400 })]) {
+      const kw = run.energy.gridPowerW / 1000;
+      const slope =
+        DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) / kw +
+        DEFAULTS.kConversionKgPerKwe +
+        DEFAULTS.kRadiatorKgPerM2 * run.power.radiatorM2 / kw;
+      expectRel(run.power.nuclearSpecificKgPerKw, slope, 1e-9);
+    }
+    // The radiator temperature now has an optimum: colder grows the radiator,
+    // hotter grows the reactor. The default plant is lightest near 520 K.
+    const at = (Tsink: number) => simulate({ Tsink }).power.nuclearMassKg;
+    expect(at(520)).toBeLessThan(at(400));
+    expect(at(520)).toBeLessThan(at(600));
+    expectRel(at(520) / 1000, 30.57, 0.001);
   });
 
   test("sizing the plant to its refuelling demand (v0.16)", () => {
@@ -369,7 +394,7 @@ describe("warnings", () => {
     const construction = simulateConstruction(constructionParams, 1000);
     expect(construction.warnings.some((warning) => warning.id === "pad-shear")).toBe(true);
 
-    const powerParams: SimParams = { ...DEFAULTS, alphaSpecific: 1000 };
+    const powerParams: SimParams = { ...DEFAULTS, kConversionKgPerKwe: 1000 };
     const power = simulatePower(powerParams, 1000);
     expect(power.warnings.some((warning) => warning.id === "beta-le-alpha")).toBe(true);
   });
