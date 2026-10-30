@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { sizeToDemand } from "@selene-isru/engine";
+import { PARAM_META, sizeToDemand } from "@selene-isru/engine";
 import type { DemandSizing, RefuelResult, SimParams, Warning } from "@selene-isru/engine";
 import {
   groupsForSite,
@@ -446,8 +446,8 @@ function sizingNote(sizing: DemandSizing, params: SimParams, refuel: RefuelResul
   if (sizing.bound === "min") {
     return `Target held at its ${target} minimum: even the smallest plant meets the lander's demand.`;
   }
-  if (sizing.bound === "max") {
-    return `Target held at its ${target} maximum: the largest plant still falls short of the lander's ${sizing.limitedBy}.`;
+  if (sizing.bound === "unmet") {
+    return `No plant size up to the ${formatQtyProse(PARAM_META.targetKgPerDay.max, "kg/day")} maximum meets the lander's ${sizing.limitedBy} demand; target set to ${target}, which comes closest.`;
   }
   if (params.site === "equatorial") return `Target set to ${target} of oxygen: the lander burns all of it.`;
   const surplus = refuel === null ? 0 : refuel.surplusKgPerDay;

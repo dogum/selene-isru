@@ -300,12 +300,46 @@ describe("sizing the plant to its demand", () => {
     const heavy = sizeToDemand({
       ...EQUATORIAL, sortiesPerYear: 52, McargoDown: 60000, McargoUp: 30000, dvDescent: 3200, dvAscent: 3000, IspReusable: 350
     })!;
-    expect(heavy).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "oxygen", bound: "max" });
+    expect(heavy).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "oxygen", bound: "unmet" });
     // Passive stores with the thinnest blanket boil off all the hydrogen at any
     // size: the demand cannot be met, so the target holds at its maximum.
     const thin = { ...PROPELLANT, cryoControlMode: "passive", Nmli: 5 } as const;
     expect(simulate({ ...thin, targetKgPerDay: PARAM_META.targetKgPerDay.max }).refuel!.supplyH2KgPerDay).toBe(0);
-    expect(sizeToDemand(thin)).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "hydrogen", bound: "max" });
+    expect(sizeToDemand(thin)).toEqual({ targetKgPerDay: PARAM_META.targetKgPerDay.max, limitedBy: "hydrogen", bound: "unmet" });
+  });
+
+  const COOLED = { ...PROPELLANT, cryoControlMode: "capacity-limited", Nmli: 10, coolerCapacityW: 3000, reserveDays: 120 } as const;
+  const coveredAt = (input: Partial<SimParams>, targetKgPerDay: number): number => {
+    const refuel = simulate({ ...input, targetKgPerDay }).refuel!;
+    return Math.min(refuel.supplyO2KgPerDay / refuel.demandO2KgPerDay, refuel.supplyH2KgPerDay / refuel.demandFuelKgPerDay);
+  };
+
+  test("a window narrower than a grid step: the peak between grid sizes is searched", () => {
+    // Coverage meets the demand only from about 195 to 200 kg/day, where the
+    // stores reach the cooler's capacity; the grid sizes either side fall short.
+    const narrow = { ...COOLED, sortiesPerYear: 1.17 };
+    expect(coveredAt(narrow, 194.74)).toBeLessThan(1);
+    expect(coveredAt(narrow, 219.3)).toBeLessThan(1);
+    const sizing = sizeToDemand(narrow)!;
+    expect(sizing.bound).toBe("within");
+    expect(sizing.limitedBy).toBe("hydrogen");
+    expectRel(sizing.targetKgPerDay, 195.06, 0.001);
+    expectRel(coveredAt(narrow, sizing.targetKgPerDay), 1, 1e-9);
+    expect(coveredAt(narrow, sizing.targetKgPerDay * 0.99)).toBeLessThan(1);
+  });
+
+  test("a demand no size meets: the size that comes closest, not the largest", () => {
+    // Two sorties a year peak short of the demand at the cooler's knee and
+    // fall away beyond it, so the maximum would be the worst choice.
+    const short = { ...COOLED, sortiesPerYear: 2 };
+    const sizing = sizeToDemand(short)!;
+    expect(sizing.bound).toBe("unmet");
+    expect(sizing.limitedBy).toBe("hydrogen");
+    expectRel(sizing.targetKgPerDay, 197.26, 0.001);
+    const closest = coveredAt(short, sizing.targetKgPerDay);
+    expect(closest).toBeLessThan(1);
+    for (const scale of [0.98, 1.02]) expect(coveredAt(short, sizing.targetKgPerDay * scale)).toBeLessThan(closest);
+    expect(coveredAt(short, PARAM_META.targetKgPerDay.max)).toBeLessThan(closest);
   });
 
   test("a capacity-limited cooler: the smallest plant that meets the demand, not the largest", () => {

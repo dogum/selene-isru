@@ -215,6 +215,32 @@ SIZING_VECTORS: list[tuple[str, dict[str, Any]]] = [
             "reserveDays": 120,
         },
     ),
+    (
+        "polar-capacity-limited-cooler-narrow-window",
+        {
+            "site": "polar",
+            "polarProduct": "propellant",
+            "refuelDemand": "lander",
+            "sortiesPerYear": 1.17,
+            "cryoControlMode": "capacity-limited",
+            "Nmli": 10,
+            "coolerCapacityW": 3000,
+            "reserveDays": 120,
+        },
+    ),
+    (
+        "polar-capacity-limited-cooler-unmet",
+        {
+            "site": "polar",
+            "polarProduct": "propellant",
+            "refuelDemand": "lander",
+            "sortiesPerYear": 2,
+            "cryoControlMode": "capacity-limited",
+            "Nmli": 10,
+            "coolerCapacityW": 3000,
+            "reserveDays": 120,
+        },
+    ),
     ("polar-water-no-demand", {"site": "polar", "refuelDemand": "lander"}),
 ]
 

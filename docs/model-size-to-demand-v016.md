@@ -42,12 +42,13 @@ sized target            = smallest targetKgPerDay where min(coverage of each mad
   lander does not burn.
 - **No demand:** where no demand applies (no lander, a polar water plant, or
   the Sabatier loop), the solver returns null.
-- **Bounds:** a demand outside the target's 10 kg/day–20 t/day bounds holds the
-  target at the bound. The result says which bound it hit.
+- **Bounds:** a demand the 10 kg/day minimum already meets holds the target at
+  the minimum (`min`). A demand no size up to 20 t/day meets is `unmet`, and the
+  target goes to the size that comes closest.
 - **What the plant owes:** the components come from the plant's mode, not from
   what survives storage. Passive stores with the thinnest MLI blanket boil off
-  all the hydrogen at any size. The target then holds at its maximum, limited
-  by hydrogen, rather than claiming the demand is met.
+  all the hydrogen at any size. The demand is then `unmet`, limited by
+  hydrogen, rather than claimed met.
 
 **How it solves.** Coverage need not rise with the target.
 - **Zero-boil-off and passive storage:** coverage rises with size, because
@@ -59,17 +60,34 @@ sized target            = smallest targetKgPerDay where min(coverage of each mad
   when all the hydrogen boils off.
 - **Search:** so the solver scans 64 log-spaced sizes across the bounds, about
   13% apart, for the first that meets the demand, then bisects inside that step.
-  A demand no scanned size meets holds the target at its maximum.
-- **Cost:** about 100 engine runs at most, a few tens of milliseconds, only when
+- **Peaks between grid sizes:** where coverage rises and turns over between
+  two grid sizes, a golden-section search finds the peak, and the solver
+  bisects up to it if it meets the demand.
+  - **Why:** a window narrower than a grid step would otherwise be missed. At
+    1.17 sorties a year under the same cooler, the demand is met only from
+    about 195 to 200 kg/day; the solver finds 195.1 kg/day.
+  - **History:** until the follow-up to PR #20, this window was missed and the
+    target held at its maximum.
+- **Unmet demand:** when no size meets the demand, the result is `unmet` and
+  the target is the size that comes closest.
+  - **Two sorties a year under that cooler:** coverage peaks short of the
+    demand at the cooler's knee, 197 kg/day, and falls away beyond it, so the
+    largest plant would be the worst choice.
+  - **Coverage rising with size:** the closest is still the maximum.
+- **Cost:** about 65 engine runs for the scan, about 40 for the bisection,
+  and about 60 more for each peak searched; tens of milliseconds, only when
   asked.
 - **Result:** it returns the bracket's low end, under a part in 10¹² short of
   the demand, so float noise never shows up as surplus.
-- **Limit:** a feasible window narrower than one grid step could be missed.
+- **Limit:** a peak is searched only where the grid sees coverage turn over. A
+  window inside a stretch the grid sees as steadily rising or falling could
+  still be missed. The model's coverage curves have one knee, at the cooler's
+  capacity, so no such case is known.
 
 The result (`DemandSizing`) carries:
 - `targetKgPerDay`
 - `limitedBy`: the component that sets the size
-- `bound`: `within`, `min`, or `max`
+- `bound`: `within`, `min`, or `unmet` (`max` until the follow-up to PR #20)
 
 ## Reference results
 
@@ -147,17 +165,25 @@ Screenshot: [the polar plant sized to one crewed sortie a year](screenshots/size
   - under a capacity-limited cooler that loses all its hydrogen at large sizes,
     the solver finds the small plant that works (about 83 kg/day) rather than
     holding at the maximum
+  - a window narrower than a grid step is found at its peak (195.1 kg/day), and
+    a demand no size meets returns the size that comes closest, at the
+    cooler's knee
 - **Regression (v0.16):** anchors in both suites for the sized equatorial and
   polar crewed cases and the 20-sortie polar case.
-- **Parity:** nine sizing vectors in `dynamics_vectors.json`, compared leaf by
-  leaf. They include both bounds, a polar plant that boils off all its
-  hydrogen, the capacity-limited cooler case, and a plant with no demand. Golden vectors do
+- **Parity:** eleven sizing vectors in `dynamics_vectors.json`, compared leaf by
+  leaf. They include:
+  - the minimum and an unmet demand
+  - a polar plant that boils off all its hydrogen
+  - three capacity-limited cooler cases: a window found on the grid, a window
+    found at a peak between grid sizes, and a demand met by no size
+  - a plant with no demand Golden vectors do
   not change, since `simulate()` does not.
 - **App:** `control-rail.test.tsx` checks:
   - the click sets the engine's size and leaves no surplus
   - the note's wording at both sites and at a bound
   - one undo restores the hand-set target and retires the note
   - the Custom Site workspace does not offer the button
+  - an unmet demand's note names the size that comes closest
 
 ## Left for later
 
