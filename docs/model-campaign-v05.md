@@ -98,6 +98,22 @@ unit as `M0leo`. Product used on the lunar surface displaces landed cargo, and
 for that use the lander model itself implies about 12.8 kg/kg. Lower values
 suit product used in orbit.
 
+For product used in orbit, a single expendable H2/O2 stage gives the LEO mass
+needed per kg delivered from LEO (Tsiolkovsky, stage dry mass 10% of
+propellant, delta-v from the Wikipedia "Delta-v budget" Earth-Moon table):
+
+| Destination | LEO kg per kg, Isp 450 s | LEO kg per kg, Isp 380 s |
+|---|---|---|
+| EML-1 (3.77 km/s) | 2.72 | 3.33 |
+| Low lunar orbit (4.04 km/s) | 2.94 | 3.68 |
+| GEO (4.33 km/s) | 3.20 | 4.10 |
+
+So `gearRatio` of about 3 to 4 suits propellant sold at EML-1 or low lunar
+orbit, and the range minimum of 2 is conservative for any orbital customer.
+These figures come from the open
+[space-water-logistics](https://github.com/SpaceOceanCorp/space-water-logistics)
+gear-ratio model (Apache-2.0), which also gives the lunar-sourced side.
+
 ## Reference results
 
 > *v0.6 note: the liquefaction recalibration in
