@@ -98,9 +98,24 @@ unit as `M0leo`. Product used on the lunar surface displaces landed cargo, and
 for that use the lander model itself implies about 12.8 kg/kg. Lower values
 suit product used in orbit.
 
-For product used in orbit, a single expendable H2/O2 stage gives the LEO mass
-needed per kg delivered from LEO (Tsiolkovsky, stage dry mass 10% of
-propellant, delta-v from the Wikipedia "Delta-v budget" Earth-Moon table):
+For an illustrative Earth-supply comparison, assume one expendable H2/O2
+stage carries product from LEO to the destination. Its dry mass is 10% of
+its propellant mass (not 10% of wet stage mass), remains attached through the
+transfer burns, and is charged to this delivery. For delivered product mass
+`P`, the [ideal rocket equation](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/ideal-rocket-equation/)
+then gives:
+
+```
+R = exp(deltaV / (Isp * g0)),  g0 = 9.80665 m/s²
+initial LEO mass / P = R / (1.1 - 0.1 R)
+```
+
+This requires `1.1 - 0.1 R > 0`. The initial mass includes product,
+propellant, and stage dry mass. The following retain the contributor's
+assumed delta-v values; they are examples, not independently solved
+trajectories. Actual budgets depend on the departure and destination orbits,
+inclination, and transfer strategy. The calculation assumes constant Isp
+and no additional reserves, transfer losses, or boil-off.
 
 | Destination | LEO kg per kg, Isp 450 s | LEO kg per kg, Isp 380 s |
 |---|---|---|
@@ -108,11 +123,26 @@ propellant, delta-v from the Wikipedia "Delta-v budget" Earth-Moon table):
 | Low lunar orbit (4.04 km/s) | 2.94 | 3.68 |
 | GEO (4.33 km/s) | 3.20 | 4.10 |
 
-So `gearRatio` of about 3 to 4 suits propellant sold at EML-1 or low lunar
-orbit, and the range minimum of 2 is conservative for any orbital customer.
-These figures come from the open
+These are **gross Earth-supply LEO mass equivalents per kg of usable product
+delivered to the stated destination**, in the same form as the product it
+replaces. Values around 3–4 describe these examples (2.72–4.10), not a
+universal orbital `gearRatio`. For product already needed in the same LEO,
+the transfer delta-v is zero and the equivalent is 1 kg/kg. The model's
+input minimum of 2 therefore does not cover every orbital customer.
+
+The campaign currently credits plant product after its modeled storage
+losses and demand limits; it does not simulate delivery from the lunar
+surface to these orbits. An orbital campaign must separately account for
+lunar ascent/transfer propellant, transit and transfer losses, and the LEO
+mass needed for delivery hardware and resupply. Product consumed or lost on
+that route cannot also be credited as product delivered to the customer.
+The table alone therefore does not establish net campaign savings. This
+guidance leaves the default of 6 and the surface-use example unchanged.
+
+The six numerical examples originate in the open
 [space-water-logistics](https://github.com/SpaceOceanCorp/space-water-logistics)
-gear-ratio model (Apache-2.0), which also gives the lunar-sourced side.
+gear-ratio model (Apache-2.0), which also estimates lunar water requirements;
+those water quantities are not LEO-mass transport charges.
 
 ## Reference results
 
