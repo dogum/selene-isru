@@ -2,7 +2,7 @@
 
 Open items gathered from every "left for later" and "remaining" section in the
 audit trail ([`model-audit-v02.md`](model-audit-v02.md) through
-[`model-reactor-per-kwt-v018.md`](model-reactor-per-kwt-v018.md)), plus the
+[`model-fission-calibration-v019.md`](model-fission-calibration-v019.md)), plus the
 visual and Custom Site notes. Each item names the doc it came from. When an item
 ships, delete it here and annotate the source doc, as the audit trail already
 does.
@@ -20,7 +20,9 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 
 | # | Item | Size | Source in hand | From |
 |---|---|---|---|---|
-| 1 | **Megawatt-class fission calibration.** The 1,200/600 K temperatures, the scale of the reactor (3.87 kg/kWt) and conversion (13.93 kg/kW) terms, and the 1.5 t shield are uncited; anchor them to a megawatt-class surface fission study, and replace the linear slopes with a power scaling. | M | needs a source (NASA FSP's 40 kWe design gives the radiator and the split only) | v0.17, v0.18 |
+| 1 | **Brayton efficiency from the cycle.** Conversion efficiency from the temperature ratio and component efficiencies, not a fixed fraction of Carnot, so the model's lightest radiator moves from about 570 K to Mason 2006's 380–400 K and Brayton and Stirling differ. | M | Mason 2006 (NASA/TM-2006-214120) gives the Brayton design point and its cold-end optimum | v0.19 |
+| 2 | **Fission shield mass with power.** One shield mass serves every power level; a megawatt reactor needs a thicker shield at the same dose and distance. | S | Mason 2001 and 2006 give shield masses at 50–500 kWe | v0.19 |
+| 3 | **Fission economy of scale.** Replace the linear fission slope with a power law that follows Mason 2001's fall from 74 to 38 kg/kWe between 100 and 500 kWe. | S | Mason 2001 (NASA/TM-2001-210593), Table 3 | v0.17, v0.19 |
 
 ## Model depth, larger
 

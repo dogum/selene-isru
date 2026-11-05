@@ -47,7 +47,9 @@ export function solarPanelCount(solarArrayM2: number, cap = PANEL_INSTANCE_CAP):
   return clamp(Math.round(solarArrayM2 / PANEL_M2_PER_INSTANCE), 0, cap);
 }
 
-const RADIATOR_REF_M2 = 150;
+// v0.19: the default fission radiator runs at 400 K (Mason 2006's Brayton) and
+// spans about 3,100 m^2 at 1 t/day; this reference keeps it near its old ×1.8.
+const RADIATOR_REF_M2 = 1000;
 
 /** radiator wing x-scale: sqrt-area, clamp ×0.4–×3 */
 export function radiatorWingScale(radiatorM2: number): number {

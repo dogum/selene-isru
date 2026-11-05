@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from selene_isru import fission_efficiency, radiator_m2_per_kw, simulate
+from selene_isru import fission_efficiency, nuclear_specific_kg_per_kw, radiator_m2_per_kw, simulate
 from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -75,6 +75,34 @@ def test_polar_propellant_calibration_reproduces_nasa_baseline() -> None:
     }
     for key, value in row["expected"].items():
         assert actual[key] == pytest.approx(value, rel=row["relativeTolerance"]), key
+
+
+def test_fission_slope_from_nasa_surface_brayton_scaling_v019() -> None:
+    row = item("mason-2001-surface-brayton-scaling")
+    assert row["kind"] == "calibration"
+    i = row["inputs"]
+    mass_100 = i["power100Kwe"] * i["specificMass100KgPerKwe"]
+    mass_500 = i["power500Kwe"] * i["specificMass500KgPerKwe"]
+    marginal = (mass_500 - mass_100) / (i["power500Kwe"] - i["power100Kwe"])
+    assert marginal == pytest.approx(row["expected"], rel=1e-9)
+    assert nuclear_specific_kg_per_kw(DEFAULTS) == pytest.approx(marginal, rel=0.001)
+    intercept = mass_100 - marginal * i["power100Kwe"]
+    assert intercept - DEFAULTS["MshieldKg"] == pytest.approx(2799, rel=0.01)
+
+
+def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
+    row = item("mason-2006-lunar-brayton-50kwe")
+    assert row["kind"] == "documentation-only"
+    i = row["inputs"]
+    assert DEFAULTS["Tsource"] == i["hotEndK"]
+    assert DEFAULTS["Tsink"] == i["coldEndK"]
+    assert fission_efficiency(DEFAULTS) == pytest.approx(i["converterEfficiency"], rel=0.002)
+    area_m2 = radiator_m2_per_kw(DEFAULTS) * i["outputKwe"]
+    assert area_m2 == pytest.approx(i["radiatorAreaWithMarginM2"] / (1 + i["areaMargin"]), rel=0.15)
+    mass_kg = DEFAULTS["MshieldKg"] + nuclear_specific_kg_per_kw(DEFAULTS) * i["outputKwe"]
+    assert i["systemMassWithMarginKg"] / (1 + i["massMargin"]) == pytest.approx(row["expected"], rel=0.001)
+    assert mass_kg == pytest.approx(row["expected"], rel=0.12)
+    assert mass_kg < row["expected"]
 
 
 def test_fission_radiator_mass_per_area_from_nasa_fsp() -> None:

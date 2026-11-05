@@ -148,7 +148,8 @@ Screenshot: [fission mass against radiator temperature, from the sweep tool, wit
 ## Left for later
 
 - **Megawatt-class calibration** (backlog): the scale of both terms, the
-  shield, and the default temperatures.
+  shield, and the default temperatures. *(v0.19: done; see
+  [`model-fission-calibration-v019.md`](model-fission-calibration-v019.md).)*
 - **Conversion efficiency from the converter.** `etaMech`, a fraction of
   Carnot, is one number for Stirling and Brayton alike; a converter choice
   would carry its own efficiency, temperatures, and mass.

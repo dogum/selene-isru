@@ -55,7 +55,7 @@ describe("bindings clamp behavior (§3.4)", () => {
 
   it("radiator wing scale is sqrt-area clamped ×0.4–×3", () => {
     expect(radiatorWingScale(0)).toBe(0.4);
-    expect(radiatorWingScale(150)).toBeCloseTo(1, 6);
+    expect(radiatorWingScale(1000)).toBeCloseTo(1, 6);
     expect(radiatorWingScale(1e9)).toBe(3);
   });
 

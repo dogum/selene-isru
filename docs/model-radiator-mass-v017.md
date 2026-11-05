@@ -161,6 +161,9 @@ Screenshot: [the power panel with a 400 K radiator, and the new input's evidence
   [`model-reactor-per-kwt-v018.md`](model-reactor-per-kwt-v018.md).)*
 - **Megawatt-class calibration.** The 1,200/600 K temperatures, 28 kg/kW, and
   1.5 t shield are uncited. A megawatt-class surface fission study would anchor
-  them, and FSP's power scaling would replace the linear slope.
+  them, and FSP's power scaling would replace the linear slope. *(v0.19:
+  temperatures, efficiency, shield, and scale calibrated to Mason 2001, Mason
+  2006, and FSP; the slope stays linear. See
+  [`model-fission-calibration-v019.md`](model-fission-calibration-v019.md).)*
 - **A hotter radiator's areal mass.** The default 600 K radiator would need
   liquid-metal heat pipes, not FSP's water ones; one areal mass serves both.

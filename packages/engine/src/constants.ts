@@ -1548,24 +1548,24 @@ export const PARAM_META = {
     "source": "spec"
   },
   "Tsource": {
-    "value": 1200,
+    "value": 1150,
     "min": 800,
     "max": 1600,
     "unit": "K",
     "kind": "parameter",
     "group": "power",
     "description": "Fission system hot-side temperature",
-    "source": "spec"
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: refractory-reactor direct Brayton for a 50 kWe lunar system, 1150 K converter hot end"
   },
   "Tsink": {
-    "value": 600,
+    "value": 400,
     "min": 300,
     "max": 900,
     "unit": "K",
     "kind": "parameter",
     "group": "power",
     "description": "Fission system sink temperature",
-    "source": "spec"
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: Brayton cold end 400 K at its minimum-mass design point (380 K for the stainless reactor)"
   },
   "Tenv": {
     "value": 250,
@@ -1578,14 +1578,14 @@ export const PARAM_META = {
     "source": "spec"
   },
   "etaMech": {
-    "value": 0.55,
+    "value": 0.403,
     "min": 0.2,
     "max": 0.8,
     "unit": "1",
     "kind": "parameter",
     "group": "power",
     "description": "Thermal mechanical efficiency",
-    "source": "spec"
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: 26.3% Brayton converter efficiency at 1150/400 K, a 0.403 fraction of Carnot"
   },
   "etaRad": {
     "value": 0.85,
@@ -1608,34 +1608,34 @@ export const PARAM_META = {
     "source": "spec"
   },
   "MshieldKg": {
-    "value": 1500,
+    "value": 1676,
     "min": 500,
     "max": 8000,
     "unit": "kg",
     "kind": "parameter",
     "group": "power",
     "description": "Nuclear shielding mass",
-    "source": "spec"
+    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: 1676 kg shield for an emplaced reactor with lunar regolith augmentation, <5 rem/yr at 100 m"
   },
   "kReactorKgPerKwt": {
-    "value": 3.87,
+    "value": 2.25,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
     "kind": "parameter",
     "group": "power",
     "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
-    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: the reactor is 913 kg of the 1,816 kg of reactor, conversion and power management; the split is scaled to the model's 28 kg/kWe at 27.5% efficiency (assumption)"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; split as NASA FSP's (Mason, Poston & Qualls 2008, Table II: the reactor is 913 of 1,816 kg) at the 26.3% design point, after the radiator"
   },
   "kConversionKgPerKwe": {
-    "value": 13.93,
+    "value": 8.47,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Fission power conversion and power management mass per kW of electrical output",
-    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: the reactor is 913 kg of the 1,816 kg of reactor, conversion and power management; the split is scaled to the model's 28 kg/kWe at 27.5% efficiency (assumption)"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; split as NASA FSP's (Mason, Poston & Qualls 2008, Table II: the reactor is 913 of 1,816 kg) at the 26.3% design point, after the radiator"
   },
   "kRadiatorKgPerM2": {
     "value": 3.87,
@@ -2453,15 +2453,15 @@ export const DEFAULTS = {
   "etaDischarge": 0.95,
   "SEstorage": 600,
   "Rarray": 20,
-  "Tsource": 1200,
-  "Tsink": 600,
+  "Tsource": 1150,
+  "Tsink": 400,
   "Tenv": 250,
-  "etaMech": 0.55,
+  "etaMech": 0.403,
   "etaRad": 0.85,
   "epsRad": 0.85,
-  "MshieldKg": 1500,
-  "kReactorKgPerKwt": 3.87,
-  "kConversionKgPerKwe": 13.93,
+  "MshieldKg": 1676,
+  "kReactorKgPerKwt": 2.25,
+  "kConversionKgPerKwe": 8.47,
   "kRadiatorKgPerM2": 3.87,
   "dSolar": 0.05,
   "dNuclear": 0.01,
