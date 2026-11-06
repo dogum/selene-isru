@@ -213,6 +213,9 @@ export function PowerTrade(): React.JSX.Element {
         <div>
           SHIELD <b className="num">{formatQtyText(result.power.shieldMassKg, "kg")}</b>
         </div>
+        <div>
+          CABLE <b className="num">{formatQtyText(params.dSeparationKm, "km")} · {formatQtyText(result.power.cableMassKg, "kg")} · {formatQtyText(result.power.cableLossW, "W")} lost</b>
+        </div>
         {result.power.beamedFloorPowerW !== null && (
           <div>
             BEAMED FLOOR <b className="num">{formatQtyText(result.power.beamedFloorPowerW, "W")}</b>

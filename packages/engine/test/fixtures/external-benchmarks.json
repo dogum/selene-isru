@@ -233,6 +233,31 @@
       "modelSimplification": "The model's defaults take this design point: 1150/400 K, giving 26.3% (v0.19 as a 0.403 fraction of Carnot; since v0.20 from the Brayton cycle, with its loop pressure loss fitted here). As a check not used in calibration, the model at 50 kWe sizes 158 m^2 of radiator against Mason's 140 m^2 before margin, and 3.14 t of system against 3.49 t before margin (10% light); since v0.21, with the shield scaled with power and the reactor and conversion recalibrated, 3.0 t (14% light). The model's efficiency is a fixed fraction of Carnot, so it puts its own minimum-mass radiator temperature near 575 K; a Brayton cycle loses efficiency faster as its cold end warms, which is why Mason's optimum is 400 K. Since v0.20 the Brayton cycle puts the model's optimum near 420 K. Since v0.24 the cycle runs at its best pressure ratio (1.87 here), with the loop pressure loss refitted to 5.15%, and the radiator spans the gas cooler, from 526 K down to 350 K, behind a gas cooler approach fitted so its flux matches Mason's: 158.6 kWt (213 kWt less 54.4 kWe) over 140 m^2, 1,133 W/m^2, against the model's 1,113 (the 48.6 K fit rounded up to 50 K). The model then sizes 126 m^2 at 50 kWe, since it rejects less heat than Mason's system, and 3.11 t (11% light); its optimum radiator cold end is near 414 K."
     },
     {
+      "id": "mason-2025-fsp-separation",
+      "kind": "calibration",
+      "quantity": "Fission shield and cable mass against reactor separation for NASA's 40 kWe surface power design",
+      "inputs": {
+        "reactorThermalKwt": 175,
+        "userPowerKwe": 40,
+        "separation05Km": 0.5,
+        "separation1Km": 1,
+        "separation2Km": 2,
+        "shield05Kg": 2700,
+        "shield1Kg": 1370,
+        "shield2Kg": 700,
+        "pallet05Kg": 670,
+        "pallet1Kg": 872,
+        "pallet2Kg": 1250,
+        "optimumSeparationKm": 1.8
+      },
+      "expected": 0.97,
+      "unit": "1",
+      "source": "Mason, Kaldon, Corbisiero & Rao 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, NETS 2025",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20250000841",
+      "sourceLocator": "Sec. VII and Fig. 10 (HP-Stirling option): 1,370 kg shield and 872 kg user interface pallet at the 1 km reference; about 2,700 kg and 670 kg at 0.5 km; about 700 kg and 1,250 kg at 2 km; minimum system mass near 1.8 km",
+      "modelSimplification": "The shield goes as separation^-0.97, ln(2700/700)/ln(4), from the 0.5 and 2 km points; the 1 km shield is MshieldKg. Much of the change is the shield's included angle (52, 36, and 22 degrees), not only its thickness. The cable is a fixed 303 kg/km, fitted so the model's cable for 40 kWe grows as Mason's pallet does (385 kg/km by least squares), plus aluminium conductor sized for 1.67% loss per km at 3 kV (Barth & Pike 2022). Not fitted: the model's 40 kWe shield-plus-cable minimum falls at 1.86 km, against Mason's 1.8 km."
+    },
+    {
       "id": "kleinhenz-paz-2020-polar-excavation",
       "kind": "documentation-only",
       "quantity": "polar mine excavator mass and power for the NASA baseline case",

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
+import { cableMassKg, conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionShieldKg, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -109,11 +109,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // two systems, shield included, is Mason's. v0.22: so does the reactor and
     // conversion's economy of scale; the model lands 2.55 t lighter at both.
     // v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
+    // v0.25: the shield at its 1 km separation and the cable to the outpost; 2.55 t.
     const modelKg = (kwe: number) => nuclearMassAtKwe(DEFAULTS, kwe);
     const modelMarginal = (modelKg(i.power500Kwe!) - modelKg(i.power100Kwe!)) / (i.power500Kwe! - i.power100Kwe!);
     expectRelative2(modelMarginal, marginal, 0.001);
-    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2522, 0.01);
-    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2522, 0.01);
+    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2554, 0.01);
+    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2554, 0.01);
   });
 
   test("fission economy of scale from NASA's spacecraft Brayton systems, 0.1 to 10 MWe (v0.22)", () => {
@@ -170,9 +171,39 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(DEFAULTS.bStirlingScale, exponent, 0.005);
     // Not used in calibration: NASA FSP's Stirling conversion and power management per kWe.
     const fsp = (i.fspConversionKg! + i.fspPowerManagementKg!) / i.fspUserPowerKwe!;
-    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.05);
+    // v0.25: 21.06 kg/kWe, 7% under FSP's 22.6, once the cable's conductor is charged on its own:
+    // FSP's power management may carry its own cable.
+    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.08);
     // Stirling is heavier than Brayton at megawatt scale, as Mason 2001 finds above 50 kWe.
     expectRelative2(nuclearMassAtKwe(stirling, 500) / nuclearMassAtKwe(DEFAULTS, 500), 1.2, 0.01);
+  });
+
+  test("fission shield and cable against separation, from NASA's 40 kWe surface power design (v0.25)", () => {
+    const item = benchmark("mason-2025-fsp-separation");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    const exponent = Math.log(i.shield05Kg! / i.shield2Kg!) / Math.log(i.separation2Km! / i.separation05Km!);
+    expectRelative2(DEFAULTS.nShieldDistance, exponent, 0.005);
+    expect(DEFAULTS.MshieldKg).toBe(i.shield1Kg);
+    const at = (km: number) => ({ ...DEFAULTS, dSeparationKm: km });
+    const cable = (km: number) => cableMassKg(at(km), i.userPowerKwe! / lineEfficiency(at(km)));
+    expectRelative2(fissionShieldKg(at(i.separation05Km!), i.reactorThermalKwt!), i.shield05Kg!, 0.01);
+    expectRelative2(fissionShieldKg(at(i.separation2Km!), i.reactorThermalKwt!), i.shield2Kg!, 0.01);
+    // The cable grows as Mason's user interface pallet does: 385 kg/km by least squares.
+    const xs = [i.separation05Km!, i.separation1Km!, i.separation2Km!];
+    const ys = [i.pallet05Kg!, i.pallet1Kg!, i.pallet2Kg!];
+    const mx = xs.reduce((a, b) => a + b, 0) / 3;
+    const my = ys.reduce((a, b) => a + b, 0) / 3;
+    const slope = xs.reduce((a, x, k) => a + (x - mx) * (ys[k]! - my), 0) / xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+    expectRelative2(cable(1), slope, 0.005);
+    expectRelative2(cable(2) - cable(0.5), i.pallet2Kg! - i.pallet05Kg!, 0.02);
+    // Not fitted: the shield-plus-cable minimum, against Mason's 1.8 km.
+    const system = (km: number) => fissionShieldKg(at(km), i.reactorThermalKwt!) + cable(km);
+    let best = 0.2;
+    for (let k = 20; k < 500; k++) {
+      if (system(k / 100) < system(best)) best = k / 100;
+    }
+    expectRelative2(best, i.optimumSeparationKm!, 0.05);
   });
 
   test("fission design point and a 50 kWe cross-check, from NASA's lunar Brayton study (v0.19)", () => {
@@ -230,8 +261,9 @@ describe("external analytical benchmarks (separate from implementation parity)",
       run.power.nuclearMassKg,
       run.power.shieldMassKg +
         DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) * fissionScaleFactor(DEFAULTS, run.power.fissionThermalW / 1000) +
-        conversionKgPerKwe({ ...DEFAULTS, ...fsp }, run.power.fissionThermalW / 1000) * (run.energy.gridPowerW / 1000) +
-        run.power.radiatorMassKg,
+        conversionKgPerKwe({ ...DEFAULTS, ...fsp }, run.power.fissionThermalW / 1000) * ((run.energy.gridPowerW + run.power.cableLossW) / 1000) +
+        run.power.radiatorMassKg +
+        run.power.cableMassKg,
       1e-12
     );
   });

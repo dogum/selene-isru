@@ -67,7 +67,12 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
   {
     match: /^Mason 2025/,
     url: "https://ntrs.nasa.gov/citations/20250000841",
-    section: "Mason, Kaldon, Corbisiero & Rao 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System (NETS 2025), Table IV"
+    section: "Mason, Kaldon, Corbisiero & Rao 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System (NETS 2025), Table IV and Sec. VII (separation distance)"
+  },
+  {
+    match: /^Barth & Pike 2022/,
+    url: "https://ntrs.nasa.gov/citations/20220002315",
+    section: "Barth & Pike 2022, Lunar Power Transmission for Fission Surface Power (NETS 2022), Sec. III.D, metallic conductors"
   },
   {
     match: /^Mason 2006/,
@@ -562,7 +567,34 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   MshieldKg: {
     rangeRationale: "From a reactor buried in regolith to a fully earth-delivered crew-rated shield; NASA finds on-board shielding about four times the excavation shield's mass.",
-    validity: "The shield's mass at its reference reactor heat (QshieldRefKwt); since v0.21 it grows with power above that point (nShield). The default is NASA FSP's 1,676 kg shield for an emplaced reactor with regolith augmentation, under 5 rem/yr at 100 m, sized for 175 kWt. Mason 2001's unburied crew-rated shields put about 4.5 t at zero power.",
+    validity: "The shield's mass at its reference reactor heat (QshieldRefKwt) with the outpost 1 km away. Since v0.21 it grows with power above that heat (nShield); since v0.25 it shrinks as the outpost moves away (nShieldDistance). The default is NASA's current FSP design: a 1,370 kg directional tungsten, boron carbide, and lithium hydride shield for a 175 kWt reactor, under 5 rem/yr at a habitat boundary 1 km away (Mason 2025). Until v0.24 it was FSP 2008's 1,676 kg shield buried in regolith for 100 m; burial is not modelled.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
+  },
+  nShieldDistance: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "0 is a shield that ignores distance; 2 is inverse-square dose with a fixed shadow, an upper bound since attenuation is exponential in thickness.",
+    validity: "Shield mass goes as (1 km / separation) to this power. The default 0.97 is fitted to Mason 2025's shields for one 175 kWt reactor: about 2,700 kg at 0.5 km, 1,370 kg at 1 km, and 700 kg at 2 km. Much of that is the shadow the shield must cast over a 1 km wide outpost: its included angle narrows from 52 to 36 to 22 degrees. It is applied at every reactor power, on top of nShield. At the reference 1 km separation the factor is 1 whatever the exponent, so it has no effect until the separation moves.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.15
+  },
+  dSeparationKm: {
+    rangeRationale: "From 100 m, Mason 2001's optimized separation for a 500 kWe low-voltage system, to 5 km, past the lunar horizon at 2.4 km that NASA notes a 3 km separation clears.",
+    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.9 km for a 40 kWe system (Mason finds about 1.8 km), about 1.15 km for the default 1 MWe plant, and about 0.6 km at 10 t/day, since the cable's conductor grows with power. The cable runs at a fixed 3 kV; a megawatt plant would raise its voltage and move farther away.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
+  },
+  kCableKgPerKm: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "From a bare conductor to a heavily armoured, redundant cable; NASA's 40 kWe FSP cable and spool weigh 325 kg for 1 km.",
+    validity: "The cable mass that does not grow with power: insulation, jacket, data fibre, spool, and conductors at their minimum gauge. Fitted so the model's 40 kWe cable grows as Mason 2025's user interface pallet does with cable length (670, 872, and 1,250 kg at 0.5, 1, and 2 km: 385 kg/km), less the conductor this model sizes for 40 kWe. NASA's four redundant 3 kVac feeds use 14 AWG wire, far above what 40 kWe needs.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
+  },
+  fCableLossPerKm: {
+    maturity: "DESIGN ASSUMPTION",
+    rangeRationale: "From 0.2% per km, a heavy conductor, to 5% per km, a light one that wastes power.",
+    validity: "The conduction loss per km the cable's aluminium conductor is sized for, at a fixed 3 kV. A lower loss needs proportionally more conductor; the loss is charged to the fission plant, which sends enough to cover it. The default 1.67% per km is NASA's design choice of 5% at 3 km (Barth & Pike 2022). The optimum trades conductor mass against the fission mass the loss costs, about 25 kg per kW.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
@@ -582,7 +614,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   QshieldRefKwt: {
     rangeRationale: "From a kilowatt-class reactor to a multi-megawatt one; set it to the reactor heat of whichever design MshieldKg is taken from.",
-    validity: "The reactor heat at which the shield weighs MshieldKg. Below it the shield stays at MshieldKg: a small reactor still needs a crew-rated shield, which Mason 2001 finds dominates a 10 kWe system's mass. The default is the 175 kWt NASA FSP's 1,676 kg shield was sized for.",
+    validity: "The reactor heat at which the shield weighs MshieldKg. Below it the shield stays at MshieldKg: a small reactor still needs a crew-rated shield, which Mason 2001 finds dominates a 10 kWe system's mass. The default is the 175 kWt heat-pipe reactor of NASA's current FSP design, whose shield weighs 1,370 kg (Mason 2025).",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.05
   },

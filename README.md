@@ -282,6 +282,10 @@ The v0.24 Brayton optimum (the cycle at its best pressure ratio, and the
 radiator sized over the gas cooler's span with an approach fitted to NASA's
 lunar Brayton radiator) is in
 [`docs/model-brayton-optimum-v024.md`](docs/model-brayton-optimum-v024.md).
+The v0.25 shield separation (the fission shield shrinking as the outpost moves
+away, and a cable to the outpost charged by its length and loss, from NASA's
+current 40 kWe design and its transmission study) is in
+[`docs/model-shield-separation-v025.md`](docs/model-shield-separation-v025.md).
 
 ## Architecture
 

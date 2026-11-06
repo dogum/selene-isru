@@ -12,9 +12,41 @@ def shield_mass_kg(m_shield_kg: float, ref_kw: float, n_shield: float, kw: float
     return m_shield_kg * max(1.0, kw / ref_kw) ** n_shield
 
 
+def shield_distance_factor(params: dict[str, Any]) -> float:
+    """Shield mass relative to its reference separation: (dShieldRefKm / dSeparationKm)^nShieldDistance [1]."""
+    return (c("dShieldRefKm") / params["dSeparationKm"]) ** params["nShieldDistance"]
+
+
+def fission_shield_kg(params: dict[str, Any], thermal_kw: float) -> float:
+    """Fission shield at a reactor heat and the case's separation [kg]."""
+    shield = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], thermal_kw)
+    return shield * shield_distance_factor(params)
+
+
+def line_efficiency(params: dict[str, Any]) -> float:
+    """Fraction of the fission plant's electrical output the cable delivers to the outpost [1]."""
+    return 1 - params["fCableLossPerKm"] * params["dSeparationKm"]
+
+
+def cable_conductor_kg_per_kw_km(params: dict[str, Any]) -> float:
+    """Aluminium conductor per kW sent per km of route, sized to lose fCableLossPerKm [kg/(kW km)].
+
+    Two conductors at the line voltage: loss fraction 2 rho L P / (V^2 A) held at fCableLossPerKm per km,
+    so conductor mass 2 A L rho_m = 4 rho rho_m P L / (V^2 f), with P in kW and L in km."""
+    return (
+        4 * c("rhoAluminumOhmM") * c("densityAluminumKgPerM3") * 1e9
+        / (c("VCableV") ** 2 * params["fCableLossPerKm"])
+    )
+
+
+def cable_mass_kg(params: dict[str, Any], sent_kwe: float) -> float:
+    """Reactor-to-outpost cable mass at a sent electrical power [kg]: a fixed mass per km plus the conductor."""
+    return params["dSeparationKm"] * (params["kCableKgPerKm"] + cable_conductor_kg_per_kw_km(params) * sent_kwe)
+
+
 def shield_ref_kwe(params: dict[str, Any]) -> float:
-    """Electrical output at which the shield weighs MshieldKg [kW]: its reference heat times the efficiency."""
-    return params["QshieldRefKwt"] * fission_efficiency(params)
+    """Delivered output at which the shield reaches its reference heat [kW]."""
+    return params["QshieldRefKwt"] * fission_efficiency(params) * line_efficiency(params)
 
 
 def p_crit_kw(m_shield_kg: float, beta: float, alpha: float, shield_ref_kw: float = 1.0, n_shield: float = 0.0) -> float | None:
@@ -206,32 +238,38 @@ def conversion_kg_per_kwe(params: dict[str, Any], thermal_kw: float) -> float:
 
 
 def _specific_kg_per_kwe(params: dict[str, Any], eta: float, radiator_kg_per_kwe: float, kwe: float) -> float:
-    heat_kw = kwe / eta
-    return (
+    """Per delivered kW: reactor, conversion, radiator, and cable conductor, all sized on the sent power."""
+    line = line_efficiency(params)
+    heat_kw = kwe / line / eta
+    per_sent_kwe = (
         params["kReactorKgPerKwt"] / eta * fission_scale_factor(params, heat_kw)
         + conversion_kg_per_kwe(params, heat_kw)
         + radiator_kg_per_kwe
+        + params["dSeparationKm"] * cable_conductor_kg_per_kw_km(params)
     )
+    return per_sent_kwe / line
 
 
 def nuclear_specific_kg_per_kw(params: dict[str, Any], kwe: float | None = None) -> float:
-    """Fission specific mass per kW of electrical output at an output, excluding the shield [kg/kW].
+    """Fission specific mass per kW delivered at an output, excluding the shield and the cable's fixed mass [kg/kW].
 
     Defaults to the output at the scaling reference heat."""
     eta = fission_efficiency(params)
-    at_kwe = params["QscaleRefKwt"] * eta if kwe is None else kwe
+    at_kwe = params["QscaleRefKwt"] * eta * line_efficiency(params) if kwe is None else kwe
     return _specific_kg_per_kwe(params, eta, params["kRadiatorKgPerM2"] * _radiator_m2_per_kw_at(params, eta), at_kwe)
 
 
 def _mass_curve(params: dict[str, Any]):
-    """Fission mass against electrical output and age, with the efficiency and radiator evaluated once."""
+    """Fission mass against delivered output and age, with the efficiency and radiator evaluated once."""
     eta = fission_efficiency(params)
+    line = line_efficiency(params)
     radiator_kg_per_kwe = params["kRadiatorKgPerM2"] * _radiator_m2_per_kw_at(params, eta)
+    cable_fixed_kg = params["dSeparationKm"] * params["kCableKgPerKm"]
 
     def mass(kwe: float, t_years: float) -> float:
-        shield = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], kwe / eta)
+        shield = fission_shield_kg(params, kwe / line / eta)
         specific = _specific_kg_per_kwe(params, eta, radiator_kg_per_kwe, kwe)
-        return shield + nuclear_slope_at_year(specific, params["dNuclear"], t_years) * kwe
+        return shield + cable_fixed_kg + nuclear_slope_at_year(specific, params["dNuclear"], t_years) * kwe
 
     return mass
 
@@ -299,8 +337,9 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     beta_solar = solar_mass_kg / (p_grid / 1000)
 
     eta_therm = fission_efficiency(params)
-    q_fission = p_grid / eta_therm
-    q_reject = q_fission - p_grid
+    p_sent = p_grid / line_efficiency(params)
+    q_fission = p_sent / eta_therm
+    q_reject = q_fission - p_sent
     radiator_flux = radiator_flux_w_per_m2(params)
     radiator_m2 = q_reject / max(1e-9, radiator_flux)
     radiator_cold_k, _ = radiator_temperatures_k(params)
@@ -310,13 +349,15 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         else radiator_cold_k
     )
     radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
-    shield_kg = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], q_fission / 1000)
+    shield_kg = fission_shield_kg(params, q_fission / 1000)
+    cable_kg = cable_mass_kg(params, p_sent / 1000)
     scale = fission_scale_factor(params, q_fission / 1000)
     nuclear_mass_kg = (
         shield_kg
         + params["kReactorKgPerKwt"] * (q_fission / 1000) * scale
-        + conversion_kg_per_kwe(params, q_fission / 1000) * (p_grid / 1000)
+        + conversion_kg_per_kwe(params, q_fission / 1000) * (p_sent / 1000)
         + radiator_mass_kg
+        + cable_kg
     )
     alpha_with_radiator = nuclear_specific_kg_per_kw(params, p_grid / 1000)
     architecture = "solar" if solar_mass_kg <= nuclear_mass_kg else "nuclear"
@@ -350,6 +391,8 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "radiatorMassKg": radiator_mass_kg,
         "radiatorEffectiveK": radiator_effective_k,
         "shieldMassKg": shield_kg,
+        "cableMassKg": cable_kg,
+        "cableLossW": p_sent - p_grid,
         "fissionThermalW": q_fission,
         "nuclearSpecificKgPerKw": alpha_with_radiator,
         "pCritW": 0 if p_crit is None else p_crit * 1000,

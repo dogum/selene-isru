@@ -394,7 +394,8 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
       epsRecuperator: "Recuperator effectiveness",
       kReactorKgPerKwt: "Reactor mass per kWt",
       kRadiatorKgPerM2: "Radiator mass per m²",
-      epsRad: "Radiator emissivity"
+      epsRad: "Radiator emissivity",
+      dSeparationKm: "Separation from the outpost"
     },
     note: "The rim reactor appears for the nuclear architecture; its radiator span scales with rejected heat and its switchgear lighting follows grid demand.",
     metrics: (r) => [
@@ -402,7 +403,8 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
       { label: "Grid power", value: formatQtyText(r.energy.gridPowerW, "W") },
       { label: "Reactor heat", value: formatQtyText(r.power.fissionThermalW, "W") },
       { label: "Nuclear mass", value: formatQtyText(r.power.nuclearMassKg, "kg") },
-      { label: "Radiator", value: `${formatQtyText(r.power.radiatorM2, "m²")} · ${formatQtyText(r.power.radiatorMassKg, "kg")}` }
+      { label: "Radiator", value: `${formatQtyText(r.power.radiatorM2, "m²")} · ${formatQtyText(r.power.radiatorMassKg, "kg")}` },
+      { label: "Shield · cable", value: `${formatQtyText(r.power.shieldMassKg, "kg")} · ${formatQtyText(r.power.cableMassKg, "kg")}` }
     ]
   },
   habitat: {
