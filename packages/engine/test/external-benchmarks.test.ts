@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, fissionEfficiency, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
+import { DEFAULTS, fissionEfficiency, nuclearSpecificKgPerKw, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -95,6 +95,38 @@ describe("external analytical benchmarks (separate from implementation parity)",
     for (const [key, value] of Object.entries(expected)) {
       expect(Math.abs(actual[key]! - value), key).toBeLessThanOrEqual(value * item.relativeTolerance!);
     }
+  });
+
+  test("fission slope from NASA's surface Brayton systems, 100 to 500 kWe (v0.19)", () => {
+    const item = benchmark("mason-2001-surface-brayton-scaling");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    const mass100 = i.power100Kwe! * i.specificMass100KgPerKwe!;
+    const mass500 = i.power500Kwe! * i.specificMass500KgPerKwe!;
+    const marginal = (mass500 - mass100) / (i.power500Kwe! - i.power100Kwe!);
+    expectRelative2(marginal, item.expected as number, 1e-9);
+    // The default slope, reactor + conversion + radiator, is Mason's marginal mass.
+    expectRelative2(nuclearSpecificKgPerKw(DEFAULTS), marginal, 0.001);
+    // Mason's shaped, unburied crew shield puts 4.5 t at zero power; the model's
+    // regolith-augmented FSP shield is 1.7 t, so the model is 2.8 t lighter at both points.
+    const intercept = mass100 - marginal * i.power100Kwe!;
+    expectRelative2(intercept - DEFAULTS.MshieldKg, 2799, 0.01);
+  });
+
+  test("fission design point and a 50 kWe cross-check, from NASA's lunar Brayton study (v0.19)", () => {
+    const item = benchmark("mason-2006-lunar-brayton-50kwe");
+    expect(item.kind).toBe("documentation-only");
+    const i = item.inputs as Record<string, number>;
+    expect(DEFAULTS.Tsource).toBe(i.hotEndK);
+    expect(DEFAULTS.Tsink).toBe(i.coldEndK);
+    expectRelative2(fissionEfficiency(DEFAULTS), i.converterEfficiency!, 0.002);
+    // Not calibrated: the model's radiator and system mass at 50 kWe, against Mason's before margin.
+    const areaM2 = radiatorM2PerKw(DEFAULTS) * i.outputKwe!;
+    expectRelative2(areaM2, i.radiatorAreaWithMarginM2! / (1 + i.areaMargin!), 0.15);
+    const massKg = DEFAULTS.MshieldKg + nuclearSpecificKgPerKw(DEFAULTS) * i.outputKwe!;
+    expectRelative2(i.systemMassWithMarginKg! / (1 + i.massMargin!), item.expected as number, 0.001);
+    expectRelative2(massKg, item.expected as number, 0.12);
+    expect(massKg).toBeLessThan(item.expected as number);
   });
 
   test("fission radiator mass per area, from NASA's 40 kWe surface power design", () => {

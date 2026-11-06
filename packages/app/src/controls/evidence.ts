@@ -55,6 +55,16 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
     section: "NASA Architecture Workshop 2023 · Merancy, How: NRHO, The Artemis Orbit (cis-lunar delta-v, slides 6 and 9)"
   },
   {
+    match: /^Mason 2001/,
+    url: "https://ntrs.nasa.gov/citations/20010016863",
+    section: "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts (NASA/TM-2001-210593), Table 3"
+  },
+  {
+    match: /^Mason 2006/,
+    url: "https://ntrs.nasa.gov/citations/20060011236",
+    section: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Table 1"
+  },
+  {
     match: /^Mason, Poston & Qualls 2008/,
     url: "https://ntrs.nasa.gov/citations/20080013229",
     section: "Mason, Poston & Qualls 2008, System Concepts for Affordable Fission Surface Power (NASA/TM-2008-215166), Table II and Heat Rejection"
@@ -457,13 +467,37 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   kReactorKgPerKwt: {
     rangeRationale: "From an advanced megawatt-class reactor to past NASA's 40 kWe design, whose 913 kg reactor makes 175 kWt (5.2 kg/kWt).",
-    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. The default keeps NASA FSP's split, the reactor half of reactor, conversion and power management, scaled to the model's 28 kg/kW at 27.5% efficiency; that scale is an assumption, not a megawatt-class design.",
+    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. Since v0.19 the reactor and conversion terms, with the radiator, add to NASA's 29.25 kg/kWe marginal mass for 100–500 kWe surface Brayton systems (Mason 2001), split as NASA FSP's reactor is to its conversion and power management.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
   kConversionKgPerKwe: {
     rangeRationale: "From advanced megawatt-class conversion to past NASA's 40 kWe design, whose Stirling converters and power management come to 22.6 kg/kW.",
-    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Default from NASA FSP's split, scaled to the model's 28 kg/kW at 27.5% efficiency.",
+    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Since v0.19 the default is half of NASA's 29.25 kg/kWe surface marginal mass after the radiator (Mason 2001), in FSP's split.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
+  },
+  Tsource: {
+    rangeRationale: "From a stainless-steel reactor's 850–900 K to advanced refractory designs near 1,600 K; NASA's lunar Brayton study used 900 K and 1,150 K reactors.",
+    validity: "The converter hot end. The default is Mason 2006's refractory-reactor direct Brayton for a 50 kWe lunar system.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.05
+  },
+  Tsink: {
+    rangeRationale: "From a cold radiator near 300 K to 900 K; NASA's lunar studies put the Brayton cold end at 380–400 K and Stirling at 415–460 K.",
+    validity: "The converter cold end, which the model also takes as the radiator temperature. The default is Mason 2006's minimum-mass Brayton design point, 400 K. The model's efficiency is a fixed fraction of Carnot, while a real Brayton cycle loses efficiency faster as its cold end warms, so the model's own lightest radiator runs near 570 K and overstates what a warmer radiator saves.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.1
+  },
+  etaMech: {
+    rangeRationale: "Fraction of Carnot from poor converters (0.2) to the best Stirling (0.8); NASA's lunar Brayton reaches 0.40 and its Stirling about 0.55.",
+    validity: "Conversion efficiency is this fraction of the Carnot efficiency between the hot and cold ends. The default reproduces Mason 2006's 26.3% Brayton converter at 1,150/400 K. It is held fixed as the temperatures change, which a real converter does not do.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.1
+  },
+  MshieldKg: {
+    rangeRationale: "From a reactor buried in regolith to a fully earth-delivered crew-rated shield; NASA finds on-board shielding about four times the excavation shield's mass.",
+    validity: "One fixed mass, whatever the power. The default is NASA FSP's 1,676 kg shield for an emplaced reactor with regolith augmentation, under 5 rem/yr at 100 m, sized for 175 kWt; a megawatt reactor needs a thicker one. Mason 2001's unburied crew-rated shields put about 4.5 t at zero power.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },

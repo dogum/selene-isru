@@ -134,6 +134,44 @@
       "modelSimplification": "The heat rejection subsystem (panels, heat pipes, pumped water loops, deployment) is charged per m^2 of radiating area before margin: 615 / (175 / 1.1) = 3.87 kg/m^2. At FSP's temperatures and 27.4% gross conversion the model sizes 152 m^2 for 40 kWe, against FSP's 159 m^2 before margin: the model rejects only the waste heat behind the delivered power, not the 8 kWe of FSP's electrical losses and parasitic loads. Radiator emissivity and fin efficiency are the model defaults; FSP does not state them. Since v0.18 the reactor is charged per kW of heat and conversion with power management per kW of output, split in FSP's proportion (reactor 913 of 1,816 kg) and scaled to the model's 28 kg/kWe at its default 27.5% efficiency; FSP's own 5.2 kg/kWt and 22.6 kg/kWe are a 40 kWe unit's."
     },
     {
+      "id": "mason-2001-surface-brayton-scaling",
+      "kind": "calibration",
+      "quantity": "Marginal fission system mass per kWe for surface reactor power, 100 to 500 kWe",
+      "inputs": {
+        "power100Kwe": 100,
+        "specificMass100KgPerKwe": 74.0,
+        "power500Kwe": 500,
+        "specificMass500KgPerKwe": 38.2
+      },
+      "expected": 29.25,
+      "unit": "kg/kW",
+      "source": "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts, NASA/TM-2001-210593",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20010016863",
+      "sourceLocator": "Table 3 (surface outposts and bases): reference 1300 K Brayton, 6 kg/m^2 radiator, 200 Vac, 74.0 kg/kWe at 100 kWe and 38.2 kg/kWe at 500 kWe, with a shaped crew-rated shield and an optimized separation distance; margin not stated",
+      "modelSimplification": "The model's fission slope (reactor per kWt, conversion per kWe, radiator per m^2) is set to the marginal 29.25 kg/kWe between those two systems, with FSP's reactor/conversion split. Mason's line extrapolates to about 4.5 t at zero power, for a shield sized at 100-200 m with no burial; the model keeps NASA FSP's 1.7 t regolith-augmented shield, so it lands 2.8 t lighter at both points."
+    },
+    {
+      "id": "mason-2006-lunar-brayton-50kwe",
+      "kind": "documentation-only",
+      "quantity": "Fission design point (temperatures, efficiency), radiator area, and system mass of a 50 kWe lunar Brayton system",
+      "inputs": {
+        "outputKwe": 50,
+        "hotEndK": 1150,
+        "coldEndK": 400,
+        "converterEfficiency": 0.263,
+        "radiatorAreaWithMarginM2": 154,
+        "areaMargin": 0.1,
+        "systemMassWithMarginKg": 4193,
+        "massMargin": 0.2
+      },
+      "expected": 3494,
+      "unit": "kg",
+      "source": "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications, NASA/TM-2006-214120",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20060011236",
+      "sourceLocator": "Table 1 (50 kWe design points with excavation shield), refractory reactor, high-temperature direct Brayton: 1150 K hot end, 400 K cold end, 26.3% converter efficiency, 154 m^2 main radiator with 10% area margin, 4193 kg with 20% mass margin; text: minimum-mass Brayton cold end 380-400 K",
+      "modelSimplification": "The model's defaults take this design point: 1150/400 K and a 0.403 fraction of Carnot, giving 26.3%. As a check not used in calibration, the model at 50 kWe sizes 158 m^2 of radiator against Mason's 140 m^2 before margin, and 3.14 t of system against 3.49 t before margin (10% light). The model's efficiency is a fixed fraction of Carnot, so it puts its own minimum-mass radiator temperature near 575 K; a Brayton cycle loses efficiency faster as its cold end warms, which is why Mason's optimum is 400 K."
+    },
+    {
       "id": "kleinhenz-paz-2020-polar-excavation",
       "kind": "documentation-only",
       "quantity": "polar mine excavator mass and power for the NASA baseline case",

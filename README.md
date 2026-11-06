@@ -260,6 +260,10 @@ NASA's 40 kWe fission surface power design) is in
 The v0.18 reactor mass (the fission reactor charged per kW of heat and its
 conversion per kW of output, so conversion efficiency costs reactor mass) is in
 [`docs/model-reactor-per-kwt-v018.md`](docs/model-reactor-per-kwt-v018.md).
+The v0.19 fission calibration (temperatures, efficiency, shield, and mass scale
+set to NASA Glenn's surface Brayton studies and NASA's FSP design, with a 400 K
+radiator) is in
+[`docs/model-fission-calibration-v019.md`](docs/model-fission-calibration-v019.md).
 
 ## Architecture
 

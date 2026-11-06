@@ -466,6 +466,7 @@ in `assets/ASSET_LICENSES.md`.
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
+| Megawatt-class fission calibration, 400 K radiator, disclosed 570 K model optimum | v0.19 anchors in `regression.test.ts` / `test_regression.py`, `mason-2001-surface-brayton-scaling` and `mason-2006-lunar-brayton-50kwe` in `external-benchmarks.test.ts` |
 | Fission reactor per kWt and conversion per kWe, radiator-temperature optimum | v0.18 anchors in `regression.test.ts` / `test_regression.py`, the split check in `mason-2008-fsp-radiator`, `legacy-params.test.ts` |
 | Fission radiator mass, FSP calibration, power-trade slope agreement | v0.17 anchors in `regression.test.ts` / `test_regression.py`, `mason-2008-fsp-radiator` in `external-benchmarks.test.ts`, `power-slopes.test.ts` |
 | Plant sized to its demand: solver, bounds, sizing parity, rail button | sizing tests in `refuel.test.ts` / `test_refuel.py`, v0.16 anchors in `regression.test.ts`, sizing vectors in `dynamics_vectors.json`, `control-rail.test.tsx` |
@@ -529,7 +530,8 @@ script run on a clean checkout at all.
   `model-excavators-v012.md` → `model-sabatier-mass-v013.md` →
   `model-electrolysis-bop-v014.md` → `model-overburden-timing-v015.md` →
   `model-size-to-demand-v016.md` → `model-radiator-mass-v017.md` →
-  `model-reactor-per-kwt-v018.md`) is
+  `model-reactor-per-kwt-v018.md` →
+  `model-fission-calibration-v019.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -589,6 +591,10 @@ script run on a clean checkout at all.
 - [`docs/model-reactor-per-kwt-v018.md`](docs/model-reactor-per-kwt-v018.md) —
   the fission reactor charged on its heat and conversion on its output, in
   NASA FSP's split, and the radiator-temperature optimum that follows.
+- [`docs/model-fission-calibration-v019.md`](docs/model-fission-calibration-v019.md) —
+  the fission system's temperatures, efficiency, shield, and scale set to NASA
+  Glenn's surface Brayton studies and FSP, and the radiator-temperature
+  optimum the fixed-Carnot efficiency still misplaces.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

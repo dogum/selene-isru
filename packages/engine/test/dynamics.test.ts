@@ -123,7 +123,7 @@ describe("phase 2 dynamics regression anchors", () => {
     // v0.12: whole excavators (see regression.test.ts).
     // v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
     // v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
-    expectRel(result.plantMassThroughputDays.p50, 51.78326567856924, 1e-12);
+    expectRel(result.plantMassThroughputDays.p50, 51.223134179939066, 1e-12);  // v0.19: fission calibrated to Mason and FSP
     expectRel(result.secTotal.p50, 23.758063285514478, 1e-12);
   });
 });
