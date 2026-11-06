@@ -19,7 +19,15 @@ from .modules.ilmenite import (
     reduces_ilmenite,
 )
 from .modules.logistics import payload_per_mission_kg
-from .modules.power import fission_efficiency, nuclear_specific_kg_per_kw, p_crit_dynamic_kw, p_crit_kw, radiator_m2_per_kw
+from .modules.power import (
+    fission_efficiency,
+    nuclear_specific_kg_per_kw,
+    p_crit_dynamic_kw,
+    p_crit_kw,
+    radiator_m2_per_kw,
+    shield_mass_kg,
+    shield_ref_kwe,
+)
 from .modules.refuel import refuel_timeline, sortie_propellant_kg
 from .modules.sabatier import sabatier_kp
 from .modules.thermal import sec_sub_delivered_j_per_kg, sec_sub_j_per_kg
@@ -41,6 +49,8 @@ __all__ = [
     "p_crit_dynamic_kw",
     "p_crit_kw",
     "radiator_m2_per_kw",
+    "shield_mass_kg",
+    "shield_ref_kwe",
     "refuel_timeline",
     "ilmenite_conversion",
     "ilmenite_oxygen_fraction",

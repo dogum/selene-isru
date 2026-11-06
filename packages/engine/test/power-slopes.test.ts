@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { normalizeParams, nuclearSlopeAtYear, nuclearSpecificKgPerKw, pCritDynamicKw, simulate, solarSlopeAtYear } from "../src/index";
+import { normalizeParams, nuclearSlopeAtYear, nuclearSpecificKgPerKw, pCritDynamicKw, shieldMassKg, shieldRefKwe, simulate, solarSlopeAtYear } from "../src/index";
 
 /**
  * The power-trade chart plots the two aging slopes and marks the crossover.
@@ -48,9 +48,29 @@ describe("the nuclear slope carries the radiator", () => {
     const kw = result.energy.gridPowerW / 1000;
     const alpha = result.power.nuclearSpecificKgPerKw;
     expect(alpha).toBe(nuclearSpecificKgPerKw(params));
-    expect(Math.abs(result.power.nuclearMassKg - (params.MshieldKg + alpha * kw))).toBeLessThan(1e-9 * result.power.nuclearMassKg);
+    // v0.21: the shield follows the reactor heat; on electrical output its reference is shieldRefKwe.
+    const refKwe = shieldRefKwe(params);
+    const shieldAt = (pKw: number) => shieldMassKg(params.MshieldKg, refKwe, params.nShield, pKw);
+    expect(Math.abs(result.power.nuclearMassKg - (shieldAt(kw) + alpha * kw))).toBeLessThan(1e-9 * result.power.nuclearMassKg);
     const beta = result.power.solarMassKg / kw;
-    const dynamic = pCritDynamicKw(params.MshieldKg, beta, alpha, params.dSolar, params.dNuclear, params.missionYears);
+    const dynamic = pCritDynamicKw(params.MshieldKg, beta, alpha, params.dSolar, params.dNuclear, params.missionYears, refKwe, params.nShield);
     expect(result.power.pCritDynamicW).toBe(dynamic === null ? 0 : dynamic * 1000);
+  });
+});
+
+/**
+ * The chart draws the nuclear curve as the scaled shield plus the aged slope.
+ * Where the crossover sits above the shield's reference power, both curves must
+ * meet there.
+ */
+describe("the crossover meets a shield that grows with power", () => {
+  test.each([
+    { MshieldKg: 1676, beta: 400, alpha: 30, refKw: 2, n: 0.33 },
+    { MshieldKg: 4000, beta: 60, alpha: 25, refKw: 10, n: 0.5 },
+    { MshieldKg: 1676, beta: 900, alpha: 30, refKw: 46, n: 0.33 }
+  ])("Mshield=$MshieldKg ref=$refKw n=$n", (c) => {
+    const p = pCritDynamicKw(c.MshieldKg, c.beta, c.alpha, 0, 0, 0, c.refKw, c.n)!;
+    const nuclear = shieldMassKg(c.MshieldKg, c.refKw, c.n, p) + c.alpha * p;
+    expect(Math.abs(c.beta * p - nuclear)).toBeLessThan(1e-9 * c.beta * p);
   });
 });

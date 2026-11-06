@@ -10,6 +10,8 @@ import {
   secElecJPerKg,
   secSubJPerKg,
   shieldFullBalanceM,
+  shieldMassKg,
+  shieldRefKwe,
   simulate,
   sizeToDemand
 } from "../src/index";
@@ -39,9 +41,13 @@ function pinFissionEfficiency<T extends Partial<SimParams>>(params: T, eta: numb
 }
 
 const V018_FISSION = pinFissionEfficiency(
-  { Tsource: 1200, Tsink: 600, MshieldKg: 1500, kReactorKgPerKwt: 3.87, kConversionKgPerKwe: 13.93 },
+  { Tsource: 1200, Tsink: 600, MshieldKg: 1500, kReactorKgPerKwt: 3.87, kConversionKgPerKwe: 13.93, nShield: 0 },
   0.275
 );
+
+// v0.21 scales the shield with power and recalibrates the reactor and conversion
+// masses; the v0.19 and v0.20 anchors pin the fission inputs they were written for.
+const V020_FISSION = { kReactorKgPerKwt: 2.25, kConversionKgPerKwe: 8.47, nShield: 0 };
 
 describe("regression anchors", () => {
   test("matches the research-derived headline values", () => {
@@ -69,7 +75,7 @@ describe("regression anchors", () => {
     expect(result.logistics.plantMassThroughputDays).toBe(result.logistics.totalInfraMassKg / 1000);
     // v0.9 moved this from 60.4: the excavation fleet is sized on soil moved,
     // 8.5 t -> 108 kg.
-    expectRel(result.logistics.plantMassThroughputDays, 51.26, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(result.logistics.plantMassThroughputDays, 50.46, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expectRel(shieldFullBalanceM(101325, 3000), 20.85, 0.005);
     expect(payloadPerMissionKg(DEFAULTS)).toBeGreaterThanOrEqual(95_000);
     expect(payloadPerMissionKg(DEFAULTS)).toBeLessThanOrEqual(107_000);
@@ -90,7 +96,7 @@ describe("regression anchors", () => {
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
     expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.49, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.80, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
@@ -107,7 +113,7 @@ describe("regression anchors", () => {
     expectRel(campaign.leoMassPerLandedKg, leoPerKg, 1e-12);
     expectRel(campaign.paybackDays!, DEFAULTS.commissioningDays + DEFAULTS.M0leo / netPerDay, 1e-12);
     expectRel(campaign.paybackDays!, 240.8, 0.001);
-    expectRel(campaign.returnRatio, 6.899, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(campaign.returnRatio, 6.924, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expectRel(campaign.leoMassPerLandedKg, 12.82, 0.001);
     expect(campaign.paysBackInCampaign).toBe(true);
     // The Sabatier loop's CO2 is landed from Earth and outweighs its products' saving.
@@ -130,14 +136,14 @@ describe("regression anchors", () => {
     expectRel(cryo.inventories[2]!.liquefierMassKg, 233 * production.h2KgPerDay, 1e-12);
     // v0.9 moved these from 20.78 kWh/kg, 82.35 t and day 311.3.
     expectRel(energy.secTotal_kWhPerKg, 20.62, 0.001);  // v0.14: electrolysis balance of plant
-    expectRel(logistics.totalInfraMassKg / 1000, 74.29, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(logistics.totalInfraMassKg / 1000, 73.77, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expectRel(campaign.paybackDays!, 309.4, 0.001);  // v0.14: electrolysis balance of plant
     // Leverage and throughput days are measured against usable propellant,
     // not the water processed (deliberately moved from 133x and 82.4 days;
     // v0.9 then moved leverage from 103.4x).
     expect(logistics.productKgPerDay).toBe(production.propellantKgPerDay);
     expectRel(logistics.plantMassThroughputDays, logistics.totalInfraMassKg / production.propellantKgPerDay, 1e-12);
-    expectRel(logistics.leverageL, 114.6, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(logistics.leverageL, 115.4, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // The Sabatier loop is measured against its products, imported carbon included.
     const sabatier = simulate({ site: "polar", enableSabatier: true });
     const p = sabatier.production;
@@ -157,16 +163,16 @@ describe("regression anchors", () => {
     expectRel(crew.refuel!.demandO2KgPerDay, 100.0, 0.001);
     expectRel(crew.refuel!.isruShare, 6 / 7, 1e-12);
     // v0.9 moved these from 61.69 t and 0.732.
-    expectRel(crew.logistics.totalInfraMassKg / 1000, 52.58, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(crew.logistics.totalInfraMassKg / 1000, 51.77, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expect(crew.campaign.paysBackInCampaign).toBe(false);
-    expectRel(crew.campaign.returnRatio, 0.762, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(crew.campaign.returnRatio, 0.765, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // Nine sorties a year use the whole plant. The ledger credits each sortie
     // when it flies, so payback falls on the sixth, on day 273, not on the
     // v0.5 day 242 that crediting by the day would give. (v0.9 moved the
     // return from 6.59.)
     const matched = simulate({ refuelDemand: "lander", sortiesPerYear: 9 });
     expectRel(matched.campaign.paybackDays!, 273.3, 0.001);
-    expectRel(matched.campaign.returnRatio, 6.858, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(matched.campaign.returnRatio, 6.883, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
   });
 
   test("ilmenite reduction: Eagle's mare soil plant uses less power but lands more (v0.8)", () => {
@@ -177,7 +183,7 @@ describe("regression anchors", () => {
     expectRel(ilmenite.ilmenite!.soilPerKgO2, 327.3, 0.001);
     expectRel(ilmenite.energy.secTotal_kWhPerKg, 20.49, 0.001);  // v0.14: electrolysis balance of plant
     expectRel(ilmenite.energy.gridPowerW / 1000, 853.6, 0.001);
-    expectRel(ilmenite.logistics.totalInfraMassKg / 1000, 94.13, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(ilmenite.logistics.totalInfraMassKg / 1000, 93.62, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expectRel(ilmenite.campaign.paybackDays!, 585.8, 0.001);  // v0.14: electrolysis balance of plant
     // High-Ti mare soil halves the soil handled and matches MRE's payback.
     const highTi = simulate({ equatorialProcess: "ilmenite", fIlmenite: 0.15 });
@@ -211,7 +217,7 @@ describe("regression anchors", () => {
     expect(equatorial.excavation.excavatorTripsPerDay).toBe(34);
     expect(equatorial.excavation.excavatorKgPerDay).toBe(2720);
     expect(equatorial.excavation.excavatorCount).toBe(2);
-    expectRel(equatorial.logistics.totalInfraMassKg / 1000, 51.26, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(equatorial.logistics.totalInfraMassKg / 1000, 50.46, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // A small plant still lands a whole excavator.
     const small = simulate({ targetKgPerDay: 100 });
     expect(small.excavation.excavatorCount).toBe(1);
@@ -238,16 +244,37 @@ describe("regression anchors", () => {
     const plant = sabatier.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
     expectRel(sabatier.production.ch4KgPerDay, 211.1, 0.001);
     expectRel(plant / 1000, 13.23, 0.001);
-    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.37, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.31, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // MRE and polar water plants do not move.
-    expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 51.26, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.46, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+  });
+
+  test("the fission shield scales with power (v0.21)", () => {
+    // New and deliberate: the shield is MshieldKg up to FSP's 175 kWt and grows as
+    // power^0.33 above it, the exponent of Mason 2025's 1,370 and 1,500 kg shields.
+    expectRel(shieldMassKg(1370, 175, DEFAULTS.nShield, 230) / 1500, 1, 0.005);
+    expect(shieldMassKg(1676, 175, 0.33, 100)).toBe(1676);
+    const base = simulate({});
+    expectRel(base.power.shieldMassKg / 1000, 4.615, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 29.82, 0.001);
+    expectRel(base.power.nuclearSpecificKgPerKw, 25.46, 0.001);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.46, 0.001);
+    expect(base.logistics.nMissions).toBe(1);
+    // The crossover satisfies the scaled shield.
+    const kw = base.power.pCritW / 1000;
+    const beta = base.power.solarMassKg / (base.energy.gridPowerW / 1000);
+    const shield = shieldMassKg(DEFAULTS.MshieldKg, shieldRefKwe(DEFAULTS), DEFAULTS.nShield, kw);
+    expectRel(beta * kw, shield + base.power.nuclearSpecificKgPerKw * kw, 1e-9);
+    expectRel(kw, 2.077, 0.001);
+    // A fixed shield (nShield 0) is the v0.20 model's.
+    expect(simulate({ nShield: 0 }).power.shieldMassKg).toBe(DEFAULTS.MshieldKg);
   });
 
   test("fission defaults calibrated to NASA's surface Brayton studies (v0.19)", () => {
     // New and deliberate: Mason 2006's 50 kWe lunar Brayton design point
     // (1150/400 K, 26.3%), NASA FSP's 1676 kg buried shield, and a slope set to
     // Mason 2001's 29.25 kg/kWe marginal surface mass, split as FSP's.
-    const base = simulate({});
+    const base = simulate(V020_FISSION);
     expectRel(base.power.fissionThermalW / base.energy.gridPowerW, 1 / 0.2628, 0.001);
     expectRel(base.power.radiatorM2, 3124, 0.001);
     expectRel(base.power.radiatorMassKg / 1000, 12.09, 0.001);
@@ -267,19 +294,19 @@ describe("regression anchors", () => {
     expectRel(fissionEfficiency({ ...DEFAULTS, Tsource: 900, Tsink: 380 }), 0.1547, 0.001);
     // The radiator-temperature optimum moves from v0.19's 570 K to near 420 K,
     // against Mason's 400 K, because a warmer cold end now costs the cycle its work.
-    const at = (Tsink: number) => simulate({ Tsink }).power.nuclearMassKg;
+    const at = (Tsink: number) => simulate({ ...V020_FISSION, Tsink }).power.nuclearMassKg;
     expect(at(420)).toBeLessThan(at(400));
     expect(at(420)).toBeLessThan(at(440));
     expect(at(570)).toBeGreaterThan(3 * at(420));
     expectRel(at(420) / 1000, 30.39, 0.001);
     // Above about 600 K the default cycle makes no net work, and says so.
     // An alarm only when the plant runs on fission; with solar selected it is a caution.
-    const dead = simulate({ Tsink: 650 });
+    const dead = simulate({ ...V020_FISSION, Tsink: 650 });
     expect(dead.power.architecture).toBe("solar");
     expect(dead.warnings.find((w) => w.id === "fission-no-net-work")?.severity).toBe("caution");
-    const forced = simulatePower({ ...DEFAULTS, Tsink: 650 }, dead.energy.gridPowerW, undefined, "nuclear");
+    const forced = simulatePower({ ...DEFAULTS, ...V020_FISSION, Tsink: 650 }, dead.energy.gridPowerW, undefined, "nuclear");
     expect(forced.warnings.find((w) => w.id === "fission-no-net-work")?.severity).toBe("alarm");
-    expect(warningIds(simulate({}))).not.toContain("fission-no-net-work");
+    expect(warningIds(simulate(V020_FISSION))).not.toContain("fission-no-net-work");
   });
 
   test("the fission radiator is charged by its area (v0.17)", () => {
@@ -330,9 +357,9 @@ describe("regression anchors", () => {
     const crewSize = sizeToDemand(crew)!;
     expectRel(crewSize.targetKgPerDay, 111.14, 0.001);
     const crewSized = simulate({ ...crew, targetKgPerDay: crewSize.targetKgPerDay });
-    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.00, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.15, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // A right-sized plant for one crewed sortie a year still does not pay back.
-    expectRel(crewSized.campaign.returnRatio, 0.9211, 0.001);
+    expectRel(crewSized.campaign.returnRatio, 0.9199, 0.001);  // v0.21: shield scales with power
     expect(crewSized.campaign.paysBackInCampaign).toBe(false);
     // At the pole the hydrogen sets the size; it pays back on the campaign's
     // last sortie, where 1 t/day never did.
@@ -341,8 +368,8 @@ describe("regression anchors", () => {
     expect(polarSize.limitedBy).toBe("hydrogen");
     expectRel(polarSize.targetKgPerDay, 166.71, 0.001);
     const polarSized = simulate({ ...polar, targetKgPerDay: polarSize.targetKgPerDay });
-    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.45, 0.001);  // v0.19: fission calibrated to Mason and FSP
-    expectRel(polarSized.campaign.returnRatio, 1.0275, 0.001);
+    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.73, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(polarSized.campaign.returnRatio, 1.0258, 0.001);  // v0.21: shield scales with power
     expect(polarSized.campaign.paybackDays).toBe(polarSized.campaign.campaignEndDay);
     expect(simulate(polar).campaign.paysBackInCampaign).toBe(false);
     // Twenty sorties a year need 3.3 t/day: three landings and a lower return, but more saved.
@@ -350,7 +377,7 @@ describe("regression anchors", () => {
     const busySized = simulate({ ...busy, targetKgPerDay: sizeToDemand(busy)!.targetKgPerDay });
     expectRel(busySized.production.targetKgPerDay, 3334.3, 0.001);
     expect(busySized.logistics.nMissions).toBe(3);
-    expectRel(busySized.campaign.returnRatio, 5.264, 0.001);  // v0.19: fission calibrated to Mason and FSP
+    expectRel(busySized.campaign.returnRatio, 5.305, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     expect(busySized.campaign.netLeoMassKg).toBeGreaterThan(simulate(busy).campaign.netLeoMassKg);
   });
 
@@ -388,7 +415,7 @@ describe("regression anchors", () => {
     expectRel(at({ tIlmResidenceH: 1 }).ilmenite!.conversion, 0.5327, 0.001);
     const long = at({ tIlmResidenceH: 8 });
     expectRel(long.ilmenite!.conversion, 0.9724, 0.001);
-    expectRel(long.logistics.totalInfraMassKg / 1000, 91.24, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(long.logistics.totalInfraMassKg / 1000, 90.80, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // Feeding Eagle's mare soil unseparated: a 31.5 t reactor and 44.3 kWh/kg.
     const unseparated = at({ ilmConcentrateGrade: 0.075 });
     expectRel(unseparated.ilmenite!.reactorMassKg / 1000, 31.48, 0.001);
@@ -406,7 +433,7 @@ describe("regression anchors", () => {
     expectRel(basalt.excavation.overburdenKgPerDay, 1.1 * ilmenite.soilKgPerDay, 1e-12);
     expectRel(basalt.energy.secTotal_kWhPerKg, 16.91, 0.001);  // v0.14: electrolysis balance of plant
     expectRel(basalt.energy.gridPowerW / 1000, 704.6, 0.001);
-    expectRel(basalt.logistics.totalInfraMassKg / 1000, 84.69, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(basalt.logistics.totalInfraMassKg / 1000, 84.47, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // It fits one lander where the soil plant needs two: payback day 586 -> 246.
     expect(basalt.logistics.nMissions).toBe(1);
     expectRel(basalt.campaign.paybackDays!, 245.6, 0.001);  // v0.14: electrolysis balance of plant

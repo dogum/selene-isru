@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { nuclearSlopeAtYear, pCritDynamicKw, solarSlopeAtYear } from "@selene-isru/engine";
+import { nuclearSlopeAtYear, pCritDynamicKw, shieldMassKg, shieldRefKwe, solarSlopeAtYear } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
@@ -31,12 +31,16 @@ export function PowerTrade(): React.JSX.Element {
   // α from the engine: the fission system's kg/kW with its radiator, the slope it charges
   const alpha = result.power.nuclearSpecificKgPerKw;
   const mShield = params.MshieldKg;
+  // The shield grows with reactor heat above its reference point; on the chart's
+  // electrical axis that reference is the engine's shieldRefKwe.
+  const shieldRef = shieldRefKwe(params);
+  const nShield = params.nShield;
 
   // degradation-adjusted slopes at scrubber time t, from the same engine
   // equations pCritDynamicKw uses — so the curves and the crossover agree
   const betaT = solarSlopeAtYear(beta, params.dSolar, tYears);
   const alphaT = nuclearSlopeAtYear(alpha, params.dNuclear, tYears);
-  const pCritT = pCritDynamicKw(mShield, beta, alpha, params.dSolar, params.dNuclear, tYears);
+  const pCritT = pCritDynamicKw(mShield, beta, alpha, params.dSolar, params.dNuclear, tYears, shieldRef, nShield);
 
   const chart = useMemo(() => {
     const compareMassKg =
@@ -54,7 +58,7 @@ export function PowerTrade(): React.JSX.Element {
       pts.push(lo * Math.pow(hi / lo, i / samples));
     }
     const solarPts = pts.map((p) => [p, massAt(p, betaT, 0)] as const);
-    const nukePts = pts.map((p) => [p, massAt(p, alphaT, mShield)] as const);
+    const nukePts = pts.map((p) => [p, massAt(p, alphaT, shieldMassKg(mShield, shieldRef, nShield, p))] as const);
     const allMass = [...solarPts, ...nukePts].map((d) => d[1]);
     allMass.push(Math.max(1, compareMassKg));
     const y = scaleLog()
@@ -73,7 +77,7 @@ export function PowerTrade(): React.JSX.Element {
       xTicks: x.ticks(4),
       yTicks: y.ticks(4)
     };
-  }, [pGridKw, comparePGridKw, compareResult.power.architecture, compareResult.power.solarMassKg, compareResult.power.nuclearMassKg, result.power.pCritW, pCritT, betaT, alphaT, mShield, width, margin.left, margin.right, margin.top, margin.bottom]);
+  }, [pGridKw, comparePGridKw, compareResult.power.architecture, compareResult.power.solarMassKg, compareResult.power.nuclearMassKg, result.power.pCritW, pCritT, betaT, alphaT, mShield, shieldRef, nShield, width, margin.left, margin.right, margin.top, margin.bottom]);
 
   const opMassKg =
     result.power.architecture === "solar" ? result.power.solarMassKg : result.power.nuclearMassKg;
@@ -211,6 +215,9 @@ export function PowerTrade(): React.JSX.Element {
         </div>
         <div>
           RADIATOR <b className="num">{formatQtyText(result.power.radiatorM2, "m^2")} · {formatQtyText(result.power.radiatorMassKg, "kg")}</b>
+        </div>
+        <div>
+          SHIELD <b className="num">{formatQtyText(result.power.shieldMassKg, "kg")}</b>
         </div>
         {result.power.beamedFloorPowerW !== null && (
           <div>

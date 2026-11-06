@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, fissionEfficiency, nuclearSpecificKgPerKw, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, simulate } from "../src/index";
+import { DEFAULTS, fissionEfficiency, nuclearSpecificKgPerKw, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -105,12 +105,15 @@ describe("external analytical benchmarks (separate from implementation parity)",
     const mass500 = i.power500Kwe! * i.specificMass500KgPerKwe!;
     const marginal = (mass500 - mass100) / (i.power500Kwe! - i.power100Kwe!);
     expectRelative2(marginal, item.expected as number, 1e-9);
-    // The default slope, reactor + conversion + radiator, is Mason's marginal mass.
-    expectRelative2(nuclearSpecificKgPerKw(DEFAULTS), marginal, 0.001);
-    // Mason's shaped, unburied crew shield puts 4.5 t at zero power; the model's
-    // regolith-augmented FSP shield is 1.7 t, so the model is 2.8 t lighter at both points.
-    const intercept = mass100 - marginal * i.power100Kwe!;
-    expectRelative2(intercept - DEFAULTS.MshieldKg, 2799, 0.01);
+    // v0.21: the shield grows with power, so the model's marginal mass between the
+    // two systems, shield included, is Mason's; and it lands 2.7 t lighter at both.
+    const modelKg = (kwe: number) =>
+      shieldMassKg(DEFAULTS.MshieldKg, DEFAULTS.QshieldRefKwt, DEFAULTS.nShield, kwe / fissionEfficiency(DEFAULTS)) +
+      nuclearSpecificKgPerKw(DEFAULTS) * kwe;
+    const modelMarginal = (modelKg(i.power500Kwe!) - modelKg(i.power100Kwe!)) / (i.power500Kwe! - i.power100Kwe!);
+    expectRelative2(modelMarginal, marginal, 0.001);
+    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2688, 0.01);
+    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2688, 0.01);
   });
 
   test("fission design point and a 50 kWe cross-check, from NASA's lunar Brayton study (v0.19)", () => {
@@ -123,9 +126,11 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // Not calibrated: the model's radiator and system mass at 50 kWe, against Mason's before margin.
     const areaM2 = radiatorM2PerKw(DEFAULTS) * i.outputKwe!;
     expectRelative2(areaM2, i.radiatorAreaWithMarginM2! / (1 + i.areaMargin!), 0.15);
-    const massKg = DEFAULTS.MshieldKg + nuclearSpecificKgPerKw(DEFAULTS) * i.outputKwe!;
+    const shieldKg = shieldMassKg(DEFAULTS.MshieldKg, DEFAULTS.QshieldRefKwt, DEFAULTS.nShield, i.outputKwe! / fissionEfficiency(DEFAULTS));
+    const massKg = shieldKg + nuclearSpecificKgPerKw(DEFAULTS) * i.outputKwe!;
     expectRelative2(i.systemMassWithMarginKg! / (1 + i.massMargin!), item.expected as number, 0.001);
-    expectRelative2(massKg, item.expected as number, 0.12);
+    // v0.21: 3.0 t against 3.49 t, 14% light (10% before the shield scaled with power).
+    expectRelative2(massKg, item.expected as number, 0.15);
     expect(massKg).toBeLessThan(item.expected as number);
   });
 
@@ -159,7 +164,7 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(run.power.radiatorMassKg, run.power.radiatorM2 * DEFAULTS.kRadiatorKgPerM2, 1e-12);
     expectRelative2(
       run.power.nuclearMassKg,
-      DEFAULTS.MshieldKg +
+      run.power.shieldMassKg +
         DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) +
         DEFAULTS.kConversionKgPerKwe * (run.energy.gridPowerW / 1000) +
         run.power.radiatorMassKg,

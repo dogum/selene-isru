@@ -363,6 +363,10 @@ export interface SimParams {
   epsRad: number;
   /** [kg] */
   MshieldKg: number;
+  /** Reactor heat the shield mass is quoted at [kW] */
+  QshieldRefKwt: number;
+  /** Exponent of shield mass with reactor heat [1] */
+  nShield: number;
   /** [kg/kW] */
   kReactorKgPerKwt: number;
   kConversionKgPerKwe: number;
@@ -777,6 +781,8 @@ export interface SimResult {
     radiatorM2: number;
     /** fission radiator mass, part of nuclearMassKg [kg] */
     radiatorMassKg: number;
+    /** fission shield mass at the reactor's heat, part of nuclearMassKg [kg] */
+    shieldMassKg: number;
     /** fission reactor heat for the grid load: electrical output over conversion efficiency [W] */
     fissionThermalW: number;
     /** fission specific mass excluding the shield, radiator included: the power trade's nuclear slope [kg/kW] */

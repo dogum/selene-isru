@@ -82,6 +82,8 @@ export {
   pCritDynamicKw,
   pCritKw,
   radiatorM2PerKw,
+  shieldMassKg,
+  shieldRefKwe,
   siteCycleHours,
   solarSlopeAtYear
 } from "./modules/power";
@@ -425,6 +427,7 @@ export function simulate(
       solarArrayM2: power.solarArrayM2,
       radiatorM2: power.radiatorM2,
       radiatorMassKg: power.radiatorMassKg,
+      shieldMassKg: power.shieldMassKg,
       fissionThermalW: power.fissionThermalW,
       nuclearSpecificKgPerKw: power.nuclearSpecificKgPerKw,
       pCritW: power.pCritW,

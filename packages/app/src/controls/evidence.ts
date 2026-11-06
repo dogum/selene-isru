@@ -65,6 +65,11 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
     section: "Fuller 2010, Closed Brayton Cycle Power Conversion Unit for Fission Surface Power Phase I Final Report (NASA/CR-2010-215673), design decisions"
   },
   {
+    match: /^Mason 2025/,
+    url: "https://ntrs.nasa.gov/citations/20250000841",
+    section: "Mason, Kaldon, Corbisiero & Rao 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System (NETS 2025), Table IV"
+  },
+  {
     match: /^Mason 2006/,
     url: "https://ntrs.nasa.gov/citations/20060011236",
     section: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Table 1"
@@ -472,13 +477,13 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   kReactorKgPerKwt: {
     rangeRationale: "From an advanced megawatt-class reactor to past NASA's 40 kWe design, whose 913 kg reactor makes 175 kWt (5.2 kg/kWt).",
-    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. Since v0.19 the reactor and conversion terms, with the radiator, add to NASA's 29.25 kg/kWe marginal mass for 100–500 kWe surface Brayton systems (Mason 2001), split as NASA FSP's reactor is to its conversion and power management.",
+    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. Since v0.19 the reactor and conversion terms, with the radiator, add to NASA's 29.25 kg/kWe marginal mass for 100–500 kWe surface Brayton systems (Mason 2001), split as NASA FSP's reactor is to its conversion and power management. Since v0.21 the shield's growth over that span is part of the 29.25, so the reactor and conversion carry less.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
   kConversionKgPerKwe: {
     rangeRationale: "From advanced megawatt-class conversion to past NASA's 40 kWe design, whose Stirling converters and power management come to 22.6 kg/kW.",
-    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Since v0.19 the default is half of NASA's 29.25 kg/kWe surface marginal mass after the radiator (Mason 2001), in FSP's split.",
+    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Since v0.19 the default is half of NASA's 29.25 kg/kWe surface marginal mass after the radiator (Mason 2001), in FSP's split; since v0.21 also after the shield's growth with power.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
@@ -533,9 +538,22 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   MshieldKg: {
     rangeRationale: "From a reactor buried in regolith to a fully earth-delivered crew-rated shield; NASA finds on-board shielding about four times the excavation shield's mass.",
-    validity: "One fixed mass, whatever the power. The default is NASA FSP's 1,676 kg shield for an emplaced reactor with regolith augmentation, under 5 rem/yr at 100 m, sized for 175 kWt; a megawatt reactor needs a thicker one. Mason 2001's unburied crew-rated shields put about 4.5 t at zero power.",
+    validity: "The shield's mass at its reference reactor heat (QshieldRefKwt); since v0.21 it grows with power above that point (nShield). The default is NASA FSP's 1,676 kg shield for an emplaced reactor with regolith augmentation, under 5 rem/yr at 100 m, sized for 175 kWt. Mason 2001's unburied crew-rated shields put about 4.5 t at zero power.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
+  },
+  QshieldRefKwt: {
+    rangeRationale: "From a kilowatt-class reactor to a multi-megawatt one; set it to the reactor heat of whichever design MshieldKg is taken from.",
+    validity: "The reactor heat at which the shield weighs MshieldKg. Below it the shield stays at MshieldKg: a small reactor still needs a crew-rated shield, which Mason 2001 finds dominates a 10 kWe system's mass. The default is the 175 kWt NASA FSP's 1,676 kg shield was sized for.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.05
+  },
+  nShield: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "0 is a fixed shield; about 0.06 is thicker material alone, since attenuation is exponential in thickness; 0.67 is a shield whose face grows with the core's cross-section at fixed power density.",
+    validity: "Shield mass grows as (reactor heat / QshieldRefKwt) to this power, above the reference. The default 0.33 is fitted to two shields from one NASA study: 1,370 kg for a 175 kWt heat-pipe reactor and 1,500 kg for a 230 kWt gas-cooled one (Mason 2025). That pair also differs in core size, so the exponent carries both the thicker shield and the larger core. At the default plant's 3.8 MWt it extrapolates more than 20 times past the data.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.5
   },
   kRadiatorKgPerM2: {
     rangeRationale: "Lunar fission radiator concepts span about 5–11 kg/m^2 per panel; NASA's 40 kWe design charges its whole heat-rejection subsystem at 3.9 kg per m^2 of radiating area, panels radiating from both faces.",

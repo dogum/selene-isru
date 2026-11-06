@@ -268,6 +268,9 @@ The v0.20 Brayton cycle (fission efficiency from a recuperated Brayton cycle
 with NASA's converter components, so a warmer radiator costs the cycle its
 work) is in
 [`docs/model-brayton-cycle-v020.md`](docs/model-brayton-cycle-v020.md).
+The v0.21 shield scaling (the fission shield grows with reactor power above
+NASA FSP's 175 kWt design, with the reactor and conversion recalibrated) is in
+[`docs/model-shield-power-v021.md`](docs/model-shield-power-v021.md).
 
 ## Architecture
 

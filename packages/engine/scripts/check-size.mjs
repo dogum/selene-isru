@@ -23,7 +23,11 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 // and seven cited Eagle 1988 inputs, and whole excavators sized from RASSOR
 // kinematics with their six cited Guerrero-Gonzalez & Zabel 2023 inputs.
 // Still zero runtime dependencies.
-const limitBytes = 208 * 1024;
+// 208 -> 224 KiB (v0.17-v0.21 fission system): the radiator charged by area,
+// the reactor/conversion split, the megawatt calibration, the recuperated
+// Brayton cycle with its six cited Fuller 2010 inputs, and the shield that
+// scales with power. Still zero runtime dependencies.
+const limitBytes = 224 * 1024;
 
 function jsSize(dir) {
   let total = 0;
