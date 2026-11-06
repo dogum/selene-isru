@@ -16,7 +16,15 @@ from selene_isru.constants import DEFAULTS
 from selene_isru.modules.construction import shield_full_balance_m, simulate_construction
 from selene_isru.modules.electrolysis import melt_heat_j_per_kg, oxide_model_yield, sec_elec_j_per_kg
 from selene_isru.modules.logistics import payload_per_mission_kg
-from selene_isru.modules.power import fission_efficiency, p_crit_kw, simulate_power
+from selene_isru.modules.power import (
+    brayton_cycle,
+    brayton_cycle_at,
+    fission_efficiency,
+    p_crit_kw,
+    radiator_flux_w_per_m2,
+    radiator_temperatures_k,
+    simulate_power,
+)
 from selene_isru.modules.sabatier import sabatier_kp
 from selene_isru.modules.thermal import sec_sub_j_per_kg
 
@@ -72,7 +80,7 @@ def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
     assert_rel(polar["thermal"]["secSub_JPerKg"] / J_PER_KWH, 1.78 / 0.75, 0.01)
     assert_rel(polar["energy"]["secTotal_kWhPerKg"], 6.478, 0.001)
     # v0.12: 17 whole RASSORs, 1,122 kg against 1,085, move landed mass from 21.48 t.
-    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.99, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 22.02, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
@@ -225,7 +233,7 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     # v0.12: whole excavators.
     # v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
     # v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
-    assert_rel(result["plantMassThroughputDays"]["p50"], 50.18934274361462, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency; v0.21: shield scales with power; v0.22: fission economy of scale
+    assert_rel(result["plantMassThroughputDays"]["p50"], 50.1601882540015, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -311,9 +319,9 @@ def test_fission_economy_of_scale_v022() -> None:
     # (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.
     assert fission_scale_factor(DEFAULTS, DEFAULTS["QscaleRefKwt"]) == 1
     base = simulate({})
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.63, 0.001)
-    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 25.27, 0.001)
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.26, 0.001)
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.61, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 25.25, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.24, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert base["logistics"]["nMissions"] == 1
     # The engine's fission mass is the curve the power chart draws.
     kw = base["energy"]["gridPowerW"] / 1000
@@ -322,13 +330,14 @@ def test_fission_economy_of_scale_v022() -> None:
     p_crit = base["power"]["pCritW"] / 1000
     beta = base["power"]["solarMassKg"] / kw
     assert_rel(beta * p_crit, nuclear_mass_at_kwe(DEFAULTS, p_crit), 1e-9)
-    assert_rel(p_crit, 2.089, 0.001)
+    assert_rel(p_crit, 2.091, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     # A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
     big = simulate({"targetKgPerDay": 10000})
-    assert_rel(big["power"]["nuclearMassKg"] / 1000, 245.5, 0.001)
+    assert_rel(big["power"]["nuclearMassKg"] / 1000, 242.6, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert big["logistics"]["nMissions"] == 6
-    # A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model.
-    assert_rel(simulate(V021_FISSION)["logistics"]["totalInfraMassKg"] / 1000, 50.46, 0.001)
+    # A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model
+    # (since v0.24, with the v0.24 cycle and radiator).
+    assert_rel(simulate(V021_FISSION)["logistics"]["totalInfraMassKg"] / 1000, 47.99, 0.001)
 
 
 def test_fission_shield_scales_with_power_v021() -> None:
@@ -336,21 +345,52 @@ def test_fission_shield_scales_with_power_v021() -> None:
     # power^0.33 above it, the exponent of Mason 2025's 1,370 and 1,500 kg shields.
     assert_rel(shield_mass_kg(1370, 175, DEFAULTS["nShield"], 230) / 1500, 1, 0.005)
     assert shield_mass_kg(1676, 175, 0.33, 100) == 1676
+    # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: the pinned v0.21 masses on the v0.24 cycle and radiator move
+    # the shield from 4.615 t, the fission system from 29.82 t, the slope from 25.46 kg/kW,
+    # landed mass from 50.46 t, and the crossover from 2.077 kW.
     base = simulate(V021_FISSION)
-    assert_rel(base["power"]["shieldMassKg"] / 1000, 4.615, 0.001)
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.82, 0.001)
-    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 25.46, 0.001)
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.46, 0.001)
+    assert_rel(base["power"]["shieldMassKg"] / 1000, 4.613, 0.001)
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 27.36, 0.001)
+    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 22.98, 0.001)
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 47.99, 0.001)
     assert base["logistics"]["nMissions"] == 1
     # The crossover satisfies the scaled shield.
     kw = base["power"]["pCritW"] / 1000
     beta = base["power"]["solarMassKg"] / (base["energy"]["gridPowerW"] / 1000)
     shield = shield_mass_kg(DEFAULTS["MshieldKg"], shield_ref_kwe(DEFAULTS), DEFAULTS["nShield"], kw)
     assert_rel(beta * kw, shield + base["power"]["nuclearSpecificKgPerKw"] * kw, 1e-9)
-    assert_rel(kw, 2.077, 0.001)
+    assert_rel(kw, 2.070, 0.001)
     # A fixed shield (nShield 0) is the v0.20 model's.
     fixed = simulate({**V021_FISSION, "nShield": 0})
     assert fixed["power"]["shieldMassKg"] == DEFAULTS["MshieldKg"]
+
+
+def test_brayton_optimum_pressure_ratio_and_radiator_span_v024() -> None:
+    # New and deliberate: the cycle runs at its best pressure ratio, and the radiator
+    # spans the gas cooler instead of sitting at the compressor inlet.
+    cycle = brayton_cycle(DEFAULTS)
+    assert_rel(cycle["pressureRatio"], 1.866, 0.001)
+    assert_rel(cycle["coolerInletK"], 576.0, 0.001)
+    held = brayton_cycle_at(DEFAULTS, 2.0)
+    assert held["netWorkK"] / held["heatInK"] < cycle["netWorkK"] / cycle["heatInK"]
+    assert radiator_temperatures_k(DEFAULTS) == pytest.approx((350, 526.0), rel=0.001)
+    base = simulate({})
+    assert_rel(base["power"]["radiatorEffectiveK"], 419.9, 0.001)
+    assert_rel(base["power"]["radiatorM2"], 2492, 0.001)
+    assert_rel(base["power"]["radiatorMassKg"] / 1000, 9.644, 0.001)
+    rejected_w = base["power"]["fissionThermalW"] - base["energy"]["gridPowerW"]
+    assert_rel(base["power"]["radiatorM2"] * radiator_flux_w_per_m2(DEFAULTS), rejected_w, 1e-9)
+    # The lightest radiator cold end, against Mason 2006's 400 K and 380 K.
+    def at(params: dict[str, float]) -> float:
+        return simulate(params)["power"]["nuclearMassKg"]
+
+    assert at({"Tsink": 410}) < min(at({"Tsink": 400}), at({"Tsink": 430}))
+    assert at({"Tsource": 900, "Tsink": 374}) < min(at({"Tsource": 900, "Tsink": 360}), at({"Tsource": 900, "Tsink": 390}))
+    # A Stirling radiator still sits at its cold end.
+    assert simulate({"fissionConverter": "stirling"})["power"]["radiatorEffectiveK"] == DEFAULTS["Tsink"]
+    # A radiator loop that reaches its environment cannot reject heat.
+    cold = simulate({"Tsink": 300, "dTGasCoolerK": 100})
+    assert [w["severity"] for w in cold["warnings"] if w["id"] == "radiator-temperature"] == ["alarm"]
 
 
 # v0.21 scales the shield with power and recalibrates the reactor and conversion
@@ -360,13 +400,16 @@ V020_FISSION = {"kReactorKgPerKwt": 2.25, "kConversionKgPerKwe": 8.47, "nShield"
 
 def test_fission_defaults_calibrated_to_nasa_surface_brayton_v019() -> None:
     # New and deliberate: Mason 2006's design point, FSP's shield, Mason 2001's marginal slope.
+    # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: the radiator spans the gas cooler, so with
+    # the pinned v0.20 masses it moves from 3,124 m^2 and 12.09 t, the slope from 29.24 kg/kW,
+    # the fission system from 30.63 t, and landed mass from 51.26 t. The design point holds.
     base = simulate(V020_FISSION)
-    assert_rel(base["power"]["fissionThermalW"] / base["energy"]["gridPowerW"], 1 / 0.2628, 0.001)
-    assert_rel(base["power"]["radiatorM2"], 3124, 0.001)
-    assert_rel(base["power"]["radiatorMassKg"] / 1000, 12.09, 0.001)
-    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 29.24, 0.001)
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 30.63, 0.001)
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 51.26, 0.001)
+    assert_rel(base["power"]["fissionThermalW"] / base["energy"]["gridPowerW"], 1 / 0.2630, 0.001)
+    assert_rel(base["power"]["radiatorM2"], 2492, 0.001)
+    assert_rel(base["power"]["radiatorMassKg"] / 1000, 9.644, 0.001)
+    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 26.77, 0.001)
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 28.17, 0.001)
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 48.81, 0.001)
     assert base["logistics"]["nMissions"] == 1
 
     # v0.19's disclosed 570 K optimum belonged to the fixed fraction of Carnot;
@@ -375,18 +418,21 @@ def test_fission_defaults_calibrated_to_nasa_surface_brayton_v019() -> None:
 
 def test_fission_efficiency_from_the_brayton_cycle_v020() -> None:
     # New and deliberate: Fuller 2010's components, a 5% loop pressure loss fitted to Mason 2006's 26.3%.
-    assert_rel(fission_efficiency(DEFAULTS), 0.2627, 0.001)
-    # Not fitted: Mason 2006's stainless-steel Brayton point, 15.6% at 900/380 K.
-    assert_rel(fission_efficiency({**DEFAULTS, "Tsource": 900, "Tsink": 380}), 0.1547, 0.001)
+    # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: the 5.15% loss is refitted at the best pressure ratio, so
+    # 26.27% becomes 26.30%, and Mason's unfitted 900/380 K point moves from 15.47% to 16.62% (15.6%).
+    assert_rel(fission_efficiency(DEFAULTS), 0.2630, 0.001)
+    assert_rel(fission_efficiency({**DEFAULTS, "Tsource": 900, "Tsink": 380}), 0.1662, 0.001)
 
     def at(tsink: float) -> float:
         return simulate({**V020_FISSION, "Tsink": tsink})["power"]["nuclearMassKg"]
 
     # The optimum moves from v0.19's 570 K to near 420 K, against Mason's 400 K.
-    assert at(420) < at(400)
-    assert at(420) < at(440)
-    assert at(570) > 3 * at(420)
-    assert_rel(at(420) / 1000, 30.39, 0.001)
+    # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: it moves to near 414 K, and a 570 K radiator
+    # costs less than the 3 times v0.20 charged, since the radiator now runs warmer than its cold end.
+    assert at(410) < at(400)
+    assert at(410) < at(430)
+    assert at(570) > 1.8 * at(410)
+    assert_rel(at(420) / 1000, 28.06, 0.001)
     dead = simulate({**V020_FISSION, "Tsink": 650})
     assert dead["power"]["architecture"] == "solar"
     assert [w["severity"] for w in dead["warnings"] if w["id"] == "fission-no-net-work"] == ["caution"]
@@ -395,20 +441,21 @@ def test_fission_efficiency_from_the_brayton_cycle_v020() -> None:
 
 # v0.19 calibrated the fission defaults to Mason 2006/2001 and NASA FSP. The v0.17
 # and v0.18 anchors pin the fission inputs they were written for, so what they test holds.
-# v0.20 retired etaMech for a Brayton cycle, so their 27.5% efficiency at 1200/600 K
-# is pinned through a near-ideal cycle and the alternator efficiency that reaches it.
-PINNED_CYCLE = {"rpBrayton": 1.75, "etaCompressor": 0.92, "etaTurbine": 0.95, "epsRecuperator": 0.98, "fPressureLoss": 0}
-
-
-def pin_fission_efficiency(params: dict, eta: float) -> dict:
-    unit = fission_efficiency({**DEFAULTS, **params, **PINNED_CYCLE, "etaAlternator": 1})
-    return {**params, **PINNED_CYCLE, "etaAlternator": eta / unit}
-
-
-V018_FISSION = pin_fission_efficiency(
-    {"Tsource": 1200, "Tsink": 600, "MshieldKg": 1500, "kReactorKgPerKwt": 3.87, "kConversionKgPerKwe": 13.93, "nShield": 0, "bFissionScale": 1},
-    0.275,
-)
+# Their model was 27.5% of efficiency, a fixed 0.55 of Carnot at 1200/600 K, with the radiator
+# at the sink temperature: since v0.24 that is exactly the Stirling converter's model.
+V018_FISSION = {
+    "fissionConverter": "stirling",
+    "fCarnotStirling": 0.55,
+    "Tsource": 1200,
+    "Tsink": 600,
+    "MshieldKg": 1500,
+    "kReactorKgPerKwt": 3.87,
+    "kConversionKgPerKwe": 13.93,
+    "kConversionStirlingKgPerKwe": 13.93,
+    "nShield": 0,
+    "bFissionScale": 1,
+    "bStirlingScale": 1,
+}
 
 
 def test_fission_radiator_charged_by_its_area_v017() -> None:
@@ -451,16 +498,16 @@ def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
     crew_size = size_to_demand(crew)
     assert_rel(crew_size["targetKgPerDay"], 111.14, 0.001)
     crew_sized = simulate({**crew, "targetKgPerDay": crew_size["targetKgPerDay"]})
-    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 14.30, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
-    assert_rel(crew_sized["campaign"]["returnRatio"], 0.9199, 0.001)  # v0.21: shield scales with power
+    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 14.33, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    assert_rel(crew_sized["campaign"]["returnRatio"], 0.9190, 0.001)  # v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert crew_sized["campaign"]["paysBackInCampaign"] is False
     polar = {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander"}
     polar_size = size_to_demand(polar)
     assert polar_size["limitedBy"] == "hydrogen"
     assert_rel(polar_size["targetKgPerDay"], 166.71, 0.001)
     polar_sized = simulate({**polar, "targetKgPerDay": polar_size["targetKgPerDay"]})
-    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.91, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
-    assert_rel(polar_sized["campaign"]["returnRatio"], 1.0258, 0.001)  # v0.21: shield scales with power
+    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.94, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    assert_rel(polar_sized["campaign"]["returnRatio"], 1.0247, 0.001)  # v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert polar_sized["campaign"]["paybackDays"] == polar_sized["campaign"]["campaignEndDay"]
     assert simulate(polar)["campaign"]["paysBackInCampaign"] is False
     busy = {**polar, "sortiesPerYear": 20}

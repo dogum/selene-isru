@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  braytonCycle,
+  braytonCycleAt,
   DEFAULTS,
   fissionEfficiency,
   fissionScaleFactor,
@@ -8,6 +10,8 @@ import {
   oxideModelYield,
   payloadPerMissionKg,
   pCritKw,
+  radiatorFluxWPerM2,
+  radiatorTemperaturesK,
   sabatierKp,
   secElecJPerKg,
   secSubJPerKg,
@@ -33,19 +37,21 @@ function warningIds(result: { warnings: Array<{ id: string }> }): Set<string> {
 
 // v0.19 calibrated the fission defaults to Mason 2006/2001 and NASA FSP. The v0.17
 // and v0.18 anchors pin the fission inputs they were written for, so what they test holds.
-// v0.20 retired etaMech for a Brayton cycle, so their 27.5% efficiency at 1200/600 K
-// is pinned through a near-ideal cycle and the alternator efficiency that reaches it.
-const PINNED_CYCLE = { rpBrayton: 1.75, etaCompressor: 0.92, etaTurbine: 0.95, epsRecuperator: 0.98, fPressureLoss: 0 };
-
-function pinFissionEfficiency<T extends Partial<SimParams>>(params: T, eta: number): T & typeof PINNED_CYCLE & { etaAlternator: number } {
-  const unit = fissionEfficiency({ ...DEFAULTS, ...params, ...PINNED_CYCLE, etaAlternator: 1 });
-  return { ...params, ...PINNED_CYCLE, etaAlternator: eta / unit };
-}
-
-const V018_FISSION = pinFissionEfficiency(
-  { Tsource: 1200, Tsink: 600, MshieldKg: 1500, kReactorKgPerKwt: 3.87, kConversionKgPerKwe: 13.93, nShield: 0, bFissionScale: 1 },
-  0.275
-);
+// Their model was 27.5% of efficiency, a fixed 0.55 of Carnot at 1200/600 K, with the radiator
+// at the sink temperature: since v0.24 that is exactly the Stirling converter's model.
+const V018_FISSION = {
+  fissionConverter: "stirling" as const,
+  fCarnotStirling: 0.55,
+  Tsource: 1200,
+  Tsink: 600,
+  MshieldKg: 1500,
+  kReactorKgPerKwt: 3.87,
+  kConversionKgPerKwe: 13.93,
+  kConversionStirlingKgPerKwe: 13.93,
+  nShield: 0,
+  bFissionScale: 1,
+  bStirlingScale: 1
+};
 
 // v0.21 scales the shield with power and recalibrates the reactor and conversion
 // masses; the v0.19 and v0.20 anchors pin the fission inputs they were written for.
@@ -100,7 +106,7 @@ describe("regression anchors", () => {
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
     expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.99, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 22.02, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
@@ -280,9 +286,9 @@ describe("regression anchors", () => {
     // (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.
     expect(fissionScaleFactor(DEFAULTS, DEFAULTS.QscaleRefKwt)).toBe(1);
     const base = simulate({});
-    expectRel(base.power.nuclearMassKg / 1000, 29.63, 0.001);
-    expectRel(base.power.nuclearSpecificKgPerKw, 25.27, 0.001);
-    expectRel(base.logistics.totalInfraMassKg / 1000, 50.26, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 29.61, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    expectRel(base.power.nuclearSpecificKgPerKw, 25.25, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.24, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(base.logistics.nMissions).toBe(1);
     // The engine's fission mass is the curve the power chart draws.
     const kw = base.energy.gridPowerW / 1000;
@@ -291,13 +297,14 @@ describe("regression anchors", () => {
     const pCrit = base.power.pCritW / 1000;
     const beta = base.power.solarMassKg / kw;
     expectRel(beta * pCrit, nuclearMassAtKwe(DEFAULTS, pCrit), 1e-9);
-    expectRel(pCrit, 2.089, 0.001);
+    expectRel(pCrit, 2.091, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     // A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
     const big = simulate({ targetKgPerDay: 10000 });
-    expectRel(big.power.nuclearMassKg / 1000, 245.5, 0.001);
+    expectRel(big.power.nuclearMassKg / 1000, 242.6, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(big.logistics.nMissions).toBe(6);
-    // A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model.
-    expectRel(simulate(V021_FISSION).logistics.totalInfraMassKg / 1000, 50.46, 0.001);
+    // A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model
+    // (since v0.24, with the v0.24 cycle and radiator).
+    expectRel(simulate(V021_FISSION).logistics.totalInfraMassKg / 1000, 47.99, 0.001);
   });
 
   test("the fission shield scales with power (v0.21)", () => {
@@ -305,33 +312,67 @@ describe("regression anchors", () => {
     // power^0.33 above it, the exponent of Mason 2025's 1,370 and 1,500 kg shields.
     expectRel(shieldMassKg(1370, 175, DEFAULTS.nShield, 230) / 1500, 1, 0.005);
     expect(shieldMassKg(1676, 175, 0.33, 100)).toBe(1676);
+    // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: the pinned v0.21 masses on the v0.24 cycle and radiator move
+    // the shield from 4.615 t, the fission system from 29.82 t, the slope from 25.46 kg/kW,
+    // landed mass from 50.46 t, and the crossover from 2.077 kW.
     const base = simulate(V021_FISSION);
-    expectRel(base.power.shieldMassKg / 1000, 4.615, 0.001);
-    expectRel(base.power.nuclearMassKg / 1000, 29.82, 0.001);
-    expectRel(base.power.nuclearSpecificKgPerKw, 25.46, 0.001);
-    expectRel(base.logistics.totalInfraMassKg / 1000, 50.46, 0.001);
+    expectRel(base.power.shieldMassKg / 1000, 4.613, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 27.36, 0.001);
+    expectRel(base.power.nuclearSpecificKgPerKw, 22.98, 0.001);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 47.99, 0.001);
     expect(base.logistics.nMissions).toBe(1);
     // The crossover satisfies the scaled shield.
     const kw = base.power.pCritW / 1000;
     const beta = base.power.solarMassKg / (base.energy.gridPowerW / 1000);
     const shield = shieldMassKg(DEFAULTS.MshieldKg, shieldRefKwe(DEFAULTS), DEFAULTS.nShield, kw);
     expectRel(beta * kw, shield + base.power.nuclearSpecificKgPerKw * kw, 1e-9);
-    expectRel(kw, 2.077, 0.001);
+    expectRel(kw, 2.070, 0.001);
     // A fixed shield (nShield 0) is the v0.20 model's.
     expect(simulate({ ...V021_FISSION, nShield: 0 }).power.shieldMassKg).toBe(DEFAULTS.MshieldKg);
+  });
+
+  test("the Brayton cycle at its best pressure ratio, and the radiator over the gas span (v0.24)", () => {
+    // New and deliberate: the cycle runs at its best pressure ratio, and the radiator
+    // spans the gas cooler instead of sitting at the compressor inlet.
+    const cycle = braytonCycle(DEFAULTS);
+    expectRel(cycle.pressureRatio, 1.866, 0.001);
+    expectRel(cycle.coolerInletK, 576.0, 0.001);
+    const held = braytonCycleAt(DEFAULTS, 2.0);
+    expect(held.netWorkK / held.heatInK).toBeLessThan(cycle.netWorkK / cycle.heatInK);
+    const span = radiatorTemperaturesK(DEFAULTS);
+    expectRel(span.coldK, 350, 1e-12);
+    expectRel(span.hotK, 526.0, 0.001);
+    const base = simulate({});
+    expectRel(base.power.radiatorEffectiveK, 419.9, 0.001);
+    expectRel(base.power.radiatorM2, 2492, 0.001);
+    expectRel(base.power.radiatorMassKg / 1000, 9.644, 0.001);
+    const rejectedW = base.power.fissionThermalW - base.energy.gridPowerW;
+    expectRel(base.power.radiatorM2 * radiatorFluxWPerM2(DEFAULTS), rejectedW, 1e-9);
+    // The lightest radiator cold end, against Mason 2006's 400 K and 380 K.
+    const at = (params: Partial<SimParams>) => simulate(params).power.nuclearMassKg;
+    expect(at({ Tsink: 410 })).toBeLessThan(Math.min(at({ Tsink: 400 }), at({ Tsink: 430 })));
+    expect(at({ Tsource: 900, Tsink: 374 })).toBeLessThan(Math.min(at({ Tsource: 900, Tsink: 360 }), at({ Tsource: 900, Tsink: 390 })));
+    // A Stirling radiator still sits at its cold end.
+    expect(simulate({ fissionConverter: "stirling" }).power.radiatorEffectiveK).toBe(DEFAULTS.Tsink);
+    // A radiator loop that reaches its environment cannot reject heat.
+    const cold = simulate({ Tsink: 300, dTGasCoolerK: 100 });
+    expect(cold.warnings.filter((w) => w.id === "radiator-temperature").map((w) => w.severity)).toEqual(["alarm"]);
   });
 
   test("fission defaults calibrated to NASA's surface Brayton studies (v0.19)", () => {
     // New and deliberate: Mason 2006's 50 kWe lunar Brayton design point
     // (1150/400 K, 26.3%), NASA FSP's 1676 kg buried shield, and a slope set to
     // Mason 2001's 29.25 kg/kWe marginal surface mass, split as FSP's.
+    // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: the radiator spans the gas cooler, so with
+    // the pinned v0.20 masses it moves from 3,124 m^2 and 12.09 t, the slope from 29.24 kg/kW,
+    // the fission system from 30.63 t, and landed mass from 51.26 t. The design point holds.
     const base = simulate(V020_FISSION);
-    expectRel(base.power.fissionThermalW / base.energy.gridPowerW, 1 / 0.2628, 0.001);
-    expectRel(base.power.radiatorM2, 3124, 0.001);
-    expectRel(base.power.radiatorMassKg / 1000, 12.09, 0.001);
-    expectRel(base.power.nuclearSpecificKgPerKw, 29.24, 0.001);
-    expectRel(base.power.nuclearMassKg / 1000, 30.63, 0.001);
-    expectRel(base.logistics.totalInfraMassKg / 1000, 51.26, 0.001);
+    expectRel(base.power.fissionThermalW / base.energy.gridPowerW, 1 / 0.2630, 0.001);
+    expectRel(base.power.radiatorM2, 2492, 0.001);
+    expectRel(base.power.radiatorMassKg / 1000, 9.644, 0.001);
+    expectRel(base.power.nuclearSpecificKgPerKw, 26.77, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 28.17, 0.001);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 48.81, 0.001);
     expect(base.logistics.nMissions).toBe(1);
     // v0.19's disclosed 570 K optimum belonged to the fixed fraction of Carnot;
     // v0.20 replaced it with the Brayton cycle (see the v0.20 test).
@@ -340,16 +381,19 @@ describe("regression anchors", () => {
   test("fission efficiency from the Brayton cycle (v0.20)", () => {
     // New and deliberate: a recuperated closed Brayton cycle with Fuller 2010's
     // components and a 5% loop pressure loss fitted to Mason 2006's 26.3% at 1150/400 K.
-    expectRel(fissionEfficiency(DEFAULTS), 0.2627, 0.001);
-    // Not fitted: Mason 2006's stainless-steel Brayton point, 15.6% at 900/380 K.
-    expectRel(fissionEfficiency({ ...DEFAULTS, Tsource: 900, Tsink: 380 }), 0.1547, 0.001);
+    // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: the 5.15% loss is refitted at the best pressure ratio, so
+    // 26.27% becomes 26.30%, and Mason's unfitted 900/380 K point moves from 15.47% to 16.62% (15.6%).
+    expectRel(fissionEfficiency(DEFAULTS), 0.2630, 0.001);
+    expectRel(fissionEfficiency({ ...DEFAULTS, Tsource: 900, Tsink: 380 }), 0.1662, 0.001);
     // The radiator-temperature optimum moves from v0.19's 570 K to near 420 K,
     // against Mason's 400 K, because a warmer cold end now costs the cycle its work.
     const at = (Tsink: number) => simulate({ ...V020_FISSION, Tsink }).power.nuclearMassKg;
-    expect(at(420)).toBeLessThan(at(400));
-    expect(at(420)).toBeLessThan(at(440));
-    expect(at(570)).toBeGreaterThan(3 * at(420));
-    expectRel(at(420) / 1000, 30.39, 0.001);
+    // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span: it moves to near 414 K, and a 570 K radiator
+    // costs less than the 3 times v0.20 charged, since the radiator now runs warmer than its cold end.
+    expect(at(410)).toBeLessThan(at(400));
+    expect(at(410)).toBeLessThan(at(430));
+    expect(at(570)).toBeGreaterThan(1.8 * at(410));
+    expectRel(at(420) / 1000, 28.06, 0.001);
     // Above about 600 K the default cycle makes no net work, and says so.
     // An alarm only when the plant runs on fission; with solar selected it is a caution.
     const dead = simulate({ ...V020_FISSION, Tsink: 650 });
@@ -408,9 +452,9 @@ describe("regression anchors", () => {
     const crewSize = sizeToDemand(crew)!;
     expectRel(crewSize.targetKgPerDay, 111.14, 0.001);
     const crewSized = simulate({ ...crew, targetKgPerDay: crewSize.targetKgPerDay });
-    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.30, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.33, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     // A right-sized plant for one crewed sortie a year still does not pay back.
-    expectRel(crewSized.campaign.returnRatio, 0.9199, 0.001);  // v0.21: shield scales with power
+    expectRel(crewSized.campaign.returnRatio, 0.9190, 0.001);  // v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(crewSized.campaign.paysBackInCampaign).toBe(false);
     // At the pole the hydrogen sets the size; it pays back on the campaign's
     // last sortie, where 1 t/day never did.
@@ -419,8 +463,8 @@ describe("regression anchors", () => {
     expect(polarSize.limitedBy).toBe("hydrogen");
     expectRel(polarSize.targetKgPerDay, 166.71, 0.001);
     const polarSized = simulate({ ...polar, targetKgPerDay: polarSize.targetKgPerDay });
-    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.91, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
-    expectRel(polarSized.campaign.returnRatio, 1.0258, 0.001);  // v0.21: shield scales with power
+    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.94, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
+    expectRel(polarSized.campaign.returnRatio, 1.0247, 0.001);  // v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(polarSized.campaign.paybackDays).toBe(polarSized.campaign.campaignEndDay);
     expect(simulate(polar).campaign.paysBackInCampaign).toBe(false);
     // Twenty sorties a year need 3.3 t/day: three landings and a lower return, but more saved.

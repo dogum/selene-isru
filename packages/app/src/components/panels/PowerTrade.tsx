@@ -208,7 +208,7 @@ export function PowerTrade(): React.JSX.Element {
           ARRAY <b className="num">{formatQtyText(result.power.solarArrayM2, "m^2")}</b>
         </div>
         <div>
-          RADIATOR <b className="num">{formatQtyText(result.power.radiatorM2, "m^2")} · {formatQtyText(result.power.radiatorMassKg, "kg")}</b>
+          RADIATOR <b className="num">{formatQtyText(result.power.radiatorM2, "m^2")} · {formatQtyText(result.power.radiatorMassKg, "kg")} · {formatQtyText(result.power.radiatorEffectiveK, "K")}</b>
         </div>
         <div>
           SHIELD <b className="num">{formatQtyText(result.power.shieldMassKg, "kg")}</b>

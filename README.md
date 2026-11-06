@@ -278,6 +278,10 @@ The v0.23 Stirling converter (a fission converter choice beside Brayton, with
 its own efficiency, conversion mass, and scaling from NASA's lunar and Mason
 2001 studies) is in
 [`docs/model-stirling-v023.md`](docs/model-stirling-v023.md).
+The v0.24 Brayton optimum (the cycle at its best pressure ratio, and the
+radiator sized over the gas cooler's span with an approach fitted to NASA's
+lunar Brayton radiator) is in
+[`docs/model-brayton-optimum-v024.md`](docs/model-brayton-optimum-v024.md).
 
 ## Architecture
 

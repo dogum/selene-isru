@@ -1604,7 +1604,7 @@
     "source": "Mason 2006, NASA/TM-2006-214120, Table 1: Stirling converters at 25.9% between 850 and 460 K and 32.1% between 1050 and 500 K, 0.565 and 0.613 of Carnot"
   },
   "kConversionStirlingKgPerKwe": {
-    "value": 23.31,
+    "value": 22.23,
     "min": 2,
     "max": 60,
     "unit": "kg/kW",
@@ -1622,16 +1622,6 @@
     "group": "power",
     "description": "Exponent of Stirling conversion mass with reactor thermal power",
     "source": "Mason 2001, NASA/TM-2001-210593, Table 4: Stirling systems of 31.0, 21.8 and 20.7 kg/kWe at 0.1, 1 and 10 MWe fit a fixed 1.0 t plus mass growing as power^0.996"
-  },
-  "rpBrayton": {
-    "value": 2.0,
-    "min": 1.3,
-    "max": 4,
-    "unit": "1",
-    "kind": "parameter",
-    "group": "power",
-    "description": "Brayton compressor pressure ratio",
-    "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: design pressure ratio 2:1"
   },
   "etaCompressor": {
     "value": 0.84,
@@ -1664,14 +1654,24 @@
     "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: recuperator effectiveness 90%"
   },
   "fPressureLoss": {
-    "value": 0.05,
+    "value": 0.0515,
     "min": 0,
     "max": 0.2,
     "unit": "1",
     "kind": "parameter",
     "group": "power",
     "description": "Brayton loop pressure loss, fraction of compressor exit pressure",
-    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: fitted so the cycle gives the 26.3% Brayton converter efficiency at 1150/400 K, with Fuller 2010's components"
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: fitted so the cycle, at its best pressure ratio, gives the 26.3% Brayton converter efficiency at 1150/400 K, with Fuller 2010's components"
+  },
+  "dTGasCoolerK": {
+    "value": 50,
+    "min": 0,
+    "max": 100,
+    "unit": "K",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Brayton gas cooler approach: how far the radiator loop runs below the gas",
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: fitted so the 50 kWe 1150/400 K Brayton radiator rejects its 158.6 kWt over 140 m^2 before margin (48.6 K, rounded up)"
   },
   "etaAlternator": {
     "value": 0.931,
@@ -1734,7 +1734,7 @@
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Table IV: 1,500 kg shield for the 230 kWt gas-cooled reactor against 1,370 kg for the 175 kWt heat-pipe reactor, ln(1500/1370)/ln(230/175) = 0.33"
   },
   "kReactorKgPerKwt": {
-    "value": 1.84,
+    "value": 2.19,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
@@ -1744,7 +1744,7 @@
     "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kConversionKgPerKwe": {
-    "value": 6.94,
+    "value": 8.24,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",

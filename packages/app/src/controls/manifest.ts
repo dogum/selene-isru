@@ -219,11 +219,11 @@ export type RailVisibilityParams = Pick<
 
 /** Fission inputs that only act on one converter; the other converter hides them. */
 const BRAYTON_ONLY = new Set<keyof SimParams>([
-  "rpBrayton",
   "etaCompressor",
   "etaTurbine",
   "epsRecuperator",
   "fPressureLoss",
+  "dTGasCoolerK",
   "etaAlternator",
   "kConversionKgPerKwe"
 ]);

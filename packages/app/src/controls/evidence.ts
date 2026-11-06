@@ -518,15 +518,16 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   Tsink: {
     rangeRationale: "From a cold radiator near 300 K to 900 K; NASA's lunar studies put the Brayton cold end at 380–400 K and Stirling at 415–460 K.",
-    validity: "The compressor inlet, which the model also takes as the radiator temperature. The default is Mason 2006's minimum-mass Brayton design point, 400 K. Since v0.20 the Brayton cycle loses efficiency as its cold end warms, so the model's own lightest radiator runs near 420 K; with the default 1,150 K hot end the cycle makes no net work above about 600 K. The radiator is sized at the compressor inlet, the coldest point of the heat it rejects, so it errs large.",
+    validity: "The converter cold end: the Brayton compressor inlet, or the Stirling cold end. The default is Mason 2006's minimum-mass Brayton design point, 400 K. Since v0.20 the Brayton cycle loses efficiency as its cold end warms; since v0.24, at its best pressure ratio, the model's own lightest radiator runs near 414 K, and with the default 1,150 K hot end the cycle makes no net work above about 625 K. Since v0.24 a Brayton radiator spans the gas cooler, from the recuperator exit down to this temperature, less the gas cooler approach (dTGasCoolerK); a Stirling radiator still sits at this temperature.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.1
   },
-  rpBrayton: {
-    rangeRationale: "Closed space Brayton loops run near 1.6–2.5; NASA's fission surface power converter was designed at 2:1.",
-    validity: "Compressor exit over inlet pressure. Each pressure ratio has its own best temperature ratio, so the default holds Fuller 2010's design value rather than re-optimizing it as the temperatures change.",
-    applicability: "Both sites · nuclear architecture",
-    defaultUncertainty: 0.1
+  dTGasCoolerK: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "From an ideal gas cooler, whose radiator loop runs at the gas temperature, to 100 K below it; compact space gas coolers run a few tens of kelvin.",
+    validity: "Fitted, not sourced: with the radiator spanning the gas cooler, a 48.6 K approach (rounded to 50 K) makes Mason 2006's 50 kWe Brayton radiator reject its 158.6 kWt over its 140 m^2 before margin, 1,133 W/m^2. The radiator loop then runs from 526 K down to 350 K behind the default cycle, an effective 420 K. The model's 50 kWe radiator comes to 126 m^2, since it rejects less heat than Mason's system. Brayton only: a Stirling radiator sits at the cold end.",
+    applicability: "Both sites · nuclear architecture · Brayton",
+    defaultUncertainty: 0.3
   },
   etaCompressor: {
     rangeRationale: "From a poor small radial compressor (0.6) to the best large turbomachinery (0.92); NASA's converter design used 84%.",
@@ -549,7 +550,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   fPressureLoss: {
     maturity: "SIMPLIFIED CORRELATION",
     rangeRationale: "From a lossless loop to 20% of compressor exit pressure lost in ducts and heat exchangers.",
-    validity: "The one cycle value fitted, not sourced: 5% makes Fuller 2010's components give Mason 2006's 26.3% at 1,150/400 K. Unfitted, the same cycle gives 15.5% at Mason's 900/380 K point against its 15.6%.",
+    validity: "Fitted, not sourced: 5.15% makes Fuller 2010's components, at the cycle's best pressure ratio (1.87 here), give Mason 2006's 26.3% at 1,150/400 K. Unfitted, the same cycle gives 16.6% at Mason's 900/380 K point against its 15.6%. Since v0.24 the pressure ratio is not an input: the model takes the one that maximizes efficiency at each pair of temperatures, so it is the best converter these components make, not Fuller's 2:1 design.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
@@ -594,7 +595,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   kRadiatorKgPerM2: {
     rangeRationale: "Lunar fission radiator concepts span about 5–11 kg/m^2 per panel; NASA's 40 kWe design charges its whole heat-rejection subsystem at 3.9 kg per m^2 of radiating area, panels radiating from both faces.",
-    validity: "Charged per m^2 of radiating area, which the model sizes from the waste heat, the radiator temperature, its environment, emissivity, and fin efficiency. Includes pumps, coolant loops, and deployment. Calibrated to NASA's 615 kg heat-rejection subsystem for 159 m^2 before its 10% area margin; a hotter radiator than that design's 380 K would need different heat pipes.",
+    validity: "Charged per m^2 of radiating area, which the model sizes from the waste heat, the radiator temperature span, its environment, emissivity, and fin efficiency. Includes pumps, coolant loops, and deployment. Calibrated to NASA's 615 kg heat-rejection subsystem for 159 m^2 before its 10% area margin; a hotter radiator than that design's 380 K would need different heat pipes.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },

@@ -359,13 +359,13 @@ export interface SimParams {
   kConversionStirlingKgPerKwe: number;
   /** Exponent of Stirling conversion mass with reactor heat [1] */
   bStirlingScale: number;
-  /** Brayton compressor pressure ratio [1] */
-  rpBrayton: number;
   etaCompressor: number;
   etaTurbine: number;
   epsRecuperator: number;
   /** Loop pressure loss, fraction of compressor exit pressure [1] */
   fPressureLoss: number;
+  /** Gas cooler approach: radiator loop below the gas [K] */
+  dTGasCoolerK: number;
   etaAlternator: number;
   etaRad: number;
   epsRad: number;
@@ -793,6 +793,8 @@ export interface SimResult {
     radiatorM2: number;
     /** fission radiator mass, part of nuclearMassKg [kg] */
     radiatorMassKg: number;
+    /** temperature at which a uniform radiator would shed the same flux as the fission radiator [K] */
+    radiatorEffectiveK: number;
     /** fission shield mass at the reactor's heat, part of nuclearMassKg [kg] */
     shieldMassKg: number;
     /** fission reactor heat for the grid load: electrical output over conversion efficiency [W] */

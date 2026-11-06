@@ -66,6 +66,11 @@ describe("inputs renamed or retired in v0.9", () => {
     // v0.20: a fraction of Carnot has no equivalent among the Brayton cycle's component efficiencies.
     expect(upgradeLegacyParams({ ...DEFAULTS, etaMech: 0.55 })).not.toHaveProperty("etaMech");
     expect(parseParams("etaMech=0.55&Tsink=420")).toEqual({ Tsink: 420 });
+    // v0.24: the cycle takes its best pressure ratio, so a held one is an outcome, not an input.
+    const held = upgradeLegacyParams({ ...DEFAULTS, rpBrayton: 2.5 });
+    expect(held).not.toHaveProperty("rpBrayton");
+    expect(simulate({ ...DEFAULTS, ...held } as SimParams)).toEqual(simulate(DEFAULTS));
+    expect(parseParams("rpBrayton=2.5&Tsink=420")).toEqual({ Tsink: 420 });
   });
 
   it("reads a shared link made before v0.9", () => {
