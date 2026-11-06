@@ -271,6 +271,9 @@ work) is in
 The v0.21 shield scaling (the fission shield grows with reactor power above
 NASA FSP's 175 kWt design, with the reactor and conversion recalibrated) is in
 [`docs/model-shield-power-v021.md`](docs/model-shield-power-v021.md).
+The v0.22 economy of scale (fission reactor and conversion mass growing as
+power^0.95, from NASA's 0.1–10 MWe Brayton systems) is in
+[`docs/model-economy-of-scale-v022.md`](docs/model-economy-of-scale-v022.md).
 
 ## Architecture
 

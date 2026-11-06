@@ -370,6 +370,10 @@ export interface SimParams {
   /** [kg/kW] */
   kReactorKgPerKwt: number;
   kConversionKgPerKwe: number;
+  /** Reactor heat the reactor and conversion specific masses are quoted at [kW] */
+  QscaleRefKwt: number;
+  /** Exponent of reactor and conversion mass with reactor heat [1] */
+  bFissionScale: number;
   kRadiatorKgPerM2: number;
   /** [1/yr] */
   dSolar: number;
@@ -785,7 +789,7 @@ export interface SimResult {
     shieldMassKg: number;
     /** fission reactor heat for the grid load: electrical output over conversion efficiency [W] */
     fissionThermalW: number;
-    /** fission specific mass excluding the shield, radiator included: the power trade's nuclear slope [kg/kW] */
+    /** fission specific mass at the grid power, excluding the shield, radiator included [kg/kW] */
     nuclearSpecificKgPerKw: number;
     /** [W] */
     pCritW: number;

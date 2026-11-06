@@ -183,4 +183,6 @@ Screenshot: [the radiator temperature's evidence over the power panel](screensho
   power^0.33 above 175 kWt. See [`model-shield-power-v021.md`](model-shield-power-v021.md).)*
 - **Economy of scale.** The slope is linear. Mason 2001 shows specific mass
   falling from 74 to 38 kg/kWe between 100 and 500 kWe, mostly through the
-  shield and fixed hardware; a power law would follow it.
+  shield and fixed hardware; a power law would follow it. *(v0.21: the shield's power law;
+  v0.22: the reactor and conversion scale as power^0.95. See
+  [`model-economy-of-scale-v022.md`](model-economy-of-scale-v022.md).)*

@@ -154,17 +154,62 @@ export function radiatorM2PerKw(params: SimParams): number {
 }
 
 /**
- * Fission specific mass per kW of electrical output, excluding the shield
- * [kg/kW]: the reactor on the heat it makes, conversion and power management
- * on the output, and the radiator on its area. The slope the power trade and
- * its crossover use; exported so charts plot the same slope the engine charges.
+ * Reactor and conversion specific-mass factor at a reactor heat [1]:
+ * (Q / QscaleRefKwt)^(bFissionScale - 1). Below 1 the plant is past the
+ * reference size and gains economy of scale.
  */
-export function nuclearSpecificKgPerKw(params: SimParams): number {
+export function fissionScaleFactor(params: SimParams, thermalKw: number): number {
+  return (Math.max(thermalKw, 1e-9) / params.QscaleRefKwt) ** (params.bFissionScale - 1);
+}
+
+/**
+ * Fission specific mass per kW of electrical output at an output, excluding
+ * the shield [kg/kW]: the reactor on the heat it makes and conversion and
+ * power management on the output, both scaled with size, and the radiator on
+ * its area. Defaults to the output at the scaling reference heat.
+ */
+export function nuclearSpecificKgPerKw(params: SimParams, kwe?: number): number {
+  const eta = fissionEfficiency(params);
+  const atKwe = kwe ?? params.QscaleRefKwt * eta;
   return (
-    params.kReactorKgPerKwt / fissionEfficiency(params) +
-    params.kConversionKgPerKwe +
+    (params.kReactorKgPerKwt / eta + params.kConversionKgPerKwe) * fissionScaleFactor(params, atKwe / eta) +
     params.kRadiatorKgPerM2 * radiatorM2PerKw(params)
   );
+}
+
+/**
+ * Fission system mass at an electrical output after `tYears` of derating
+ * [kg]: the shield plus the aged rest. The power chart draws this curve, so it
+ * and the crossover come from the same mass.
+ */
+export function nuclearMassAtKwe(params: SimParams, kwe: number, tYears = 0): number {
+  const eta = fissionEfficiency(params);
+  const shield = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, kwe / eta);
+  return shield + nuclearSlopeAtYear(nuclearSpecificKgPerKw(params, kwe), params.dNuclear, tYears) * kwe;
+}
+
+/**
+ * Electrical output above which fission is lighter than solar [kW], or null
+ * if it never is below 1 TW. Solar mass is linear in output and fission mass
+ * concave, so the gap has one root; it is found by bisection on a log scale.
+ */
+export function fissionCrossoverKw(params: SimParams, beta: number, tYears = 0): number | null {
+  const betaT = solarSlopeAtYear(beta, params.dSolar, tYears);
+  const gap = (kw: number): number => betaT * kw - nuclearMassAtKwe(params, kw, tYears);
+  let lo = 1e-6;
+  let hi = 1e9;
+  if (gap(hi) <= 0) {
+    return null;
+  }
+  for (let i = 0; i < 100; i++) {
+    const mid = Math.sqrt(lo * hi);
+    if (gap(mid) > 0) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return hi;
 }
 
 export function siteCycleHours(params: SimParams, profile?: PolarProfileSummary): { dayHours: number; nightHours: number } {
@@ -230,28 +275,19 @@ export function simulatePower(
   // power management scale with electrical output.
   const radiatorMassKg = params.kRadiatorKgPerM2 * radiatorM2;
   const shieldKg = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, Qfission / 1000);
+  const scale = fissionScaleFactor(params, Qfission / 1000);
   const nuclearMassKg =
     shieldKg +
-    params.kReactorKgPerKwt * (Qfission / 1000) +
-    params.kConversionKgPerKwe * (Pgrid / 1000) +
+    params.kReactorKgPerKwt * (Qfission / 1000) * scale +
+    params.kConversionKgPerKwe * (Pgrid / 1000) * scale +
     radiatorMassKg;
-  const alphaWithRadiator = nuclearSpecificKgPerKw(params);
+  const alphaWithRadiator = nuclearSpecificKgPerKw(params, Pgrid / 1000);
   const architecture = strategy === "auto"
     ? solarMassKg <= nuclearMassKg ? "solar" : "nuclear"
     : strategy;
   const selectedPowerMassKg = architecture === "solar" ? solarMassKg : nuclearMassKg;
-  const refKwe = shieldRefKwe(params);
-  const pCrit = pCritKw(params.MshieldKg, betaSolar, alphaWithRadiator, refKwe, params.nShield);
-  const pCritDynamic = pCritDynamicKw(
-    params.MshieldKg,
-    betaSolar,
-    alphaWithRadiator,
-    params.dSolar,
-    params.dNuclear,
-    params.missionYears,
-    refKwe,
-    params.nShield
-  );
+  const pCrit = fissionCrossoverKw(params, betaSolar);
+  const pCritDynamic = fissionCrossoverKw(params, betaSolar, params.missionYears);
   const warnings: Warning[] = [];
 
   if (pCrit === null) {
@@ -259,7 +295,7 @@ export function simulatePower(
       id: "beta-le-alpha",
       severity: "caution",
       module: "power",
-      message: "Solar specific mass is less than or equal to nuclear specific mass.",
+      message: "Solar stays lighter than fission at every power level.",
       value: betaSolar,
       limit: alphaWithRadiator
     });

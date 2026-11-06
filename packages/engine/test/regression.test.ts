@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   DEFAULTS,
   fissionEfficiency,
+  fissionScaleFactor,
+  nuclearMassAtKwe,
   meltHeatJPerKg,
   oxideModelYield,
   payloadPerMissionKg,
@@ -41,13 +43,15 @@ function pinFissionEfficiency<T extends Partial<SimParams>>(params: T, eta: numb
 }
 
 const V018_FISSION = pinFissionEfficiency(
-  { Tsource: 1200, Tsink: 600, MshieldKg: 1500, kReactorKgPerKwt: 3.87, kConversionKgPerKwe: 13.93, nShield: 0 },
+  { Tsource: 1200, Tsink: 600, MshieldKg: 1500, kReactorKgPerKwt: 3.87, kConversionKgPerKwe: 13.93, nShield: 0, bFissionScale: 1 },
   0.275
 );
 
 // v0.21 scales the shield with power and recalibrates the reactor and conversion
 // masses; the v0.19 and v0.20 anchors pin the fission inputs they were written for.
-const V020_FISSION = { kReactorKgPerKwt: 2.25, kConversionKgPerKwe: 8.47, nShield: 0 };
+const V020_FISSION = { kReactorKgPerKwt: 2.25, kConversionKgPerKwe: 8.47, nShield: 0, bFissionScale: 1 };
+// v0.22 scales the reactor and conversion with size; the v0.21 anchors pin the linear ones.
+const V021_FISSION = { kReactorKgPerKwt: 1.75, kConversionKgPerKwe: 6.58, bFissionScale: 1 };
 
 describe("regression anchors", () => {
   test("matches the research-derived headline values", () => {
@@ -75,7 +79,7 @@ describe("regression anchors", () => {
     expect(result.logistics.plantMassThroughputDays).toBe(result.logistics.totalInfraMassKg / 1000);
     // v0.9 moved this from 60.4: the excavation fleet is sized on soil moved,
     // 8.5 t -> 108 kg.
-    expectRel(result.logistics.plantMassThroughputDays, 50.46, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(result.logistics.plantMassThroughputDays, 50.26, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     expectRel(shieldFullBalanceM(101325, 3000), 20.85, 0.005);
     expect(payloadPerMissionKg(DEFAULTS)).toBeGreaterThanOrEqual(95_000);
     expect(payloadPerMissionKg(DEFAULTS)).toBeLessThanOrEqual(107_000);
@@ -96,7 +100,7 @@ describe("regression anchors", () => {
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
     expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.80, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.99, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
@@ -136,14 +140,14 @@ describe("regression anchors", () => {
     expectRel(cryo.inventories[2]!.liquefierMassKg, 233 * production.h2KgPerDay, 1e-12);
     // v0.9 moved these from 20.78 kWh/kg, 82.35 t and day 311.3.
     expectRel(energy.secTotal_kWhPerKg, 20.62, 0.001);  // v0.14: electrolysis balance of plant
-    expectRel(logistics.totalInfraMassKg / 1000, 73.77, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(logistics.totalInfraMassKg / 1000, 73.69, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     expectRel(campaign.paybackDays!, 309.4, 0.001);  // v0.14: electrolysis balance of plant
     // Leverage and throughput days are measured against usable propellant,
     // not the water processed (deliberately moved from 133x and 82.4 days;
     // v0.9 then moved leverage from 103.4x).
     expect(logistics.productKgPerDay).toBe(production.propellantKgPerDay);
     expectRel(logistics.plantMassThroughputDays, logistics.totalInfraMassKg / production.propellantKgPerDay, 1e-12);
-    expectRel(logistics.leverageL, 115.4, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(logistics.leverageL, 115.6, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     // The Sabatier loop is measured against its products, imported carbon included.
     const sabatier = simulate({ site: "polar", enableSabatier: true });
     const p = sabatier.production;
@@ -163,7 +167,7 @@ describe("regression anchors", () => {
     expectRel(crew.refuel!.demandO2KgPerDay, 100.0, 0.001);
     expectRel(crew.refuel!.isruShare, 6 / 7, 1e-12);
     // v0.9 moved these from 61.69 t and 0.732.
-    expectRel(crew.logistics.totalInfraMassKg / 1000, 51.77, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(crew.logistics.totalInfraMassKg / 1000, 51.58, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     expect(crew.campaign.paysBackInCampaign).toBe(false);
     expectRel(crew.campaign.returnRatio, 0.765, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     // Nine sorties a year use the whole plant. The ledger credits each sortie
@@ -217,7 +221,7 @@ describe("regression anchors", () => {
     expect(equatorial.excavation.excavatorTripsPerDay).toBe(34);
     expect(equatorial.excavation.excavatorKgPerDay).toBe(2720);
     expect(equatorial.excavation.excavatorCount).toBe(2);
-    expectRel(equatorial.logistics.totalInfraMassKg / 1000, 50.46, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(equatorial.logistics.totalInfraMassKg / 1000, 50.26, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     // A small plant still lands a whole excavator.
     const small = simulate({ targetKgPerDay: 100 });
     expect(small.excavation.excavatorCount).toBe(1);
@@ -244,9 +248,34 @@ describe("regression anchors", () => {
     const plant = sabatier.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
     expectRel(sabatier.production.ch4KgPerDay, 211.1, 0.001);
     expectRel(plant / 1000, 13.23, 0.001);
-    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.31, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.38, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     // MRE and polar water plants do not move.
-    expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.46, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.26, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+  });
+
+  test("fission economy of scale (v0.22)", () => {
+    // New and deliberate: reactor and conversion scale as reactor heat^0.95 about 1 MWt
+    // (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.
+    expect(fissionScaleFactor(DEFAULTS, DEFAULTS.QscaleRefKwt)).toBe(1);
+    const base = simulate({});
+    expectRel(base.power.nuclearMassKg / 1000, 29.63, 0.001);
+    expectRel(base.power.nuclearSpecificKgPerKw, 25.27, 0.001);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.26, 0.001);
+    expect(base.logistics.nMissions).toBe(1);
+    // The engine's fission mass is the curve the power chart draws.
+    const kw = base.energy.gridPowerW / 1000;
+    expectRel(nuclearMassAtKwe(DEFAULTS, kw), base.power.nuclearMassKg, 1e-12);
+    // The crossover is where the solar line meets that curve.
+    const pCrit = base.power.pCritW / 1000;
+    const beta = base.power.solarMassKg / kw;
+    expectRel(beta * pCrit, nuclearMassAtKwe(DEFAULTS, pCrit), 1e-9);
+    expectRel(pCrit, 2.089, 0.001);
+    // A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
+    const big = simulate({ targetKgPerDay: 10000 });
+    expectRel(big.power.nuclearMassKg / 1000, 245.5, 0.001);
+    expect(big.logistics.nMissions).toBe(6);
+    // A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model.
+    expectRel(simulate(V021_FISSION).logistics.totalInfraMassKg / 1000, 50.46, 0.001);
   });
 
   test("the fission shield scales with power (v0.21)", () => {
@@ -254,7 +283,7 @@ describe("regression anchors", () => {
     // power^0.33 above it, the exponent of Mason 2025's 1,370 and 1,500 kg shields.
     expectRel(shieldMassKg(1370, 175, DEFAULTS.nShield, 230) / 1500, 1, 0.005);
     expect(shieldMassKg(1676, 175, 0.33, 100)).toBe(1676);
-    const base = simulate({});
+    const base = simulate(V021_FISSION);
     expectRel(base.power.shieldMassKg / 1000, 4.615, 0.001);
     expectRel(base.power.nuclearMassKg / 1000, 29.82, 0.001);
     expectRel(base.power.nuclearSpecificKgPerKw, 25.46, 0.001);
@@ -267,7 +296,7 @@ describe("regression anchors", () => {
     expectRel(beta * kw, shield + base.power.nuclearSpecificKgPerKw * kw, 1e-9);
     expectRel(kw, 2.077, 0.001);
     // A fixed shield (nShield 0) is the v0.20 model's.
-    expect(simulate({ nShield: 0 }).power.shieldMassKg).toBe(DEFAULTS.MshieldKg);
+    expect(simulate({ ...V021_FISSION, nShield: 0 }).power.shieldMassKg).toBe(DEFAULTS.MshieldKg);
   });
 
   test("fission defaults calibrated to NASA's surface Brayton studies (v0.19)", () => {
@@ -357,7 +386,7 @@ describe("regression anchors", () => {
     const crewSize = sizeToDemand(crew)!;
     expectRel(crewSize.targetKgPerDay, 111.14, 0.001);
     const crewSized = simulate({ ...crew, targetKgPerDay: crewSize.targetKgPerDay });
-    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.15, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.30, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     // A right-sized plant for one crewed sortie a year still does not pay back.
     expectRel(crewSized.campaign.returnRatio, 0.9199, 0.001);  // v0.21: shield scales with power
     expect(crewSized.campaign.paysBackInCampaign).toBe(false);
@@ -368,7 +397,7 @@ describe("regression anchors", () => {
     expect(polarSize.limitedBy).toBe("hydrogen");
     expectRel(polarSize.targetKgPerDay, 166.71, 0.001);
     const polarSized = simulate({ ...polar, targetKgPerDay: polarSize.targetKgPerDay });
-    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.73, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.91, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     expectRel(polarSized.campaign.returnRatio, 1.0258, 0.001);  // v0.21: shield scales with power
     expect(polarSized.campaign.paybackDays).toBe(polarSized.campaign.campaignEndDay);
     expect(simulate(polar).campaign.paysBackInCampaign).toBe(false);
@@ -377,7 +406,7 @@ describe("regression anchors", () => {
     const busySized = simulate({ ...busy, targetKgPerDay: sizeToDemand(busy)!.targetKgPerDay });
     expectRel(busySized.production.targetKgPerDay, 3334.3, 0.001);
     expect(busySized.logistics.nMissions).toBe(3);
-    expectRel(busySized.campaign.returnRatio, 5.305, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(busySized.campaign.returnRatio, 5.322, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     expect(busySized.campaign.netLeoMassKg).toBeGreaterThan(simulate(busy).campaign.netLeoMassKg);
   });
 
@@ -472,7 +501,7 @@ describe("warnings", () => {
     const construction = simulateConstruction(constructionParams, 1000);
     expect(construction.warnings.some((warning) => warning.id === "pad-shear")).toBe(true);
 
-    const powerParams: SimParams = { ...DEFAULTS, kConversionKgPerKwe: 1000 };
+    const powerParams: SimParams = { ...DEFAULTS, kConversionKgPerKwe: 1000, bFissionScale: 1 };
     const power = simulatePower(powerParams, 1000);
     expect(power.warnings.some((warning) => warning.id === "beta-le-alpha")).toBe(true);
   });

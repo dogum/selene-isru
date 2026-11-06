@@ -57,7 +57,7 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
   {
     match: /^Mason 2001/,
     url: "https://ntrs.nasa.gov/citations/20010016863",
-    section: "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts (NASA/TM-2001-210593), Table 3"
+    section: "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts (NASA/TM-2001-210593), Tables 3 (surface) and 4 (spacecraft)"
   },
   {
     match: /^Fuller 2010/,
@@ -477,13 +477,13 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   kReactorKgPerKwt: {
     rangeRationale: "From an advanced megawatt-class reactor to past NASA's 40 kWe design, whose 913 kg reactor makes 175 kWt (5.2 kg/kWt).",
-    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. Since v0.19 the reactor and conversion terms, with the radiator, add to NASA's 29.25 kg/kWe marginal mass for 100–500 kWe surface Brayton systems (Mason 2001), split as NASA FSP's reactor is to its conversion and power management. Since v0.21 the shield's growth over that span is part of the 29.25, so the reactor and conversion carry less.",
+    validity: "Reactor, reflectors, control drums, and primary heat transport, charged on the heat the reactor makes: electrical output over conversion efficiency. A less efficient cycle needs a bigger reactor. Since v0.19 the reactor and conversion terms, with the radiator, add to NASA's 29.25 kg/kWe marginal mass for 100–500 kWe surface Brayton systems (Mason 2001), split as NASA FSP's reactor is to its conversion and power management. Since v0.21 the shield's growth over that span is part of the 29.25, so the reactor and conversion carry less. Since v0.22 it is the specific mass at QscaleRefKwt (1 MWt), and scales with size by bFissionScale.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
   kConversionKgPerKwe: {
     rangeRationale: "From advanced megawatt-class conversion to past NASA's 40 kWe design, whose Stirling converters and power management come to 22.6 kg/kW.",
-    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Since v0.19 the default is half of NASA's 29.25 kg/kWe surface marginal mass after the radiator (Mason 2001), in FSP's split; since v0.21 also after the shield's growth with power.",
+    validity: "Power conversion, power conditioning, and distribution per kW of electrical output, scaled linearly; packaging, redundancy, and minimum unit size are not resolved. Since v0.19 the default is half of NASA's 29.25 kg/kWe surface marginal mass after the radiator (Mason 2001), in FSP's split; since v0.21 also after the shield's growth with power. Since v0.22 it is quoted at QscaleRefKwt (1 MWt) and scales with size by bFissionScale.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
@@ -541,6 +541,20 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "The shield's mass at its reference reactor heat (QshieldRefKwt); since v0.21 it grows with power above that point (nShield). The default is NASA FSP's 1,676 kg shield for an emplaced reactor with regolith augmentation, under 5 rem/yr at 100 m, sized for 175 kWt. Mason 2001's unburied crew-rated shields put about 4.5 t at zero power.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
+  },
+  QscaleRefKwt: {
+    maturity: "DESIGN ASSUMPTION",
+    rangeRationale: "From a 100 kWt reactor to 10 MWt, Mason 2001's span for the scaling exponent.",
+    validity: "The reactor heat at which the reactor and conversion specific masses are quoted. A model convention: changing it with the masses held moves every plant's fission mass by (reference ratio)^(bFissionScale - 1).",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0
+  },
+  bFissionScale: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "1 is no economy of scale, the v0.21 model; 0.6 is a strong one, as in process plants that follow a six-tenths rule.",
+    validity: "Reactor and conversion mass grow as reactor heat to this power, so a larger reactor costs less per kW. The default 0.95 fits NASA's Brayton systems at 0.1, 1 and 10 MWe exactly as a fixed 1.3 t plus mass growing as power^0.95 (Mason 2001, Table 4). Those are spacecraft systems, with a lighter shield and a shared radiator; the model applies the exponent to its reactor and conversion only, so its radiator stays linear. The power law extends below 100 kWe, where a small reactor costs more per kW.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.03
   },
   QshieldRefKwt: {
     rangeRationale: "From a kilowatt-class reactor to a multi-megawatt one; set it to the reactor heat of whichever design MshieldKg is taken from.",

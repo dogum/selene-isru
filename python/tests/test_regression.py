@@ -2,7 +2,16 @@ from __future__ import annotations
 
 import pytest
 
-from selene_isru import sample_uncertainty, shield_mass_kg, shield_ref_kwe, simulate, simulate_timeseries, size_to_demand
+from selene_isru import (
+    fission_scale_factor,
+    nuclear_mass_at_kwe,
+    sample_uncertainty,
+    shield_mass_kg,
+    shield_ref_kwe,
+    simulate,
+    simulate_timeseries,
+    size_to_demand,
+)
 from selene_isru.constants import DEFAULTS
 from selene_isru.modules.construction import shield_full_balance_m, simulate_construction
 from selene_isru.modules.electrolysis import melt_heat_j_per_kg, oxide_model_yield, sec_elec_j_per_kg
@@ -12,6 +21,9 @@ from selene_isru.modules.sabatier import sabatier_kp
 from selene_isru.modules.thermal import sec_sub_j_per_kg
 
 J_PER_KWH = 3_600_000
+
+# v0.22 scales the reactor and conversion with size; the v0.21 anchors pin the linear ones.
+V021_FISSION = {"kReactorKgPerKwt": 1.75, "kConversionKgPerKwe": 6.58, "bFissionScale": 1}
 
 
 def assert_rel(actual: float, expected: float, rel_tol: float) -> None:
@@ -44,7 +56,7 @@ def test_regression_anchors() -> None:
     assert result["logistics"]["nMissions"] == 1
     assert result["logistics"]["totalInfraMassKg"] / 1000 == result["logistics"]["plantMassThroughputDays"]
     # v0.9 moved this from 60.4: the excavation fleet is sized on soil moved (8.5 t -> 108 kg).
-    assert_rel(result["logistics"]["plantMassThroughputDays"], 50.46, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(result["logistics"]["plantMassThroughputDays"], 50.26, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert_rel(shield_full_balance_m(101325, 3000), 20.85, 0.005)
     assert 95_000 <= payload_per_mission_kg(DEFAULTS) <= 107_000
     assert 1.8 <= result["construction"]["padsPerYear"] <= 2.2
@@ -60,7 +72,7 @@ def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
     assert_rel(polar["thermal"]["secSub_JPerKg"] / J_PER_KWH, 1.78 / 0.75, 0.01)
     assert_rel(polar["energy"]["secTotal_kWhPerKg"], 6.478, 0.001)
     # v0.12: 17 whole RASSORs, 1,122 kg against 1,085, move landed mass from 21.48 t.
-    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.80, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.99, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
@@ -92,10 +104,10 @@ def test_polar_propellant_mode_v06() -> None:
     assert [item["stream"] for item in result["cryo"]["inventories"]] == ["water-ice", "lox", "lh2"]
     # v0.9 moved these from 20.78 kWh/kg, 82.35 t, day 311.3, 103.4x and 186.0x.
     assert_rel(result["energy"]["secTotal_kWhPerKg"], 20.62, 0.001)  # v0.14: electrolysis balance of plant
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 73.77, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 73.69, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert_rel(result["campaign"]["paybackDays"], 309.4, 0.001)  # v0.14: electrolysis balance of plant
     assert result["logistics"]["productKgPerDay"] == production["propellantKgPerDay"]
-    assert_rel(result["logistics"]["leverageL"], 115.4, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(result["logistics"]["leverageL"], 115.6, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     sabatier = simulate({"site": "polar", "enableSabatier": True})
     # v0.13: no longer borrows the MRE reactor mass, so leverage moves from 213.4x.
     assert_rel(sabatier["logistics"]["leverageL"], 222.7, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
@@ -106,7 +118,7 @@ def test_refuelling_demand_v07() -> None:
     assert_rel(crew["refuel"]["propellantPerSortieKg"], 42_595, 0.001)
     assert_rel(crew["refuel"]["demandO2KgPerDay"], 100.0, 0.001)
     # v0.9 moved these from 61.69 t and 0.732.
-    assert_rel(crew["logistics"]["totalInfraMassKg"] / 1000, 51.77, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(crew["logistics"]["totalInfraMassKg"] / 1000, 51.58, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert crew["campaign"]["paysBackInCampaign"] is False
     assert_rel(crew["campaign"]["returnRatio"], 0.765, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
     matched = simulate({"refuelDemand": "lander", "sortiesPerYear": 9})
@@ -213,7 +225,7 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     # v0.12: whole excavators.
     # v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
     # v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
-    assert_rel(result["plantMassThroughputDays"]["p50"], 50.39211868179666, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency; v0.21: shield scales with power
+    assert_rel(result["plantMassThroughputDays"]["p50"], 50.18934274361462, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency; v0.21: shield scales with power; v0.22: fission economy of scale
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -231,7 +243,7 @@ def test_direct_warning_branches_unreachable_by_bounded_public_params() -> None:
     assert "pad-shear" in {warning["id"] for warning in construction["warnings"]}
 
     power_params = dict(DEFAULTS)
-    power_params.update({"kConversionKgPerKwe": 1000})
+    power_params.update({"kConversionKgPerKwe": 1000, "bFissionScale": 1})
     power = simulate_power(power_params, 1000)
     assert "beta-le-alpha" in {warning["id"] for warning in power["warnings"]}
 
@@ -243,7 +255,7 @@ def test_whole_excavators_from_rassor_kinematics_v012() -> None:
     assert equatorial["excavation"]["excavatorTripsPerDay"] == 34
     assert equatorial["excavation"]["excavatorKgPerDay"] == 2720
     assert equatorial["excavation"]["excavatorCount"] == 2
-    assert_rel(equatorial["logistics"]["totalInfraMassKg"] / 1000, 50.46, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(equatorial["logistics"]["totalInfraMassKg"] / 1000, 50.26, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     small = simulate({"targetKgPerDay": 100})
     assert small["excavation"]["excavatorCount"] == 1
     assert small["excavation"]["fleetMassKg"] == 66
@@ -265,8 +277,33 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     plant = next(row["massKg"] for row in result["logistics"]["manifest"] if row["subsystem"] == "reactor/plant")
     assert_rel(result["production"]["ch4KgPerDay"], 211.1, 0.001)
     assert_rel(plant / 1000, 13.23, 0.001)
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.31, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
-    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.46, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.38, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.26, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+
+
+def test_fission_economy_of_scale_v022() -> None:
+    # New and deliberate: reactor and conversion scale as reactor heat^0.95 about 1 MWt
+    # (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.
+    assert fission_scale_factor(DEFAULTS, DEFAULTS["QscaleRefKwt"]) == 1
+    base = simulate({})
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.63, 0.001)
+    assert_rel(base["power"]["nuclearSpecificKgPerKw"], 25.27, 0.001)
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.26, 0.001)
+    assert base["logistics"]["nMissions"] == 1
+    # The engine's fission mass is the curve the power chart draws.
+    kw = base["energy"]["gridPowerW"] / 1000
+    assert_rel(nuclear_mass_at_kwe(DEFAULTS, kw), base["power"]["nuclearMassKg"], 1e-12)
+    # The crossover is where the solar line meets that curve.
+    p_crit = base["power"]["pCritW"] / 1000
+    beta = base["power"]["solarMassKg"] / kw
+    assert_rel(beta * p_crit, nuclear_mass_at_kwe(DEFAULTS, p_crit), 1e-9)
+    assert_rel(p_crit, 2.089, 0.001)
+    # A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
+    big = simulate({"targetKgPerDay": 10000})
+    assert_rel(big["power"]["nuclearMassKg"] / 1000, 245.5, 0.001)
+    assert big["logistics"]["nMissions"] == 6
+    # A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model.
+    assert_rel(simulate(V021_FISSION)["logistics"]["totalInfraMassKg"] / 1000, 50.46, 0.001)
 
 
 def test_fission_shield_scales_with_power_v021() -> None:
@@ -274,7 +311,7 @@ def test_fission_shield_scales_with_power_v021() -> None:
     # power^0.33 above it, the exponent of Mason 2025's 1,370 and 1,500 kg shields.
     assert_rel(shield_mass_kg(1370, 175, DEFAULTS["nShield"], 230) / 1500, 1, 0.005)
     assert shield_mass_kg(1676, 175, 0.33, 100) == 1676
-    base = simulate({})
+    base = simulate(V021_FISSION)
     assert_rel(base["power"]["shieldMassKg"] / 1000, 4.615, 0.001)
     assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.82, 0.001)
     assert_rel(base["power"]["nuclearSpecificKgPerKw"], 25.46, 0.001)
@@ -287,13 +324,13 @@ def test_fission_shield_scales_with_power_v021() -> None:
     assert_rel(beta * kw, shield + base["power"]["nuclearSpecificKgPerKw"] * kw, 1e-9)
     assert_rel(kw, 2.077, 0.001)
     # A fixed shield (nShield 0) is the v0.20 model's.
-    fixed = simulate({"nShield": 0})
+    fixed = simulate({**V021_FISSION, "nShield": 0})
     assert fixed["power"]["shieldMassKg"] == DEFAULTS["MshieldKg"]
 
 
 # v0.21 scales the shield with power and recalibrates the reactor and conversion
 # masses; the v0.19 and v0.20 anchors pin the fission inputs they were written for.
-V020_FISSION = {"kReactorKgPerKwt": 2.25, "kConversionKgPerKwe": 8.47, "nShield": 0}
+V020_FISSION = {"kReactorKgPerKwt": 2.25, "kConversionKgPerKwe": 8.47, "nShield": 0, "bFissionScale": 1}
 
 
 def test_fission_defaults_calibrated_to_nasa_surface_brayton_v019() -> None:
@@ -344,7 +381,7 @@ def pin_fission_efficiency(params: dict, eta: float) -> dict:
 
 
 V018_FISSION = pin_fission_efficiency(
-    {"Tsource": 1200, "Tsink": 600, "MshieldKg": 1500, "kReactorKgPerKwt": 3.87, "kConversionKgPerKwe": 13.93, "nShield": 0},
+    {"Tsource": 1200, "Tsink": 600, "MshieldKg": 1500, "kReactorKgPerKwt": 3.87, "kConversionKgPerKwe": 13.93, "nShield": 0, "bFissionScale": 1},
     0.275,
 )
 
@@ -389,7 +426,7 @@ def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
     crew_size = size_to_demand(crew)
     assert_rel(crew_size["targetKgPerDay"], 111.14, 0.001)
     crew_sized = simulate({**crew, "targetKgPerDay": crew_size["targetKgPerDay"]})
-    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 14.15, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 14.30, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert_rel(crew_sized["campaign"]["returnRatio"], 0.9199, 0.001)  # v0.21: shield scales with power
     assert crew_sized["campaign"]["paysBackInCampaign"] is False
     polar = {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander"}
@@ -397,7 +434,7 @@ def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
     assert polar_size["limitedBy"] == "hydrogen"
     assert_rel(polar_size["targetKgPerDay"], 166.71, 0.001)
     polar_sized = simulate({**polar, "targetKgPerDay": polar_size["targetKgPerDay"]})
-    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.73, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.91, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert_rel(polar_sized["campaign"]["returnRatio"], 1.0258, 0.001)  # v0.21: shield scales with power
     assert polar_sized["campaign"]["paybackDays"] == polar_sized["campaign"]["campaignEndDay"]
     assert simulate(polar)["campaign"]["paysBackInCampaign"] is False
@@ -405,7 +442,7 @@ def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
     busy_sized = simulate({**busy, "targetKgPerDay": size_to_demand(busy)["targetKgPerDay"]})
     assert_rel(busy_sized["production"]["targetKgPerDay"], 3334.3, 0.001)
     assert busy_sized["logistics"]["nMissions"] == 3
-    assert_rel(busy_sized["campaign"]["returnRatio"], 5.305, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    assert_rel(busy_sized["campaign"]["returnRatio"], 5.322, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
     assert busy_sized["campaign"]["netLeoMassKg"] > simulate(busy)["campaign"]["netLeoMassKg"]
 
 

@@ -92,13 +92,48 @@ def radiator_m2_per_kw(params: dict[str, Any]) -> float:
     return (1000 * (1 / eta_therm - 1)) / max(1e-9, flux_w_per_m2)
 
 
-def nuclear_specific_kg_per_kw(params: dict[str, Any]) -> float:
-    """Fission specific mass per kW of electrical output, excluding the shield [kg/kW]."""
-    return (
-        params["kReactorKgPerKwt"] / fission_efficiency(params)
-        + params["kConversionKgPerKwe"]
-        + params["kRadiatorKgPerM2"] * radiator_m2_per_kw(params)
-    )
+def fission_scale_factor(params: dict[str, Any], thermal_kw: float) -> float:
+    """Reactor and conversion specific-mass factor at a reactor heat: (Q / QscaleRefKwt)^(bFissionScale - 1) [1]."""
+    return (max(thermal_kw, 1e-9) / params["QscaleRefKwt"]) ** (params["bFissionScale"] - 1)
+
+
+def nuclear_specific_kg_per_kw(params: dict[str, Any], kwe: float | None = None) -> float:
+    """Fission specific mass per kW of electrical output at an output, excluding the shield [kg/kW].
+
+    Defaults to the output at the scaling reference heat."""
+    eta = fission_efficiency(params)
+    at_kwe = params["QscaleRefKwt"] * eta if kwe is None else kwe
+    return (params["kReactorKgPerKwt"] / eta + params["kConversionKgPerKwe"]) * fission_scale_factor(
+        params, at_kwe / eta
+    ) + params["kRadiatorKgPerM2"] * radiator_m2_per_kw(params)
+
+
+def nuclear_mass_at_kwe(params: dict[str, Any], kwe: float, t_years: float = 0.0) -> float:
+    """Fission system mass at an electrical output after t_years of derating [kg]: the shield plus the aged rest."""
+    eta = fission_efficiency(params)
+    shield = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], kwe / eta)
+    return shield + nuclear_slope_at_year(nuclear_specific_kg_per_kw(params, kwe), params["dNuclear"], t_years) * kwe
+
+
+def fission_crossover_kw(params: dict[str, Any], beta: float, t_years: float = 0.0) -> float | None:
+    """Electrical output above which fission is lighter than solar [kW], by bisection on a log scale.
+
+    Solar mass is linear and fission mass concave in output, so the gap has one root."""
+    beta_t = solar_slope_at_year(beta, params["dSolar"], t_years)
+
+    def gap(kw: float) -> float:
+        return beta_t * kw - nuclear_mass_at_kwe(params, kw, t_years)
+
+    lo, hi = 1e-6, 1e9
+    if gap(hi) <= 0:
+        return None
+    for _ in range(100):
+        mid = math.sqrt(lo * hi)
+        if gap(mid) > 0:
+            hi = mid
+        else:
+            lo = mid
+    return hi
 
 
 def site_cycle_hours(params: dict[str, Any], profile: dict[str, Any] | None = None) -> tuple[float, float]:
@@ -143,30 +178,21 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     radiator_m2 = q_reject / max(1e-9, radiator_denominator)
     radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
     shield_kg = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], q_fission / 1000)
+    scale = fission_scale_factor(params, q_fission / 1000)
     nuclear_mass_kg = (
         shield_kg
-        + params["kReactorKgPerKwt"] * (q_fission / 1000)
-        + params["kConversionKgPerKwe"] * (p_grid / 1000)
+        + params["kReactorKgPerKwt"] * (q_fission / 1000) * scale
+        + params["kConversionKgPerKwe"] * (p_grid / 1000) * scale
         + radiator_mass_kg
     )
-    alpha_with_radiator = nuclear_specific_kg_per_kw(params)
+    alpha_with_radiator = nuclear_specific_kg_per_kw(params, p_grid / 1000)
     architecture = "solar" if solar_mass_kg <= nuclear_mass_kg else "nuclear"
     selected_power_mass_kg = solar_mass_kg if architecture == "solar" else nuclear_mass_kg
-    ref_kwe = shield_ref_kwe(params)
-    p_crit = p_crit_kw(params["MshieldKg"], beta_solar, alpha_with_radiator, ref_kwe, params["nShield"])
-    p_crit_dynamic = p_crit_dynamic_kw(
-        params["MshieldKg"],
-        beta_solar,
-        alpha_with_radiator,
-        params["dSolar"],
-        params["dNuclear"],
-        params["missionYears"],
-        ref_kwe,
-        params["nShield"],
-    )
+    p_crit = fission_crossover_kw(params, beta_solar)
+    p_crit_dynamic = fission_crossover_kw(params, beta_solar, params["missionYears"])
     warnings: list[dict[str, Any]] = []
     if p_crit is None:
-        warnings.append({"id": "beta-le-alpha", "severity": "caution", "module": "power", "message": "Solar specific mass is less than or equal to nuclear specific mass.", "value": beta_solar, "limit": alpha_with_radiator})
+        warnings.append({"id": "beta-le-alpha", "severity": "caution", "module": "power", "message": "Solar stays lighter than fission at every power level.", "value": beta_solar, "limit": alpha_with_radiator})
     if params["Tsource"] <= params["Tsink"]:
         warnings.append({"id": "power-hot-side", "severity": "alarm", "module": "power", "message": "Fission hot-side temperature must exceed sink temperature.", "value": params["Tsource"], "limit": params["Tsink"]})
     cycle = brayton_cycle(params)

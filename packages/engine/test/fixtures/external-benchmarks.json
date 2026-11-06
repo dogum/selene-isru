@@ -148,7 +148,26 @@
       "source": "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts, NASA/TM-2001-210593",
       "sourceUrl": "https://ntrs.nasa.gov/citations/20010016863",
       "sourceLocator": "Table 3 (surface outposts and bases): reference 1300 K Brayton, 6 kg/m^2 radiator, 200 Vac, 74.0 kg/kWe at 100 kWe and 38.2 kg/kWe at 500 kWe, with a shaped crew-rated shield and an optimized separation distance; margin not stated",
-      "modelSimplification": "The model's fission slope (reactor per kWt, conversion per kWe, radiator per m^2) is set to the marginal 29.25 kg/kWe between those two systems, with FSP's reactor/conversion split. Mason's line extrapolates to about 4.5 t at zero power, for a shield sized at 100-200 m with no burial; the model keeps NASA FSP's 1.7 t regolith-augmented shield, so it lands 2.8 t lighter at both points. Since v0.21 the model's shield grows as (reactor heat / 175 kWt)^0.33, adding 3.8 kg/kWe between the two systems; the reactor and conversion terms are reduced by that much, so the model's marginal mass, shield included, stays 29.25 kg/kWe and it lands 2.7 t lighter at both points."
+      "modelSimplification": "The model's fission slope (reactor per kWt, conversion per kWe, radiator per m^2) is set to the marginal 29.25 kg/kWe between those two systems, with FSP's reactor/conversion split. Mason's line extrapolates to about 4.5 t at zero power, for a shield sized at 100-200 m with no burial; the model keeps NASA FSP's 1.7 t regolith-augmented shield, so it lands 2.8 t lighter at both points. Since v0.21 the model's shield grows as (reactor heat / 175 kWt)^0.33, adding 3.8 kg/kWe between the two systems; the reactor and conversion terms are reduced by that much, so the model's marginal mass, shield included, stays 29.25 kg/kWe and it lands 2.7 t lighter at both points. Since v0.22 the reactor and conversion also scale as power^0.95 (benchmark mason-2001-spacecraft-brayton-scaling), recalibrated the same way; the model lands 2.55 t lighter at both points."
+    },
+    {
+      "id": "mason-2001-spacecraft-brayton-scaling",
+      "kind": "calibration",
+      "quantity": "Exponent of fission system mass with power, 0.1 to 10 MWe",
+      "inputs": {
+        "power100Kwe": 100,
+        "specificMass100KgPerKwe": 26.4,
+        "power1000Kwe": 1000,
+        "specificMass1000KgPerKwe": 13.3,
+        "power10000Kwe": 10000,
+        "specificMass10000KgPerKwe": 10.8
+      },
+      "expected": 0.9486,
+      "unit": "1",
+      "source": "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts, NASA/TM-2001-210593",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20010016863",
+      "sourceLocator": "Table 4 (spacecraft power and propulsion): reference 1300 K Brayton, 6 kg/m^2 radiator, 200 Vac, 26.4, 13.3 and 10.8 kg/kWe at 100 kWe, 1 MWe and 10 MWe, with instrument-rated shielding",
+      "modelSimplification": "The three systems fit a fixed 1.29 t plus a mass growing as power^0.9486, exactly. The model applies that exponent (0.95) to its reactor and conversion masses only, quoted at 1 MWt; its radiator stays linear in power, so its mass without the shield grows 9.4 times from 1 to 10 MWe against Mason's 8.9. Spacecraft systems carry a lighter shield and a shared radiator, which is why the surface benchmark sets the scale and this one only the exponent."
     },
     {
       "id": "mason-2006-lunar-brayton-50kwe",
