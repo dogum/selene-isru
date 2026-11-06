@@ -24,9 +24,35 @@ def p_crit_dynamic_kw(m_shield_kg: float, beta: float, alpha: float, d_solar: fl
     return None if denominator <= 0 else m_shield_kg / denominator
 
 
+def brayton_cycle(params: dict[str, Any]) -> dict[str, float]:
+    """Recuperated closed Brayton cycle on an ideal monatomic gas, per unit heat capacity [K].
+
+    Turbine inlet at Tsource, compressor inlet at Tsink. Returns the net work and the
+    reactor heat per unit mass flow and heat capacity, and the cycle's temperatures.
+    """
+    k = (c("gammaHeXe") - 1) / c("gammaHeXe")
+    t1 = params["Tsink"]
+    t3 = params["Tsource"]
+    t2 = t1 * (1 + (params["rpBrayton"] ** k - 1) / params["etaCompressor"])
+    expansion = max(1.0, params["rpBrayton"] * (1 - params["fPressureLoss"]))
+    t4 = t3 * (1 - params["etaTurbine"] * (1 - expansion ** -k))
+    t5 = t2 + params["epsRecuperator"] * max(0.0, t4 - t2)
+    return {
+        "compressorExitK": t2,
+        "turbineExitK": t4,
+        "heaterInletK": t5,
+        "netWorkK": (t3 - t4) - (t2 - t1),
+        "heatInK": t3 - t5,
+    }
+
+
 def fission_efficiency(params: dict[str, Any]) -> float:
-    """Fission conversion efficiency, electrical output over reactor heat [1]."""
-    return max(1e-9, (1 - params["Tsink"] / params["Tsource"]) * params["etaMech"])
+    """Fission conversion efficiency, electrical output over reactor heat [1]: the Brayton cycle's
+    net work over its heat input, times the alternator and power conditioning efficiency."""
+    cycle = brayton_cycle(params)
+    if cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0:
+        return 1e-9
+    return max(1e-9, cycle["netWorkK"] / cycle["heatInK"] * params["etaAlternator"])
 
 
 def radiator_m2_per_kw(params: dict[str, Any]) -> float:
@@ -104,6 +130,9 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         warnings.append({"id": "beta-le-alpha", "severity": "caution", "module": "power", "message": "Solar specific mass is less than or equal to nuclear specific mass.", "value": beta_solar, "limit": alpha_with_radiator})
     if params["Tsource"] <= params["Tsink"]:
         warnings.append({"id": "power-hot-side", "severity": "alarm", "module": "power", "message": "Fission hot-side temperature must exceed sink temperature.", "value": params["Tsource"], "limit": params["Tsink"]})
+    cycle = brayton_cycle(params)
+    if params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
+        warnings.append({"id": "fission-no-net-work", "severity": "alarm" if architecture == "nuclear" else "caution", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
     if params["Tsink"] <= params["Tenv"]:
         warnings.append({"id": "radiator-temperature", "severity": "alarm", "module": "power", "message": "Radiator sink temperature must exceed its environment temperature.", "value": params["Tsink"], "limit": params["Tenv"]})
 

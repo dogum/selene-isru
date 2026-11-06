@@ -351,7 +351,14 @@ export interface SimParams {
   Tsink: number;
   /** [K] */
   Tenv: number;
-  etaMech: number;
+  /** Brayton compressor pressure ratio [1] */
+  rpBrayton: number;
+  etaCompressor: number;
+  etaTurbine: number;
+  epsRecuperator: number;
+  /** Loop pressure loss, fraction of compressor exit pressure [1] */
+  fPressureLoss: number;
+  etaAlternator: number;
   etaRad: number;
   epsRad: number;
   /** [kg] */

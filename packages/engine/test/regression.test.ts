@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   DEFAULTS,
+  fissionEfficiency,
   meltHeatJPerKg,
   oxideModelYield,
   payloadPerMissionKg,
@@ -28,14 +29,19 @@ function warningIds(result: { warnings: Array<{ id: string }> }): Set<string> {
 
 // v0.19 calibrated the fission defaults to Mason 2006/2001 and NASA FSP. The v0.17
 // and v0.18 anchors pin the fission inputs they were written for, so what they test holds.
-const V018_FISSION: Partial<SimParams> & { kReactorKgPerKwt: number; kConversionKgPerKwe: number } = {
-  Tsource: 1200,
-  Tsink: 600,
-  etaMech: 0.55,
-  MshieldKg: 1500,
-  kReactorKgPerKwt: 3.87,
-  kConversionKgPerKwe: 13.93
-};
+// v0.20 retired etaMech for a Brayton cycle, so their 27.5% efficiency at 1200/600 K
+// is pinned through a near-ideal cycle and the alternator efficiency that reaches it.
+const PINNED_CYCLE = { rpBrayton: 1.75, etaCompressor: 0.92, etaTurbine: 0.95, epsRecuperator: 0.98, fPressureLoss: 0 };
+
+function pinFissionEfficiency<T extends Partial<SimParams>>(params: T, eta: number): T & typeof PINNED_CYCLE & { etaAlternator: number } {
+  const unit = fissionEfficiency({ ...DEFAULTS, ...params, ...PINNED_CYCLE, etaAlternator: 1 });
+  return { ...params, ...PINNED_CYCLE, etaAlternator: eta / unit };
+}
+
+const V018_FISSION = pinFissionEfficiency(
+  { Tsource: 1200, Tsink: 600, MshieldKg: 1500, kReactorKgPerKwt: 3.87, kConversionKgPerKwe: 13.93 },
+  0.275
+);
 
 describe("regression anchors", () => {
   test("matches the research-derived headline values", () => {
@@ -249,11 +255,31 @@ describe("regression anchors", () => {
     expectRel(base.power.nuclearMassKg / 1000, 30.63, 0.001);
     expectRel(base.logistics.totalInfraMassKg / 1000, 51.26, 0.001);
     expect(base.logistics.nMissions).toBe(1);
-    // Disclosed limit: with a fixed fraction of Carnot the model's own lightest
-    // radiator runs near 570 K, 6 t under Mason's 400 K design point.
+    // v0.19's disclosed 570 K optimum belonged to the fixed fraction of Carnot;
+    // v0.20 replaced it with the Brayton cycle (see the v0.20 test).
+  });
+
+  test("fission efficiency from the Brayton cycle (v0.20)", () => {
+    // New and deliberate: a recuperated closed Brayton cycle with Fuller 2010's
+    // components and a 5% loop pressure loss fitted to Mason 2006's 26.3% at 1150/400 K.
+    expectRel(fissionEfficiency(DEFAULTS), 0.2627, 0.001);
+    // Not fitted: Mason 2006's stainless-steel Brayton point, 15.6% at 900/380 K.
+    expectRel(fissionEfficiency({ ...DEFAULTS, Tsource: 900, Tsink: 380 }), 0.1547, 0.001);
+    // The radiator-temperature optimum moves from v0.19's 570 K to near 420 K,
+    // against Mason's 400 K, because a warmer cold end now costs the cycle its work.
     const at = (Tsink: number) => simulate({ Tsink }).power.nuclearMassKg;
-    expect(at(570)).toBeLessThan(at(400));
-    expectRel(at(570) / 1000, 24.63, 0.001);
+    expect(at(420)).toBeLessThan(at(400));
+    expect(at(420)).toBeLessThan(at(440));
+    expect(at(570)).toBeGreaterThan(3 * at(420));
+    expectRel(at(420) / 1000, 30.39, 0.001);
+    // Above about 600 K the default cycle makes no net work, and says so.
+    // An alarm only when the plant runs on fission; with solar selected it is a caution.
+    const dead = simulate({ Tsink: 650 });
+    expect(dead.power.architecture).toBe("solar");
+    expect(dead.warnings.find((w) => w.id === "fission-no-net-work")?.severity).toBe("caution");
+    const forced = simulatePower({ ...DEFAULTS, Tsink: 650 }, dead.energy.gridPowerW, undefined, "nuclear");
+    expect(forced.warnings.find((w) => w.id === "fission-no-net-work")?.severity).toBe("alarm");
+    expect(warningIds(simulate({}))).not.toContain("fission-no-net-work");
   });
 
   test("the fission radiator is charged by its area (v0.17)", () => {
@@ -267,13 +293,12 @@ describe("regression anchors", () => {
     expectRel(base.power.nuclearSpecificKgPerKw, 29.98, 0.001);
     expectRel(base.power.nuclearMassKg / 1000, 31.18, 0.001);
     expectRel(base.logistics.totalInfraMassKg / 1000, 51.81, 0.001);
-    // The radiator now follows its temperature: at 400 K it is 1,924 m^2 and 7.4 t.
+    // The 400 K case's 7.4 t radiator and 33.18 t fission system (v0.18) belonged to the
+    // fixed-fraction-of-Carnot efficiency; v0.20 retired them with it. A colder radiator
+    // is still charged by its area.
     const cold = simulate({ ...V018_FISSION, Tsink: 400 });
-    expectRel(cold.power.radiatorMassKg / 1000, 7.446, 0.001);
-    // v0.18: the colder cycle is more efficient, so its reactor is lighter:
-    // 36.66 -> 33.18 t of fission system, 57.29 -> 53.82 t landed.
-    expectRel(cold.power.nuclearMassKg / 1000, 33.18, 0.001);
-    expectRel(cold.logistics.totalInfraMassKg / 1000, 53.82, 0.001);
+    expect(cold.power.radiatorM2).toBeGreaterThan(base.power.radiatorM2);
+    expectRel(cold.power.radiatorMassKg, DEFAULTS.kRadiatorKgPerM2 * cold.power.radiatorM2, 1e-12);
   });
 
   test("the fission reactor is charged on its heat (v0.18)", () => {
@@ -293,12 +318,8 @@ describe("regression anchors", () => {
         DEFAULTS.kRadiatorKgPerM2 * run.power.radiatorM2 / kw;
       expectRel(run.power.nuclearSpecificKgPerKw, slope, 1e-9);
     }
-    // The radiator temperature now has an optimum: colder grows the radiator,
-    // hotter grows the reactor. The default plant is lightest near 520 K.
-    const at = (Tsink: number) => simulate({ ...V018_FISSION, Tsink }).power.nuclearMassKg;
-    expect(at(520)).toBeLessThan(at(400));
-    expect(at(520)).toBeLessThan(at(600));
-    expectRel(at(520) / 1000, 30.57, 0.001);
+    // The 520 K optimum belonged to the fixed-fraction-of-Carnot efficiency; v0.20
+    // retired it, and the v0.20 test pins the Brayton cycle's optimum instead.
   });
 
   test("sizing the plant to its refuelling demand (v0.16)", () => {

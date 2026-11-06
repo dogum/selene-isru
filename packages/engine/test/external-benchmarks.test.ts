@@ -139,12 +139,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(DEFAULTS.kRadiatorKgPerM2, arealKgPerM2, 0.002);
     // At FSP's temperatures and 27.4% gross conversion, the model's radiator
     // for 40 kWe is within 5% of FSP's area before margin, and so is its mass.
-    const fsp = {
-      Tsource: i.stirlingHotK!,
-      Tsink: i.radiatorEffectiveK!,
-      Tenv: i.sinkK!,
-      etaMech: i.grossPowerKwe! / i.reactorThermalKw! / (1 - i.radiatorEffectiveK! / i.stirlingHotK!)
-    };
+    // FSP's 27.4% gross Stirling conversion, pinned through a near-ideal Brayton
+    // cycle and the alternator efficiency that reaches it (v0.20 retired etaMech).
+    const cycle = { rpBrayton: 1.75, etaCompressor: 0.92, etaTurbine: 0.95, epsRecuperator: 0.98, fPressureLoss: 0 };
+    const temps = { Tsource: i.stirlingHotK!, Tsink: i.radiatorEffectiveK!, Tenv: i.sinkK! };
+    const unit = fissionEfficiency({ ...DEFAULTS, ...temps, ...cycle, etaAlternator: 1 });
+    const fsp = { ...temps, ...cycle, etaAlternator: i.grossPowerKwe! / i.reactorThermalKw! / unit };
     const areaM2 = radiatorM2PerKw({ ...DEFAULTS, ...fsp }) * i.userPowerKwe!;
     const fspAreaM2 = i.radiatingAreaWithMarginM2! / (1 + i.areaMargin!);
     expectRelative2(areaM2, fspAreaM2, 0.05);

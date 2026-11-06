@@ -7,7 +7,7 @@ from selene_isru.constants import DEFAULTS
 from selene_isru.modules.construction import shield_full_balance_m, simulate_construction
 from selene_isru.modules.electrolysis import melt_heat_j_per_kg, oxide_model_yield, sec_elec_j_per_kg
 from selene_isru.modules.logistics import payload_per_mission_kg
-from selene_isru.modules.power import p_crit_kw, simulate_power
+from selene_isru.modules.power import fission_efficiency, p_crit_kw, simulate_power
 from selene_isru.modules.sabatier import sabatier_kp
 from selene_isru.modules.thermal import sec_sub_j_per_kg
 
@@ -213,7 +213,7 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     # v0.12: whole excavators.
     # v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
     # v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
-    assert_rel(result["plantMassThroughputDays"]["p50"], 51.223134179939066, 1e-12)  # v0.19: fission calibrated to Mason and FSP
+    assert_rel(result["plantMassThroughputDays"]["p50"], 51.2360381596776, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -280,23 +280,46 @@ def test_fission_defaults_calibrated_to_nasa_surface_brayton_v019() -> None:
     assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 51.26, 0.001)
     assert base["logistics"]["nMissions"] == 1
 
+    # v0.19's disclosed 570 K optimum belonged to the fixed fraction of Carnot;
+    # v0.20 replaced it with the Brayton cycle (see the v0.20 test).
+
+
+def test_fission_efficiency_from_the_brayton_cycle_v020() -> None:
+    # New and deliberate: Fuller 2010's components, a 5% loop pressure loss fitted to Mason 2006's 26.3%.
+    assert_rel(fission_efficiency(DEFAULTS), 0.2627, 0.001)
+    # Not fitted: Mason 2006's stainless-steel Brayton point, 15.6% at 900/380 K.
+    assert_rel(fission_efficiency({**DEFAULTS, "Tsource": 900, "Tsink": 380}), 0.1547, 0.001)
+
     def at(tsink: float) -> float:
         return simulate({"Tsink": tsink})["power"]["nuclearMassKg"]
 
-    assert at(570) < at(400)
-    assert_rel(at(570) / 1000, 24.63, 0.001)
+    # The optimum moves from v0.19's 570 K to near 420 K, against Mason's 400 K.
+    assert at(420) < at(400)
+    assert at(420) < at(440)
+    assert at(570) > 3 * at(420)
+    assert_rel(at(420) / 1000, 30.39, 0.001)
+    dead = simulate({"Tsink": 650})
+    assert dead["power"]["architecture"] == "solar"
+    assert [w["severity"] for w in dead["warnings"] if w["id"] == "fission-no-net-work"] == ["caution"]
+    assert "fission-no-net-work" not in warning_ids(simulate({}))
 
 
 # v0.19 calibrated the fission defaults to Mason 2006/2001 and NASA FSP. The v0.17
 # and v0.18 anchors pin the fission inputs they were written for, so what they test holds.
-V018_FISSION = {
-    "Tsource": 1200,
-    "Tsink": 600,
-    "etaMech": 0.55,
-    "MshieldKg": 1500,
-    "kReactorKgPerKwt": 3.87,
-    "kConversionKgPerKwe": 13.93,
-}
+# v0.20 retired etaMech for a Brayton cycle, so their 27.5% efficiency at 1200/600 K
+# is pinned through a near-ideal cycle and the alternator efficiency that reaches it.
+PINNED_CYCLE = {"rpBrayton": 1.75, "etaCompressor": 0.92, "etaTurbine": 0.95, "epsRecuperator": 0.98, "fPressureLoss": 0}
+
+
+def pin_fission_efficiency(params: dict, eta: float) -> dict:
+    unit = fission_efficiency({**DEFAULTS, **params, **PINNED_CYCLE, "etaAlternator": 1})
+    return {**params, **PINNED_CYCLE, "etaAlternator": eta / unit}
+
+
+V018_FISSION = pin_fission_efficiency(
+    {"Tsource": 1200, "Tsink": 600, "MshieldKg": 1500, "kReactorKgPerKwt": 3.87, "kConversionKgPerKwe": 13.93},
+    0.275,
+)
 
 
 def test_fission_radiator_charged_by_its_area_v017() -> None:
@@ -307,11 +330,11 @@ def test_fission_radiator_charged_by_its_area_v017() -> None:
     assert_rel(base["power"]["nuclearSpecificKgPerKw"], 29.98, 0.001)
     assert_rel(base["power"]["nuclearMassKg"] / 1000, 31.18, 0.001)
     assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 51.81, 0.001)
+    # The 400 K case's 7.4 t radiator and 33.18 t fission system belonged to the
+    # fixed fraction of Carnot; v0.20 retired them. A colder radiator is still charged by its area.
     cold = simulate({**V018_FISSION, "Tsink": 400})
-    assert_rel(cold["power"]["radiatorMassKg"] / 1000, 7.446, 0.001)
-    # v0.18: the colder cycle's reactor is lighter: 36.66 -> 33.18 t, 57.29 -> 53.82 t landed.
-    assert_rel(cold["power"]["nuclearMassKg"] / 1000, 33.18, 0.001)
-    assert_rel(cold["logistics"]["totalInfraMassKg"] / 1000, 53.82, 0.001)
+    assert cold["power"]["radiatorM2"] > base["power"]["radiatorM2"]
+    assert_rel(cold["power"]["radiatorMassKg"], DEFAULTS["kRadiatorKgPerM2"] * cold["power"]["radiatorM2"], 1e-12)
 
 
 def test_fission_reactor_charged_on_its_heat_v018() -> None:
@@ -329,12 +352,7 @@ def test_fission_reactor_charged_on_its_heat_v018() -> None:
         )
         assert_rel(run["power"]["nuclearSpecificKgPerKw"], slope, 1e-9)
 
-    def at(tsink: float) -> float:
-        return simulate({**V018_FISSION, "Tsink": tsink})["power"]["nuclearMassKg"]
-
-    assert at(520) < at(400)
-    assert at(520) < at(600)
-    assert_rel(at(520) / 1000, 30.57, 0.001)
+    # The 520 K optimum belonged to the fixed fraction of Carnot; v0.20 retired it.
 
 
 def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:

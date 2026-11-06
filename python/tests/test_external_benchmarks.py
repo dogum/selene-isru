@@ -113,12 +113,12 @@ def test_fission_radiator_mass_per_area_from_nasa_fsp() -> None:
     areal = i["heatRejectionMassKg"] / fsp_area_m2
     assert areal == pytest.approx(row["expected"], rel=0.001)
     assert DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(areal, rel=0.002)
-    fsp = {
-        "Tsource": i["stirlingHotK"],
-        "Tsink": i["radiatorEffectiveK"],
-        "Tenv": i["sinkK"],
-        "etaMech": i["grossPowerKwe"] / i["reactorThermalKw"] / (1 - i["radiatorEffectiveK"] / i["stirlingHotK"]),
-    }
+    # FSP's 27.4% gross Stirling conversion, pinned through a near-ideal Brayton cycle
+    # and the alternator efficiency that reaches it (v0.20 retired etaMech).
+    cycle = {"rpBrayton": 1.75, "etaCompressor": 0.92, "etaTurbine": 0.95, "epsRecuperator": 0.98, "fPressureLoss": 0}
+    temps = {"Tsource": i["stirlingHotK"], "Tsink": i["radiatorEffectiveK"], "Tenv": i["sinkK"]}
+    unit = fission_efficiency({**DEFAULTS, **temps, **cycle, "etaAlternator": 1})
+    fsp = {**temps, **cycle, "etaAlternator": i["grossPowerKwe"] / i["reactorThermalKw"] / unit}
     area_m2 = radiator_m2_per_kw({**DEFAULTS, **fsp}) * i["userPowerKwe"]
     assert area_m2 == pytest.approx(fsp_area_m2, rel=0.05)
     assert area_m2 * DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(i["heatRejectionMassKg"], rel=0.05)
