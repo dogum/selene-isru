@@ -26,8 +26,8 @@ afterEach(() => {
 
 describe("fission converter (v0.23)", () => {
   it("offers the converter at both sites, beside the polar illumination profile", () => {
-    expect(railModeParamsForGroup(power, brayton)).toEqual(["fissionConverter"]);
-    expect(railModeParamsForGroup(power, { ...brayton, site: "polar" })).toEqual(["polarProfileMode", "fissionConverter"]);
+    expect(railModeParamsForGroup(power, brayton)).toEqual(["fissionConverter", "fissionSiting"]);
+    expect(railModeParamsForGroup(power, { ...brayton, site: "polar" })).toEqual(["polarProfileMode", "fissionConverter", "fissionSiting"]);
   });
 
   it("shows only the chosen converter's inputs, and the hidden ones are inert", () => {
@@ -36,7 +36,7 @@ describe("fission converter (v0.23)", () => {
     expect(shown(stirling)).toEqual(expect.arrayContaining(STIRLING_KEYS));
     for (const key of BRAYTON_KEYS) expect(shown(stirling)).not.toContain(key);
     // The shared reactor, shield, radiator, and temperatures stay with both.
-    for (const key of ["Tsource", "Tsink", "kReactorKgPerKwt", "bFissionScale", "MshieldKg", "kRadiatorKgPerM2"]) {
+    for (const key of ["Tsource", "Tsink", "kReactorKgPerKwt", "bFissionScale", "MshieldKg", "dSeparationKm", "kRadiatorKgPerM2"]) {
       expect(shown(stirling)).toContain(key);
       expect(shown(brayton)).toContain(key);
     }
@@ -59,6 +59,25 @@ describe("fission converter (v0.23)", () => {
     expect(serializeParams(stirling)).toContain("fissionConverter=stirling");
     expect(parseParams("fissionConverter=stirling")).toEqual({ fissionConverter: "stirling" });
     expect(parseParams("fissionConverter=rankine")).toEqual({});
+  });
+
+  it("switches the reactor's siting, showing only the chosen siting's shield (v0.26)", () => {
+    const buried: SimParams = { ...DEFAULTS, fissionSiting: "buried" };
+    expect(shown(brayton)).toEqual(expect.arrayContaining(["MshieldKg", "nShieldDistance", "dSeparationKm"]));
+    expect(shown(brayton)).not.toContain("MshieldBuriedKg");
+    expect(shown(buried)).toEqual(expect.arrayContaining(["MshieldBuriedKg", "dSeparationKm", "nShield"]));
+    for (const key of ["MshieldKg", "nShieldDistance"]) expect(shown(buried)).not.toContain(key);
+    expect(inputActivity(brayton, "MshieldBuriedKg").activity).toBe("no-effect");
+    for (const key of ["MshieldKg", "nShieldDistance"] as const) expect(inputActivity(buried, key).activity).toBe("no-effect");
+    render(<ControlGroups />);
+    fireEvent.click(screen.getByRole("button", { name: /^\W*Power$/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: /REACTOR SITING/ }), { target: { value: "buried" } });
+    expect(useStore.getState().params.fissionSiting).toBe("buried");
+    expect(useStore.getState().result.power.shieldMassKg).toBe(simulate(buried).power.shieldMassKg);
+    expect(screen.getByText(/Regolith shields the outpost/)).toBeTruthy();
+    expect(serializeParams(buried)).toContain("fissionSiting=buried");
+    expect(parseParams("fissionSiting=buried")).toEqual({ fissionSiting: "buried" });
+    expect(parseParams("fissionSiting=underground")).toEqual({});
   });
 
   it("points the analysis tools' conversion-mass lever at the chosen converter", () => {

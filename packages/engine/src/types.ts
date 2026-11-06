@@ -7,6 +7,7 @@ export type RefuelDemand = "none" | "lander";
 export type EquatorialProcess = "mre" | "ilmenite";
 export type IlmeniteFeed = "soil" | "basalt";
 export type FissionConverter = "brayton" | "stirling";
+export type FissionSiting = "surface" | "buried";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -353,6 +354,7 @@ export interface SimParams {
   /** [K] */
   Tenv: number;
   fissionConverter: FissionConverter;
+  fissionSiting: FissionSiting;
   /** Stirling efficiency as a fraction of Carnot [1] */
   fCarnotStirling: number;
   /** [kg/kW] */
@@ -376,6 +378,7 @@ export interface SimParams {
   /** Exponent of shield mass with reactor heat [1] */
   nShield: number;
   nShieldDistance: number;
+  MshieldBuriedKg: number;
   dSeparationKm: number;
   kCableKgPerKm: number;
   fCableLossPerKm: number;

@@ -18,7 +18,13 @@ def shield_distance_factor(params: dict[str, Any]) -> float:
 
 
 def fission_shield_kg(params: dict[str, Any], thermal_kw: float) -> float:
-    """Fission shield at a reactor heat and the case's separation [kg]."""
+    """Fission shield at a reactor heat and the case's siting and separation [kg].
+
+    A surface reactor's shield casts the outpost's shadow, so it shrinks with separation. A buried reactor's
+    regolith shields the outpost; its Earth-delivered shield protects the equipment above the hole, so it does
+    not depend on separation."""
+    if params["fissionSiting"] == "buried":
+        return shield_mass_kg(params["MshieldBuriedKg"], params["QshieldRefKwt"], params["nShield"], thermal_kw)
     shield = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], thermal_kw)
     return shield * shield_distance_factor(params)
 

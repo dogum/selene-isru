@@ -234,6 +234,10 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Brayton is a closed gas turbine whose efficiency comes from its cycle; Stirling is a set of free-piston convertors at a fixed fraction of Carnot. Both share the reactor, shield, radiator, and temperatures; only the chosen converter's own inputs act. NASA finds Stirling lighter below about 50 kWe and Brayton above (Mason 2001); the model's Stirling is heavier at every power, close to Mason at 500 kWe and not below 100 kWe.",
     applicability: "Both sites · nuclear architecture"
   },
+  fissionSiting: {
+    validity: "Surface: the reactor stands on the regolith behind its own directional shield, which must shadow the outpost, so it shrinks with separation (Mason 2025, NASA's current design). Buried: the reactor sits in an excavated hole, the regolith shields the outpost, and an Earth-delivered plug shield protects the converters and radiator above it, so separation no longer sizes the shield and the reactor can sit 100 m away (FSP 2008's emplaced design). Burial pays through the shorter cable: about 1.6 t for the default 1 MWe plant and 20 t at 10 t/day, while a 40 kWe system is lighter on the surface at its best separation. Digging the hole (about 20 t of regolith, a few days of the plant's own mining) and crew-assisted installation are not charged.",
+    applicability: "Both sites · nuclear architecture"
+  },
   fCarnotStirling: {
     rangeRationale: "From poor convertors (0.3) to the best free-piston Stirling (0.75); NASA's lunar designs run 0.56-0.61.",
     validity: "Stirling efficiency is this fraction of the Carnot efficiency between the hot and cold ends. The default 0.59 reproduces Mason 2006's two Stirling converters (25.9% at 850/460 K, 32.1% at 1,050/500 K) within 5%. Held fixed, so the model's lightest Stirling radiator runs about 40 K warmer than Mason's design points.",
@@ -571,6 +575,12 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
+  MshieldBuriedKg: {
+    rangeRationale: "From a light plug shield over a deep hole to a heavily shielded converter deck; FSP 2008's 1.2 m boron carbide plug weighs 1,676 kg.",
+    validity: "The shield's mass for a buried reactor at its reference heat (QshieldRefKwt), grown with power by nShield. The default is NASA FSP 2008's 1,676 kg boron carbide and stainless plug shield for its 175 kWt emplaced reactor: the regolith limits the dose to under 5 rem/yr at 100 m in every direction, and the plug keeps the Stirling converters under 2 Mrad. It is sized by the converters' dose, not the outpost's, so it does not change with separation. Older NASA studies put an on-board shield at about four times an excavation shield (Mason 2006); the model's surface shield is Mason 2025's lighter directional design, 1,370 kg at 1 km.",
+    applicability: "Both sites · nuclear architecture · buried",
+    defaultUncertainty: 0.3
+  },
   nShieldDistance: {
     maturity: "SIMPLIFIED CORRELATION",
     rangeRationale: "0 is a shield that ignores distance; 2 is inverse-square dose with a fixed shadow, an upper bound since attenuation is exponential in thickness.",
@@ -580,7 +590,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   dSeparationKm: {
     rangeRationale: "From 100 m, Mason 2001's optimized separation for a 500 kWe low-voltage system, to 5 km, past the lunar horizon at 2.4 km that NASA notes a 3 km separation clears.",
-    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.9 km for a 40 kWe system (Mason finds about 1.8 km), about 1.15 km for the default 1 MWe plant, and about 0.6 km at 10 t/day, since the cable's conductor grows with power. The cable runs at a fixed 3 kV; a megawatt plant would raise its voltage and move farther away.",
+    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.9 km for a 40 kWe system (Mason finds about 1.8 km), about 1.15 km for the default 1 MWe plant, and about 0.6 km at 10 t/day, since the cable's conductor grows with power. The cable runs at a fixed 3 kV; a megawatt plant would raise its voltage and move farther away. A buried reactor's shield does not depend on separation, so its lightest separation is the 100 m minimum.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },

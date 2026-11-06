@@ -286,6 +286,10 @@ The v0.25 shield separation (the fission shield shrinking as the outpost moves
 away, and a cable to the outpost charged by its length and loss, from NASA's
 current 40 kWe design and its transmission study) is in
 [`docs/model-shield-separation-v025.md`](docs/model-shield-separation-v025.md).
+The v0.26 buried reactor (a siting choice that puts the reactor in an excavated
+hole, where regolith shields the outpost and NASA FSP's plug shield protects the
+converters) is in
+[`docs/model-shield-burial-v026.md`](docs/model-shield-burial-v026.md).
 
 ## Architecture
 

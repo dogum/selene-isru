@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   braytonCycle,
   cableConductorKgPerKwKm,
+  fissionShieldKg,
   braytonCycleAt,
   DEFAULTS,
   fissionEfficiency,
@@ -334,6 +335,29 @@ describe("regression anchors", () => {
     expectRel(kw, 2.452, 0.001);  // v0.25: shield at its separation, cable to the outpost
     // A fixed shield (nShield 0) is the v0.20 model's.
     expect(simulate({ ...V021_FISSION, nShield: 0 }).power.shieldMassKg).toBe(V021_FISSION.MshieldKg);
+  });
+
+  test("a buried fission reactor (v0.26)", () => {
+    // New and deliberate: a buried reactor's shield is FSP 2008's 1,676 kg emplaced shield, grown with
+    // heat and independent of separation. Surface siting stays the default, and the default plant does not move.
+    expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.40, 0.001);
+    const buried = { fissionSiting: "buried" as const, dSeparationKm: 0.1 };
+    const base = simulate(buried);
+    expectRel(base.power.shieldMassKg, 4616, 0.001);
+    expectRel(base.power.cableMassKg, 231, 0.002);
+    expectRel(base.power.cableLossW / 1000, 1.65, 0.01);
+    expectRel(base.power.nuclearMassKg / 1000, 28.14, 0.001);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 48.77, 0.001);
+    // Separation no longer sizes the shield, so a buried reactor is lightest next to the outpost.
+    const heatKw = base.power.fissionThermalW / 1000;
+    expect(fissionShieldKg({ ...DEFAULTS, ...buried, dSeparationKm: 2 }, heatKw)).toBe(fissionShieldKg({ ...DEFAULTS, ...buried }, heatKw));
+    expect(base.logistics.totalInfraMassKg).toBeLessThan(simulate({ ...buried, dSeparationKm: 0.5 }).logistics.totalInfraMassKg);
+    // A 10 t/day plant saves most of its 20.7 t cable.
+    expectRel(simulate({ ...buried, targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 435.6, 0.001);
+    // An unsupported siting resets to the surface and says so.
+    const reset = simulate({ fissionSiting: "underground" } as unknown as Partial<SimParams>);
+    expect(reset.power.shieldMassKg).toBe(simulate({}).power.shieldMassKg);
+    expect(reset.warnings.some((w) => w.id === "param-clamped")).toBe(true);
   });
 
   test("the fission shield and cable with separation (v0.25)", () => {

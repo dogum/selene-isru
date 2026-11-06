@@ -252,7 +252,8 @@ Screenshot: [the separation's evidence over the power panel](screenshots/shield-
 
 ## Left for later
 
-- **Burial and regolith augmentation.**
+- **Burial and regolith augmentation.** *(v0.26: done; see
+  [`model-shield-burial-v026.md`](model-shield-burial-v026.md).)*
   - FSP 2008's 1,676 kg shield sat buried in regolith for 100 m.
   - Mason 2025's 1,370 kg above-ground shield is for 1 km.
   - On this model's distance law, an above-ground shield for 100 m would weigh

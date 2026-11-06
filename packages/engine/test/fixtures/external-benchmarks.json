@@ -210,6 +210,24 @@
       "modelSimplification": "The model's Stirling conversion and power management mass, 23.31 kg/kWe, is set so its Stirling marginal mass between 100 and 500 kWe, shield and radiator included, is Mason's 36.2 kg/kWe at Mason 2006's 1050/500 K lithium Stirling design point. Table 4's Stirling systems fit a fixed 1.0 t plus mass growing as power^0.996, so the model scales Stirling conversion linearly: modular convertors gain no economy of scale. Not used in calibration: NASA FSP's Stirling design carries 22.6 kg/kWe of conversion and power management. The model's Stirling is heavier than its Brayton at every power (1.03 at 10 kWe to 1.20 at 500 kWe); Mason 2001 finds Stirling lighter below about 100 kWe (0.86 at 10 kWe), which the model's per-kW reactor misses."
     },
     {
+      "id": "mason-2008-fsp-emplaced-shield",
+      "kind": "calibration",
+      "quantity": "Shield mass for a fission reactor buried in an excavated hole, and how older studies compare it with an on-board shield",
+      "inputs": {
+        "reactorThermalKwt": 175,
+        "shieldKg": 1676,
+        "separationKm": 0.1,
+        "landedToEmplacedSystemRatio": 1.8,
+        "onBoardToExcavationShieldRatio": 4
+      },
+      "expected": 1676,
+      "unit": "kg",
+      "source": "Mason, Poston & Qualls 2008, System Concepts for Affordable Fission Surface Power, NASA/TM-2008-215166",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20080013229",
+      "sourceLocator": "Table II: 1,676 kg B4C and stainless shield, 1.2 m axial plug, lunar regolith augmentation, <2 Mrad at the Stirling converters and <5 rem/yr at 100 m, for the 175 kWt emplaced reactor; System Configuration: regolith provides the line-of-sight shielding to the outpost, about 100 m away; Fig. 14: the landed configuration (on-board shield, 1 km, 2,000 V) is 80% heavier at 40 kWe. Mason 2006 (NASA/TM-2006-214120), Shielding Options: the on-board shield is four times the excavation shield's mass",
+      "modelSimplification": "A buried reactor's shield is MshieldBuriedKg, grown with reactor heat by nShield and independent of separation: the regolith shields the outpost, and the Earth-delivered shield protects the equipment above the hole. Not reproduced: the 2006 and 2008 studies' on-board shields were 4-pi or wide-sector shields, so their landed systems came out about twice as heavy; the model's surface shield is Mason 2025's 36-degree directional shield, 1,370 kg at 1 km, lighter than the buried one. In the model, burial pays by letting the reactor sit 100 m from the outpost, which shortens the cable: 1.6 t lighter for the default 1 MWe plant, but 0.25 t heavier for a 40 kWe system against a surface reactor at its best separation. The regolith moved (a 2 m by 4 m hole, about 20 t) is not charged."
+    },
+    {
       "id": "mason-2006-lunar-brayton-50kwe",
       "kind": "documentation-only",
       "quantity": "Fission design point (temperatures, efficiency), radiator area, and system mass of a 50 kWe lunar Brayton system",

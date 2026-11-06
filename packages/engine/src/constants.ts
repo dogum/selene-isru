@@ -1627,6 +1627,14 @@ export const PARAM_META = {
     "description": "Fission power converter: closed Brayton turbine, or free-piston Stirling",
     "source": "model switch; Mason 2006, NASA/TM-2006-214120: Brayton, Stirling, and thermoelectric lunar fission options"
   },
+  "fissionSiting": {
+    "value": "surface",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Fission reactor siting: on the surface behind its own directional shield, or buried in an excavated hole with regolith shielding the outpost",
+    "source": "model switch; Mason, Poston & Qualls 2008, NASA/TM-2008-215166: emplaced and landed configurations; Mason 2006, NASA/TM-2006-214120: excavation and on-board shields"
+  },
   "fCarnotStirling": {
     "value": 0.59,
     "min": 0.3,
@@ -1744,8 +1752,18 @@ export const PARAM_META = {
     "unit": "kg",
     "kind": "parameter",
     "group": "power",
-    "description": "Nuclear shielding mass at its reference heat and 1 km separation",
+    "description": "Nuclear shielding mass for a surface reactor at its reference heat and 1 km separation",
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Table IV and Sec. VII: 1,370 kg directional shield for the 175 kWt heat-pipe reactor, <5 rem/yr at the crew habitat boundary 1 km away"
+  },
+  "MshieldBuriedKg": {
+    "value": 1676,
+    "min": 300,
+    "max": 8000,
+    "unit": "kg",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Nuclear shielding mass for a buried reactor at its reference heat",
+    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: 1676 kg shield for a reactor emplaced in an excavated hole with lunar regolith augmentation, <2 Mrad at the Stirling converters and <5 rem/yr at 100 m in all directions"
   },
   "QshieldRefKwt": {
     "value": 175,
@@ -2667,6 +2685,7 @@ export const DEFAULTS = {
   "Tsink": 400,
   "Tenv": 250,
   "fissionConverter": "brayton",
+  "fissionSiting": "surface",
   "fCarnotStirling": 0.59,
   "kConversionStirlingKgPerKwe": 21.06,
   "bStirlingScale": 1,
@@ -2679,6 +2698,7 @@ export const DEFAULTS = {
   "etaRad": 0.85,
   "epsRad": 0.85,
   "MshieldKg": 1370,
+  "MshieldBuriedKg": 1676,
   "QshieldRefKwt": 175,
   "nShield": 0.33,
   "nShieldDistance": 0.97,
