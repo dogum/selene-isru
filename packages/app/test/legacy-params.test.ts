@@ -63,6 +63,9 @@ describe("inputs renamed or retired in v0.9", () => {
     // v0.18: one fission mass per kW of output has no single split into reactor and conversion.
     expect(upgradeLegacyParams({ ...DEFAULTS, alphaSpecific: 45 })).not.toHaveProperty("alphaSpecific");
     expect(parseParams("alphaSpecific=45&Tsink=500")).toEqual({ Tsink: 500 });
+    // v0.20: a fraction of Carnot has no equivalent among the Brayton cycle's component efficiencies.
+    expect(upgradeLegacyParams({ ...DEFAULTS, etaMech: 0.55 })).not.toHaveProperty("etaMech");
+    expect(parseParams("etaMech=0.55&Tsink=420")).toEqual({ Tsink: 420 });
   });
 
   it("reads a shared link made before v0.9", () => {

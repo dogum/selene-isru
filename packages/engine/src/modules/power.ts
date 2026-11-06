@@ -66,9 +66,51 @@ export function pCritDynamicKw(
   return MshieldKg / denominator;
 }
 
-/** Fission conversion efficiency, electrical output over reactor heat [1]. */
+/** Temperatures and per-unit-flow work and heat of a recuperated Brayton cycle [K]. */
+export interface BraytonCycle {
+  compressorExitK: number;
+  turbineExitK: number;
+  heaterInletK: number;
+  /** Net work over mass flow times heat capacity [K] */
+  netWorkK: number;
+  /** Reactor heat over mass flow times heat capacity [K] */
+  heatInK: number;
+}
+
+/**
+ * Recuperated closed Brayton cycle on an ideal monatomic gas: turbine inlet at
+ * Tsource, compressor inlet at Tsink. Work and heat are per unit mass flow and
+ * heat capacity, so their ratio is the cycle efficiency.
+ */
+export function braytonCycle(params: SimParams): BraytonCycle {
+  const gamma = PHYSICAL_CONSTANTS.gammaHeXe.value;
+  const k = (gamma - 1) / gamma;
+  const t1 = params.Tsink;
+  const t3 = params.Tsource;
+  const t2 = t1 * (1 + (params.rpBrayton ** k - 1) / params.etaCompressor);
+  const expansion = Math.max(1, params.rpBrayton * (1 - params.fPressureLoss));
+  const t4 = t3 * (1 - params.etaTurbine * (1 - expansion ** -k));
+  const t5 = t2 + params.epsRecuperator * Math.max(0, t4 - t2);
+  return {
+    compressorExitK: t2,
+    turbineExitK: t4,
+    heaterInletK: t5,
+    netWorkK: t3 - t4 - (t2 - t1),
+    heatInK: t3 - t5
+  };
+}
+
+/**
+ * Fission conversion efficiency, electrical output over reactor heat [1]: the
+ * Brayton cycle's net work over its heat input, times the alternator and
+ * power conditioning efficiency.
+ */
 export function fissionEfficiency(params: SimParams): number {
-  return Math.max(1e-9, (1 - params.Tsink / params.Tsource) * params.etaMech);
+  const cycle = braytonCycle(params);
+  if (cycle.netWorkK <= 0 || cycle.heatInK <= 0) {
+    return 1e-9;
+  }
+  return Math.max(1e-9, (cycle.netWorkK / cycle.heatInK) * params.etaAlternator);
 }
 
 /**
@@ -197,6 +239,17 @@ export function simulatePower(
       message: "Fission hot-side temperature must exceed sink temperature.",
       value: params.Tsource,
       limit: params.Tsink
+    });
+  }
+  const cycle = braytonCycle(params);
+  if (params.Tsource > params.Tsink && (cycle.netWorkK <= 0 || cycle.heatInK <= 0)) {
+    warnings.push({
+      id: "fission-no-net-work",
+      severity: "alarm",
+      module: "power",
+      message: "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
+      value: params.Tsource / params.Tsink,
+      limit: cycle.netWorkK
     });
   }
   if (params.Tsink <= params.Tenv) {

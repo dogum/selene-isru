@@ -27,11 +27,15 @@
  * shield and radiator) has no single equivalent. It is dropped and the case
  * takes the new defaults, which reproduce its 28 kg/kW at the default
  * efficiency.
+ *
+ * v0.20 computes fission efficiency from a recuperated Brayton cycle, so
+ * `etaMech` (a fixed fraction of Carnot) has no equivalent among the cycle's
+ * component efficiencies. It is dropped and the case takes the cycle defaults.
  */
 const RENAMED: Readonly<Record<string, string>> = {
   eIlmMining: "eMining"
 };
-const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass", "kMiningMass", "kIlmMiningMass", "alphaSpecific"];
+const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass", "kMiningMass", "kIlmMiningMass", "alphaSpecific", "etaMech"];
 
 export function upgradeLegacyParams<T extends object>(raw: T): T {
   const renamed = Object.keys(RENAMED).filter((key) => key in raw);

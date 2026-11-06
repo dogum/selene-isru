@@ -391,6 +391,7 @@ const POLAR_CONFIG: Record<string, AssetConfig> = {
     controlLabels: {
       Tsource: "Hot-side temperature",
       Tsink: "Sink temperature",
+      epsRecuperator: "Recuperator effectiveness",
       kReactorKgPerKwt: "Reactor mass per kWt",
       kRadiatorKgPerM2: "Radiator mass per m²",
       epsRad: "Radiator emissivity"

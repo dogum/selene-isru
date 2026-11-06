@@ -71,9 +71,11 @@ export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoin
 export { payloadPerMissionKg } from "./modules/logistics";
 export { refuelTimeline, sortiePropellantKg } from "./modules/refuel";
 export type { RefuelSource, RefuelTimelinePoint, SortiePropellant } from "./modules/refuel";
+export type { BraytonCycle } from "./modules/power";
 export {
   beamedPowerW,
   beamEfficiency,
+  braytonCycle,
   fissionEfficiency,
   nuclearSlopeAtYear,
   nuclearSpecificKgPerKw,

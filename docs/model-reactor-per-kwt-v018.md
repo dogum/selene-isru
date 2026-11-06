@@ -152,4 +152,6 @@ Screenshot: [fission mass against radiator temperature, from the sweep tool, wit
   [`model-fission-calibration-v019.md`](model-fission-calibration-v019.md).)*
 - **Conversion efficiency from the converter.** `etaMech`, a fraction of
   Carnot, is one number for Stirling and Brayton alike; a converter choice
-  would carry its own efficiency, temperatures, and mass.
+  would carry its own efficiency, temperatures, and mass. *(v0.20: Brayton's
+  efficiency now comes from its cycle; a Stirling choice stays on the backlog.
+  See [`model-brayton-cycle-v020.md`](model-brayton-cycle-v020.md).)*

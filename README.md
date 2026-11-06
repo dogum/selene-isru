@@ -264,6 +264,10 @@ The v0.19 fission calibration (temperatures, efficiency, shield, and mass scale
 set to NASA Glenn's surface Brayton studies and NASA's FSP design, with a 400 K
 radiator) is in
 [`docs/model-fission-calibration-v019.md`](docs/model-fission-calibration-v019.md).
+The v0.20 Brayton cycle (fission efficiency from a recuperated Brayton cycle
+with NASA's converter components, so a warmer radiator costs the cycle its
+work) is in
+[`docs/model-brayton-cycle-v020.md`](docs/model-brayton-cycle-v020.md).
 
 ## Architecture
 

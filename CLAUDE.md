@@ -179,7 +179,7 @@ from parity vectors — parity agreeing does not mean the physics is right.
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `campaignTimeline`, `refuelTimeline`, `sizeToDemand`, `DEFAULTS`,
 `PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
 helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
-`beamEfficiency`, `fissionEfficiency`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
+`beamEfficiency`, `braytonCycle`, `fissionEfficiency`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
@@ -257,7 +257,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~208 KB of ~213 KB. A ratchet normally reads nearly
+The current build sits at ~211 KB of ~213 KB. A ratchet normally reads nearly
 full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -466,6 +466,7 @@ in `assets/ASSET_LICENSES.md`.
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
+| Fission efficiency from a recuperated Brayton cycle, Mason design points, 420 K optimum, no-net-work alarm | v0.20 anchors in `regression.test.ts` / `test_regression.py`, `mason-2006-lunar-brayton-50kwe` in `external-benchmarks.test.ts`, `legacy-params.test.ts` |
 | Megawatt-class fission calibration, 400 K radiator, disclosed 570 K model optimum | v0.19 anchors in `regression.test.ts` / `test_regression.py`, `mason-2001-surface-brayton-scaling` and `mason-2006-lunar-brayton-50kwe` in `external-benchmarks.test.ts` |
 | Fission reactor per kWt and conversion per kWe, radiator-temperature optimum | v0.18 anchors in `regression.test.ts` / `test_regression.py`, the split check in `mason-2008-fsp-radiator`, `legacy-params.test.ts` |
 | Fission radiator mass, FSP calibration, power-trade slope agreement | v0.17 anchors in `regression.test.ts` / `test_regression.py`, `mason-2008-fsp-radiator` in `external-benchmarks.test.ts`, `power-slopes.test.ts` |
@@ -531,7 +532,7 @@ script run on a clean checkout at all.
   `model-electrolysis-bop-v014.md` → `model-overburden-timing-v015.md` →
   `model-size-to-demand-v016.md` → `model-radiator-mass-v017.md` →
   `model-reactor-per-kwt-v018.md` →
-  `model-fission-calibration-v019.md`) is
+  `model-fission-calibration-v019.md` → `model-brayton-cycle-v020.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -595,6 +596,10 @@ script run on a clean checkout at all.
   the fission system's temperatures, efficiency, shield, and scale set to NASA
   Glenn's surface Brayton studies and FSP, and the radiator-temperature
   optimum the fixed-Carnot efficiency still misplaces.
+- [`docs/model-brayton-cycle-v020.md`](docs/model-brayton-cycle-v020.md) —
+  fission efficiency from a recuperated Brayton cycle with NASA's converter
+  components, one pressure loss fitted to Mason 2006, and the radiator
+  optimum that moves to near 420 K.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

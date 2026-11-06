@@ -23,6 +23,13 @@ export const PHYSICAL_CONSTANTS = {
     "description": "Stefan-Boltzmann constant",
     "source": "CODATA 2022"
   },
+  "gammaHeXe": {
+    "value": 1.6666666666666667,
+    "unit": "1",
+    "kind": "physical",
+    "description": "Heat capacity ratio of the helium-xenon Brayton working fluid (monatomic ideal gas)",
+    "source": "Monatomic ideal gas, 5/3; Mason 2006, NASA/TM-2006-214120: HeXe working fluid"
+  },
   "gL": {
     "value": 1.62,
     "unit": "m/s^2",
@@ -1577,15 +1584,65 @@ export const PARAM_META = {
     "description": "Radiator environment temperature",
     "source": "spec"
   },
-  "etaMech": {
-    "value": 0.403,
-    "min": 0.2,
-    "max": 0.8,
+  "rpBrayton": {
+    "value": 2,
+    "min": 1.3,
+    "max": 4,
     "unit": "1",
     "kind": "parameter",
     "group": "power",
-    "description": "Thermal mechanical efficiency",
-    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: 26.3% Brayton converter efficiency at 1150/400 K, a 0.403 fraction of Carnot"
+    "description": "Brayton compressor pressure ratio",
+    "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: design pressure ratio 2:1"
+  },
+  "etaCompressor": {
+    "value": 0.84,
+    "min": 0.6,
+    "max": 0.92,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Brayton compressor isentropic efficiency",
+    "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: compressor efficiency 84%"
+  },
+  "etaTurbine": {
+    "value": 0.87,
+    "min": 0.6,
+    "max": 0.95,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Brayton turbine isentropic efficiency",
+    "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: turbine efficiency 87%"
+  },
+  "epsRecuperator": {
+    "value": 0.9,
+    "min": 0,
+    "max": 0.98,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Brayton recuperator effectiveness",
+    "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: recuperator effectiveness 90%"
+  },
+  "fPressureLoss": {
+    "value": 0.05,
+    "min": 0,
+    "max": 0.2,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Brayton loop pressure loss, fraction of compressor exit pressure",
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: fitted so the cycle gives the 26.3% Brayton converter efficiency at 1150/400 K, with Fuller 2010's components"
+  },
+  "etaAlternator": {
+    "value": 0.931,
+    "min": 0.8,
+    "max": 0.99,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Brayton alternator and power conditioning efficiency",
+    "source": "Fuller 2010, NASA/CR-2010-215673, closed Brayton cycle power conversion unit for fission surface power: generator efficiency 98% and power conversion 95%"
   },
   "etaRad": {
     "value": 0.85,
@@ -2456,7 +2513,12 @@ export const DEFAULTS = {
   "Tsource": 1150,
   "Tsink": 400,
   "Tenv": 250,
-  "etaMech": 0.403,
+  "rpBrayton": 2,
+  "etaCompressor": 0.84,
+  "etaTurbine": 0.87,
+  "epsRecuperator": 0.9,
+  "fPressureLoss": 0.05,
+  "etaAlternator": 0.931,
   "etaRad": 0.85,
   "epsRad": 0.85,
   "MshieldKg": 1676,

@@ -60,6 +60,11 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
     section: "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts (NASA/TM-2001-210593), Table 3"
   },
   {
+    match: /^Fuller 2010/,
+    url: "https://ntrs.nasa.gov/citations/20100026654",
+    section: "Fuller 2010, Closed Brayton Cycle Power Conversion Unit for Fission Surface Power Phase I Final Report (NASA/CR-2010-215673), design decisions"
+  },
+  {
     match: /^Mason 2006/,
     url: "https://ntrs.nasa.gov/citations/20060011236",
     section: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Table 1"
@@ -485,15 +490,46 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   Tsink: {
     rangeRationale: "From a cold radiator near 300 K to 900 K; NASA's lunar studies put the Brayton cold end at 380–400 K and Stirling at 415–460 K.",
-    validity: "The converter cold end, which the model also takes as the radiator temperature. The default is Mason 2006's minimum-mass Brayton design point, 400 K. The model's efficiency is a fixed fraction of Carnot, while a real Brayton cycle loses efficiency faster as its cold end warms, so the model's own lightest radiator runs near 570 K and overstates what a warmer radiator saves.",
+    validity: "The compressor inlet, which the model also takes as the radiator temperature. The default is Mason 2006's minimum-mass Brayton design point, 400 K. Since v0.20 the Brayton cycle loses efficiency as its cold end warms, so the model's own lightest radiator runs near 420 K; with the default 1,150 K hot end the cycle makes no net work above about 600 K. The radiator is sized at the compressor inlet, the coldest point of the heat it rejects, so it errs large.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.1
   },
-  etaMech: {
-    rangeRationale: "Fraction of Carnot from poor converters (0.2) to the best Stirling (0.8); NASA's lunar Brayton reaches 0.40 and its Stirling about 0.55.",
-    validity: "Conversion efficiency is this fraction of the Carnot efficiency between the hot and cold ends. The default reproduces Mason 2006's 26.3% Brayton converter at 1,150/400 K. It is held fixed as the temperatures change, which a real converter does not do.",
+  rpBrayton: {
+    rangeRationale: "Closed space Brayton loops run near 1.6–2.5; NASA's fission surface power converter was designed at 2:1.",
+    validity: "Compressor exit over inlet pressure. Each pressure ratio has its own best temperature ratio, so the default holds Fuller 2010's design value rather than re-optimizing it as the temperatures change.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.1
+  },
+  etaCompressor: {
+    rangeRationale: "From a poor small radial compressor (0.6) to the best large turbomachinery (0.92); NASA's converter design used 84%.",
+    validity: "Isentropic efficiency of a single compression stage on an ideal monatomic gas. Windage and bearing losses are in the alternator term.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.03
+  },
+  etaTurbine: {
+    rangeRationale: "From a poor small radial turbine (0.6) to the best large turbomachinery (0.95); NASA's converter design used 87%.",
+    validity: "Isentropic efficiency of a single expansion stage on an ideal monatomic gas.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.03
+  },
+  epsRecuperator: {
+    rangeRationale: "From no recuperator to 0.98; NASA's converter design used 90%, and space Brayton designs reach about 95% at a mass cost.",
+    validity: "Fraction of the turbine exhaust's available heat returned to the compressor exit. The recuperator's own mass is not charged separately: it sits in the conversion mass per kW.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.05
+  },
+  fPressureLoss: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "From a lossless loop to 20% of compressor exit pressure lost in ducts and heat exchangers.",
+    validity: "The one cycle value fitted, not sourced: 5% makes Fuller 2010's components give Mason 2006's 26.3% at 1,150/400 K. Unfitted, the same cycle gives 15.5% at Mason's 900/380 K point against its 15.6%.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.3
+  },
+  etaAlternator: {
+    rangeRationale: "From 80% to 99% of shaft power delivered as conditioned electricity.",
+    validity: "Alternator efficiency times power conditioning: NASA's converter design's 98% generator and 95% power conversion. Bearing and windage losses are lumped in.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.02
   },
   MshieldKg: {
     rangeRationale: "From a reactor buried in regolith to a fully earth-delivered crew-rated shield; NASA finds on-board shielding about four times the excavation shield's mass.",

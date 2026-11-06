@@ -107,7 +107,8 @@ goes:
   warms, because the compressor's work grows.
 - **What to make of it:** the defaults sit at NASA's design point, not at the
   model's optimum. A sweep of the radiator temperature overstates what a warmer
-  radiator saves. The backlog carries the converter model that would fix it.
+  radiator saves. The backlog carries the converter model that would fix it. *(v0.20: fixed by
+  the Brayton cycle; see [`model-brayton-cycle-v020.md`](model-brayton-cycle-v020.md).)*
 
 ## Numbers that moved
 
@@ -174,7 +175,9 @@ Screenshot: [the radiator temperature's evidence over the power panel](screensho
 - **Brayton efficiency from the cycle.** Efficiency from the temperature
   ratio and component efficiencies, not a fixed fraction of Carnot, would move
   the model's optimum to Mason's 400 K. It would also make Brayton and
-  Stirling distinct.
+  Stirling distinct. *(v0.20: done for Brayton; the optimum moves to
+  about 420 K, and Stirling stays on the backlog. See
+  [`model-brayton-cycle-v020.md`](model-brayton-cycle-v020.md).)*
 - **Shield mass with power.** One shield mass serves every power level; a
   megawatt reactor needs a thicker shield at the same dose and distance.
 - **Economy of scale.** The slope is linear. Mason 2001 shows specific mass
