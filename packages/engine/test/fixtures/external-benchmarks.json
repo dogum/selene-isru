@@ -233,6 +233,22 @@
       "modelSimplification": "Not fitted: the model's cable design takes the insulation stress, jacket, and minimum gauge from these sources and picks the voltage that minimizes conductor, insulation, and jacket mass. It gives ±3,969 V for Barth & Pike's cable (±4,000 V) and ±3,060 V and 50 kg for Oleson's (±2,800 V and about 45 kg), where the conductor sits at the 16 AWG minimum. Since v0.28 the model also designs a three-phase AC line insulated for its peak voltage: it gives 3,027 Vrms line to neutral for Barth & Pike's 40 kW cable, against their 3,000 Vrms, and 49% more mass than the DC line, as they find the AC cable heavier."
     },
     {
+      "id": "barth-pike-2022-lunar-horizon",
+      "kind": "documentation-only",
+      "quantity": "Line-of-sight distance to the lunar horizon from a crew member's eyes, and the separation that puts a surface reactor beyond it",
+      "inputs": {
+        "eyeHeightM": 1.7,
+        "horizonKm": 2.4,
+        "separationKm": 3
+      },
+      "expected": 2.4,
+      "unit": "km",
+      "source": "Barth & Pike 2022, Lunar Power Transmission for Fission Surface Power, NETS 2022",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20220002315",
+      "sourceLocator": "Sec. I: \"Although the distance to the horizon is very dependent on topography, a 3 km separation places the reactor over the 2.4 km lunar horizon from the crew and shields them from radiation.\"",
+      "modelSimplification": "A diagnostic only: horizonKm is sqrt(2 R h) for the reactor's core and the outpost over a smooth sphere of the Moon's mean radius, the reactor taken at the surface by default and a buried one always. The source does not state the eye height; 1.7 m reproduces its 2.4 km. Beyond the horizon the model raises an info note and still charges the shield in full, since no source quantifies how much terrain attenuates: the shield stays sized for line of sight, and real topography can put the horizon nearer or farther."
+    },
+    {
       "id": "mason-2008-fsp-emplaced-shield",
       "kind": "calibration",
       "quantity": "Shield mass for a fission reactor buried in an excavated hole, and how older studies compare it with an on-board shield",

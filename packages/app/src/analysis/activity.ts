@@ -56,6 +56,7 @@ const LABELS: Record<string, string> = {
   "power.cableMassKg": "cable mass",
   "power.cableLossW": "cable loss",
   "power.cableVoltageV": "cable voltage",
+  "power.horizonKm": "line-of-sight horizon",
   "power.fissionThermalW": "reactor heat",
   "power.nuclearSpecificKgPerKw": "fission specific mass",
   "production.propellantKgPerDay": "usable propellant",

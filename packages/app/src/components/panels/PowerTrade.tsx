@@ -216,6 +216,11 @@ export function PowerTrade(): React.JSX.Element {
         <div>
           CABLE <b className="num">{formatQtyText(params.dSeparationKm, "km")} · {formatQtyText(result.power.cableVoltageV, "V")} {params.cableForm === "ac" ? "AC" : "DC"} · {formatQtyText(result.power.cableMassKg, "kg")} · {formatQtyText(result.power.cableLossW, "W")} lost</b>
         </div>
+        {result.power.architecture === "nuclear" && (
+          <div>
+            HORIZON <b className="num">{formatQtyText(result.power.horizonKm, "km")} · outpost {result.warnings.some((w) => w.id === "outpost-beyond-horizon") ? "beyond, shield not credited" : "in view"}</b>
+          </div>
+        )}
         {result.power.beamedFloorPowerW !== null && (
           <div>
             BEAMED FLOOR <b className="num">{formatQtyText(result.power.beamedFloorPowerW, "W")}</b>

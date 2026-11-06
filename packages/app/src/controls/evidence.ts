@@ -598,6 +598,24 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
+  hOutpostM: {
+    maturity: "DESIGN ASSUMPTION",
+    sourceUrl: "https://ntrs.nasa.gov/citations/20220002315",
+    sourceSection: "Barth & Pike 2022, Lunar Power Transmission for Fission Surface Power (NETS 2022), Sec. I, introduction: the 2.4 km lunar horizon",
+    rangeRationale: "From the ground to 20 m, a mast or a habitat roof that must not see the reactor.",
+    validity: "Sets only the line-of-sight horizon: sqrt(2 R h) for the outpost plus the same for the reactor's core, over a smooth Moon of 1,737.4 km radius. The default 1.7 m, a standing crew member's eyes, reproduces Barth & Pike's 2.4 km lunar horizon. Beyond the horizon the plant notes that terrain blocks direct radiation, but the shield is still charged in full: no source quantifies how much terrain attenuates, and real topography can put the horizon nearer or farther. No mass depends on it.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.5
+  },
+  hReactorM: {
+    maturity: "DESIGN ASSUMPTION",
+    sourceUrl: "https://ntrs.nasa.gov/citations/20220002315",
+    sourceSection: "Barth & Pike 2022, Lunar Power Transmission for Fission Surface Power (NETS 2022), Sec. I, introduction: the 2.4 km lunar horizon",
+    rangeRationale: "From a core at the surface to 10 m, a reactor left high on its lander.",
+    validity: "Sets only the line-of-sight horizon, which a raised core pushes out: at 4 m it is 6.2 km rather than 2.4 km. The default 0 m is Barth & Pike's reading, a reactor at the surface. A buried reactor's core sits below the surface whatever this says, so the rail hides it under buried. No mass depends on it; the shield is sized for line of sight either way.",
+    applicability: "Both sites · nuclear architecture · surface",
+    defaultUncertainty: 0
+  },
   kCableKgPerKm: {
     maturity: "SIMPLIFIED CORRELATION",
     rangeRationale: "From a bare conductor to a heavily armoured, redundant cable; NASA's 40 kWe FSP cable and spool weigh 325 kg for 1 km.",

@@ -464,6 +464,13 @@ export const PHYSICAL_CONSTANTS = {
     "description": "Approximate lunar night duration",
     "source": "lunar synodic period"
   },
+  "rMoonM": {
+    "value": 1737400,
+    "unit": "m",
+    "kind": "physical",
+    "description": "Mean lunar radius",
+    "source": "IAU WG on Cartographic Coordinates and Rotational Elements: mean radius 1,737.4 km"
+  },
   "dShieldRefKm": {
     "value": 1,
     "unit": "km",
@@ -1834,6 +1841,26 @@ export const PARAM_META = {
     "description": "Reactor separation from the outpost, and the cable route length",
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.B and VI: crew habitat boundary 1 km from the reactor, connected by a 1 km cable"
   },
+  "hOutpostM": {
+    "value": 1.7,
+    "min": 0,
+    "max": 20,
+    "unit": "m",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Height above the surface at which the outpost must not see the reactor: a standing crew member's eyes",
+    "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. I: a 3 km separation places the reactor over the 2.4 km lunar horizon from the crew; the eye height is not stated, and 1.7 m reproduces 2.4 km over a smooth Moon"
+  },
+  "hReactorM": {
+    "value": 0,
+    "min": 0,
+    "max": 10,
+    "unit": "m",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Height of a surface reactor's core above the surface, for the line-of-sight horizon",
+    "source": "design assumption: Barth & Pike 2022's 2.4 km horizon takes the reactor at the surface; a reactor left on its lander deck stands several metres up"
+  },
   "kCableKgPerKm": {
     "value": 243,
     "min": 0,
@@ -2743,6 +2770,8 @@ export const DEFAULTS = {
   "nShield": 0.33,
   "nShieldDistance": 0.97,
   "dSeparationKm": 1,
+  "hOutpostM": 1.7,
+  "hReactorM": 0,
   "kCableKgPerKm": 243,
   "fCableLossPerKm": 0.0167,
   "VCableMaxV": 8000,

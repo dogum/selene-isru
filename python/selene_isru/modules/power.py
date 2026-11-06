@@ -103,6 +103,15 @@ def cable_mass_kg(params: dict[str, Any], sent_kwe: float) -> float:
     return params["dSeparationKm"] * per_km
 
 
+def horizon_km(params: dict[str, Any]) -> float:
+    """Line-of-sight distance over a smooth Moon between the reactor's core and the outpost [km].
+
+    sqrt(2 R h_reactor) + sqrt(2 R h_outpost). A buried reactor's core is at the surface or below it."""
+    reactor_m = 0.0 if params["fissionSiting"] == "buried" else params["hReactorM"]
+    radius = c("rMoonM")
+    return (math.sqrt(2 * radius * reactor_m) + math.sqrt(2 * radius * params["hOutpostM"])) / 1000
+
+
 def shield_ref_kwe(params: dict[str, Any]) -> float:
     """Delivered output at which the shield reaches its reference heat [kW]."""
     return params["QshieldRefKwt"] * fission_efficiency(params) * line_efficiency(params)
@@ -433,6 +442,9 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         warnings.append({"id": "stirling-hot-end", "severity": "caution", "module": "power", "message": "Stirling hot end is above NASA's 1,050 K refractory Stirling design.", "value": params["Tsource"], "limit": c("TStirlingMaxK")})
     if params["fissionConverter"] == "brayton" and params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
         warnings.append({"id": "fission-no-net-work", "severity": "alarm" if architecture == "nuclear" else "caution", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
+    horizon = horizon_km(params)
+    if architecture == "nuclear" and params["dSeparationKm"] > horizon:
+        warnings.append({"id": "outpost-beyond-horizon", "severity": "info", "module": "power", "message": "The outpost is beyond the reactor's line-of-sight horizon; terrain blocks direct radiation, which the shield, sized for line of sight, does not credit.", "value": params["dSeparationKm"], "limit": horizon})
     if radiator_cold_k <= params["Tenv"]:
         warnings.append({"id": "radiator-temperature", "severity": "alarm", "module": "power", "message": "Radiator cold end must exceed its environment temperature.", "value": radiator_cold_k, "limit": params["Tenv"]})
 
@@ -453,6 +465,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "cableMassKg": cable_kg,
         "cableLossW": p_sent - p_grid,
         "cableVoltageV": cable_voltage_v,
+        "horizonKm": horizon,
         "fissionThermalW": q_fission,
         "nuclearSpecificKgPerKw": alpha_with_radiator,
         "pCritW": 0 if p_crit is None else p_crit * 1000,

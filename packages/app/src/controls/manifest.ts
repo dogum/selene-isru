@@ -237,7 +237,7 @@ export function readsFissionConverter(key: keyof SimParams, params: Pick<SimPara
 }
 
 /** Shield inputs that only act on one siting; the other siting hides them. */
-const SURFACE_SHIELD_ONLY = new Set<keyof SimParams>(["MshieldKg", "nShieldDistance"]);
+const SURFACE_SHIELD_ONLY = new Set<keyof SimParams>(["MshieldKg", "nShieldDistance", "hReactorM"]);
 const BURIED_SHIELD_ONLY = new Set<keyof SimParams>(["MshieldBuriedKg"]);
 
 /** Whether a shield input belongs to this case's siting; the other siting's shield inputs are inert. */

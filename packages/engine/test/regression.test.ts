@@ -4,6 +4,7 @@ import {
   cableDesign,
   cableMassKg,
   fissionShieldKg,
+  horizonKm,
   braytonCycleAt,
   DEFAULTS,
   fissionEfficiency,
@@ -337,6 +338,30 @@ describe("regression anchors", () => {
     expectRel(kw, 2.410, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     // A fixed shield (nShield 0) is the v0.20 model's.
     expect(simulate({ ...V021_FISSION, nShield: 0 }).power.shieldMassKg).toBe(V021_FISSION.MshieldKg);
+  });
+
+  test("the reactor's line-of-sight horizon (v0.29)", () => {
+    // New and deliberate: a diagnostic only. The horizon between the reactor's core and the outpost over a
+    // smooth Moon, Barth & Pike's 2.4 km for a crew member's eyes; no mass depends on it.
+    const base = simulate({});
+    expectRel(base.power.horizonKm, Math.sqrt(2 * 1_737_400 * 1.7) / 1000, 1e-12);
+    expectRel(base.power.horizonKm, 2.430, 0.001);
+    expect(horizonKm(DEFAULTS)).toBe(base.power.horizonKm);
+    expect(base.warnings.some((w) => w.id === "outpost-beyond-horizon")).toBe(false);
+    // Beyond it the shield is still charged in full, and the plant is told so.
+    const far = simulate({ dSeparationKm: 3 });
+    const beyond = far.warnings.find((w) => w.id === "outpost-beyond-horizon");
+    expect(beyond?.severity).toBe("info");
+    expect(far.power.shieldMassKg).toBe(fissionShieldKg({ ...DEFAULTS, dSeparationKm: 3 }, far.power.fissionThermalW / 1000));
+    // A reactor raised on its lander deck sees farther; a buried one sits at the surface whatever its height.
+    expectRel(simulate({ hReactorM: 4 }).power.horizonKm, 6.158, 0.001);
+    expect(simulate({ fissionSiting: "buried", hReactorM: 4 }).power.horizonKm).toBe(base.power.horizonKm);
+    // No mass moves with either height.
+    const raised = simulate({ hReactorM: 10, hOutpostM: 20 });
+    expect(raised.logistics.totalInfraMassKg).toBe(base.logistics.totalInfraMassKg);
+    // A solar plant has no reactor to see.
+    expect(simulate({ site: "polar", targetKgPerDay: 10 }).power.architecture).toBe("solar");
+    expect(simulate({ site: "polar", targetKgPerDay: 10, dSeparationKm: 3 }).warnings.some((w) => w.id === "outpost-beyond-horizon")).toBe(false);
   });
 
   test("AC transmission (v0.28)", () => {

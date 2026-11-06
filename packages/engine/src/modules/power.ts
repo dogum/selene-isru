@@ -19,6 +19,7 @@ export interface PowerOutput {
   cableMassKg: number;
   cableLossW: number;
   cableVoltageV: number;
+  horizonKm: number;
   fissionThermalW: number;
   nuclearSpecificKgPerKw: number;
   pCritW: number;
@@ -154,6 +155,17 @@ export function cableMassKg(params: SimParams, sentKwe: number): number {
   const design = cableDesign(params, sentKwe);
   const perKm = params.kCableKgPerKm + design.conductorKgPerKm + design.insulationKgPerKm + design.jacketKgPerKm;
   return params.dSeparationKm * perKm;
+}
+
+/**
+ * Line-of-sight distance over a smooth Moon between the reactor's core and the
+ * outpost [km]: sqrt(2 R h_reactor) + sqrt(2 R h_outpost). A buried reactor's
+ * core is at the surface or below it.
+ */
+export function horizonKm(params: SimParams): number {
+  const reactorM = params.fissionSiting === "buried" ? 0 : params.hReactorM;
+  const radius = PHYSICAL_CONSTANTS.rMoonM.value;
+  return (Math.sqrt(2 * radius * reactorM) + Math.sqrt(2 * radius * params.hOutpostM)) / 1000;
 }
 
 /** Delivered output at which the shield reaches its reference heat [kW]. */
@@ -601,6 +613,18 @@ export function simulatePower(
       limit: cycle.netWorkK
     });
   }
+  const horizon = horizonKm(params);
+  if (architecture === "nuclear" && params.dSeparationKm > horizon) {
+    warnings.push({
+      id: "outpost-beyond-horizon",
+      severity: "info",
+      module: "power",
+      message:
+        "The outpost is beyond the reactor's line-of-sight horizon; terrain blocks direct radiation, which the shield, sized for line of sight, does not credit.",
+      value: params.dSeparationKm,
+      limit: horizon
+    });
+  }
   if (radiatorColdK <= params.Tenv) {
     warnings.push({
       id: "radiator-temperature",
@@ -649,6 +673,7 @@ export function simulatePower(
     cableMassKg: cableKg,
     cableLossW: Psent - Pgrid,
     cableVoltageV,
+    horizonKm: horizon,
     fissionThermalW: Qfission,
     nuclearSpecificKgPerKw: alphaWithRadiator,
     pCritW: pCrit === null ? 0 : pCrit * 1000,

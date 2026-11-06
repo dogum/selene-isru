@@ -382,6 +382,10 @@ export interface SimParams {
   nShieldDistance: number;
   MshieldBuriedKg: number;
   dSeparationKm: number;
+  /** [m] */
+  hOutpostM: number;
+  /** [m] */
+  hReactorM: number;
   kCableKgPerKm: number;
   VCableMaxV: number;
   fCableLossPerKm: number;
@@ -813,6 +817,8 @@ export interface SimResult {
     cableLossW: number;
     /** the cable's line-to-line voltage (RMS for AC): the lightest for its power, capped by VCableMaxV [V] */
     cableVoltageV: number;
+    /** line-of-sight horizon between the reactor's core and the outpost over a smooth Moon [km] */
+    horizonKm: number;
     /** fission reactor heat for the grid load and the cable's loss: sent electrical output over conversion efficiency [W] */
     fissionThermalW: number;
     /** fission specific mass per delivered kW at the grid power, excluding the shield and the cable's fixed mass; radiator and conductor included [kg/kW] */

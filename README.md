@@ -298,6 +298,10 @@ The v0.28 AC transmission (a three-phase AC cable insulated for its peak voltage
 beside the DC line, with the cable's fixed mass refitted to NASA's own 3 kVac
 cable) is in
 [`docs/model-ac-transmission-v028.md`](docs/model-ac-transmission-v028.md).
+The v0.29 siting horizon (the line-of-sight horizon between reactor and outpost,
+Barth & Pike's 2.4 km, with a note when the outpost is beyond it and terrain
+shielding disclosed as uncredited) is in
+[`docs/model-siting-horizon-v029.md`](docs/model-siting-horizon-v029.md).
 
 ## Architecture
 
