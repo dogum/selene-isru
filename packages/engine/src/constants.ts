@@ -1656,6 +1656,14 @@ export const PARAM_META = {
     "description": "Fission reactor siting: on the surface behind its own directional shield, or buried in an excavated hole with regolith shielding the outpost",
     "source": "model switch; Mason, Poston & Qualls 2008, NASA/TM-2008-215166: emplaced and landed configurations; Mason 2006, NASA/TM-2006-214120: excavation and on-board shields"
   },
+  "cableForm": {
+    "value": "dc",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Reactor-to-outpost transmission: a bipolar DC line, or a three-phase AC line insulated for its peak voltage",
+    "source": "model switch; Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: DC and three-phase AC cable sweeps; Mason 2025, NETS 2025: NASA's current design transmits at 3 kVac"
+  },
   "fCarnotStirling": {
     "value": 0.59,
     "min": 0.3,
@@ -1827,14 +1835,14 @@ export const PARAM_META = {
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.B and VI: crew habitat boundary 1 km from the reactor, connected by a 1 km cable"
   },
   "kCableKgPerKm": {
-    "value": 312,
+    "value": 243,
     "min": 0,
     "max": 1000,
     "unit": "kg/km",
     "kind": "parameter",
     "group": "power",
     "description": "Fixed cable mass per km: data fibre, spool, redundancy, and protection beyond the designed conductors, insulation, and jacket",
-    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the cable this model designs for 40 kWe (74 kg/km)"
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the 3 kVac cable this model designs for 40 kWe (143 kg/km)"
   },
   "fCableLossPerKm": {
     "value": 0.0167,
@@ -1853,7 +1861,7 @@ export const PARAM_META = {
     "unit": "V",
     "kind": "parameter",
     "group": "power",
-    "description": "Highest reactor-to-outpost cable voltage, line to line",
+    "description": "Highest cable voltage, line to line on a DC line; an AC line is held to the same peak voltage to ground",
     "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: a 40 kW, 3 km aluminium cable is lightest at ±4,000 VDC (8,000 V line to line); vacuum-rated high-voltage cable that avoids partial discharge is an open design challenge"
   },
   "kReactorKgPerKwt": {
@@ -2717,6 +2725,7 @@ export const DEFAULTS = {
   "Tenv": 250,
   "fissionConverter": "brayton",
   "fissionSiting": "surface",
+  "cableForm": "dc",
   "fCarnotStirling": 0.59,
   "kConversionStirlingKgPerKwe": 21.96,
   "bStirlingScale": 1,
@@ -2734,7 +2743,7 @@ export const DEFAULTS = {
   "nShield": 0.33,
   "nShieldDistance": 0.97,
   "dSeparationKm": 1,
-  "kCableKgPerKm": 312,
+  "kCableKgPerKm": 243,
   "fCableLossPerKm": 0.0167,
   "VCableMaxV": 8000,
   "kReactorKgPerKwt": 2.16,

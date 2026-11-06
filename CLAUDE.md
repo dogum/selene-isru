@@ -153,7 +153,7 @@ camelCase result keys preserved on both sides.
 
 `python/tools/generate_golden.py` Latin-hypercube samples the full parameter
 box (200 points, seed 42, plus named corner scenarios) and writes
-`packages/engine/test/golden_vectors.json` (220 vectors) plus
+`packages/engine/test/golden_vectors.json` (221 vectors) plus
 `dynamics_vectors.json`. `packages/engine/test/parity.test.ts` asserts the TS
 engine reproduces **every numeric leaf to 1e-9 relative / 1e-12 absolute
 tolerance**. CI regenerates from Python and runs `git diff --exit-code` on the
@@ -260,7 +260,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~230 KB of ~246 KB. A ratchet
+The current build sits at ~231 KB of ~246 KB. A ratchet
 normally reads nearly full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -469,6 +469,7 @@ in `assets/ASSET_LICENSES.md`.
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
+| AC transmission: three-phase cable at its peak voltage, cable form switch, fixed mass refitted to Mason 2025's 3 kVac cable | v0.28 anchors in `regression.test.ts` / `test_regression.py`, `barth-pike-2022-cable-voltage` and `mason-2025-fsp-separation` in `external-benchmarks.test.ts`, `fission-converter.test.tsx` |
 | Cable voltage designed for its power: conductor, insulation, jacket, 8 kV cap, NASA transmission cross-checks | v0.27 anchors in `regression.test.ts` / `test_regression.py`, `barth-pike-2022-cable-voltage` in `external-benchmarks.test.ts` |
 | Buried fission reactor: siting switch, FSP 2008 plug shield, shield independent of separation, rail select | v0.26 anchors in `regression.test.ts` / `test_regression.py`, `mason-2008-fsp-emplaced-shield` in `external-benchmarks.test.ts`, `fission-converter.test.tsx` |
 | Fission shield with separation, cable to the outpost and its loss, Mason 2025 separation sweep | v0.25 anchors in `regression.test.ts` / `test_regression.py`, `mason-2025-fsp-separation` in `external-benchmarks.test.ts` |
@@ -546,7 +547,7 @@ script run on a clean checkout at all.
   `model-shield-power-v021.md` → `model-economy-of-scale-v022.md` →
   `model-stirling-v023.md` → `model-brayton-optimum-v024.md` →
   `model-shield-separation-v025.md` → `model-shield-burial-v026.md` →
-  `model-cable-voltage-v027.md`) is
+  `model-cable-voltage-v027.md` → `model-ac-transmission-v028.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -642,6 +643,9 @@ script run on a clean checkout at all.
   the cable to the outpost designed for its voltage, conductor against
   insulation, checked against NASA's transmission studies, and what that does
   to the best separation and to burial.
+- [`docs/model-ac-transmission-v028.md`](docs/model-ac-transmission-v028.md) —
+  a three-phase AC cable beside the DC line, both held to one peak voltage to
+  ground, and the cable's fixed mass refitted to NASA's own 3 kVac cable.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

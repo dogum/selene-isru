@@ -216,6 +216,7 @@ export type RailVisibilityParams = Pick<
   | "ilmFeed"
   | "fissionConverter"
   | "fissionSiting"
+  | "cableForm"
 >;
 
 /** Fission inputs that only act on one converter; the other converter hides them. */
@@ -371,7 +372,7 @@ const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
   "oxygen-process": ["equatorialProcess", "ilmFeed"],
   "extraction-sub": ["polarProduct"],
   cryo: ["storageStream", "cryoControlMode"],
-  power: ["polarProfileMode", "fissionConverter", "fissionSiting"],
+  power: ["polarProfileMode", "fissionConverter", "fissionSiting", "cableForm"],
   sabatier: ["enableSabatier"],
   campaign: ["deploymentManifest"],
   refuel: ["refuelDemand"]
@@ -386,7 +387,7 @@ export function railModeParamsForGroup(
   params: Pick<SimParams, "site" | "enableSabatier" | "polarProduct" | "equatorialProcess">
 ): Array<keyof SimParams> {
   // The illumination profile belongs to the pole; the converter and siting to both sites.
-  if (group.id === "power" && params.site !== "polar") return ["fissionConverter", "fissionSiting"];
+  if (group.id === "power" && params.site !== "polar") return ["fissionConverter", "fissionSiting", "cableForm"];
   // The feed choice belongs to the ilmenite plant.
   if (group.id === "oxygen-process" && params.equatorialProcess !== "ilmenite") return ["equatorialProcess"];
   if (group.id === "refuel" && !makesLanderPropellant(params)) return [];

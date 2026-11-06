@@ -214,7 +214,7 @@ export function PowerTrade(): React.JSX.Element {
           SHIELD <b className="num">{formatQtyText(result.power.shieldMassKg, "kg")}</b>
         </div>
         <div>
-          CABLE <b className="num">{formatQtyText(params.dSeparationKm, "km")} · {formatQtyText(result.power.cableVoltageV, "V")} · {formatQtyText(result.power.cableMassKg, "kg")} · {formatQtyText(result.power.cableLossW, "W")} lost</b>
+          CABLE <b className="num">{formatQtyText(params.dSeparationKm, "km")} · {formatQtyText(result.power.cableVoltageV, "V")} {params.cableForm === "ac" ? "AC" : "DC"} · {formatQtyText(result.power.cableMassKg, "kg")} · {formatQtyText(result.power.cableLossW, "W")} lost</b>
         </div>
         {result.power.beamedFloorPowerW !== null && (
           <div>

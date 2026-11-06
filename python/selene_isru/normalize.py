@@ -73,6 +73,7 @@ def normalize_params(input_params: dict[str, Any] | None = None) -> tuple[dict[s
             "ilmFeed": {"soil", "basalt"},
             "fissionConverter": {"brayton", "stirling"},
             "fissionSiting": {"surface", "buried"},
+            "cableForm": {"dc", "ac"},
         }
         if key in string_options:
             if isinstance(raw, str) and raw in string_options[key]:

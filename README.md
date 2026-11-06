@@ -294,6 +294,10 @@ The v0.27 cable voltage (the cable to the outpost designed for the power it
 carries, trading conductor against insulation up to an 8 kV cap, checked against
 NASA's lunar transmission studies) is in
 [`docs/model-cable-voltage-v027.md`](docs/model-cable-voltage-v027.md).
+The v0.28 AC transmission (a three-phase AC cable insulated for its peak voltage,
+beside the DC line, with the cable's fixed mass refitted to NASA's own 3 kVac
+cable) is in
+[`docs/model-ac-transmission-v028.md`](docs/model-ac-transmission-v028.md).
 
 ## Architecture
 

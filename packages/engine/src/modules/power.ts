@@ -73,29 +73,31 @@ const CABLE_V_MIN = 10;
 const CABLE_BISECTIONS = 80;
 
 export interface CableDesign {
-  /** line-to-line voltage [V] */
+  /** line-to-line voltage, RMS for AC [V] */
   voltageV: number;
   /** each conductor's cross-section [m^2] */
   conductorAreaM2: number;
   /** each conductor's insulation thickness [m] */
   insulationM: number;
-  /** both conductors [kg/km] */
+  /** all conductors: two for DC, three for AC [kg/km] */
   conductorKgPerKm: number;
-  /** both conductors' insulation [kg/km] */
+  /** all conductors' insulation [kg/km] */
   insulationKgPerKm: number;
   /** the outer jacket [kg/km] */
   jacketKgPerKm: number;
 }
 
 /**
- * Reactor-to-outpost cable at a sent electrical power. Two aluminium
- * conductors (a bipolar line, each at half the line voltage to ground), each
- * insulated with FEP at a fixed design stress, inside one FEP jacket. The
- * conductor is sized so the line loses fCableLossPerKm per km: its area
- * A = 2 rho P / (V^2 f), floored at the 16 AWG minimum. A higher voltage
- * shrinks the conductor as 1/V^2 and thickens the insulation as V; the voltage
- * is the one that minimizes their mass, found by bisection on the sign of the
- * slope, and capped at VCableMaxV.
+ * Reactor-to-outpost cable at a sent electrical power. Aluminium conductors,
+ * each insulated with FEP at a fixed design stress, inside one FEP jacket. DC
+ * is a bipolar line: two conductors, each at half the line voltage V to
+ * ground, A = 2 rho P / (V^2 f). AC is a three-phase line at unity power
+ * factor: three conductors, each insulated for its peak voltage to ground
+ * V sqrt(2/3), A = rho P / (V^2 f). Areas are floored at the 16 AWG minimum.
+ * A higher voltage shrinks the conductor as 1/V^2 and thickens the insulation
+ * as V; the voltage (line to line, RMS for AC) is the one that minimizes their
+ * mass, found by bisection on the sign of the slope, and capped so the peak
+ * voltage to ground stays within VCableMaxV / 2.
  */
 export function cableDesign(params: SimParams, sentKwe: number): CableDesign {
   const rho = PHYSICAL_CONSTANTS.rhoAluminumOhmM.value;
@@ -104,15 +106,21 @@ export function cableDesign(params: SimParams, sentKwe: number): CableDesign {
   const stress = PHYSICAL_CONSTANTS.EInsulationVPerM.value;
   const jacket = PHYSICAL_CONSTANTS.tCableJacketM.value;
   const aMin = PHYSICAL_CONSTANTS.AConductorMinM2.value;
-  const areaCoefficient = (2 * rho * Math.max(sentKwe, 0) * 1000) / (params.fCableLossPerKm / 1000);
+  const ac = params.cableForm === "ac";
+  const conductors = ac ? 3 : 2;
+  const peakToGround = ac ? Math.sqrt(2 / 3) : 0.5;
+  const bundle = ac ? 1 + 2 / Math.sqrt(3) : 2;
+  const lossPerM = params.fCableLossPerKm / 1000;
+  const areaCoefficient = ((ac ? 1 : 2) * rho * Math.max(sentKwe, 0) * 1000) / lossPerM;
+  const vMax = (params.VCableMaxV * 0.5) / peakToGround;
   const slopeSign = (v: number): number => {
     const area = areaCoefficient / v ** 2;
     const radius = Math.sqrt(area / Math.PI);
-    const thickness = v / 2 / stress;
-    return -rhoM * area + rhoI * Math.PI * (thickness ** 2 + jacket * (thickness - radius));
+    const thickness = (peakToGround * v) / stress;
+    return -conductors * rhoM * area + rhoI * Math.PI * (conductors * thickness ** 2 + bundle * jacket * (thickness - radius));
   };
   let lo = CABLE_V_MIN;
-  let hi = Math.max(lo, Math.min(Math.sqrt(areaCoefficient / aMin), params.VCableMaxV));
+  let hi = Math.max(lo, Math.min(Math.sqrt(areaCoefficient / aMin), vMax));
   let voltage: number;
   if (hi === lo || slopeSign(hi) < 0) {
     voltage = hi;
@@ -129,14 +137,14 @@ export function cableDesign(params: SimParams, sentKwe: number): CableDesign {
   }
   const area = Math.max(aMin, areaCoefficient / voltage ** 2);
   const radius = Math.sqrt(area / Math.PI);
-  const thickness = voltage / 2 / stress;
-  const bundleRadius = 2 * (radius + thickness);
+  const thickness = (peakToGround * voltage) / stress;
+  const bundleRadius = bundle * (radius + thickness);
   return {
     voltageV: voltage,
     conductorAreaM2: area,
     insulationM: thickness,
-    conductorKgPerKm: 2 * area * rhoM * 1000,
-    insulationKgPerKm: 2 * Math.PI * (2 * radius * thickness + thickness ** 2) * rhoI * 1000,
+    conductorKgPerKm: conductors * area * rhoM * 1000,
+    insulationKgPerKm: conductors * Math.PI * (2 * radius * thickness + thickness ** 2) * rhoI * 1000,
     jacketKgPerKm: Math.PI * (2 * bundleRadius * jacket + jacket ** 2) * rhoI * 1000
   };
 }

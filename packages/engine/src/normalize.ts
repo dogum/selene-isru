@@ -124,6 +124,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "cableForm") {
+      if (raw === "dc" || raw === "ac") {
+        assign("cableForm", raw);
+      } else {
+        assign("cableForm", DEFAULTS.cableForm);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "fissionSiting") {
       if (raw === "surface" || raw === "buried") {
         assign("fissionSiting", raw);
