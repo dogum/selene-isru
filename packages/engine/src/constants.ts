@@ -463,6 +463,34 @@ export const PHYSICAL_CONSTANTS = {
     "kind": "physical",
     "description": "Approximate lunar night duration",
     "source": "lunar synodic period"
+  },
+  "dShieldRefKm": {
+    "value": 1,
+    "unit": "km",
+    "kind": "physical",
+    "description": "Separation at which MshieldKg is quoted",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.B: crew habitat boundary 1 km from the reactor"
+  },
+  "VCableV": {
+    "value": 3000,
+    "unit": "V",
+    "kind": "physical",
+    "description": "Reactor-to-outpost transmission voltage",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.D: 3 kVac, 1 kHz transmission; Barth & Pike 2022, NETS 2022, Sec. III.D: AC cable mass minimized at 3,000 Vrms line-to-neutral for 40 kW"
+  },
+  "rhoAluminumOhmM": {
+    "value": 2.82e-8,
+    "unit": "ohm m",
+    "kind": "physical",
+    "description": "Aluminium conductor resistivity",
+    "source": "CRC Handbook of Chemistry and Physics: aluminium at 20 C"
+  },
+  "densityAluminumKgPerM3": {
+    "value": 2700,
+    "unit": "kg/m^3",
+    "kind": "physical",
+    "description": "Aluminium conductor density",
+    "source": "CRC Handbook of Chemistry and Physics"
   }
 } as const satisfies Record<string, PhysicalConstantMeta>;
 
@@ -1610,14 +1638,14 @@ export const PARAM_META = {
     "source": "Mason 2006, NASA/TM-2006-214120, Table 1: Stirling converters at 25.9% between 850 and 460 K and 32.1% between 1050 and 500 K, 0.565 and 0.613 of Carnot"
   },
   "kConversionStirlingKgPerKwe": {
-    "value": 22.23,
+    "value": 21.06,
     "min": 2,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Stirling power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, and shield at Mason 2006's 1050/500 K Stirling design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, shield, and 1 km cable at Mason 2006's 1050/500 K Stirling design point"
   },
   "bStirlingScale": {
     "value": 1,
@@ -1710,14 +1738,14 @@ export const PARAM_META = {
     "source": "spec"
   },
   "MshieldKg": {
-    "value": 1676,
+    "value": 1370,
     "min": 500,
     "max": 8000,
     "unit": "kg",
     "kind": "parameter",
     "group": "power",
-    "description": "Nuclear shielding mass",
-    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: 1676 kg shield for an emplaced reactor with lunar regolith augmentation, <5 rem/yr at 100 m"
+    "description": "Nuclear shielding mass at its reference heat and 1 km separation",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Table IV and Sec. VII: 1,370 kg directional shield for the 175 kWt heat-pipe reactor, <5 rem/yr at the crew habitat boundary 1 km away"
   },
   "QshieldRefKwt": {
     "value": 175,
@@ -1739,25 +1767,65 @@ export const PARAM_META = {
     "description": "Exponent of shield mass with reactor thermal power",
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Table IV: 1,500 kg shield for the 230 kWt gas-cooled reactor against 1,370 kg for the 175 kWt heat-pipe reactor, ln(1500/1370)/ln(230/175) = 0.33"
   },
+  "nShieldDistance": {
+    "value": 0.97,
+    "min": 0,
+    "max": 2,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Exponent of shield mass with reactor separation (heavier when closer)",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII and Fig. 10: shield about 2,700 kg at 0.5 km, 1,370 kg at 1 km, and 700 kg at 2 km, ln(2700/700)/ln(4) = 0.97"
+  },
+  "dSeparationKm": {
+    "value": 1,
+    "min": 0.1,
+    "max": 5,
+    "unit": "km",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Reactor separation from the outpost, and the cable route length",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.B and VI: crew habitat boundary 1 km from the reactor, connected by a 1 km cable"
+  },
+  "kCableKgPerKm": {
+    "value": 303,
+    "min": 0,
+    "max": 1000,
+    "unit": "kg/km",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Fixed cable mass per km: jacket, data fibre, spool, and minimum-gauge conductors",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the conductor this model sizes for 40 kWe"
+  },
+  "fCableLossPerKm": {
+    "value": 0.0167,
+    "min": 0.002,
+    "max": 0.05,
+    "unit": "1/km",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Cable conduction loss per km the conductor is sized for",
+    "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: cable losses limited to 5% at 3 km"
+  },
   "kReactorKgPerKwt": {
-    "value": 2.19,
+    "value": 1.94,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
     "kind": "parameter",
     "group": "power",
     "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kConversionKgPerKwe": {
-    "value": 8.24,
+    "value": 7.31,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Fission power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "QscaleRefKwt": {
     "value": 1000,
@@ -2600,7 +2668,7 @@ export const DEFAULTS = {
   "Tenv": 250,
   "fissionConverter": "brayton",
   "fCarnotStirling": 0.59,
-  "kConversionStirlingKgPerKwe": 22.23,
+  "kConversionStirlingKgPerKwe": 21.06,
   "bStirlingScale": 1,
   "etaCompressor": 0.84,
   "etaTurbine": 0.87,
@@ -2610,11 +2678,15 @@ export const DEFAULTS = {
   "etaAlternator": 0.931,
   "etaRad": 0.85,
   "epsRad": 0.85,
-  "MshieldKg": 1676,
+  "MshieldKg": 1370,
   "QshieldRefKwt": 175,
   "nShield": 0.33,
-  "kReactorKgPerKwt": 2.19,
-  "kConversionKgPerKwe": 8.24,
+  "nShieldDistance": 0.97,
+  "dSeparationKm": 1,
+  "kCableKgPerKm": 303,
+  "fCableLossPerKm": 0.0167,
+  "kReactorKgPerKwt": 1.94,
+  "kConversionKgPerKwe": 7.31,
   "QscaleRefKwt": 1000,
   "bFissionScale": 0.95,
   "kRadiatorKgPerM2": 3.87,

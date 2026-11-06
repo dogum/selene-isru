@@ -16,6 +16,8 @@ export interface PowerOutput {
   radiatorMassKg: number;
   radiatorEffectiveK: number;
   shieldMassKg: number;
+  cableMassKg: number;
+  cableLossW: number;
   fissionThermalW: number;
   nuclearSpecificKgPerKw: number;
   pCritW: number;
@@ -40,9 +42,47 @@ export function shieldMassKg(MshieldKg: number, refKw: number, nShield: number, 
   return MshieldKg * Math.max(1, kw / refKw) ** nShield;
 }
 
-/** Electrical output at which the shield weighs MshieldKg [kW]: its reference heat times the efficiency. */
+/** Shield mass relative to its reference separation: (dShieldRefKm / dSeparationKm)^nShieldDistance [1]. */
+export function shieldDistanceFactor(params: SimParams): number {
+  return (PHYSICAL_CONSTANTS.dShieldRefKm.value / params.dSeparationKm) ** params.nShieldDistance;
+}
+
+/**
+ * Fission shield at a reactor heat and the case's separation [kg]: the power
+ * law of `shieldMassKg`, times the distance factor. A closer outpost needs a
+ * thicker shield and a wider shadow (Mason 2025's 52°, 36°, and 22° included
+ * angles at 0.5, 1, and 2 km).
+ */
+export function fissionShieldKg(params: SimParams, thermalKw: number): number {
+  return shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, thermalKw) * shieldDistanceFactor(params);
+}
+
+/** Fraction of the fission plant's electrical output the cable delivers to the outpost [1]. */
+export function lineEfficiency(params: SimParams): number {
+  return 1 - params.fCableLossPerKm * params.dSeparationKm;
+}
+
+/**
+ * Aluminium conductor per kW sent per km of route, sized to lose
+ * fCableLossPerKm [kg/(kW km)]. Two conductors at the line voltage: the loss
+ * fraction 2 rho L P / (V^2 A) is held at fCableLossPerKm per km, so the
+ * conductor mass 2 A L rho_m = 4 rho rho_m P L / (V^2 f), with P in kW and L in km.
+ */
+export function cableConductorKgPerKwKm(params: SimParams): number {
+  return (
+    (4 * PHYSICAL_CONSTANTS.rhoAluminumOhmM.value * PHYSICAL_CONSTANTS.densityAluminumKgPerM3.value * 1e9) /
+    (PHYSICAL_CONSTANTS.VCableV.value ** 2 * params.fCableLossPerKm)
+  );
+}
+
+/** Reactor-to-outpost cable mass at a sent electrical power [kg]: a fixed mass per km plus the conductor. */
+export function cableMassKg(params: SimParams, sentKwe: number): number {
+  return params.dSeparationKm * (params.kCableKgPerKm + cableConductorKgPerKwKm(params) * sentKwe);
+}
+
+/** Delivered output at which the shield reaches its reference heat [kW]. */
 export function shieldRefKwe(params: SimParams): number {
-  return params.QshieldRefKwt * fissionEfficiency(params);
+  return params.QshieldRefKwt * fissionEfficiency(params) * lineEfficiency(params);
 }
 
 /**
@@ -289,41 +329,47 @@ export function conversionKgPerKwe(params: SimParams, thermalKw: number): number
   return params.kConversionKgPerKwe * fissionScaleFactor(params, thermalKw);
 }
 
+/** Per delivered kW: reactor, conversion, radiator, and cable conductor, all sized on the sent power. */
 function specificKgPerKwe(params: SimParams, eta: number, radiatorKgPerKwe: number, kwe: number): number {
-  const heatKw = kwe / eta;
-  return (
+  const line = lineEfficiency(params);
+  const heatKw = kwe / line / eta;
+  const perSentKwe =
     (params.kReactorKgPerKwt / eta) * fissionScaleFactor(params, heatKw) +
     conversionKgPerKwe(params, heatKw) +
-    radiatorKgPerKwe
-  );
+    radiatorKgPerKwe +
+    params.dSeparationKm * cableConductorKgPerKwKm(params);
+  return perSentKwe / line;
 }
 
 /**
- * Fission specific mass per kW of electrical output at an output, excluding
- * the shield [kg/kW]: the reactor on the heat it makes and conversion and
- * power management on the output, both scaled with size, and the radiator on
- * its area. Defaults to the output at the scaling reference heat.
+ * Fission specific mass per kW delivered at an output, excluding the shield
+ * and the cable's fixed mass [kg/kW]: the reactor on the heat it makes and
+ * conversion and power management on the sent output, both scaled with size,
+ * the radiator on its area, and the cable conductor, all grossed up for the
+ * cable's loss. Defaults to the output at the scaling reference heat.
  */
 export function nuclearSpecificKgPerKw(params: SimParams, kwe?: number): number {
   const eta = fissionEfficiency(params);
-  const atKwe = kwe ?? params.QscaleRefKwt * eta;
+  const atKwe = kwe ?? params.QscaleRefKwt * eta * lineEfficiency(params);
   return specificKgPerKwe(params, eta, params.kRadiatorKgPerM2 * radiatorM2PerKwAt(params, eta), atKwe);
 }
 
-/** Fission mass against electrical output and age, with the efficiency and radiator evaluated once. */
+/** Fission mass against delivered output and age, with the efficiency and radiator evaluated once. */
 function massCurve(params: SimParams): (kwe: number, tYears: number) => number {
   const eta = fissionEfficiency(params);
+  const line = lineEfficiency(params);
   const radiatorKgPerKwe = params.kRadiatorKgPerM2 * radiatorM2PerKwAt(params, eta);
+  const cableFixedKg = params.dSeparationKm * params.kCableKgPerKm;
   return (kwe, tYears) => {
-    const shield = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, kwe / eta);
+    const shield = fissionShieldKg(params, kwe / line / eta);
     const specific = specificKgPerKwe(params, eta, radiatorKgPerKwe, kwe);
-    return shield + nuclearSlopeAtYear(specific, params.dNuclear, tYears) * kwe;
+    return shield + cableFixedKg + nuclearSlopeAtYear(specific, params.dNuclear, tYears) * kwe;
   };
 }
 
 /**
- * Fission system mass at an electrical output after `tYears` of derating
- * [kg]: the shield plus the aged rest. The power chart draws this curve, so it
+ * Fission system mass at a delivered electrical output after `tYears` of
+ * derating [kg]: the shield and the cable's fixed mass plus the aged rest. The power chart draws this curve, so it
  * and the crossover come from the same mass.
  */
 export function nuclearMassAtKwe(params: SimParams, kwe: number, tYears = 0): number {
@@ -405,8 +451,10 @@ export function simulatePower(
   const betaSolar = solarMassKg / (Pgrid / 1000);
 
   const etaTherm = fissionEfficiency(params);
-  const Qfission = Pgrid / etaTherm;
-  const Qreject = Qfission - Pgrid;
+  // The reactor sends enough to cover the cable's loss to the outpost.
+  const Psent = Pgrid / lineEfficiency(params);
+  const Qfission = Psent / etaTherm;
+  const Qreject = Qfission - Psent;
   const radiatorFlux = radiatorFluxWPerM2(params);
   const radiatorM2 = Qreject / Math.max(1e-9, radiatorFlux);
   const radiatorColdK = radiatorTemperaturesK(params).coldK;
@@ -418,13 +466,15 @@ export function simulatePower(
   // so both follow the cycle's efficiency and temperatures; conversion and
   // power management scale with electrical output.
   const radiatorMassKg = params.kRadiatorKgPerM2 * radiatorM2;
-  const shieldKg = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, Qfission / 1000);
+  const shieldKg = fissionShieldKg(params, Qfission / 1000);
+  const cableKg = cableMassKg(params, Psent / 1000);
   const scale = fissionScaleFactor(params, Qfission / 1000);
   const nuclearMassKg =
     shieldKg +
     params.kReactorKgPerKwt * (Qfission / 1000) * scale +
-    conversionKgPerKwe(params, Qfission / 1000) * (Pgrid / 1000) +
-    radiatorMassKg;
+    conversionKgPerKwe(params, Qfission / 1000) * (Psent / 1000) +
+    radiatorMassKg +
+    cableKg;
   const alphaWithRadiator = nuclearSpecificKgPerKw(params, Pgrid / 1000);
   const architecture = strategy === "auto"
     ? solarMassKg <= nuclearMassKg ? "solar" : "nuclear"
@@ -521,6 +571,8 @@ export function simulatePower(
     radiatorMassKg,
     radiatorEffectiveK,
     shieldMassKg: shieldKg,
+    cableMassKg: cableKg,
+    cableLossW: Psent - Pgrid,
     fissionThermalW: Qfission,
     nuclearSpecificKgPerKw: alphaWithRadiator,
     pCritW: pCrit === null ? 0 : pCrit * 1000,

@@ -64,7 +64,7 @@ and v0.18:
 | `Tsource` | 1,200 K | **1,150 K** | Mason 2006: Brayton hot end |
 | `Tsink` | 600 K | **400 K** | Mason 2006: Brayton cold end at minimum mass |
 | `etaMech` | 0.55 | **0.403** | Mason 2006: 26.3% at 1,150/400 K |
-| `MshieldKg` | 1,500 kg | **1,676 kg** | NASA FSP's emplaced shield |
+| `MshieldKg` | 1,500 kg | **1,676 kg** | NASA FSP's emplaced shield *(v0.25: 1,370 kg, Mason 2025's above-ground shield at 1 km; see [`model-shield-separation-v025.md`](model-shield-separation-v025.md))* |
 | `kReactorKgPerKwt` | 3.87 kg/kWt | **2.25 kg/kWt** | Mason 2001's slope, FSP's split |
 | `kConversionKgPerKwe` | 13.93 kg/kW | **8.47 kg/kW** | Mason 2001's slope, FSP's split |
 

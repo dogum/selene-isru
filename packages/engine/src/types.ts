@@ -375,6 +375,10 @@ export interface SimParams {
   QshieldRefKwt: number;
   /** Exponent of shield mass with reactor heat [1] */
   nShield: number;
+  nShieldDistance: number;
+  dSeparationKm: number;
+  kCableKgPerKm: number;
+  fCableLossPerKm: number;
   /** [kg/kW] */
   kReactorKgPerKwt: number;
   kConversionKgPerKwe: number;
@@ -795,11 +799,15 @@ export interface SimResult {
     radiatorMassKg: number;
     /** temperature at which a uniform radiator would shed the same flux as the fission radiator [K] */
     radiatorEffectiveK: number;
-    /** fission shield mass at the reactor's heat, part of nuclearMassKg [kg] */
+    /** fission shield mass at the reactor's heat and the outpost's separation, part of nuclearMassKg [kg] */
     shieldMassKg: number;
-    /** fission reactor heat for the grid load: electrical output over conversion efficiency [W] */
+    /** reactor-to-outpost cable mass, part of nuclearMassKg [kg] */
+    cableMassKg: number;
+    /** power the cable loses between the fission plant and the outpost [W] */
+    cableLossW: number;
+    /** fission reactor heat for the grid load and the cable's loss: sent electrical output over conversion efficiency [W] */
     fissionThermalW: number;
-    /** fission specific mass at the grid power, excluding the shield, radiator included [kg/kW] */
+    /** fission specific mass per delivered kW at the grid power, excluding the shield and the cable's fixed mass; radiator and conductor included [kg/kW] */
     nuclearSpecificKgPerKw: number;
     /** [W] */
     pCritW: number;

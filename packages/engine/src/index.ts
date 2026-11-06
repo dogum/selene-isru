@@ -92,6 +92,11 @@ export {
   radiatorTemperaturesK,
   shieldMassKg,
   shieldRefKwe,
+  cableConductorKgPerKwKm,
+  cableMassKg,
+  fissionShieldKg,
+  lineEfficiency,
+  shieldDistanceFactor,
   siteCycleHours,
   solarSlopeAtYear
 } from "./modules/power";
@@ -437,6 +442,8 @@ export function simulate(
       radiatorMassKg: power.radiatorMassKg,
       radiatorEffectiveK: power.radiatorEffectiveK,
       shieldMassKg: power.shieldMassKg,
+      cableMassKg: power.cableMassKg,
+      cableLossW: power.cableLossW,
       fissionThermalW: power.fissionThermalW,
       nuclearSpecificKgPerKw: power.nuclearSpecificKgPerKw,
       pCritW: power.pCritW,

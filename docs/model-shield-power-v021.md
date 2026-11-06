@@ -193,6 +193,8 @@ Screenshot: [the shield exponent's evidence over the power panel](screenshots/sh
 - **Shield with distance and burial.** The dose, the separation distance, and
   the regolith augmentation are fixed with the reference shield. Mason 2025
   shows the shield halving from 1 to 2 km. A separation input would trade
-  shield mass against cable mass.
+  shield mass against cable mass. *(v0.25: separation done, with the cable;
+  burial stays open. See
+  [`model-shield-separation-v025.md`](model-shield-separation-v025.md).)*
 - **A shield exponent from a power series.** Two shields from one study set the
   exponent; a NASA shield sized across a power range would pin it.

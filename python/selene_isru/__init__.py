@@ -33,6 +33,11 @@ from .modules.power import (
     radiator_temperatures_k,
     shield_mass_kg,
     shield_ref_kwe,
+    cable_conductor_kg_per_kw_km,
+    cable_mass_kg,
+    fission_shield_kg,
+    line_efficiency,
+    shield_distance_factor,
 )
 from .modules.refuel import refuel_timeline, sortie_propellant_kg
 from .modules.sabatier import sabatier_kp
@@ -63,6 +68,11 @@ __all__ = [
     "radiator_temperatures_k",
     "shield_mass_kg",
     "shield_ref_kwe",
+    "cable_conductor_kg_per_kw_km",
+    "cable_mass_kg",
+    "fission_shield_kg",
+    "line_efficiency",
+    "shield_distance_factor",
     "refuel_timeline",
     "ilmenite_conversion",
     "ilmenite_oxygen_fraction",
