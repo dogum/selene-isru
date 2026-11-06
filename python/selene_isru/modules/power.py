@@ -132,7 +132,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         warnings.append({"id": "power-hot-side", "severity": "alarm", "module": "power", "message": "Fission hot-side temperature must exceed sink temperature.", "value": params["Tsource"], "limit": params["Tsink"]})
     cycle = brayton_cycle(params)
     if params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
-        warnings.append({"id": "fission-no-net-work", "severity": "alarm", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
+        warnings.append({"id": "fission-no-net-work", "severity": "alarm" if architecture == "nuclear" else "caution", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
     if params["Tsink"] <= params["Tenv"]:
         warnings.append({"id": "radiator-temperature", "severity": "alarm", "module": "power", "message": "Radiator sink temperature must exceed its environment temperature.", "value": params["Tsink"], "limit": params["Tenv"]})
 

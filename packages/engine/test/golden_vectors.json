@@ -609,7 +609,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9260670608034,
@@ -1288,7 +1288,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9615222224266,
@@ -1960,7 +1960,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.4515877350383,
@@ -2673,7 +2673,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.991103140186,
@@ -3271,7 +3271,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 4.02043909868,
@@ -3958,7 +3958,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7259911568534,
@@ -4663,7 +4663,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2990542340689,
@@ -5815,7 +5815,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.5213839875322,
@@ -6536,7 +6536,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7295032405494,
@@ -7219,7 +7219,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3642907862081,
@@ -9032,7 +9032,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9159178394117,
@@ -9710,7 +9710,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5805165165515,
@@ -12346,7 +12346,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3839682015114,
@@ -12918,7 +12918,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.1606686992327,
@@ -13535,7 +13535,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.6908137955568,
@@ -14272,7 +14272,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.0921686886591,
@@ -14942,7 +14942,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7979654778478,
@@ -15514,7 +15514,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.767905769594,
@@ -16128,7 +16128,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4883517835251,
@@ -16807,7 +16807,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.8195819504816,
@@ -17490,7 +17490,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.6765697223224,
@@ -18211,7 +18211,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4301259164749,
@@ -18816,7 +18816,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9944877123689,
@@ -19468,7 +19468,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.8717482226919,
@@ -20165,7 +20165,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.2135132194925,
@@ -20753,7 +20753,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.8060451872782,
@@ -21367,7 +21367,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.636131717089,
@@ -22088,7 +22088,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0750007799632,
@@ -22752,7 +22752,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1021645700427,
@@ -23916,7 +23916,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.8392070093683,
@@ -24576,7 +24576,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.341667730158,
@@ -25246,7 +25246,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.8314521539905,
@@ -25959,7 +25959,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5855437332186,
@@ -26584,7 +26584,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.8647195873118,
@@ -27263,7 +27263,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.0043311482252,
@@ -27927,7 +27927,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1799097675951,
@@ -29088,7 +29088,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4583950624706,
@@ -30497,7 +30497,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.6346029348656,
@@ -31077,7 +31077,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.7424095543173,
@@ -31667,7 +31667,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1182400317884,
@@ -33706,7 +33706,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.2185935849738,
@@ -34296,7 +34296,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.0012621308258,
@@ -34964,7 +34964,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.188412150193,
@@ -35634,7 +35634,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.9963361362481,
@@ -36789,7 +36789,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3882562250936,
@@ -38165,7 +38165,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.3545191888057,
@@ -38737,7 +38737,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.0883835402508,
@@ -39361,7 +39361,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2205816850974,
@@ -40040,7 +40040,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0531894880804,
@@ -41439,7 +41439,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.0991189068331,
@@ -42692,7 +42692,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5896352588233,
@@ -43383,7 +43383,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.8304737244223,
@@ -43971,7 +43971,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4929624922765,
@@ -44585,7 +44585,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.90961487937,
@@ -45314,7 +45314,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.6446488873152,
@@ -46003,7 +46003,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.0326065306706,
@@ -47163,7 +47163,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0131123865795,
@@ -47823,7 +47823,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0094252519414,
@@ -48495,7 +48495,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.532244188352,
@@ -49833,7 +49833,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2304644264739,
@@ -50501,7 +50501,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5788879489924,
@@ -51179,7 +51179,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2605333700809,
@@ -52358,7 +52358,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5284327496818,
@@ -53087,7 +53087,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5677467900673,
@@ -53751,7 +53751,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3291534254743,
@@ -54331,7 +54331,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5510417408959,
@@ -54912,7 +54912,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2580844647871,
@@ -55583,7 +55583,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4914847733794,
@@ -56280,7 +56280,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2358730166427,
@@ -57001,7 +57001,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.788792776816,
@@ -57607,7 +57607,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.8621978919442,
@@ -58933,7 +58933,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0158029289314,
@@ -60815,7 +60815,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9891536608247,
@@ -61485,7 +61485,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0974130285585,
@@ -62673,7 +62673,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.2428631574289,
@@ -64693,7 +64693,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0201847455304,
@@ -65318,7 +65318,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0648908232452,
@@ -66005,7 +66005,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.3499418566536,
@@ -66683,7 +66683,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3856211707949,
@@ -67255,7 +67255,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.976356347407,
@@ -67869,7 +67869,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4179189283792,
@@ -68598,7 +68598,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.5490153786108,
@@ -69289,7 +69289,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2421326502573,
@@ -69861,7 +69861,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.6317622113196,
@@ -71119,7 +71119,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9186913210069,
@@ -73101,7 +73101,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.2753816371216,
@@ -73753,7 +73753,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4837603286891,
@@ -74417,7 +74417,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.2377225438226,
@@ -74997,7 +74997,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5820143721046,
@@ -76327,7 +76327,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.4392266605018,
@@ -76997,7 +76997,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.4150327254386,
@@ -77569,7 +77569,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2967419077927,
@@ -78185,7 +78185,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.326541493791,
@@ -79520,7 +79520,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7900483489105,
@@ -80233,7 +80233,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7509038438608,
@@ -80831,7 +80831,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.8617295009654,
@@ -81510,7 +81510,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5040833996682,
@@ -82215,7 +82215,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.8649494107554,
@@ -82795,7 +82795,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3040154272444,
@@ -84796,7 +84796,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4641501349003,
@@ -85376,7 +85376,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7241429691026,
@@ -85957,7 +85957,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0342367259757,
@@ -86601,7 +86601,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.3914834428159,
@@ -87975,7 +87975,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1270658165051,
@@ -88608,7 +88608,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.9894685169174,
@@ -89276,7 +89276,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.6531786090204,
@@ -89948,7 +89948,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.3151034399929,
@@ -90536,7 +90536,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.3892080741899,
@@ -91145,7 +91145,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.6217594932866,
@@ -91882,7 +91882,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7765268567198,
@@ -93671,7 +93671,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2431363972325,
@@ -94342,7 +94342,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1888732668873,
@@ -95738,7 +95738,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4365781609985,
@@ -96360,7 +96360,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7205169736608,
@@ -97020,7 +97020,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.6196911339305,
@@ -97717,7 +97717,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.599914633986,
@@ -98297,7 +98297,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.2626104348664,
@@ -98895,7 +98895,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1249535160296,
@@ -99624,7 +99624,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.6182592805009,
@@ -100296,7 +100296,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.901224583199,
@@ -100876,7 +100876,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.2175327764663,
@@ -101501,7 +101501,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1859576911829,
@@ -102169,7 +102169,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.2840183531141,
@@ -102839,7 +102839,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0602950750404,
@@ -103552,7 +103552,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.120769884452,
@@ -104169,7 +104169,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5580092237935,
@@ -104848,7 +104848,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1366053096784,
@@ -105512,7 +105512,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4786677285433,
@@ -106084,7 +106084,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.1779202954507,
@@ -106690,7 +106690,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.5984147804838,
@@ -107419,7 +107419,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.1799022389496,
@@ -108116,7 +108116,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.3578381626389,
@@ -109286,7 +109286,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.814307508304,
@@ -109946,7 +109946,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.5338921955434,
@@ -110629,7 +110629,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 3.1652353362137,
@@ -111350,7 +111350,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.9782231430337,
@@ -112575,7 +112575,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4233276418134,
@@ -113245,7 +113245,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.703627144054,
@@ -114425,7 +114425,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.9381390353019,
@@ -115162,7 +115162,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2469699100511,
@@ -115826,7 +115826,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.1996257092589,
@@ -116398,7 +116398,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0233195187219,
@@ -117023,7 +117023,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.0577549218274,
@@ -118372,7 +118372,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.4495630570307,
@@ -119085,7 +119085,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.4852193035666,
@@ -120354,7 +120354,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2388856545994,
@@ -121045,7 +121045,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2949924429749,
@@ -121625,7 +121625,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.2890345657275,
@@ -122231,7 +122231,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.6693947004429,
@@ -122960,7 +122960,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.5604172423978,
@@ -123649,7 +123649,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.1696188219358,
@@ -124817,7 +124817,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.1603302477991,
@@ -125469,7 +125469,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.6279575699304,
@@ -126133,7 +126133,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.8374763751104,
@@ -127453,7 +127453,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3052102724525,
@@ -128113,7 +128113,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.0628381856161,
@@ -129338,7 +129338,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.3486811405926,
@@ -130307,7 +130307,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.6666666666667,
@@ -130917,7 +130917,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7777777777778,
@@ -132619,7 +132619,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 2.6666666666667,
@@ -133328,7 +133328,7 @@
           },
           {
             "id": "fission-no-net-work",
-            "severity": "alarm",
+            "severity": "caution",
             "module": "power",
             "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
             "value": 1.7777777777778,

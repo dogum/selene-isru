@@ -245,7 +245,8 @@ export function simulatePower(
   if (params.Tsource > params.Tsink && (cycle.netWorkK <= 0 || cycle.heatInK <= 0)) {
     warnings.push({
       id: "fission-no-net-work",
-      severity: "alarm",
+      // An alarm only when the plant runs on it; solar then carries the load.
+      severity: architecture === "nuclear" ? "alarm" : "caution",
       module: "power",
       message: "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
       value: params.Tsource / params.Tsink,

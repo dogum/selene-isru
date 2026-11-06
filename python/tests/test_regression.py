@@ -298,7 +298,9 @@ def test_fission_efficiency_from_the_brayton_cycle_v020() -> None:
     assert at(420) < at(440)
     assert at(570) > 3 * at(420)
     assert_rel(at(420) / 1000, 30.39, 0.001)
-    assert "fission-no-net-work" in warning_ids(simulate({"Tsink": 650}))
+    dead = simulate({"Tsink": 650})
+    assert dead["power"]["architecture"] == "solar"
+    assert [w["severity"] for w in dead["warnings"] if w["id"] == "fission-no-net-work"] == ["caution"]
     assert "fission-no-net-work" not in warning_ids(simulate({}))
 
 

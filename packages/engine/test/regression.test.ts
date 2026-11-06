@@ -273,8 +273,12 @@ describe("regression anchors", () => {
     expect(at(570)).toBeGreaterThan(3 * at(420));
     expectRel(at(420) / 1000, 30.39, 0.001);
     // Above about 600 K the default cycle makes no net work, and says so.
+    // An alarm only when the plant runs on fission; with solar selected it is a caution.
     const dead = simulate({ Tsink: 650 });
-    expect(warningIds(dead)).toContain("fission-no-net-work");
+    expect(dead.power.architecture).toBe("solar");
+    expect(dead.warnings.find((w) => w.id === "fission-no-net-work")?.severity).toBe("caution");
+    const forced = simulatePower({ ...DEFAULTS, Tsink: 650 }, dead.energy.gridPowerW, undefined, "nuclear");
+    expect(forced.warnings.find((w) => w.id === "fission-no-net-work")?.severity).toBe("alarm");
     expect(warningIds(simulate({}))).not.toContain("fission-no-net-work");
   });
 

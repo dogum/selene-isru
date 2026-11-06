@@ -49,7 +49,8 @@ efficiency        η  = w / q · ηalt                                          
   reactor heat, the waste heat the radiator sizes on, and so the fission slope
   and the solar/nuclear crossover.
 - **No net work:** where w or q is not positive, η falls to the old 1e-9 floor
-  and a new `fission-no-net-work` alarm says why. With the default components
+  and a new `fission-no-net-work` warning says why: an alarm when the plant
+  runs on fission, a caution when solar carries the load. With the default components
   this happens when the hot end is under about 1.9 times the cold end, for
   example a radiator above about 600 K behind the default 1,150 K reactor.
 - **Exported helpers:** `fissionEfficiency` is unchanged in signature, and the
