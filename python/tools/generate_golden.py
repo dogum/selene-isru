@@ -77,6 +77,7 @@ def latin_hypercube_samples() -> list[dict[str, Any]]:
         params["equatorialProcess"] = "ilmenite" if i % 4 == 2 else "mre"
         params["ilmFeed"] = "basalt" if i % 8 == 6 else "soil"
         params["fissionConverter"] = "stirling" if i % 6 == 4 else "brayton"
+        params["fissionSiting"] = "buried" if i % 7 == 3 else "surface"
         samples.append(params)
 
     return samples
@@ -133,6 +134,7 @@ def named_scenarios() -> list[tuple[str, dict[str, Any]]]:
     scenarios.append(("equatorial-ilmenite-eagle", {"equatorialProcess": "ilmenite"}))
     scenarios.append(("equatorial-ilmenite-basalt-eagle", {"equatorialProcess": "ilmenite", "ilmFeed": "basalt"}))
     scenarios.append(("fission-stirling-lithium", {"fissionConverter": "stirling", "Tsource": 1050, "Tsink": 500}))
+    scenarios.append(("fission-buried-100m", {"fissionSiting": "buried", "dSeparationKm": 0.1}))
     scenarios.append(
         (
             "equatorial-ilmenite-unconcentrated-refuel",

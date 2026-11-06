@@ -206,6 +206,22 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(best, i.optimumSeparationKm!, 0.05);
   });
 
+  test("buried fission shield, from NASA FSP's emplaced reactor (v0.26)", () => {
+    const item = benchmark("mason-2008-fsp-emplaced-shield");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    expect(DEFAULTS.MshieldBuriedKg).toBe(i.shieldKg);
+    expect(item.expected).toBe(i.shieldKg);
+    expect(DEFAULTS.QshieldRefKwt).toBe(i.reactorThermalKwt);
+    // The regolith shields the outpost, so separation does not size the shield.
+    for (const km of [i.separationKm!, 1, 5]) {
+      expect(fissionShieldKg({ ...DEFAULTS, fissionSiting: "buried", dSeparationKm: km }, i.reactorThermalKwt!)).toBe(i.shieldKg);
+    }
+    // Not reproduced: older on-board shields made landed systems about twice as heavy; the model's
+    // surface shield is Mason 2025's directional shield, lighter at 1 km than the buried one.
+    expectRelative2(fissionShieldKg(DEFAULTS, i.reactorThermalKwt!) / i.shieldKg!, 0.817, 0.002);
+  });
+
   test("fission design point and a 50 kWe cross-check, from NASA's lunar Brayton study (v0.19)", () => {
     const item = benchmark("mason-2006-lunar-brayton-50kwe");
     expect(item.kind).toBe("documentation-only");

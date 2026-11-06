@@ -83,6 +83,10 @@ export function parseParams(query: string): Partial<SimParams> {
       if (raw === "brayton" || raw === "stirling") {
         patch[key] = raw;
       }
+    } else if (key === "fissionSiting") {
+      if (raw === "surface" || raw === "buried") {
+        patch[key] = raw;
+      }
     } else if (key === "equatorialProcess") {
       if (raw === "mre" || raw === "ilmenite") {
         patch[key] = raw;

@@ -48,12 +48,18 @@ export function shieldDistanceFactor(params: SimParams): number {
 }
 
 /**
- * Fission shield at a reactor heat and the case's separation [kg]: the power
- * law of `shieldMassKg`, times the distance factor. A closer outpost needs a
- * thicker shield and a wider shadow (Mason 2025's 52°, 36°, and 22° included
- * angles at 0.5, 1, and 2 km).
+ * Fission shield at a reactor heat and the case's siting and separation [kg].
+ * A surface reactor's shield follows the power law of `shieldMassKg` times the
+ * distance factor: a closer outpost needs a thicker shield and a wider shadow
+ * (Mason 2025's 52°, 36°, and 22° included angles at 0.5, 1, and 2 km). A
+ * buried reactor's regolith shields the outpost, and its Earth-delivered
+ * shield protects the equipment above the hole, so separation does not size it
+ * (FSP 2008's emplaced reactor).
  */
 export function fissionShieldKg(params: SimParams, thermalKw: number): number {
+  if (params.fissionSiting === "buried") {
+    return shieldMassKg(params.MshieldBuriedKg, params.QshieldRefKwt, params.nShield, thermalKw);
+  }
   return shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, thermalKw) * shieldDistanceFactor(params);
 }
 

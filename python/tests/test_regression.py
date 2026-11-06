@@ -4,6 +4,7 @@ import pytest
 
 from selene_isru import (
     cable_conductor_kg_per_kw_km,
+    fission_shield_kg,
     line_efficiency,
     fission_scale_factor,
     nuclear_mass_at_kwe,
@@ -368,6 +369,31 @@ def test_fission_shield_scales_with_power_v021() -> None:
     # A fixed shield (nShield 0) is the v0.20 model's.
     fixed = simulate({**V021_FISSION, "nShield": 0})
     assert fixed["power"]["shieldMassKg"] == V021_FISSION["MshieldKg"]
+
+
+def test_buried_fission_reactor_v026() -> None:
+    # New and deliberate: a buried reactor's shield is FSP 2008's 1,676 kg emplaced shield, grown with
+    # heat and independent of separation. Surface siting stays the default, and the default plant does not move.
+    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)
+    buried = {"fissionSiting": "buried", "dSeparationKm": 0.1}
+    base = simulate(buried)
+    power = base["power"]
+    assert_rel(power["shieldMassKg"], 4616, 0.001)
+    assert_rel(power["cableMassKg"], 231, 0.002)
+    assert_rel(power["cableLossW"] / 1000, 1.65, 0.01)
+    assert_rel(power["nuclearMassKg"] / 1000, 28.14, 0.001)
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 48.77, 0.001)
+    # Separation no longer sizes the shield, so a buried reactor is lightest next to the outpost.
+    heat_kw = power["fissionThermalW"] / 1000
+    far = {**DEFAULTS, **buried, "dSeparationKm": 2}
+    assert fission_shield_kg(far, heat_kw) == fission_shield_kg({**DEFAULTS, **buried}, heat_kw)
+    assert base["logistics"]["totalInfraMassKg"] < simulate({**buried, "dSeparationKm": 0.5})["logistics"]["totalInfraMassKg"]
+    # A 10 t/day plant saves most of its 20.7 t cable.
+    assert_rel(simulate({**buried, "targetKgPerDay": 10000})["logistics"]["totalInfraMassKg"] / 1000, 435.6, 0.001)
+    # An unsupported siting resets to the surface and says so.
+    reset = simulate({"fissionSiting": "underground"})
+    assert reset["power"]["shieldMassKg"] == simulate({})["power"]["shieldMassKg"]
+    assert "param-clamped" in warning_ids(reset)
 
 
 def test_fission_shield_and_cable_with_separation_v025() -> None:

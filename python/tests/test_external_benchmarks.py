@@ -163,6 +163,22 @@ def test_fission_shield_and_cable_with_separation_v025() -> None:
     assert best == pytest.approx(i["optimumSeparationKm"], rel=0.05)
 
 
+def test_buried_fission_shield_from_nasa_fsp_v026() -> None:
+    row = item("mason-2008-fsp-emplaced-shield")
+    assert row["kind"] == "calibration"
+    i = row["inputs"]
+    assert DEFAULTS["MshieldBuriedKg"] == row["expected"] == i["shieldKg"]
+    assert DEFAULTS["QshieldRefKwt"] == i["reactorThermalKwt"]
+    buried = {**DEFAULTS, "fissionSiting": "buried"}
+    # The regolith shields the outpost, so separation does not size the shield.
+    for km in (i["separationKm"], 1, 5):
+        assert fission_shield_kg({**buried, "dSeparationKm": km}, i["reactorThermalKwt"]) == i["shieldKg"]
+    # Not reproduced: older on-board shields made landed systems about twice as heavy; the model's
+    # surface shield is Mason 2025's directional shield, lighter at 1 km than the buried one.
+    surface = fission_shield_kg(DEFAULTS, i["reactorThermalKwt"])
+    assert surface / i["shieldKg"] == pytest.approx(0.817, rel=0.002)
+
+
 def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
     row = item("mason-2006-lunar-brayton-50kwe")
     assert row["kind"] == "documentation-only"

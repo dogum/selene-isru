@@ -51,18 +51,18 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [query, setQuery] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
 
-  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter } = params;
+  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter, fissionSiting } = params;
   // Custom Site plans the MRE plant only, so its rail has no process switch.
   const customWorkspace = useStore((s) => s.workspaceMode === "custom");
   // Engine-reported streams, joined so the memo only reruns when the set changes.
   const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
-    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter };
+    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter, fissionSiting };
     const activeStreams = new Set(streamKey.split(",").filter(Boolean));
     return groupsForSite(site)
       .filter((group) => !(customWorkspace && group.id === "oxygen-process"))
       .map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter, customWorkspace, streamKey]);
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter, fissionSiting, customWorkspace, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   // A gated-off group's sliders cannot be shown, so they do not count either.
@@ -258,7 +258,9 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
           )}
           {group.id === "campaign" && showMode("deploymentManifest") && <CampaignModeControls />}
           {group.id === "refuel" && showMode("refuelDemand") && <RefuelModeControls />}
-          {group.id === "power" && showMode("fissionConverter") && <FissionConverterControls />}
+          {group.id === "power" && (showMode("fissionConverter") || showMode("fissionSiting")) && (
+            <FissionConverterControls converter={showMode("fissionConverter")} siting={showMode("fissionSiting")} />
+          )}
           {group.id === "power" && site === "polar" && showMode("polarProfileMode") && <PolarSiteProfileControls />}
           {defs.map((def) => {
             const w = warned.get(def.key);
@@ -309,23 +311,38 @@ function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: b
   );
 }
 
-function FissionConverterControls(): React.JSX.Element {
+function FissionConverterControls({ converter: showConverter, siting: showSiting }: { converter: boolean; siting: boolean }): React.JSX.Element {
   const converter = useStore((s) => s.params.fissionConverter);
+  const siting = useStore((s) => s.params.fissionSiting);
   const setParam = useStore((s) => s.setParam);
 
   return (
     <div className="rail-mode-grid">
-      <label>
+      {showConverter && <label>
         <span>FISSION CONVERTER</span>
         <select value={converter} onChange={(event) => setParam("fissionConverter", event.target.value as typeof converter)}>
           <option value="brayton">CLOSED BRAYTON</option>
           <option value="stirling">FREE-PISTON STIRLING</option>
         </select>
-      </label>
-      {converter === "stirling" && (
+      </label>}
+      {showConverter && converter === "stirling" && (
         <p className="rail-mode-note">
           Stirling runs at a fixed fraction of Carnot with modular convertors that gain no economy of scale. NASA&apos;s
           lunar Stirling designs run hot ends of 850–1,050 K and cold ends of 460–500 K; set the temperatures to match.
+        </p>
+      )}
+      {showSiting && <label>
+        <span>REACTOR SITING</span>
+        <select value={siting} onChange={(event) => setParam("fissionSiting", event.target.value as typeof siting)}>
+          <option value="surface">SURFACE, OWN SHIELD</option>
+          <option value="buried">BURIED IN REGOLITH</option>
+        </select>
+      </label>}
+      {showSiting && siting === "buried" && (
+        <p className="rail-mode-note">
+          Regolith shields the outpost, so separation no longer sizes the shield and the reactor can sit 100 m away, as
+          in NASA&apos;s 2008 emplaced design. Digging the hole (about 20 t of regolith) and crew-assisted
+          installation are not charged.
         </p>
       )}
     </div>
