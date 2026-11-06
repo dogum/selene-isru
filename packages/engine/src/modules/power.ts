@@ -14,6 +14,7 @@ export interface PowerOutput {
   solarArrayM2: number;
   radiatorM2: number;
   radiatorMassKg: number;
+  radiatorEffectiveK: number;
   shieldMassKg: number;
   fissionThermalW: number;
   nuclearSpecificKgPerKw: number;
@@ -97,43 +98,118 @@ export function pCritDynamicKw(
 
 /** Temperatures and per-unit-flow work and heat of a recuperated Brayton cycle [K]. */
 export interface BraytonCycle {
+  /** Compressor pressure ratio the cycle runs at [1] */
+  pressureRatio: number;
   compressorExitK: number;
   turbineExitK: number;
   heaterInletK: number;
+  /** Gas cooler inlet, where the recuperator hands the waste heat to the radiator loop [K] */
+  coolerInletK: number;
   /** Net work over mass flow times heat capacity [K] */
   netWorkK: number;
   /** Reactor heat over mass flow times heat capacity [K] */
   heatInK: number;
 }
 
+const RP_MIN = 1.05;
+const RP_MAX = 8;
+const RP_GRID = 48;
+const RP_BISECTIONS = 60;
+
 /**
- * Recuperated closed Brayton cycle on an ideal monatomic gas: turbine inlet at
- * Tsource, compressor inlet at Tsink. Work and heat are per unit mass flow and
- * heat capacity, so their ratio is the cycle efficiency.
+ * Recuperated closed Brayton cycle on an ideal monatomic gas at a pressure
+ * ratio: turbine inlet at Tsource, compressor inlet at Tsink. Work and heat are
+ * per unit mass flow and heat capacity, so their ratio is the cycle efficiency.
  */
-export function braytonCycle(params: SimParams): BraytonCycle {
+export function braytonCycleAt(params: SimParams, rp: number): BraytonCycle {
   const gamma = PHYSICAL_CONSTANTS.gammaHeXe.value;
   const k = (gamma - 1) / gamma;
   const t1 = params.Tsink;
   const t3 = params.Tsource;
-  const t2 = t1 * (1 + (params.rpBrayton ** k - 1) / params.etaCompressor);
-  const expansion = Math.max(1, params.rpBrayton * (1 - params.fPressureLoss));
+  const t2 = t1 * (1 + (rp ** k - 1) / params.etaCompressor);
+  const expansion = Math.max(1, rp * (1 - params.fPressureLoss));
   const t4 = t3 * (1 - params.etaTurbine * (1 - expansion ** -k));
   const t5 = t2 + params.epsRecuperator * Math.max(0, t4 - t2);
   return {
+    pressureRatio: rp,
     compressorExitK: t2,
     turbineExitK: t4,
     heaterInletK: t5,
+    coolerInletK: t4 - (t5 - t2),
     netWorkK: t3 - t4 - (t2 - t1),
     heatInK: t3 - t5
   };
 }
 
+/** Sign-carrying numerator of d(netWork / heatIn) / d(pressure ratio), from braytonCycleAt's own terms. */
+function braytonSlope(params: SimParams, rp: number): number {
+  const gamma = PHYSICAL_CONSTANTS.gammaHeXe.value;
+  const k = (gamma - 1) / gamma;
+  const t1 = params.Tsink;
+  const t3 = params.Tsource;
+  const loss = 1 - params.fPressureLoss;
+  const t2 = t1 * (1 + (rp ** k - 1) / params.etaCompressor);
+  const dt2 = (t1 * k * rp ** (k - 1)) / params.etaCompressor;
+  const expansion = rp * loss;
+  let t4 = t3;
+  let dt4 = 0;
+  if (expansion > 1) {
+    t4 = t3 * (1 - params.etaTurbine * (1 - expansion ** -k));
+    dt4 = -t3 * params.etaTurbine * k * expansion ** (-k - 1) * loss;
+  }
+  let t5 = t2;
+  let dt5 = dt2;
+  if (t4 > t2) {
+    t5 = t2 + params.epsRecuperator * (t4 - t2);
+    dt5 = dt2 + params.epsRecuperator * (dt4 - dt2);
+  }
+  const netWork = t3 - t4 - (t2 - t1);
+  return (-dt4 - dt2) * (t3 - t5) + netWork * dt5;
+}
+
+/**
+ * The Brayton cycle at the pressure ratio that maximizes its efficiency. A
+ * log-spaced grid over RP_MIN..RP_MAX finds the best point; bisection on the
+ * sign of the analytic slope between its neighbours then finds the optimum.
+ * Bisecting a slope, unlike comparing two nearly equal efficiencies, converges
+ * to the same pressure ratio in any floating-point implementation.
+ */
+export function braytonCycle(params: SimParams): BraytonCycle {
+  const value = (rp: number): number => {
+    const cycle = braytonCycleAt(params, rp);
+    return cycle.heatInK > 0 ? cycle.netWorkK / cycle.heatInK : -1e9;
+  };
+  const grid = Array.from({ length: RP_GRID }, (_, i) => RP_MIN * (RP_MAX / RP_MIN) ** (i / (RP_GRID - 1)));
+  let best = 0;
+  let bestValue = value(grid[0]!);
+  for (let i = 1; i < RP_GRID; i++) {
+    const v = value(grid[i]!);
+    if (v > bestValue) {
+      best = i;
+      bestValue = v;
+    }
+  }
+  let lo = grid[Math.max(0, best - 1)]!;
+  let hi = grid[Math.min(RP_GRID - 1, best + 1)]!;
+  for (let i = 0; i < RP_BISECTIONS; i++) {
+    const mid = (lo + hi) / 2;
+    const cycle = braytonCycleAt(params, mid);
+    const rising = cycle.netWorkK > 0 && cycle.heatInK > 0 ? braytonSlope(params, mid) > 0 : mid < grid[best]!;
+    if (rising) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  return braytonCycleAt(params, (lo + hi) / 2);
+}
+
 /**
  * Fission conversion efficiency, electrical output over reactor heat [1].
- * Brayton: the cycle's net work over its heat input, times the alternator and
- * power conditioning efficiency. Stirling: a fixed fraction of Carnot between
- * the hot and cold ends, which suits a cycle whose ideal is Carnot's.
+ * Brayton: the cycle's net work over its heat input at its best pressure
+ * ratio, times the alternator and power conditioning efficiency. Stirling: a
+ * fixed fraction of Carnot between the hot and cold ends, which suits a cycle
+ * whose ideal is Carnot's.
  */
 export function fissionEfficiency(params: SimParams): number {
   if (params.fissionConverter === "stirling") {
@@ -147,14 +223,48 @@ export function fissionEfficiency(params: SimParams): number {
 }
 
 /**
+ * Radiator coolant's cold and hot ends [K]. Brayton: the gas cools from the gas
+ * cooler inlet to the compressor inlet, and the radiator loop runs
+ * dTGasCoolerK below it. Stirling: rejects at its cold end.
+ */
+export function radiatorTemperaturesK(params: SimParams): { coldK: number; hotK: number } {
+  if (params.fissionConverter === "stirling") {
+    return { coldK: params.Tsink, hotK: params.Tsink };
+  }
+  const cycle = braytonCycle(params);
+  const coldK = params.Tsink - params.dTGasCoolerK;
+  return { coldK, hotK: Math.max(coldK, cycle.coolerInletK - params.dTGasCoolerK) };
+}
+
+/** Antiderivative of 1 / (T^4 - a^4) with respect to T, for T > a. */
+function inverseFluxIntegral(t: number, a: number): number {
+  return Math.log((t - a) / (t + a)) / (4 * a ** 3) - Math.atan(t / a) / (2 * a ** 3);
+}
+
+/**
+ * Net radiated flux averaged over the radiator, its coolant falling linearly
+ * in temperature from the hot end to the cold [W/m^2].
+ */
+export function radiatorFluxWPerM2(params: SimParams): number {
+  const k = params.etaRad * params.epsRad * PHYSICAL_CONSTANTS.sigma.value;
+  const { coldK, hotK } = radiatorTemperaturesK(params);
+  const a = params.Tenv;
+  if (coldK <= a || hotK - coldK < 1e-6) {
+    return k * (coldK ** 4 - a ** 4);
+  }
+  return (k * (hotK - coldK)) / (inverseFluxIntegral(hotK, a) - inverseFluxIntegral(coldK, a));
+}
+
+function radiatorM2PerKwAt(params: SimParams, etaTherm: number): number {
+  return (1000 * (1 / etaTherm - 1)) / Math.max(1e-9, radiatorFluxWPerM2(params));
+}
+
+/**
  * Fission radiating area per kW of electrical output [m^2/kW]: the waste heat
  * per kW over the radiator's net flux to its environment.
  */
 export function radiatorM2PerKw(params: SimParams): number {
-  const etaTherm = fissionEfficiency(params);
-  const fluxWPerM2 =
-    params.etaRad * params.epsRad * PHYSICAL_CONSTANTS.sigma.value * (params.Tsink ** 4 - params.Tenv ** 4);
-  return (1000 * (1 / etaTherm - 1)) / Math.max(1e-9, fluxWPerM2);
+  return radiatorM2PerKwAt(params, fissionEfficiency(params));
 }
 
 /**
@@ -179,6 +289,15 @@ export function conversionKgPerKwe(params: SimParams, thermalKw: number): number
   return params.kConversionKgPerKwe * fissionScaleFactor(params, thermalKw);
 }
 
+function specificKgPerKwe(params: SimParams, eta: number, radiatorKgPerKwe: number, kwe: number): number {
+  const heatKw = kwe / eta;
+  return (
+    (params.kReactorKgPerKwt / eta) * fissionScaleFactor(params, heatKw) +
+    conversionKgPerKwe(params, heatKw) +
+    radiatorKgPerKwe
+  );
+}
+
 /**
  * Fission specific mass per kW of electrical output at an output, excluding
  * the shield [kg/kW]: the reactor on the heat it makes and conversion and
@@ -188,12 +307,18 @@ export function conversionKgPerKwe(params: SimParams, thermalKw: number): number
 export function nuclearSpecificKgPerKw(params: SimParams, kwe?: number): number {
   const eta = fissionEfficiency(params);
   const atKwe = kwe ?? params.QscaleRefKwt * eta;
-  const heatKw = atKwe / eta;
-  return (
-    (params.kReactorKgPerKwt / eta) * fissionScaleFactor(params, heatKw) +
-    conversionKgPerKwe(params, heatKw) +
-    params.kRadiatorKgPerM2 * radiatorM2PerKw(params)
-  );
+  return specificKgPerKwe(params, eta, params.kRadiatorKgPerM2 * radiatorM2PerKwAt(params, eta), atKwe);
+}
+
+/** Fission mass against electrical output and age, with the efficiency and radiator evaluated once. */
+function massCurve(params: SimParams): (kwe: number, tYears: number) => number {
+  const eta = fissionEfficiency(params);
+  const radiatorKgPerKwe = params.kRadiatorKgPerM2 * radiatorM2PerKwAt(params, eta);
+  return (kwe, tYears) => {
+    const shield = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, kwe / eta);
+    const specific = specificKgPerKwe(params, eta, radiatorKgPerKwe, kwe);
+    return shield + nuclearSlopeAtYear(specific, params.dNuclear, tYears) * kwe;
+  };
 }
 
 /**
@@ -202,9 +327,7 @@ export function nuclearSpecificKgPerKw(params: SimParams, kwe?: number): number 
  * and the crossover come from the same mass.
  */
 export function nuclearMassAtKwe(params: SimParams, kwe: number, tYears = 0): number {
-  const eta = fissionEfficiency(params);
-  const shield = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, kwe / eta);
-  return shield + nuclearSlopeAtYear(nuclearSpecificKgPerKw(params, kwe), params.dNuclear, tYears) * kwe;
+  return massCurve(params)(kwe, tYears);
 }
 
 /**
@@ -214,7 +337,8 @@ export function nuclearMassAtKwe(params: SimParams, kwe: number, tYears = 0): nu
  */
 export function fissionCrossoverKw(params: SimParams, beta: number, tYears = 0): number | null {
   const betaT = solarSlopeAtYear(beta, params.dSolar, tYears);
-  const gap = (kw: number): number => betaT * kw - nuclearMassAtKwe(params, kw, tYears);
+  const mass = massCurve(params);
+  const gap = (kw: number): number => betaT * kw - mass(kw, tYears);
   let lo = 1e-6;
   let hi = 1e9;
   if (gap(hi) <= 0) {
@@ -283,12 +407,13 @@ export function simulatePower(
   const etaTherm = fissionEfficiency(params);
   const Qfission = Pgrid / etaTherm;
   const Qreject = Qfission - Pgrid;
-  const radiatorDenominator =
-    params.etaRad *
-    params.epsRad *
-    PHYSICAL_CONSTANTS.sigma.value *
-    (params.Tsink ** 4 - params.Tenv ** 4);
-  const radiatorM2 = Qreject / Math.max(1e-9, radiatorDenominator);
+  const radiatorFlux = radiatorFluxWPerM2(params);
+  const radiatorM2 = Qreject / Math.max(1e-9, radiatorFlux);
+  const radiatorColdK = radiatorTemperaturesK(params).coldK;
+  const radiatorEffectiveK =
+    radiatorFlux > 0
+      ? (radiatorFlux / (params.etaRad * params.epsRad * PHYSICAL_CONSTANTS.sigma.value) + params.Tenv ** 4) ** 0.25
+      : radiatorColdK;
   // The reactor is charged on the heat it makes and the radiator on its area,
   // so both follow the cycle's efficiency and temperatures; conversion and
   // power management scale with electrical output.
@@ -351,13 +476,13 @@ export function simulatePower(
       limit: cycle.netWorkK
     });
   }
-  if (params.Tsink <= params.Tenv) {
+  if (radiatorColdK <= params.Tenv) {
     warnings.push({
       id: "radiator-temperature",
       severity: "alarm",
       module: "power",
-      message: "Radiator sink temperature must exceed its environment temperature.",
-      value: params.Tsink,
+      message: "Radiator cold end must exceed its environment temperature.",
+      value: radiatorColdK,
       limit: params.Tenv
     });
   }
@@ -394,6 +519,7 @@ export function simulatePower(
     solarArrayM2,
     radiatorM2,
     radiatorMassKg,
+    radiatorEffectiveK,
     shieldMassKg: shieldKg,
     fissionThermalW: Qfission,
     nuclearSpecificKgPerKw: alphaWithRadiator,

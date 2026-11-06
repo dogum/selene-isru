@@ -6,7 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from selene_isru import fission_efficiency, nuclear_mass_at_kwe, radiator_m2_per_kw, shield_mass_kg, simulate
+from selene_isru import (
+    fission_efficiency,
+    nuclear_mass_at_kwe,
+    radiator_flux_w_per_m2,
+    radiator_m2_per_kw,
+    shield_mass_kg,
+    simulate,
+)
 from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -88,13 +95,14 @@ def test_fission_slope_from_nasa_surface_brayton_scaling_v019() -> None:
     # v0.21: the shield grows with power, so the model's marginal mass between the
     # two systems, shield included, is Mason's. v0.22: so does the reactor and
     # conversion's economy of scale; the model lands 2.55 t lighter at both.
+    # v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
     def model_kg(kwe: float) -> float:
         return nuclear_mass_at_kwe(DEFAULTS, kwe)
 
     model_marginal = (model_kg(i["power500Kwe"]) - model_kg(i["power100Kwe"])) / (i["power500Kwe"] - i["power100Kwe"])
     assert model_marginal == pytest.approx(marginal, rel=0.001)
-    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2551, rel=0.01)
-    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2551, rel=0.01)
+    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2522, rel=0.01)
+    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2522, rel=0.01)
 
 
 def test_fission_economy_of_scale_from_nasa_spacecraft_brayton_v022() -> None:
@@ -126,12 +134,18 @@ def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
     assert DEFAULTS["Tsource"] == i["hotEndK"]
     assert DEFAULTS["Tsink"] == i["coldEndK"]
     assert fission_efficiency(DEFAULTS) == pytest.approx(i["converterEfficiency"], rel=0.002)
+    # v0.24: the radiator spans the gas cooler; its approach is fitted to Mason's flux,
+    # 158.6 kWt over 140 m^2 before margin.
+    mason_flux = (i["reactorThermalKwt"] - i["converterOutputKwe"]) * 1000 / (i["radiatorAreaWithMarginM2"] / (1 + i["areaMargin"]))
+    assert radiator_flux_w_per_m2(DEFAULTS) == pytest.approx(mason_flux, rel=0.02)
+    # Not calibrated: the model rejects less heat at 50 kWe, so sizes 126 m^2 against 140.
     area_m2 = radiator_m2_per_kw(DEFAULTS) * i["outputKwe"]
     assert area_m2 == pytest.approx(i["radiatorAreaWithMarginM2"] / (1 + i["areaMargin"]), rel=0.15)
     mass_kg = nuclear_mass_at_kwe(DEFAULTS, i["outputKwe"])
     assert i["systemMassWithMarginKg"] / (1 + i["massMargin"]) == pytest.approx(row["expected"], rel=0.001)
     # v0.21: 3.0 t against 3.49 t, 14% light (10% before the shield scaled with power).
     # v0.22: 3.09 t, 12% light, with the small reactor's diseconomy of scale.
+    # v0.24: 3.11 t, 11% light, with the radiator over the gas span.
     assert mass_kg == pytest.approx(row["expected"], rel=0.15)
     assert mass_kg < row["expected"]
 
@@ -144,12 +158,11 @@ def test_fission_radiator_mass_per_area_from_nasa_fsp() -> None:
     areal = i["heatRejectionMassKg"] / fsp_area_m2
     assert areal == pytest.approx(row["expected"], rel=0.001)
     assert DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(areal, rel=0.002)
-    # FSP's 27.4% gross Stirling conversion, pinned through a near-ideal Brayton cycle
-    # and the alternator efficiency that reaches it (v0.20 retired etaMech).
-    cycle = {"rpBrayton": 1.75, "etaCompressor": 0.92, "etaTurbine": 0.95, "epsRecuperator": 0.98, "fPressureLoss": 0}
+    # FSP is a Stirling: its 27.4% gross conversion as a fraction of Carnot, rejecting at
+    # its 380 K effective radiator (v0.24; v0.20-v0.23 pinned it through a Brayton cycle).
     temps = {"Tsource": i["stirlingHotK"], "Tsink": i["radiatorEffectiveK"], "Tenv": i["sinkK"]}
-    unit = fission_efficiency({**DEFAULTS, **temps, **cycle, "etaAlternator": 1})
-    fsp = {**temps, **cycle, "etaAlternator": i["grossPowerKwe"] / i["reactorThermalKw"] / unit}
+    carnot = 1 - i["radiatorEffectiveK"] / i["stirlingHotK"]
+    fsp = {**temps, "fissionConverter": "stirling", "fCarnotStirling": i["grossPowerKwe"] / i["reactorThermalKw"] / carnot}
     area_m2 = radiator_m2_per_kw({**DEFAULTS, **fsp}) * i["userPowerKwe"]
     assert area_m2 == pytest.approx(fsp_area_m2, rel=0.05)
     assert area_m2 * DEFAULTS["kRadiatorKgPerM2"] == pytest.approx(i["heatRejectionMassKg"], rel=0.05)

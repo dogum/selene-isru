@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { DEFAULTS, fissionEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
+import { conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -108,11 +108,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // v0.21: the shield grows with power, so the model's marginal mass between the
     // two systems, shield included, is Mason's. v0.22: so does the reactor and
     // conversion's economy of scale; the model lands 2.55 t lighter at both.
+    // v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
     const modelKg = (kwe: number) => nuclearMassAtKwe(DEFAULTS, kwe);
     const modelMarginal = (modelKg(i.power500Kwe!) - modelKg(i.power100Kwe!)) / (i.power500Kwe! - i.power100Kwe!);
     expectRelative2(modelMarginal, marginal, 0.001);
-    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2551, 0.01);
-    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2551, 0.01);
+    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2522, 0.01);
+    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2522, 0.01);
   });
 
   test("fission economy of scale from NASA's spacecraft Brayton systems, 0.1 to 10 MWe (v0.22)", () => {
@@ -181,13 +182,19 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expect(DEFAULTS.Tsource).toBe(i.hotEndK);
     expect(DEFAULTS.Tsink).toBe(i.coldEndK);
     expectRelative2(fissionEfficiency(DEFAULTS), i.converterEfficiency!, 0.002);
+    // v0.24: the radiator spans the gas cooler; its approach is fitted to Mason's flux,
+    // 158.6 kWt over 140 m^2 before margin.
+    const masonFlux = ((i.reactorThermalKwt! - i.converterOutputKwe!) * 1000) / (i.radiatorAreaWithMarginM2! / (1 + i.areaMargin!));
+    expectRelative2(radiatorFluxWPerM2(DEFAULTS), masonFlux, 0.02);
     // Not calibrated: the model's radiator and system mass at 50 kWe, against Mason's before margin.
+    // Since v0.24 it rejects less heat than Mason's system, so sizes 126 m^2 against 140.
     const areaM2 = radiatorM2PerKw(DEFAULTS) * i.outputKwe!;
     expectRelative2(areaM2, i.radiatorAreaWithMarginM2! / (1 + i.areaMargin!), 0.15);
     const massKg = nuclearMassAtKwe(DEFAULTS, i.outputKwe!);
     expectRelative2(i.systemMassWithMarginKg! / (1 + i.massMargin!), item.expected as number, 0.001);
     // v0.21: 3.0 t against 3.49 t, 14% light (10% before the shield scaled with power).
     // v0.22: 3.09 t, 12% light, with the small reactor's diseconomy of scale.
+    // v0.24: 3.11 t, 11% light, with the radiator over the gas span.
     expectRelative2(massKg, item.expected as number, 0.15);
     expect(massKg).toBeLessThan(item.expected as number);
   });
@@ -202,12 +209,11 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(DEFAULTS.kRadiatorKgPerM2, arealKgPerM2, 0.002);
     // At FSP's temperatures and 27.4% gross conversion, the model's radiator
     // for 40 kWe is within 5% of FSP's area before margin, and so is its mass.
-    // FSP's 27.4% gross Stirling conversion, pinned through a near-ideal Brayton
-    // cycle and the alternator efficiency that reaches it (v0.20 retired etaMech).
-    const cycle = { rpBrayton: 1.75, etaCompressor: 0.92, etaTurbine: 0.95, epsRecuperator: 0.98, fPressureLoss: 0 };
+    // FSP is a Stirling: its 27.4% gross conversion as a fraction of Carnot, rejecting at
+    // its 380 K effective radiator (v0.24; v0.20-v0.23 pinned it through a Brayton cycle).
     const temps = { Tsource: i.stirlingHotK!, Tsink: i.radiatorEffectiveK!, Tenv: i.sinkK! };
-    const unit = fissionEfficiency({ ...DEFAULTS, ...temps, ...cycle, etaAlternator: 1 });
-    const fsp = { ...temps, ...cycle, etaAlternator: i.grossPowerKwe! / i.reactorThermalKw! / unit };
+    const carnot = 1 - i.radiatorEffectiveK! / i.stirlingHotK!;
+    const fsp = { ...temps, fissionConverter: "stirling" as const, fCarnotStirling: i.grossPowerKwe! / i.reactorThermalKw! / carnot };
     const areaM2 = radiatorM2PerKw({ ...DEFAULTS, ...fsp }) * i.userPowerKwe!;
     const fspAreaM2 = i.radiatingAreaWithMarginM2! / (1 + i.areaMargin!);
     expectRelative2(areaM2, fspAreaM2, 0.05);
@@ -223,9 +229,8 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(
       run.power.nuclearMassKg,
       run.power.shieldMassKg +
-        (DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) +
-          DEFAULTS.kConversionKgPerKwe * (run.energy.gridPowerW / 1000)) *
-          fissionScaleFactor(DEFAULTS, run.power.fissionThermalW / 1000) +
+        DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) * fissionScaleFactor(DEFAULTS, run.power.fissionThermalW / 1000) +
+        conversionKgPerKwe({ ...DEFAULTS, ...fsp }, run.power.fissionThermalW / 1000) * (run.energy.gridPowerW / 1000) +
         run.power.radiatorMassKg,
       1e-12
     );

@@ -57,11 +57,12 @@ efficiency        η  = w / q · ηalt                                          
   engine also exports `braytonCycle` with the cycle's temperatures.
 - **The radiator** is still sized at `Tsink`, the compressor inlet. The gas
   rejects its heat from the recuperator exit down to that, so the model's
-  radiator is the coldest it could be, and errs large.
+  radiator is the coldest it could be, and errs large. *(v0.24: the radiator spans the gas
+  cooler instead.)*
 
 | Key | Default | Range | Basis |
 |---|---|---|---|
-| `rpBrayton` | 2.0 | 1.3–4 | Fuller 2010: design pressure ratio 2:1 |
+| `rpBrayton` | 2.0 | 1.3–4 | Fuller 2010: design pressure ratio 2:1 *(v0.24: retired; the cycle runs at its best pressure ratio)* |
 | `etaCompressor` | 0.84 | 0.6–0.92 | Fuller 2010: compressor efficiency |
 | `etaTurbine` | 0.87 | 0.6–0.95 | Fuller 2010: turbine efficiency |
 | `epsRecuperator` | 0.90 | 0–0.98 | Fuller 2010: recuperator effectiveness |
@@ -187,6 +188,10 @@ Screenshot: [the cycle inputs and the pressure loss's evidence over the power pa
 - **The pressure ratio at its optimum.** Each temperature ratio has a best
   pressure ratio; the model holds Fuller's 2:1, so it understates a
   re-optimized converter away from the design point.
+  *(v0.24: done; see
+  [`model-brayton-optimum-v024.md`](model-brayton-optimum-v024.md).)*
 - **The radiator at its mean temperature.** The gas rejects heat from the
   recuperator exit down to the compressor inlet; sizing the radiator over that
   span, not at its coldest point, would shrink it.
+  *(v0.24: done, over the gas cooler span; see
+  [`model-brayton-optimum-v024.md`](model-brayton-optimum-v024.md).)*

@@ -54,33 +54,98 @@ def p_crit_dynamic_kw(
     )
 
 
-def brayton_cycle(params: dict[str, Any]) -> dict[str, float]:
-    """Recuperated closed Brayton cycle on an ideal monatomic gas, per unit heat capacity [K].
+RP_MIN = 1.05
+RP_MAX = 8.0
+RP_GRID = 48
+RP_BISECTIONS = 60
 
-    Turbine inlet at Tsource, compressor inlet at Tsink. Returns the net work and the
-    reactor heat per unit mass flow and heat capacity, and the cycle's temperatures.
-    """
+
+def brayton_cycle_at(params: dict[str, Any], rp: float) -> dict[str, float]:
+    """Recuperated closed Brayton cycle on an ideal monatomic gas at a pressure ratio, per unit heat capacity [K].
+
+    Turbine inlet at Tsource, compressor inlet at Tsink. Returns the net work and the reactor heat per
+    unit mass flow and heat capacity, and the cycle's temperatures, including the gas cooler inlet,
+    where the recuperator hands the waste heat to the radiator loop."""
     k = (c("gammaHeXe") - 1) / c("gammaHeXe")
     t1 = params["Tsink"]
     t3 = params["Tsource"]
-    t2 = t1 * (1 + (params["rpBrayton"] ** k - 1) / params["etaCompressor"])
-    expansion = max(1.0, params["rpBrayton"] * (1 - params["fPressureLoss"]))
-    t4 = t3 * (1 - params["etaTurbine"] * (1 - expansion ** -k))
+    t2 = t1 * (1 + (rp**k - 1) / params["etaCompressor"])
+    expansion = max(1.0, rp * (1 - params["fPressureLoss"]))
+    t4 = t3 * (1 - params["etaTurbine"] * (1 - expansion**-k))
     t5 = t2 + params["epsRecuperator"] * max(0.0, t4 - t2)
     return {
+        "pressureRatio": rp,
         "compressorExitK": t2,
         "turbineExitK": t4,
         "heaterInletK": t5,
+        "coolerInletK": t4 - (t5 - t2),
         "netWorkK": (t3 - t4) - (t2 - t1),
         "heatInK": t3 - t5,
     }
 
 
+def _brayton_slope(params: dict[str, Any], rp: float) -> float:
+    """Sign-carrying numerator of d(netWork / heatIn) / d(pressure ratio), from brayton_cycle_at's own terms."""
+    k = (c("gammaHeXe") - 1) / c("gammaHeXe")
+    t1 = params["Tsink"]
+    t3 = params["Tsource"]
+    loss = 1 - params["fPressureLoss"]
+    t2 = t1 * (1 + (rp**k - 1) / params["etaCompressor"])
+    dt2 = t1 * k * rp ** (k - 1) / params["etaCompressor"]
+    expansion = rp * loss
+    if expansion > 1:
+        t4 = t3 * (1 - params["etaTurbine"] * (1 - expansion**-k))
+        dt4 = -t3 * params["etaTurbine"] * k * expansion ** (-k - 1) * loss
+    else:
+        t4, dt4 = t3, 0.0
+    if t4 > t2:
+        t5 = t2 + params["epsRecuperator"] * (t4 - t2)
+        dt5 = dt2 + params["epsRecuperator"] * (dt4 - dt2)
+    else:
+        t5, dt5 = t2, dt2
+    net_work = (t3 - t4) - (t2 - t1)
+    return (-dt4 - dt2) * (t3 - t5) + net_work * dt5
+
+
+def brayton_cycle(params: dict[str, Any]) -> dict[str, float]:
+    """The Brayton cycle at the pressure ratio that maximizes its efficiency.
+
+    A log-spaced grid over RP_MIN..RP_MAX finds the best point; bisection on the sign of the analytic
+    slope between its neighbours then finds the optimum. Bisecting a slope, unlike comparing two nearly
+    equal efficiencies, converges to the same pressure ratio in any floating-point implementation."""
+
+    def value(rp: float) -> float:
+        cycle = brayton_cycle_at(params, rp)
+        return cycle["netWorkK"] / cycle["heatInK"] if cycle["heatInK"] > 0 else -1e9
+
+    grid = [RP_MIN * (RP_MAX / RP_MIN) ** (i / (RP_GRID - 1)) for i in range(RP_GRID)]
+    best = 0
+    best_value = value(grid[0])
+    for i in range(1, RP_GRID):
+        v = value(grid[i])
+        if v > best_value:
+            best, best_value = i, v
+    lo = grid[max(0, best - 1)]
+    hi = grid[min(RP_GRID - 1, best + 1)]
+    for _ in range(RP_BISECTIONS):
+        mid = (lo + hi) / 2
+        cycle = brayton_cycle_at(params, mid)
+        if cycle["netWorkK"] > 0 and cycle["heatInK"] > 0:
+            rising = _brayton_slope(params, mid) > 0
+        else:
+            rising = mid < grid[best]
+        if rising:
+            lo = mid
+        else:
+            hi = mid
+    return brayton_cycle_at(params, (lo + hi) / 2)
+
+
 def fission_efficiency(params: dict[str, Any]) -> float:
     """Fission conversion efficiency, electrical output over reactor heat [1].
 
-    Brayton: the cycle's net work over its heat input, times the alternator and power conditioning
-    efficiency. Stirling: a fixed fraction of Carnot between the hot and cold ends."""
+    Brayton: the cycle's net work over its heat input at its best pressure ratio, times the alternator
+    and power conditioning efficiency. Stirling: a fixed fraction of Carnot between the hot and cold ends."""
     if params["fissionConverter"] == "stirling":
         return max(1e-9, (1 - params["Tsink"] / params["Tsource"]) * params["fCarnotStirling"])
     cycle = brayton_cycle(params)
@@ -89,11 +154,40 @@ def fission_efficiency(params: dict[str, Any]) -> float:
     return max(1e-9, cycle["netWorkK"] / cycle["heatInK"] * params["etaAlternator"])
 
 
+def radiator_temperatures_k(params: dict[str, Any]) -> tuple[float, float]:
+    """Radiator coolant's cold and hot ends [K].
+
+    Brayton: the gas cools from the gas cooler inlet to the compressor inlet, and the radiator loop runs
+    dTGasCoolerK below it. Stirling: rejects at its cold end."""
+    if params["fissionConverter"] == "stirling":
+        return params["Tsink"], params["Tsink"]
+    cycle = brayton_cycle(params)
+    cold = params["Tsink"] - params["dTGasCoolerK"]
+    return cold, max(cold, cycle["coolerInletK"] - params["dTGasCoolerK"])
+
+
+def _inverse_flux_integral(t: float, a: float) -> float:
+    """Antiderivative of 1 / (T^4 - a^4) with respect to T, for T > a."""
+    return math.log((t - a) / (t + a)) / (4 * a**3) - math.atan(t / a) / (2 * a**3)
+
+
+def radiator_flux_w_per_m2(params: dict[str, Any]) -> float:
+    """Net radiated flux averaged over the radiator, its coolant falling linearly in temperature [W/m^2]."""
+    k = params["etaRad"] * params["epsRad"] * c("sigma")
+    cold, hot = radiator_temperatures_k(params)
+    a = params["Tenv"]
+    if cold <= a or hot - cold < 1e-6:
+        return k * (cold**4 - a**4)
+    return k * (hot - cold) / (_inverse_flux_integral(hot, a) - _inverse_flux_integral(cold, a))
+
+
+def _radiator_m2_per_kw_at(params: dict[str, Any], eta_therm: float) -> float:
+    return (1000 * (1 / eta_therm - 1)) / max(1e-9, radiator_flux_w_per_m2(params))
+
+
 def radiator_m2_per_kw(params: dict[str, Any]) -> float:
     """Fission radiating area per kW of electrical output [m^2/kW]."""
-    eta_therm = fission_efficiency(params)
-    flux_w_per_m2 = params["etaRad"] * params["epsRad"] * c("sigma") * (params["Tsink"] ** 4 - params["Tenv"] ** 4)
-    return (1000 * (1 / eta_therm - 1)) / max(1e-9, flux_w_per_m2)
+    return _radiator_m2_per_kw_at(params, fission_efficiency(params))
 
 
 def fission_scale_factor(params: dict[str, Any], thermal_kw: float) -> float:
@@ -111,25 +205,40 @@ def conversion_kg_per_kwe(params: dict[str, Any], thermal_kw: float) -> float:
     return params["kConversionKgPerKwe"] * fission_scale_factor(params, thermal_kw)
 
 
+def _specific_kg_per_kwe(params: dict[str, Any], eta: float, radiator_kg_per_kwe: float, kwe: float) -> float:
+    heat_kw = kwe / eta
+    return (
+        params["kReactorKgPerKwt"] / eta * fission_scale_factor(params, heat_kw)
+        + conversion_kg_per_kwe(params, heat_kw)
+        + radiator_kg_per_kwe
+    )
+
+
 def nuclear_specific_kg_per_kw(params: dict[str, Any], kwe: float | None = None) -> float:
     """Fission specific mass per kW of electrical output at an output, excluding the shield [kg/kW].
 
     Defaults to the output at the scaling reference heat."""
     eta = fission_efficiency(params)
     at_kwe = params["QscaleRefKwt"] * eta if kwe is None else kwe
-    heat_kw = at_kwe / eta
-    return (
-        params["kReactorKgPerKwt"] / eta * fission_scale_factor(params, heat_kw)
-        + conversion_kg_per_kwe(params, heat_kw)
-        + params["kRadiatorKgPerM2"] * radiator_m2_per_kw(params)
-    )
+    return _specific_kg_per_kwe(params, eta, params["kRadiatorKgPerM2"] * _radiator_m2_per_kw_at(params, eta), at_kwe)
+
+
+def _mass_curve(params: dict[str, Any]):
+    """Fission mass against electrical output and age, with the efficiency and radiator evaluated once."""
+    eta = fission_efficiency(params)
+    radiator_kg_per_kwe = params["kRadiatorKgPerM2"] * _radiator_m2_per_kw_at(params, eta)
+
+    def mass(kwe: float, t_years: float) -> float:
+        shield = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], kwe / eta)
+        specific = _specific_kg_per_kwe(params, eta, radiator_kg_per_kwe, kwe)
+        return shield + nuclear_slope_at_year(specific, params["dNuclear"], t_years) * kwe
+
+    return mass
 
 
 def nuclear_mass_at_kwe(params: dict[str, Any], kwe: float, t_years: float = 0.0) -> float:
     """Fission system mass at an electrical output after t_years of derating [kg]: the shield plus the aged rest."""
-    eta = fission_efficiency(params)
-    shield = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], kwe / eta)
-    return shield + nuclear_slope_at_year(nuclear_specific_kg_per_kw(params, kwe), params["dNuclear"], t_years) * kwe
+    return _mass_curve(params)(kwe, t_years)
 
 
 def fission_crossover_kw(params: dict[str, Any], beta: float, t_years: float = 0.0) -> float | None:
@@ -137,9 +246,10 @@ def fission_crossover_kw(params: dict[str, Any], beta: float, t_years: float = 0
 
     Solar mass is linear and fission mass concave in output, so the gap has one root."""
     beta_t = solar_slope_at_year(beta, params["dSolar"], t_years)
+    mass = _mass_curve(params)
 
     def gap(kw: float) -> float:
-        return beta_t * kw - nuclear_mass_at_kwe(params, kw, t_years)
+        return beta_t * kw - mass(kw, t_years)
 
     lo, hi = 1e-6, 1e9
     if gap(hi) <= 0:
@@ -191,8 +301,14 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     eta_therm = fission_efficiency(params)
     q_fission = p_grid / eta_therm
     q_reject = q_fission - p_grid
-    radiator_denominator = params["etaRad"] * params["epsRad"] * c("sigma") * (params["Tsink"] ** 4 - params["Tenv"] ** 4)
-    radiator_m2 = q_reject / max(1e-9, radiator_denominator)
+    radiator_flux = radiator_flux_w_per_m2(params)
+    radiator_m2 = q_reject / max(1e-9, radiator_flux)
+    radiator_cold_k, _ = radiator_temperatures_k(params)
+    radiator_effective_k = (
+        (radiator_flux / (params["etaRad"] * params["epsRad"] * c("sigma")) + params["Tenv"] ** 4) ** 0.25
+        if radiator_flux > 0
+        else radiator_cold_k
+    )
     radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
     shield_kg = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], q_fission / 1000)
     scale = fission_scale_factor(params, q_fission / 1000)
@@ -217,8 +333,8 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         warnings.append({"id": "stirling-hot-end", "severity": "caution", "module": "power", "message": "Stirling hot end is above NASA's 1,050 K refractory Stirling design.", "value": params["Tsource"], "limit": c("TStirlingMaxK")})
     if params["fissionConverter"] == "brayton" and params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
         warnings.append({"id": "fission-no-net-work", "severity": "alarm" if architecture == "nuclear" else "caution", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
-    if params["Tsink"] <= params["Tenv"]:
-        warnings.append({"id": "radiator-temperature", "severity": "alarm", "module": "power", "message": "Radiator sink temperature must exceed its environment temperature.", "value": params["Tsink"], "limit": params["Tenv"]})
+    if radiator_cold_k <= params["Tenv"]:
+        warnings.append({"id": "radiator-temperature", "severity": "alarm", "module": "power", "message": "Radiator cold end must exceed its environment temperature.", "value": radiator_cold_k, "limit": params["Tenv"]})
 
     beamed_floor_power_w = beamed_power_w(p_array, params["w0Beam"], params["thetaDivBeam"], params["zCraterDrop"], params["rReceiver"], params["etaEmitter"], params["etaPvReceiver"]) * params["etaWire"] if params["site"] == "polar" and architecture == "solar" else None
     beam_delivery_margin_w = None if beamed_floor_power_w is None else beamed_floor_power_w - p_grid
@@ -232,6 +348,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "solarArrayM2": solar_array_m2,
         "radiatorM2": radiator_m2,
         "radiatorMassKg": radiator_mass_kg,
+        "radiatorEffectiveK": radiator_effective_k,
         "shieldMassKg": shield_kg,
         "fissionThermalW": q_fission,
         "nuclearSpecificKgPerKw": alpha_with_radiator,

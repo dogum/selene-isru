@@ -16,7 +16,7 @@ const power = GROUPS.find((item) => item.id === "power")!;
 const brayton: SimParams = { ...DEFAULTS };
 const stirling: SimParams = { ...DEFAULTS, fissionConverter: "stirling" };
 const shown = (params: SimParams) => railParamsForGroup(power, params).map((def) => String(def.key));
-const BRAYTON_KEYS = ["rpBrayton", "etaCompressor", "etaTurbine", "epsRecuperator", "fPressureLoss", "etaAlternator", "kConversionKgPerKwe"];
+const BRAYTON_KEYS = ["etaCompressor", "etaTurbine", "epsRecuperator", "fPressureLoss", "dTGasCoolerK", "etaAlternator", "kConversionKgPerKwe"];
 const STIRLING_KEYS = ["fCarnotStirling", "kConversionStirlingKgPerKwe", "bStirlingScale"];
 
 afterEach(() => {

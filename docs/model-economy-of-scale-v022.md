@@ -108,6 +108,8 @@ included. With the scale factor that marginal changes, so the two are solved
 again, in FSP's split, now as specific masses at 1 MWt:
 - **Reactor:** 1.75 → **1.84** kg/kWt.
 - **Conversion:** 6.58 → **6.94** kg/kWe.
+  *(v0.24: 2.19 kg/kWt and 8.24 kg/kWe, after the lighter radiator over the
+  gas cooler span; see [`model-brayton-optimum-v024.md`](model-brayton-optimum-v024.md).)*
 
 They are about 5% higher because a power law adds less mass per added kW
 than its average per kW. Holding Mason's marginal between 100 and 500 kWe

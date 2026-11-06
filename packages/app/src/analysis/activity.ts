@@ -51,6 +51,7 @@ const LABELS: Record<string, string> = {
   "power.nuclearMassKg": "nuclear option mass",
   "power.radiatorM2": "radiator area",
   "power.radiatorMassKg": "radiator mass",
+  "power.radiatorEffectiveK": "radiator effective temperature",
   "power.fissionThermalW": "reactor heat",
   "power.nuclearSpecificKgPerKw": "fission specific mass",
   "production.propellantKgPerDay": "usable propellant",

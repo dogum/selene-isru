@@ -31,11 +31,16 @@
  * v0.20 computes fission efficiency from a recuperated Brayton cycle, so
  * `etaMech` (a fixed fraction of Carnot) has no equivalent among the cycle's
  * component efficiencies. It is dropped and the case takes the cycle defaults.
+ *
+ * v0.24 runs the Brayton cycle at the pressure ratio that maximizes its
+ * efficiency, so `rpBrayton` (a held pressure ratio) is an outcome, not an
+ * input. It is dropped and the case takes the optimum, which at the default
+ * temperatures gives the same 26.3%.
  */
 const RENAMED: Readonly<Record<string, string>> = {
   eIlmMining: "eMining"
 };
-const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass", "kMiningMass", "kIlmMiningMass", "alphaSpecific", "etaMech"];
+const RETIRED: readonly string[] = ["kExcFleet", "fIlmConversion", "kIlmReactorMass", "kMiningMass", "kIlmMiningMass", "alphaSpecific", "etaMech", "rpBrayton"];
 
 export function upgradeLegacyParams<T extends object>(raw: T): T {
   const renamed = Object.keys(RENAMED).filter((key) => key in raw);

@@ -106,6 +106,8 @@ management, 22.6 kg/kWe.
     included, matches Mason 2001's 36.2 kg/kWe. That makes Stirling conversion
     and power management **23.31 kg/kWe**, within 4% of FSP's own 22.6
     (benchmark `mason-2001-stirling-scaling`).
+    *(v0.24: 22.23 kg/kWe, within 2% of FSP's, after the shared reactor's
+    recalibration; see [`model-brayton-optimum-v024.md`](model-brayton-optimum-v024.md).)*
   - **Why that design point:** the Brayton calibration used Mason 2006's
     Brayton design point, which is also the model's default.
 - **Scaling:** Table 4's exponent 0.996 rounds to 1. Stirling conversion is

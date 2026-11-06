@@ -220,6 +220,8 @@
         "converterEfficiency": 0.263,
         "radiatorAreaWithMarginM2": 154,
         "areaMargin": 0.1,
+        "reactorThermalKwt": 213,
+        "converterOutputKwe": 54.4,
         "systemMassWithMarginKg": 4193,
         "massMargin": 0.2
       },
@@ -227,8 +229,8 @@
       "unit": "kg",
       "source": "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications, NASA/TM-2006-214120",
       "sourceUrl": "https://ntrs.nasa.gov/citations/20060011236",
-      "sourceLocator": "Table 1 (50 kWe design points with excavation shield), refractory reactor, high-temperature direct Brayton: 1150 K hot end, 400 K cold end, 26.3% converter efficiency, 154 m^2 main radiator with 10% area margin, 4193 kg with 20% mass margin; text: minimum-mass Brayton cold end 380-400 K",
-      "modelSimplification": "The model's defaults take this design point: 1150/400 K, giving 26.3% (v0.19 as a 0.403 fraction of Carnot; since v0.20 from the Brayton cycle, with its loop pressure loss fitted here). As a check not used in calibration, the model at 50 kWe sizes 158 m^2 of radiator against Mason's 140 m^2 before margin, and 3.14 t of system against 3.49 t before margin (10% light); since v0.21, with the shield scaled with power and the reactor and conversion recalibrated, 3.0 t (14% light). The model's efficiency is a fixed fraction of Carnot, so it puts its own minimum-mass radiator temperature near 575 K; a Brayton cycle loses efficiency faster as its cold end warms, which is why Mason's optimum is 400 K. Since v0.20 the Brayton cycle puts the model's optimum near 420 K."
+      "sourceLocator": "Table 1 (50 kWe design points with excavation shield), refractory reactor, high-temperature direct Brayton: 213 kWt reactor, 54.4 kWe conversion output, 1150 K hot end, 400 K cold end, 26.3% converter efficiency, 154 m^2 main radiator with 10% area margin, 4193 kg with 20% mass margin; text: minimum-mass Brayton cold end 380-400 K",
+      "modelSimplification": "The model's defaults take this design point: 1150/400 K, giving 26.3% (v0.19 as a 0.403 fraction of Carnot; since v0.20 from the Brayton cycle, with its loop pressure loss fitted here). As a check not used in calibration, the model at 50 kWe sizes 158 m^2 of radiator against Mason's 140 m^2 before margin, and 3.14 t of system against 3.49 t before margin (10% light); since v0.21, with the shield scaled with power and the reactor and conversion recalibrated, 3.0 t (14% light). The model's efficiency is a fixed fraction of Carnot, so it puts its own minimum-mass radiator temperature near 575 K; a Brayton cycle loses efficiency faster as its cold end warms, which is why Mason's optimum is 400 K. Since v0.20 the Brayton cycle puts the model's optimum near 420 K. Since v0.24 the cycle runs at its best pressure ratio (1.87 here), with the loop pressure loss refitted to 5.15%, and the radiator spans the gas cooler, from 526 K down to 350 K, behind a gas cooler approach fitted so its flux matches Mason's: 158.6 kWt (213 kWt less 54.4 kWe) over 140 m^2, 1,133 W/m^2, against the model's 1,113 (the 48.6 K fit rounded up to 50 K). The model then sizes 126 m^2 at 50 kWe, since it rejects less heat than Mason's system, and 3.11 t (11% light); its optimum radiator cold end is near 414 K."
     },
     {
       "id": "kleinhenz-paz-2020-polar-excavation",
