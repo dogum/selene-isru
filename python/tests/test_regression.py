@@ -281,6 +281,31 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.26, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
 
 
+def test_stirling_converter_v023() -> None:
+    # New and deliberate: a Stirling converter at 0.59 of Carnot with its own conversion mass.
+    # Brayton stays the default, and the default plant does not move.
+    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.26, 0.001)
+    lithium = simulate({"fissionConverter": "stirling", "Tsource": 1050, "Tsink": 500})
+    assert_rel(lithium["power"]["fissionThermalW"] / lithium["energy"]["gridPowerW"], 1 / 0.3090, 0.001)
+    assert_rel(lithium["power"]["radiatorM2"], 922, 0.002)
+    assert_rel(lithium["power"]["nuclearMassKg"] / 1000, 36.58, 0.001)
+    assert_rel(lithium["logistics"]["totalInfraMassKg"] / 1000, 57.21, 0.001)
+    assert lithium["logistics"]["nMissions"] == 1
+    assert "stirling-hot-end" not in warning_ids(lithium)
+    # Above NASA's 1,050 K Stirling hot end it cautions; the Brayton alarm does not apply.
+    hot = simulate({"fissionConverter": "stirling"})
+    assert [w["severity"] for w in hot["warnings"] if w["id"] == "stirling-hot-end"] == ["caution"]
+    assert "fission-no-net-work" not in warning_ids(simulate({"fissionConverter": "stirling", "Tsink": 650}))
+
+    # Disclosed limit: with a fixed fraction of Carnot the model's lightest Stirling
+    # radiator runs near 540 K behind a 1,050 K hot end, against Mason's 500 K design.
+    def at(tsink: float) -> float:
+        return simulate({"fissionConverter": "stirling", "Tsource": 1050, "Tsink": tsink})["power"]["nuclearMassKg"]
+
+    assert at(540) < at(500)
+    assert at(540) < at(580)
+
+
 def test_fission_economy_of_scale_v022() -> None:
     # New and deliberate: reactor and conversion scale as reactor heat^0.95 about 1 MWt
     # (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.

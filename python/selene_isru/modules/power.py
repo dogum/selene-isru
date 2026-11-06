@@ -77,8 +77,12 @@ def brayton_cycle(params: dict[str, Any]) -> dict[str, float]:
 
 
 def fission_efficiency(params: dict[str, Any]) -> float:
-    """Fission conversion efficiency, electrical output over reactor heat [1]: the Brayton cycle's
-    net work over its heat input, times the alternator and power conditioning efficiency."""
+    """Fission conversion efficiency, electrical output over reactor heat [1].
+
+    Brayton: the cycle's net work over its heat input, times the alternator and power conditioning
+    efficiency. Stirling: a fixed fraction of Carnot between the hot and cold ends."""
+    if params["fissionConverter"] == "stirling":
+        return max(1e-9, (1 - params["Tsink"] / params["Tsource"]) * params["fCarnotStirling"])
     cycle = brayton_cycle(params)
     if cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0:
         return 1e-9
@@ -97,15 +101,28 @@ def fission_scale_factor(params: dict[str, Any], thermal_kw: float) -> float:
     return (max(thermal_kw, 1e-9) / params["QscaleRefKwt"]) ** (params["bFissionScale"] - 1)
 
 
+def conversion_kg_per_kwe(params: dict[str, Any], thermal_kw: float) -> float:
+    """Power conversion and power management mass per kW of electrical output at a reactor heat [kg/kW].
+
+    Brayton scales with the reactor (bFissionScale); Stirling's modular convertors by bStirlingScale."""
+    if params["fissionConverter"] == "stirling":
+        stirling_scale = (max(thermal_kw, 1e-9) / params["QscaleRefKwt"]) ** (params["bStirlingScale"] - 1)
+        return params["kConversionStirlingKgPerKwe"] * stirling_scale
+    return params["kConversionKgPerKwe"] * fission_scale_factor(params, thermal_kw)
+
+
 def nuclear_specific_kg_per_kw(params: dict[str, Any], kwe: float | None = None) -> float:
     """Fission specific mass per kW of electrical output at an output, excluding the shield [kg/kW].
 
     Defaults to the output at the scaling reference heat."""
     eta = fission_efficiency(params)
     at_kwe = params["QscaleRefKwt"] * eta if kwe is None else kwe
-    return (params["kReactorKgPerKwt"] / eta + params["kConversionKgPerKwe"]) * fission_scale_factor(
-        params, at_kwe / eta
-    ) + params["kRadiatorKgPerM2"] * radiator_m2_per_kw(params)
+    heat_kw = at_kwe / eta
+    return (
+        params["kReactorKgPerKwt"] / eta * fission_scale_factor(params, heat_kw)
+        + conversion_kg_per_kwe(params, heat_kw)
+        + params["kRadiatorKgPerM2"] * radiator_m2_per_kw(params)
+    )
 
 
 def nuclear_mass_at_kwe(params: dict[str, Any], kwe: float, t_years: float = 0.0) -> float:
@@ -182,7 +199,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     nuclear_mass_kg = (
         shield_kg
         + params["kReactorKgPerKwt"] * (q_fission / 1000) * scale
-        + params["kConversionKgPerKwe"] * (p_grid / 1000) * scale
+        + conversion_kg_per_kwe(params, q_fission / 1000) * (p_grid / 1000)
         + radiator_mass_kg
     )
     alpha_with_radiator = nuclear_specific_kg_per_kw(params, p_grid / 1000)
@@ -196,7 +213,9 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     if params["Tsource"] <= params["Tsink"]:
         warnings.append({"id": "power-hot-side", "severity": "alarm", "module": "power", "message": "Fission hot-side temperature must exceed sink temperature.", "value": params["Tsource"], "limit": params["Tsink"]})
     cycle = brayton_cycle(params)
-    if params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
+    if params["fissionConverter"] == "stirling" and params["Tsource"] > c("TStirlingMaxK"):
+        warnings.append({"id": "stirling-hot-end", "severity": "caution", "module": "power", "message": "Stirling hot end is above NASA's 1,050 K refractory Stirling design.", "value": params["Tsource"], "limit": c("TStirlingMaxK")})
+    if params["fissionConverter"] == "brayton" and params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
         warnings.append({"id": "fission-no-net-work", "severity": "alarm" if architecture == "nuclear" else "caution", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
     if params["Tsink"] <= params["Tenv"]:
         warnings.append({"id": "radiator-temperature", "severity": "alarm", "module": "power", "message": "Radiator sink temperature must exceed its environment temperature.", "value": params["Tsink"], "limit": params["Tenv"]})

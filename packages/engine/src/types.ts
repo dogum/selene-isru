@@ -6,6 +6,7 @@ export type PolarProduct = "water" | "propellant";
 export type RefuelDemand = "none" | "lander";
 export type EquatorialProcess = "mre" | "ilmenite";
 export type IlmeniteFeed = "soil" | "basalt";
+export type FissionConverter = "brayton" | "stirling";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -351,6 +352,13 @@ export interface SimParams {
   Tsink: number;
   /** [K] */
   Tenv: number;
+  fissionConverter: FissionConverter;
+  /** Stirling efficiency as a fraction of Carnot [1] */
+  fCarnotStirling: number;
+  /** [kg/kW] */
+  kConversionStirlingKgPerKwe: number;
+  /** Exponent of Stirling conversion mass with reactor heat [1] */
+  bStirlingScale: number;
   /** Brayton compressor pressure ratio [1] */
   rpBrayton: number;
   etaCompressor: number;

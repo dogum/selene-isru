@@ -225,6 +225,29 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Screens, magnetic separator, hoppers, and conveyors. Guerrero-Gonzalez & Zabel's parametric models give about 2.3 times Eagle's mass per tonne of soil.",
     defaultUncertainty: 0.4
   },
+  fissionConverter: {
+    validity: "Brayton is a closed gas turbine whose efficiency comes from its cycle; Stirling is a set of free-piston convertors at a fixed fraction of Carnot. Both share the reactor, shield, radiator, and temperatures; only the chosen converter's own inputs act. NASA finds Stirling lighter below about 50 kWe and Brayton above (Mason 2001); the model's Stirling is heavier at every power, close to Mason at 500 kWe and not below 100 kWe.",
+    applicability: "Both sites · nuclear architecture"
+  },
+  fCarnotStirling: {
+    rangeRationale: "From poor convertors (0.3) to the best free-piston Stirling (0.75); NASA's lunar designs run 0.56-0.61.",
+    validity: "Stirling efficiency is this fraction of the Carnot efficiency between the hot and cold ends. The default 0.59 reproduces Mason 2006's two Stirling converters (25.9% at 850/460 K, 32.1% at 1,050/500 K) within 5%. Held fixed, so the model's lightest Stirling radiator runs about 40 K warmer than Mason's design points.",
+    applicability: "Both sites · nuclear architecture · Stirling",
+    defaultUncertainty: 0.08
+  },
+  kConversionStirlingKgPerKwe: {
+    rangeRationale: "From advanced convertors to small heavy units; NASA FSP's Stirling design carries 22.6 kg/kW of conversion and power management.",
+    validity: "Stirling convertors, power conditioning, and distribution per kW of electrical output, quoted at QscaleRefKwt and scaled by bStirlingScale. Set so the model's Stirling marginal mass from 100 to 500 kWe is Mason 2001's 36.2 kg/kWe at Mason 2006's 1,050/500 K Stirling design point; within 4% of FSP's own.",
+    applicability: "Both sites · nuclear architecture · Stirling",
+    defaultUncertainty: 0.3
+  },
+  bStirlingScale: {
+    maturity: "SIMPLIFIED CORRELATION",
+    rangeRationale: "1 is modular convertors with no economy of scale; 0.6 a strong one.",
+    validity: "Stirling conversion mass grows as reactor heat to this power. NASA's spacecraft Stirling systems at 0.1, 1 and 10 MWe fit a fixed 1.0 t plus mass growing as power^0.996 (Mason 2001, Table 4): convertors are added, not enlarged. The reactor still scales by bFissionScale.",
+    applicability: "Both sites · nuclear architecture · Stirling",
+    defaultUncertainty: 0.03
+  },
   ilmFeed: {
     validity: "Mare soil is scooped, sized, and separated; high-Ti basalt is mined from a layer under the soil, then crushed, ground, and separated. Both follow Eagle Engineering's 1988 designs, and only the chosen feed's inputs act.",
     applicability: "Equatorial site · ilmenite reduction"
@@ -489,7 +512,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   Tsource: {
     rangeRationale: "From a stainless-steel reactor's 850–900 K to advanced refractory designs near 1,600 K; NASA's lunar Brayton study used 900 K and 1,150 K reactors.",
-    validity: "The converter hot end. The default is Mason 2006's refractory-reactor direct Brayton for a 50 kWe lunar system.",
+    validity: "The converter hot end. The default is Mason 2006's refractory-reactor direct Brayton for a 50 kWe lunar system. NASA's Stirling designs run 850-1,050 K: superalloy heater heads, so a Stirling above 1,050 K raises a caution.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.05
   },

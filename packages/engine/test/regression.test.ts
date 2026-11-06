@@ -253,6 +253,28 @@ describe("regression anchors", () => {
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.26, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
   });
 
+  test("a Stirling converter (v0.23)", () => {
+    // New and deliberate: a Stirling converter at 0.59 of Carnot with its own conversion mass.
+    // Brayton stays the default, and the default plant does not move.
+    expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.26, 0.001);
+    const lithium = simulate({ fissionConverter: "stirling", Tsource: 1050, Tsink: 500 });
+    expectRel(lithium.power.fissionThermalW / lithium.energy.gridPowerW, 1 / 0.309, 0.001);
+    expectRel(lithium.power.radiatorM2, 922, 0.002);
+    expectRel(lithium.power.nuclearMassKg / 1000, 36.58, 0.001);
+    expectRel(lithium.logistics.totalInfraMassKg / 1000, 57.21, 0.001);
+    expect(lithium.logistics.nMissions).toBe(1);
+    expect(warningIds(lithium)).not.toContain("stirling-hot-end");
+    // Above NASA's 1,050 K Stirling hot end it cautions; the Brayton alarm does not apply.
+    const hot = simulate({ fissionConverter: "stirling" });
+    expect(hot.warnings.find((w) => w.id === "stirling-hot-end")?.severity).toBe("caution");
+    expect(warningIds(simulate({ fissionConverter: "stirling", Tsink: 650 }))).not.toContain("fission-no-net-work");
+    // Disclosed limit: with a fixed fraction of Carnot the model's lightest Stirling
+    // radiator runs near 540 K behind a 1,050 K hot end, against Mason's 500 K design.
+    const at = (Tsink: number) => simulate({ fissionConverter: "stirling", Tsource: 1050, Tsink }).power.nuclearMassKg;
+    expect(at(540)).toBeLessThan(at(500));
+    expect(at(540)).toBeLessThan(at(580));
+  });
+
   test("fission economy of scale (v0.22)", () => {
     // New and deliberate: reactor and conversion scale as reactor heat^0.95 about 1 MWt
     // (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.

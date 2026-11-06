@@ -114,6 +114,16 @@ export function normalizeParams(input: Partial<SimParams>): NormalizedParams {
       continue;
     }
 
+    if (key === "fissionConverter") {
+      if (raw === "brayton" || raw === "stirling") {
+        assign("fissionConverter", raw);
+      } else {
+        assign("fissionConverter", DEFAULTS.fissionConverter);
+        warnings.push({ id: "param-clamped", severity: "info", module: "params", message: "Parameter was reset to a supported option.", value: 0, limit: 0 });
+      }
+      continue;
+    }
+
     if (key === "ilmFeed") {
       if (raw === "soil" || raw === "basalt") {
         assign("ilmFeed", raw);

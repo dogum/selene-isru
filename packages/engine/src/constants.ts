@@ -30,6 +30,13 @@ export const PHYSICAL_CONSTANTS = {
     "description": "Heat capacity ratio of the helium-xenon Brayton working fluid (monatomic ideal gas)",
     "source": "Monatomic ideal gas, 5/3; Mason 2006, NASA/TM-2006-214120: HeXe working fluid"
   },
+  "TStirlingMaxK": {
+    "value": 1050,
+    "unit": "K",
+    "kind": "physical",
+    "description": "Hottest Stirling converter hot end in NASA's lunar fission designs (superalloy heater heads)",
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: refractory-reactor lithium Stirling, 1050 K converter hot end"
+  },
   "gL": {
     "value": 1.62,
     "unit": "m/s^2",
@@ -1584,6 +1591,44 @@ export const PARAM_META = {
     "description": "Radiator environment temperature",
     "source": "spec"
   },
+  "fissionConverter": {
+    "value": "brayton",
+    "unit": "mode",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Fission power converter: closed Brayton turbine, or free-piston Stirling",
+    "source": "model switch; Mason 2006, NASA/TM-2006-214120: Brayton, Stirling, and thermoelectric lunar fission options"
+  },
+  "fCarnotStirling": {
+    "value": 0.59,
+    "min": 0.3,
+    "max": 0.75,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Stirling converter efficiency as a fraction of Carnot",
+    "source": "Mason 2006, NASA/TM-2006-214120, Table 1: Stirling converters at 25.9% between 850 and 460 K and 32.1% between 1050 and 500 K, 0.565 and 0.613 of Carnot"
+  },
+  "kConversionStirlingKgPerKwe": {
+    "value": 23.31,
+    "min": 2,
+    "max": 60,
+    "unit": "kg/kW",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Stirling power conversion and power management mass per kW of electrical output",
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, and shield at Mason 2006's 1050/500 K Stirling design point"
+  },
+  "bStirlingScale": {
+    "value": 1,
+    "min": 0.6,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Exponent of Stirling conversion mass with reactor thermal power",
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 4: Stirling systems of 31.0, 21.8 and 20.7 kg/kWe at 0.1, 1 and 10 MWe fit a fixed 1.0 t plus mass growing as power^0.996"
+  },
   "rpBrayton": {
     "value": 2,
     "min": 1.3,
@@ -2553,6 +2598,10 @@ export const DEFAULTS = {
   "Tsource": 1150,
   "Tsink": 400,
   "Tenv": 250,
+  "fissionConverter": "brayton",
+  "fCarnotStirling": 0.59,
+  "kConversionStirlingKgPerKwe": 23.31,
+  "bStirlingScale": 1,
   "rpBrayton": 2,
   "etaCompressor": 0.84,
   "etaTurbine": 0.87,

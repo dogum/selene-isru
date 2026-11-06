@@ -20,6 +20,7 @@ from .modules.ilmenite import (
 )
 from .modules.logistics import payload_per_mission_kg
 from .modules.power import (
+    conversion_kg_per_kwe,
     fission_crossover_kw,
     fission_efficiency,
     fission_scale_factor,
@@ -42,6 +43,7 @@ __all__ = [
     "campaign_at",
     "campaign_timeline",
     "cp_regolith_j_per_kg_k",
+    "conversion_kg_per_kwe",
     "fission_crossover_kw",
     "fission_efficiency",
     "fission_scale_factor",

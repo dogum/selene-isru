@@ -17,6 +17,8 @@ export interface SweepParam {
   process?: SimParams["equatorialProcess"];
   /** restrict to one ilmenite feedstock; omit = either */
   feed?: SimParams["ilmFeed"];
+  /** restrict to one fission converter; omit = either */
+  converter?: SimParams["fissionConverter"];
 }
 
 /** The ilmenite grade input the plant reads: the soil's or the basalt's. */
@@ -24,12 +26,18 @@ export function ilmeniteGradeKey(params: { ilmFeed: string }): "fIlmenite" | "fI
   return params.ilmFeed === "basalt" ? "fIlmBasalt" : "fIlmenite";
 }
 
-/** Whether a site-, process- or feed-specific option acts on this configuration. */
+/** Whether a site-, process-, feed- or converter-specific option acts on this configuration. */
 export function appliesToCase(
-  option: { site?: SimParams["site"]; process?: SimParams["equatorialProcess"]; feed?: SimParams["ilmFeed"] },
-  params: Pick<SimParams, "site" | "equatorialProcess" | "ilmFeed">
+  option: {
+    site?: SimParams["site"];
+    process?: SimParams["equatorialProcess"];
+    feed?: SimParams["ilmFeed"];
+    converter?: SimParams["fissionConverter"];
+  },
+  params: Pick<SimParams, "site" | "equatorialProcess" | "ilmFeed" | "fissionConverter">
 ): boolean {
   if (option.site !== undefined && option.site !== params.site) return false;
+  if (option.converter !== undefined && option.converter !== params.fissionConverter) return false;
   if (params.site !== "equatorial") return true;
   if (option.process !== undefined && option.process !== params.equatorialProcess) return false;
   return option.feed === undefined || params.equatorialProcess !== "ilmenite" || option.feed === params.ilmFeed;
@@ -46,7 +54,8 @@ export const FRONTIER_PARAMS: SweepParam[] = [
   { key: "reserveDays", label: "Reserve days", min: 5, max: 60 },
   { key: "etaCell", label: "PV efficiency", min: 0.15, max: 0.4 },
   { key: "kReactorKgPerKwt", label: "Reactor kg/kWt", min: 1, max: 15, log: true },
-  { key: "kConversionKgPerKwe", label: "Conversion kg/kW", min: 3, max: 60, log: true },
+  { key: "kConversionKgPerKwe", label: "Conversion kg/kW", min: 3, max: 60, log: true, converter: "brayton" },
+  { key: "kConversionStirlingKgPerKwe", label: "Conversion kg/kW", min: 3, max: 60, log: true, converter: "stirling" },
   { key: "Nmli", label: "MLI layers", min: 10, max: 80 },
   { key: "Vcell", label: "MRE cell voltage", min: 3.5, max: 5, site: "equatorial", process: "mre" },
   { key: "etaCurrent", label: "Current efficiency", min: 0.5, max: 0.95, site: "equatorial", process: "mre" },

@@ -170,6 +170,46 @@
       "modelSimplification": "The three systems fit a fixed 1.29 t plus a mass growing as power^0.9486, exactly. The model applies that exponent (0.95) to its reactor and conversion masses only, quoted at 1 MWt; its radiator stays linear in power, so its mass without the shield grows 9.4 times from 1 to 10 MWe against Mason's 8.9. Spacecraft systems carry a lighter shield and a shared radiator, which is why the surface benchmark sets the scale and this one only the exponent."
     },
     {
+      "id": "mason-2006-lunar-stirling",
+      "kind": "calibration",
+      "quantity": "Stirling converter efficiency as a fraction of Carnot",
+      "inputs": {
+        "nakHotK": 850,
+        "nakColdK": 460,
+        "nakEfficiency": 0.259,
+        "lithiumHotK": 1050,
+        "lithiumColdK": 500,
+        "lithiumEfficiency": 0.321
+      },
+      "expected": 0.588,
+      "unit": "1",
+      "source": "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications, NASA/TM-2006-214120",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20060011236",
+      "sourceLocator": "Table 1 (50 kWe design points): NaK Stirling 850/460 K converter hot/cold end, 25.9% converter efficiency; lithium Stirling 1050/500 K, 32.1%; text: minimum-mass Stirling cold end 460 K",
+      "modelSimplification": "The two converters run at 0.565 and 0.613 of Carnot; the model takes one fraction, 0.59 (their geometric mean 0.588, rounded), within 5% of both. A real Stirling's fraction rises with its hot end, which the model holds fixed."
+    },
+    {
+      "id": "mason-2001-stirling-scaling",
+      "kind": "calibration",
+      "quantity": "Marginal Stirling fission system mass per kWe for surface power, 100 to 500 kWe, and its scaling exponent from 0.1 to 10 MWe",
+      "inputs": {
+        "surface100SpecificKgPerKwe": 74.7,
+        "surface500SpecificKgPerKwe": 43.9,
+        "spacecraft100SpecificKgPerKwe": 31.0,
+        "spacecraft1000SpecificKgPerKwe": 21.8,
+        "spacecraft10000SpecificKgPerKwe": 20.7,
+        "fspConversionKg": 344,
+        "fspPowerManagementKg": 559,
+        "fspUserPowerKwe": 40
+      },
+      "expected": 36.2,
+      "unit": "kg/kW",
+      "source": "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts, NASA/TM-2001-210593",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20010016863",
+      "sourceLocator": "Table 3 (surface outposts and bases), substitute 1300 K Stirling: 74.7 kg/kWe at 100 kWe and 43.9 kg/kWe at 500 kWe; Table 4 (spacecraft), substitute 1300 K Stirling: 31.0, 21.8 and 20.7 kg/kWe at 0.1, 1 and 10 MWe; cross-check: Mason, Poston & Qualls 2008 (NASA/TM-2008-215166), Table II, Stirling conversion 344 kg and power management 559 kg for 40 kWe",
+      "modelSimplification": "The model's Stirling conversion and power management mass, 23.31 kg/kWe, is set so its Stirling marginal mass between 100 and 500 kWe, shield and radiator included, is Mason's 36.2 kg/kWe at Mason 2006's 1050/500 K lithium Stirling design point. Table 4's Stirling systems fit a fixed 1.0 t plus mass growing as power^0.996, so the model scales Stirling conversion linearly: modular convertors gain no economy of scale. Not used in calibration: NASA FSP's Stirling design carries 22.6 kg/kWe of conversion and power management. The model's Stirling is heavier than its Brayton at every power (1.03 at 10 kWe to 1.20 at 500 kWe); Mason 2001 finds Stirling lighter below about 100 kWe (0.86 at 10 kWe), which the model's per-kW reactor misses."
+    },
+    {
       "id": "mason-2006-lunar-brayton-50kwe",
       "kind": "documentation-only",
       "quantity": "Fission design point (temperatures, efficiency), radiator area, and system mass of a 50 kWe lunar Brayton system",

@@ -51,18 +51,18 @@ export function ControlGroups({ exclusive = false }: ControlGroupsProps): React.
   const [query, setQuery] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
 
-  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed } = params;
+  const { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter } = params;
   // Custom Site plans the MRE plant only, so its rail has no process switch.
   const customWorkspace = useStore((s) => s.workspaceMode === "custom");
   // Engine-reported streams, joined so the memo only reruns when the set changes.
   const streamKey = result.cryo.inventories.map((inventory) => inventory.stream).sort().join(",");
   const groups = useMemo(() => {
-    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed };
+    const visibility = { site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter };
     const activeStreams = new Set(streamKey.split(",").filter(Boolean));
     return groupsForSite(site)
       .filter((group) => !(customWorkspace && group.id === "oxygen-process"))
       .map((group) => ({ group, defs: railParamsForGroup(group, visibility, activeStreams) }));
-  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, customWorkspace, streamKey]);
+  }, [site, oxideModel, storageStream, cryoControlMode, polarProfileMode, polarProduct, enableSabatier, refuelDemand, equatorialProcess, ilmFeed, fissionConverter, customWorkspace, streamKey]);
   const warned = useMemo(() => warnedParams(result.warnings), [result.warnings]);
 
   // A gated-off group's sliders cannot be shown, so they do not count either.
@@ -258,6 +258,7 @@ function RailGroup({ group, defs, modes, open, onToggle, warned }: RailGroupProp
           )}
           {group.id === "campaign" && showMode("deploymentManifest") && <CampaignModeControls />}
           {group.id === "refuel" && showMode("refuelDemand") && <RefuelModeControls />}
+          {group.id === "power" && showMode("fissionConverter") && <FissionConverterControls />}
           {group.id === "power" && site === "polar" && showMode("polarProfileMode") && <PolarSiteProfileControls />}
           {defs.map((def) => {
             const w = warned.get(def.key);
@@ -304,6 +305,29 @@ function StorageModeControls({ stream: showStream, heat: showHeat }: { stream: b
           <option value="capacity-limited">CAPACITY LIMITED</option>
         </select>
       </label>}
+    </div>
+  );
+}
+
+function FissionConverterControls(): React.JSX.Element {
+  const converter = useStore((s) => s.params.fissionConverter);
+  const setParam = useStore((s) => s.setParam);
+
+  return (
+    <div className="rail-mode-grid">
+      <label>
+        <span>FISSION CONVERTER</span>
+        <select value={converter} onChange={(event) => setParam("fissionConverter", event.target.value as typeof converter)}>
+          <option value="brayton">CLOSED BRAYTON</option>
+          <option value="stirling">FREE-PISTON STIRLING</option>
+        </select>
+      </label>
+      {converter === "stirling" && (
+        <p className="rail-mode-note">
+          Stirling runs at a fixed fraction of Carnot with modular convertors that gain no economy of scale. NASA&apos;s
+          lunar Stirling designs run hot ends of 850–1,050 K and cold ends of 460–500 K; set the temperatures to match.
+        </p>
+      )}
     </div>
   );
 }

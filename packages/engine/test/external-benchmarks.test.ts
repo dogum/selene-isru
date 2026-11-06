@@ -139,6 +139,41 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(variableKg(10000) / variableKg(1000), masonRatio, 0.08);
   });
 
+  test("Stirling efficiency as a fraction of Carnot, from NASA's lunar Stirling designs (v0.23)", () => {
+    const item = benchmark("mason-2006-lunar-stirling");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    const nak = i.nakEfficiency! / (1 - i.nakColdK! / i.nakHotK!);
+    const lithium = i.lithiumEfficiency! / (1 - i.lithiumColdK! / i.lithiumHotK!);
+    expectRelative2(Math.sqrt(nak * lithium), item.expected as number, 0.001);
+    expectRelative2(DEFAULTS.fCarnotStirling, item.expected as number, 0.005);
+    for (const [hot, cold, eta] of [
+      [i.nakHotK!, i.nakColdK!, i.nakEfficiency!],
+      [i.lithiumHotK!, i.lithiumColdK!, i.lithiumEfficiency!]
+    ] as const) {
+      expectRelative2(fissionEfficiency({ ...DEFAULTS, fissionConverter: "stirling", Tsource: hot, Tsink: cold }), eta, 0.05);
+    }
+  });
+
+  test("Stirling mass from NASA's Stirling systems, 0.1 to 10 MWe (v0.23)", () => {
+    const item = benchmark("mason-2001-stirling-scaling");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    const marginal = (500 * i.surface500SpecificKgPerKwe! - 100 * i.surface100SpecificKgPerKwe!) / 400;
+    expectRelative2(marginal, item.expected as number, 1e-9);
+    const stirling = { ...DEFAULTS, fissionConverter: "stirling" as const, Tsource: 1050, Tsink: 500 };
+    expectRelative2((nuclearMassAtKwe(stirling, 500) - nuclearMassAtKwe(stirling, 100)) / 400, marginal, 0.001);
+    const mass = [100 * i.spacecraft100SpecificKgPerKwe!, 1000 * i.spacecraft1000SpecificKgPerKwe!, 10000 * i.spacecraft10000SpecificKgPerKwe!] as const;
+    const exponent = Math.log10((mass[2] - mass[1]) / (mass[1] - mass[0]));
+    expectRelative2(exponent, 0.996, 0.001);
+    expectRelative2(DEFAULTS.bStirlingScale, exponent, 0.005);
+    // Not used in calibration: NASA FSP's Stirling conversion and power management per kWe.
+    const fsp = (i.fspConversionKg! + i.fspPowerManagementKg!) / i.fspUserPowerKwe!;
+    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.05);
+    // Stirling is heavier than Brayton at megawatt scale, as Mason 2001 finds above 50 kWe.
+    expectRelative2(nuclearMassAtKwe(stirling, 500) / nuclearMassAtKwe(DEFAULTS, 500), 1.2, 0.01);
+  });
+
   test("fission design point and a 50 kWe cross-check, from NASA's lunar Brayton study (v0.19)", () => {
     const item = benchmark("mason-2006-lunar-brayton-50kwe");
     expect(item.kind).toBe("documentation-only");

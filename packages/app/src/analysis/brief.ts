@@ -150,7 +150,7 @@ export function optimize(base: SimParams, constraints: MissionConstraints): Opti
     const sabatierStates = site === "polar" && constraints.allowSabatier ? [false, true] : [false];
     for (const reserveDays of reserves) {
       for (const etaCell of pvEfficiencies) {
-        for (const kConversionKgPerKwe of conversionSpecificMass) {
+        for (const conversionKgPerKwe of conversionSpecificMass) {
           for (const a of processA) {
             for (const b of processB) {
               for (const enableSabatier of sabatierStates) {
@@ -161,7 +161,10 @@ export function optimize(base: SimParams, constraints: MissionConstraints): Opti
                   missionYears: constraints.missionYears,
                   reserveDays,
                   etaCell,
-                  kConversionKgPerKwe,
+                  // The lever is the conversion mass the case's converter reads.
+                  ...(base.fissionConverter === "stirling"
+                    ? { kConversionStirlingKgPerKwe: conversionKgPerKwe }
+                    : { kConversionKgPerKwe: conversionKgPerKwe }),
                   enableSabatier,
                   // The equatorial levers are MRE's, so its candidates run MRE.
                   ...(site === "equatorial" ? { equatorialProcess: "mre" as const, Vcell: a, etaCurrent: b } : { chiIce: a, cpRegCold: b })

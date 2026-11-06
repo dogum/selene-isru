@@ -96,4 +96,15 @@ describe("panel exports carry the data behind each chart", () => {
     expect(header).toContain("param.reserveDays [day]");
     expect(header).toContain("logistics.totalInfraMassKg");
   });
+
+  it("brief exports the converter and the conversion mass it varied (v0.23)", () => {
+    const optimization = optimize({ ...DEFAULTS, fissionConverter: "stirling" }, GOALS[0]!.constraints);
+    const [header, ...rows] = lines(briefCandidatesCsv(optimization.all));
+    const converter = header!.findIndex((cell) => cell.startsWith("param.fissionConverter"));
+    const stirling = header!.findIndex((cell) => cell.startsWith("param.kConversionStirlingKgPerKwe"));
+    expect(converter).toBeGreaterThan(-1);
+    expect(stirling).toBeGreaterThan(-1);
+    expect(new Set(rows.map((row) => row[converter]))).toEqual(new Set(["stirling"]));
+    expect(new Set(rows.map((row) => row[stirling])).size).toBeGreaterThan(1);
+  });
 });
