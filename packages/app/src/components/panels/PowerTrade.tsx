@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { nuclearSlopeAtYear, pCritDynamicKw, shieldMassKg, shieldRefKwe, solarSlopeAtYear } from "@selene-isru/engine";
+import { fissionCrossoverKw, nuclearMassAtKwe, solarSlopeAtYear } from "@selene-isru/engine";
 import { scaleLog } from "d3-scale";
 import { line as d3line } from "d3-shape";
 import { useSize } from "../../lib/hooks";
@@ -10,7 +10,7 @@ import { ExportButton } from "./ExportButton";
 
 /**
  * §4.3 — solar vs nuclear mass trade on log-log axes, driven only by
- * SimResult + input params and the engine's public pCritDynamicKw helper.
+ * SimResult + input params and the engine's public fission mass and crossover helpers.
  */
 export function PowerTrade(): React.JSX.Element {
   const result = useStore((s) => s.result);
@@ -28,19 +28,13 @@ export function PowerTrade(): React.JSX.Element {
   const comparePGridKw = compareResult.energy.gridPowerW / 1000;
   // β from the engine's own solar sizing at the operating point (no re-derivation)
   const beta = pGridKw > 0 ? result.power.solarMassKg / pGridKw : 0;
-  // α from the engine: the fission system's kg/kW with its radiator, the slope it charges
-  const alpha = result.power.nuclearSpecificKgPerKw;
-  const mShield = params.MshieldKg;
-  // The shield grows with reactor heat above its reference point; on the chart's
-  // electrical axis that reference is the engine's shieldRefKwe.
-  const shieldRef = shieldRefKwe(params);
-  const nShield = params.nShield;
 
-  // degradation-adjusted slopes at scrubber time t, from the same engine
-  // equations pCritDynamicKw uses — so the curves and the crossover agree
+  // degradation-adjusted solar slope and fission mass curve at scrubber time t,
+  // from the same engine helpers fissionCrossoverKw uses, so the curves and the
+  // crossover agree. The fission curve carries the shield's growth and the
+  // reactor's economy of scale.
   const betaT = solarSlopeAtYear(beta, params.dSolar, tYears);
-  const alphaT = nuclearSlopeAtYear(alpha, params.dNuclear, tYears);
-  const pCritT = pCritDynamicKw(mShield, beta, alpha, params.dSolar, params.dNuclear, tYears, shieldRef, nShield);
+  const pCritT = fissionCrossoverKw(params, beta, tYears);
 
   const chart = useMemo(() => {
     const compareMassKg =
@@ -58,7 +52,7 @@ export function PowerTrade(): React.JSX.Element {
       pts.push(lo * Math.pow(hi / lo, i / samples));
     }
     const solarPts = pts.map((p) => [p, massAt(p, betaT, 0)] as const);
-    const nukePts = pts.map((p) => [p, massAt(p, alphaT, shieldMassKg(mShield, shieldRef, nShield, p))] as const);
+    const nukePts = pts.map((p) => [p, Math.max(1, nuclearMassAtKwe(params, p, tYears))] as const);
     const allMass = [...solarPts, ...nukePts].map((d) => d[1]);
     allMass.push(Math.max(1, compareMassKg));
     const y = scaleLog()
@@ -77,7 +71,7 @@ export function PowerTrade(): React.JSX.Element {
       xTicks: x.ticks(4),
       yTicks: y.ticks(4)
     };
-  }, [pGridKw, comparePGridKw, compareResult.power.architecture, compareResult.power.solarMassKg, compareResult.power.nuclearMassKg, result.power.pCritW, pCritT, betaT, alphaT, mShield, shieldRef, nShield, width, margin.left, margin.right, margin.top, margin.bottom]);
+  }, [pGridKw, comparePGridKw, compareResult.power.architecture, compareResult.power.solarMassKg, compareResult.power.nuclearMassKg, result.power.pCritW, pCritT, betaT, params, tYears, width, margin.left, margin.right, margin.top, margin.bottom]);
 
   const opMassKg =
     result.power.architecture === "solar" ? result.power.solarMassKg : result.power.nuclearMassKg;

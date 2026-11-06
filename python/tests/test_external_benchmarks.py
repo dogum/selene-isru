@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from selene_isru import fission_efficiency, nuclear_specific_kg_per_kw, radiator_m2_per_kw, shield_mass_kg, simulate
+from selene_isru import fission_efficiency, nuclear_mass_at_kwe, radiator_m2_per_kw, shield_mass_kg, simulate
 from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -86,16 +86,37 @@ def test_fission_slope_from_nasa_surface_brayton_scaling_v019() -> None:
     marginal = (mass_500 - mass_100) / (i["power500Kwe"] - i["power100Kwe"])
     assert marginal == pytest.approx(row["expected"], rel=1e-9)
     # v0.21: the shield grows with power, so the model's marginal mass between the
-    # two systems, shield included, is Mason's; and it lands 2.7 t lighter at both.
+    # two systems, shield included, is Mason's. v0.22: so does the reactor and
+    # conversion's economy of scale; the model lands 2.55 t lighter at both.
     def model_kg(kwe: float) -> float:
-        heat_kw = kwe / fission_efficiency(DEFAULTS)
-        shield = shield_mass_kg(DEFAULTS["MshieldKg"], DEFAULTS["QshieldRefKwt"], DEFAULTS["nShield"], heat_kw)
-        return shield + nuclear_specific_kg_per_kw(DEFAULTS) * kwe
+        return nuclear_mass_at_kwe(DEFAULTS, kwe)
 
     model_marginal = (model_kg(i["power500Kwe"]) - model_kg(i["power100Kwe"])) / (i["power500Kwe"] - i["power100Kwe"])
     assert model_marginal == pytest.approx(marginal, rel=0.001)
-    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2688, rel=0.01)
-    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2688, rel=0.01)
+    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2551, rel=0.01)
+    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2551, rel=0.01)
+
+
+def test_fission_economy_of_scale_from_nasa_spacecraft_brayton_v022() -> None:
+    row = item("mason-2001-spacecraft-brayton-scaling")
+    assert row["kind"] == "calibration"
+    i = row["inputs"]
+    mass = [i["power100Kwe"] * i["specificMass100KgPerKwe"], i["power1000Kwe"] * i["specificMass1000KgPerKwe"],
+            i["power10000Kwe"] * i["specificMass10000KgPerKwe"]]
+    exponent = math.log10((mass[2] - mass[1]) / (mass[1] - mass[0]))
+    assert exponent == pytest.approx(row["expected"], rel=1e-3)
+    assert DEFAULTS["bFissionScale"] == pytest.approx(exponent, rel=0.005)
+    # Not fitted: the model's mass without its shield grows 9.4 times from 1 to
+    # 10 MWe, against Mason's 8.9: its radiator stays linear.
+    def variable_kg(kwe: float) -> float:
+        heat_kw = kwe / fission_efficiency(DEFAULTS)
+        shield = shield_mass_kg(DEFAULTS["MshieldKg"], DEFAULTS["QshieldRefKwt"], DEFAULTS["nShield"], heat_kw)
+        return nuclear_mass_at_kwe(DEFAULTS, kwe) - shield
+
+    fixed = mass[0] - (mass[1] - mass[0]) / (i["power1000Kwe"] ** exponent - i["power100Kwe"] ** exponent) * i["power100Kwe"] ** exponent
+    mason_ratio = (mass[2] - fixed) / (mass[1] - fixed)
+    assert mason_ratio == pytest.approx(8.88, rel=0.002)
+    assert variable_kg(10000) / variable_kg(1000) == pytest.approx(mason_ratio, rel=0.08)
 
 
 def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
@@ -107,11 +128,10 @@ def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
     assert fission_efficiency(DEFAULTS) == pytest.approx(i["converterEfficiency"], rel=0.002)
     area_m2 = radiator_m2_per_kw(DEFAULTS) * i["outputKwe"]
     assert area_m2 == pytest.approx(i["radiatorAreaWithMarginM2"] / (1 + i["areaMargin"]), rel=0.15)
-    heat_kw = i["outputKwe"] / fission_efficiency(DEFAULTS)
-    shield = shield_mass_kg(DEFAULTS["MshieldKg"], DEFAULTS["QshieldRefKwt"], DEFAULTS["nShield"], heat_kw)
-    mass_kg = shield + nuclear_specific_kg_per_kw(DEFAULTS) * i["outputKwe"]
+    mass_kg = nuclear_mass_at_kwe(DEFAULTS, i["outputKwe"])
     assert i["systemMassWithMarginKg"] / (1 + i["massMargin"]) == pytest.approx(row["expected"], rel=0.001)
     # v0.21: 3.0 t against 3.49 t, 14% light (10% before the shield scaled with power).
+    # v0.22: 3.09 t, 12% light, with the small reactor's diseconomy of scale.
     assert mass_kg == pytest.approx(row["expected"], rel=0.15)
     assert mass_kg < row["expected"]
 

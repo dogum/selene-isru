@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { normalizeParams, nuclearSlopeAtYear, nuclearSpecificKgPerKw, pCritDynamicKw, shieldMassKg, shieldRefKwe, simulate, solarSlopeAtYear } from "../src/index";
+import { fissionCrossoverKw, normalizeParams, nuclearMassAtKwe, nuclearSlopeAtYear, nuclearSpecificKgPerKw, pCritDynamicKw, shieldMassKg, simulate, solarSlopeAtYear } from "../src/index";
 
 /**
  * The power-trade chart plots the two aging slopes and marks the crossover.
@@ -38,23 +38,25 @@ describe("aging slopes agree with the dynamic crossover", () => {
 });
 
 /**
- * The chart's nuclear slope is the engine's: the fission specific mass with its
- * radiator. The engine's own crossover and nuclear mass must be rebuilt from it.
+ * The chart draws the engine's fission mass curve, nuclearMassAtKwe, and marks
+ * the engine's crossover. The engine's own nuclear mass and crossovers must be
+ * rebuilt from that curve, so the chart and the engine agree.
  */
-describe("the nuclear slope carries the radiator", () => {
-  test.each([{}, { Tsink: 400 }, { site: "polar" as const, kRadiatorKgPerM2: 10 }])("%o", (input) => {
+describe("the nuclear curve is the engine's", () => {
+  test.each([{}, { Tsink: 400 }, { site: "polar" as const, kRadiatorKgPerM2: 10 }, { bFissionScale: 0.8 }])("%o", (input) => {
     const params = normalizeParams(input).params;
     const result = simulate(params);
     const kw = result.energy.gridPowerW / 1000;
-    const alpha = result.power.nuclearSpecificKgPerKw;
-    expect(alpha).toBe(nuclearSpecificKgPerKw(params));
-    // v0.21: the shield follows the reactor heat; on electrical output its reference is shieldRefKwe.
-    const refKwe = shieldRefKwe(params);
-    const shieldAt = (pKw: number) => shieldMassKg(params.MshieldKg, refKwe, params.nShield, pKw);
-    expect(Math.abs(result.power.nuclearMassKg - (shieldAt(kw) + alpha * kw))).toBeLessThan(1e-9 * result.power.nuclearMassKg);
+    expect(result.power.nuclearSpecificKgPerKw).toBe(nuclearSpecificKgPerKw(params, kw));
+    expect(Math.abs(result.power.nuclearMassKg - nuclearMassAtKwe(params, kw))).toBeLessThan(1e-9 * result.power.nuclearMassKg);
     const beta = result.power.solarMassKg / kw;
-    const dynamic = pCritDynamicKw(params.MshieldKg, beta, alpha, params.dSolar, params.dNuclear, params.missionYears, refKwe, params.nShield);
+    const dynamic = fissionCrossoverKw(params, beta, params.missionYears);
     expect(result.power.pCritDynamicW).toBe(dynamic === null ? 0 : dynamic * 1000);
+    // At the aged crossover the aged solar line meets the aged fission curve.
+    if (dynamic !== null) {
+      const solar = solarSlopeAtYear(beta, params.dSolar, params.missionYears) * dynamic;
+      expect(Math.abs(solar - nuclearMassAtKwe(params, dynamic, params.missionYears))).toBeLessThan(1e-9 * solar);
+    }
   });
 });
 

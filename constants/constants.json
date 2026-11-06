@@ -1689,24 +1689,44 @@
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Table IV: 1,500 kg shield for the 230 kWt gas-cooled reactor against 1,370 kg for the 175 kWt heat-pipe reactor, ln(1500/1370)/ln(230/175) = 0.33"
   },
   "kReactorKgPerKwt": {
-    "value": 1.75,
+    "value": 1.84,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
     "kind": "parameter",
     "group": "power",
     "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator and the shield's growth with power, split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kConversionKgPerKwe": {
-    "value": 6.58,
+    "value": 6.94,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Fission power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator and the shield's growth with power, split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+  },
+  "QscaleRefKwt": {
+    "value": 1000,
+    "min": 100,
+    "max": 10000,
+    "unit": "kW",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Reactor thermal power the reactor and conversion specific masses are quoted at",
+    "source": "Model convention: 1 MWt, inside Mason 2001's 0.1-10 MWe span (NASA/TM-2001-210593, Table 4)"
+  },
+  "bFissionScale": {
+    "value": 0.95,
+    "min": 0.6,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Exponent of reactor and conversion mass with reactor thermal power",
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 4: Brayton systems of 26.4, 13.3 and 10.8 kg/kWe at 0.1, 1 and 10 MWe fit a fixed 1.3 t plus mass growing as power^0.95"
   },
   "kRadiatorKgPerM2": {
     "value": 3.87,
