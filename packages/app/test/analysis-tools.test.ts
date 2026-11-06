@@ -54,6 +54,7 @@ describe("analysis grids stay inside the engine bounds", () => {
       expectInBounds("reserveDays", grid.reserves);
       expectInBounds("etaCell", grid.pvEfficiencies);
       expectInBounds("kConversionKgPerKwe", grid.conversionSpecificMass);
+      expectInBounds("kConversionStirlingKgPerKwe", grid.conversionSpecificMass);
       expectInBounds(site === "equatorial" ? "Vcell" : "chiIce", grid.processA);
       expectInBounds(site === "equatorial" ? "etaCurrent" : "cpRegCold", grid.processB);
     }

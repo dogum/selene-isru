@@ -4,6 +4,8 @@ import type { SimParams } from "@selene-isru/engine";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { inputActivity } from "../src/analysis/activity";
+import { GOALS, optimize } from "../src/analysis/brief";
+import { appliesToCase, FRONTIER_PARAMS } from "../src/analysis/sweep";
 import { ControlGroups } from "../src/components/ControlRail";
 import { GROUPS, railModeParamsForGroup, railParamsForGroup } from "../src/controls/manifest";
 import { evidenceForParam } from "../src/controls/evidence";
@@ -57,5 +59,20 @@ describe("fission converter (v0.23)", () => {
     expect(serializeParams(stirling)).toContain("fissionConverter=stirling");
     expect(parseParams("fissionConverter=stirling")).toEqual({ fissionConverter: "stirling" });
     expect(parseParams("fissionConverter=rankine")).toEqual({});
+  });
+
+  it("points the analysis tools' conversion-mass lever at the chosen converter", () => {
+    // The frontier (and the uncertainty panel, through the same filter) offers
+    // only the conversion mass the case's converter reads.
+    const axes = (params: SimParams) => FRONTIER_PARAMS.filter((param) => appliesToCase(param, params)).map((param) => param.key);
+    expect(axes(brayton)).toContain("kConversionKgPerKwe");
+    expect(axes(brayton)).not.toContain("kConversionStirlingKgPerKwe");
+    expect(axes(stirling)).toContain("kConversionStirlingKgPerKwe");
+    expect(axes(stirling)).not.toContain("kConversionKgPerKwe");
+    // The Brief varies the Stirling coefficient on a Stirling case.
+    const { all: candidates } = optimize(stirling, GOALS[0]!.constraints);
+    const levels = new Set(candidates.map((candidate) => candidate.params.kConversionStirlingKgPerKwe));
+    expect(levels.size).toBeGreaterThan(1);
+    expect(new Set(candidates.map((candidate) => candidate.params.kConversionKgPerKwe))).toEqual(new Set([DEFAULTS.kConversionKgPerKwe]));
   });
 });

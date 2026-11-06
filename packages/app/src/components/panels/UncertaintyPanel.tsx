@@ -24,6 +24,8 @@ interface UncertaintyOption {
   process?: SimParams["equatorialProcess"];
   /** restrict to one ilmenite feedstock; omit = either */
   feed?: SimParams["ilmFeed"];
+  /** restrict to one fission converter; omit = either */
+  converter?: SimParams["fissionConverter"];
 }
 
 const OPTIONS: UncertaintyOption[] = [
@@ -33,7 +35,8 @@ const OPTIONS: UncertaintyOption[] = [
   { key: "Nmli", label: "MLI construction", rel: 0.15 },
   { key: "etaCell", label: "PV efficiency", rel: 0.08 },
   { key: "kReactorKgPerKwt", label: "Fission reactor mass per kWt", rel: 0.3 },
-  { key: "kConversionKgPerKwe", label: "Fission conversion mass per kW", rel: 0.3 },
+  { key: "kConversionKgPerKwe", label: "Fission conversion mass per kW", rel: 0.3, converter: "brayton" },
+  { key: "kConversionStirlingKgPerKwe", label: "Fission conversion mass per kW", rel: 0.3, converter: "stirling" },
   { key: "Vcell", label: "MRE cell voltage", rel: 0.08, site: "equatorial", process: "mre" },
   { key: "etaCurrent", label: "MRE current efficiency", rel: 0.12, site: "equatorial", process: "mre" },
   { key: "xO2", label: "Regolith O₂ fraction", rel: 0.12, site: "equatorial", process: "mre" },
