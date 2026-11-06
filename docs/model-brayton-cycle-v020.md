@@ -182,7 +182,8 @@ Screenshot: [the cycle inputs and the pressure loss's evidence over the power pa
 
 - **Stirling as a converter choice.** The cycle is Brayton only. A Stirling
   option, Mason 2006's other lunar converter, would carry its own efficiency,
-  temperatures, and mass.
+  temperatures, and mass. *(v0.23: done; see
+  [`model-stirling-v023.md`](model-stirling-v023.md).)*
 - **The pressure ratio at its optimum.** Each temperature ratio has a best
   pressure ratio; the model holds Fuller's 2:1, so it understates a
   re-optimized converter away from the design point.

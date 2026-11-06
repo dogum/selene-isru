@@ -274,6 +274,10 @@ NASA FSP's 175 kWt design, with the reactor and conversion recalibrated) is in
 The v0.22 economy of scale (fission reactor and conversion mass growing as
 power^0.95, from NASA's 0.1–10 MWe Brayton systems) is in
 [`docs/model-economy-of-scale-v022.md`](docs/model-economy-of-scale-v022.md).
+The v0.23 Stirling converter (a fission converter choice beside Brayton, with
+its own efficiency, conversion mass, and scaling from NASA's lunar and Mason
+2001 studies) is in
+[`docs/model-stirling-v023.md`](docs/model-stirling-v023.md).
 
 ## Architecture
 

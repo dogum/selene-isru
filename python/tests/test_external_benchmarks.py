@@ -288,3 +288,36 @@ def test_basalt_against_soil_power_ratio() -> None:
     assert basalt["energy"]["gridPowerW"] / soil["energy"]["gridPowerW"] == pytest.approx(expected["powerRatio"], rel=0.05)
     ratio = basalt["logistics"]["totalInfraMassKg"] / soil["logistics"]["totalInfraMassKg"]
     assert expected["landedMassRatio"] < ratio < 1
+
+
+def test_stirling_efficiency_from_nasa_lunar_stirling_v023() -> None:
+    row = item("mason-2006-lunar-stirling")
+    assert row["kind"] == "calibration"
+    i = row["inputs"]
+    nak = i["nakEfficiency"] / (1 - i["nakColdK"] / i["nakHotK"])
+    lithium = i["lithiumEfficiency"] / (1 - i["lithiumColdK"] / i["lithiumHotK"])
+    assert math.sqrt(nak * lithium) == pytest.approx(row["expected"], rel=0.001)
+    assert DEFAULTS["fCarnotStirling"] == pytest.approx(row["expected"], rel=0.005)
+    for hot, cold, eta in ((i["nakHotK"], i["nakColdK"], i["nakEfficiency"]), (i["lithiumHotK"], i["lithiumColdK"], i["lithiumEfficiency"])):
+        stirling = {**DEFAULTS, "fissionConverter": "stirling", "Tsource": hot, "Tsink": cold}
+        assert fission_efficiency(stirling) == pytest.approx(eta, rel=0.05)
+
+
+def test_stirling_mass_from_nasa_stirling_scaling_v023() -> None:
+    row = item("mason-2001-stirling-scaling")
+    assert row["kind"] == "calibration"
+    i = row["inputs"]
+    marginal = (500 * i["surface500SpecificKgPerKwe"] - 100 * i["surface100SpecificKgPerKwe"]) / 400
+    assert marginal == pytest.approx(row["expected"], rel=1e-9)
+    stirling = {**DEFAULTS, "fissionConverter": "stirling", "Tsource": 1050, "Tsink": 500}
+    model_marginal = (nuclear_mass_at_kwe(stirling, 500) - nuclear_mass_at_kwe(stirling, 100)) / 400
+    assert model_marginal == pytest.approx(marginal, rel=0.001)
+    mass = [100 * i["spacecraft100SpecificKgPerKwe"], 1000 * i["spacecraft1000SpecificKgPerKwe"], 10000 * i["spacecraft10000SpecificKgPerKwe"]]
+    exponent = math.log10((mass[2] - mass[1]) / (mass[1] - mass[0]))
+    assert exponent == pytest.approx(0.996, rel=0.001)
+    assert DEFAULTS["bStirlingScale"] == pytest.approx(exponent, rel=0.005)
+    # Not used in calibration: NASA FSP's Stirling conversion and power management per kWe.
+    fsp = (i["fspConversionKg"] + i["fspPowerManagementKg"]) / i["fspUserPowerKwe"]
+    assert DEFAULTS["kConversionStirlingKgPerKwe"] == pytest.approx(fsp, rel=0.05)
+    # Stirling is heavier than Brayton at megawatt scale, as Mason 2001 finds above 50 kWe.
+    assert nuclear_mass_at_kwe(stirling, 500) / nuclear_mass_at_kwe(DEFAULTS, 500) == pytest.approx(1.20, rel=0.01)

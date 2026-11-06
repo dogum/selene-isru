@@ -130,11 +130,15 @@ export function braytonCycle(params: SimParams): BraytonCycle {
 }
 
 /**
- * Fission conversion efficiency, electrical output over reactor heat [1]: the
- * Brayton cycle's net work over its heat input, times the alternator and
- * power conditioning efficiency.
+ * Fission conversion efficiency, electrical output over reactor heat [1].
+ * Brayton: the cycle's net work over its heat input, times the alternator and
+ * power conditioning efficiency. Stirling: a fixed fraction of Carnot between
+ * the hot and cold ends, which suits a cycle whose ideal is Carnot's.
  */
 export function fissionEfficiency(params: SimParams): number {
+  if (params.fissionConverter === "stirling") {
+    return Math.max(1e-9, (1 - params.Tsink / params.Tsource) * params.fCarnotStirling);
+  }
   const cycle = braytonCycle(params);
   if (cycle.netWorkK <= 0 || cycle.heatInK <= 0) {
     return 1e-9;
@@ -163,6 +167,19 @@ export function fissionScaleFactor(params: SimParams, thermalKw: number): number
 }
 
 /**
+ * Power conversion and power management mass per kW of electrical output at a
+ * reactor heat [kg/kW]. Brayton scales with the reactor (bFissionScale);
+ * Stirling's modular convertors by bStirlingScale.
+ */
+export function conversionKgPerKwe(params: SimParams, thermalKw: number): number {
+  if (params.fissionConverter === "stirling") {
+    const stirlingScale = (Math.max(thermalKw, 1e-9) / params.QscaleRefKwt) ** (params.bStirlingScale - 1);
+    return params.kConversionStirlingKgPerKwe * stirlingScale;
+  }
+  return params.kConversionKgPerKwe * fissionScaleFactor(params, thermalKw);
+}
+
+/**
  * Fission specific mass per kW of electrical output at an output, excluding
  * the shield [kg/kW]: the reactor on the heat it makes and conversion and
  * power management on the output, both scaled with size, and the radiator on
@@ -171,8 +188,10 @@ export function fissionScaleFactor(params: SimParams, thermalKw: number): number
 export function nuclearSpecificKgPerKw(params: SimParams, kwe?: number): number {
   const eta = fissionEfficiency(params);
   const atKwe = kwe ?? params.QscaleRefKwt * eta;
+  const heatKw = atKwe / eta;
   return (
-    (params.kReactorKgPerKwt / eta + params.kConversionKgPerKwe) * fissionScaleFactor(params, atKwe / eta) +
+    (params.kReactorKgPerKwt / eta) * fissionScaleFactor(params, heatKw) +
+    conversionKgPerKwe(params, heatKw) +
     params.kRadiatorKgPerM2 * radiatorM2PerKw(params)
   );
 }
@@ -279,7 +298,7 @@ export function simulatePower(
   const nuclearMassKg =
     shieldKg +
     params.kReactorKgPerKwt * (Qfission / 1000) * scale +
-    params.kConversionKgPerKwe * (Pgrid / 1000) * scale +
+    conversionKgPerKwe(params, Qfission / 1000) * (Pgrid / 1000) +
     radiatorMassKg;
   const alphaWithRadiator = nuclearSpecificKgPerKw(params, Pgrid / 1000);
   const architecture = strategy === "auto"
@@ -311,7 +330,17 @@ export function simulatePower(
     });
   }
   const cycle = braytonCycle(params);
-  if (params.Tsource > params.Tsink && (cycle.netWorkK <= 0 || cycle.heatInK <= 0)) {
+  if (params.fissionConverter === "stirling" && params.Tsource > PHYSICAL_CONSTANTS.TStirlingMaxK.value) {
+    warnings.push({
+      id: "stirling-hot-end",
+      severity: "caution",
+      module: "power",
+      message: "Stirling hot end is above NASA's 1,050 K refractory Stirling design.",
+      value: params.Tsource,
+      limit: PHYSICAL_CONSTANTS.TStirlingMaxK.value
+    });
+  }
+  if (params.fissionConverter === "brayton" && params.Tsource > params.Tsink && (cycle.netWorkK <= 0 || cycle.heatInK <= 0)) {
     warnings.push({
       id: "fission-no-net-work",
       // An alarm only when the plant runs on it; solar then carries the load.

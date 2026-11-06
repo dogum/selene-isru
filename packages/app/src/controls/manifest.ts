@@ -214,7 +214,25 @@ export type RailVisibilityParams = Pick<
   | "refuelDemand"
   | "equatorialProcess"
   | "ilmFeed"
+  | "fissionConverter"
 >;
+
+/** Fission inputs that only act on one converter; the other converter hides them. */
+const BRAYTON_ONLY = new Set<keyof SimParams>([
+  "rpBrayton",
+  "etaCompressor",
+  "etaTurbine",
+  "epsRecuperator",
+  "fPressureLoss",
+  "etaAlternator",
+  "kConversionKgPerKwe"
+]);
+const STIRLING_ONLY = new Set<keyof SimParams>(["fCarnotStirling", "kConversionStirlingKgPerKwe", "bStirlingScale"]);
+
+/** Whether a fission input belongs to the converter this case runs; the other converter's inputs are inert. */
+export function readsFissionConverter(key: keyof SimParams, params: Pick<SimParams, "fissionConverter">): boolean {
+  return !(params.fissionConverter === "stirling" ? BRAYTON_ONLY : STIRLING_ONLY).has(key);
+}
 
 /** Ilmenite inputs that only act on one feed; the other feed hides them. */
 const SOIL_FEED_ONLY = new Set<keyof SimParams>(["fIlmenite", "fIlmSized", "eIlmBeneficiation", "kIlmBeneficiationMass"]);
@@ -296,8 +314,12 @@ export function railParamsForGroup(
     const mixture = params.site === "equatorial" ? paramsForGroup("propellant").filter((def) => def.key === "mixtureRatio") : [];
     return [...all, ...mixture];
   }
-  if (group.id === "power" && params.site === "polar" && params.polarProfileMode === "profile") {
-    return all.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
+  if (group.id === "power") {
+    const converter = all.filter((def) => readsFissionConverter(def.key, params));
+    if (params.site === "polar" && params.polarProfileMode === "profile") {
+      return converter.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
+    }
+    return converter;
   }
   if (group.id === "excavation") {
     // Only a mine that strips overburden (the polar pit, or a basalt layer
@@ -339,7 +361,7 @@ const GROUP_MODE_PARAMS: Partial<Record<string, Array<keyof SimParams>>> = {
   "oxygen-process": ["equatorialProcess", "ilmFeed"],
   "extraction-sub": ["polarProduct"],
   cryo: ["storageStream", "cryoControlMode"],
-  power: ["polarProfileMode"],
+  power: ["polarProfileMode", "fissionConverter"],
   sabatier: ["enableSabatier"],
   campaign: ["deploymentManifest"],
   refuel: ["refuelDemand"]
@@ -353,7 +375,8 @@ export function railModeParamsForGroup(
   group: GroupDef,
   params: Pick<SimParams, "site" | "enableSabatier" | "polarProduct" | "equatorialProcess">
 ): Array<keyof SimParams> {
-  if (group.id === "power" && params.site !== "polar") return [];
+  // The illumination profile belongs to the pole; the converter to both sites.
+  if (group.id === "power" && params.site !== "polar") return ["fissionConverter"];
   // The feed choice belongs to the ilmenite plant.
   if (group.id === "oxygen-process" && params.equatorialProcess !== "ilmenite") return ["equatorialProcess"];
   if (group.id === "refuel" && !makesLanderPropellant(params)) return [];

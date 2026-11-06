@@ -154,4 +154,5 @@ Screenshot: [fission mass against radiator temperature, from the sweep tool, wit
   Carnot, is one number for Stirling and Brayton alike; a converter choice
   would carry its own efficiency, temperatures, and mass. *(v0.20: Brayton's
   efficiency now comes from its cycle; a Stirling choice stays on the backlog.
-  See [`model-brayton-cycle-v020.md`](model-brayton-cycle-v020.md).)*
+  See [`model-brayton-cycle-v020.md`](model-brayton-cycle-v020.md).)* *(v0.23: Stirling is a converter
+  choice; see [`model-stirling-v023.md`](model-stirling-v023.md).)*

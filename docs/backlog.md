@@ -2,7 +2,7 @@
 
 Open items gathered from every "left for later" and "remaining" section in the
 audit trail ([`model-audit-v02.md`](model-audit-v02.md) through
-[`model-economy-of-scale-v022.md`](model-economy-of-scale-v022.md)), plus the
+[`model-stirling-v023.md`](model-stirling-v023.md)), plus the
 visual and Custom Site notes. Each item names the doc it came from. When an item
 ships, delete it here and annotate the source doc, as the audit trail already
 does.
@@ -20,10 +20,10 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 
 | # | Item | Size | Source in hand | From |
 |---|---|---|---|---|
-| 1 | **Stirling as a fission converter choice.** A converter switch with Stirling's own efficiency, temperatures, and mass beside today's Brayton cycle. | M | Mason 2006 (NASA/TM-2006-214120) Table 1 gives three Stirling design points; NASA FSP's Stirling design | v0.18, v0.20 |
-| 2 | **Brayton pressure ratio at its optimum, and the radiator at its mean temperature.** Re-optimize the pressure ratio with the temperature ratio, and size the radiator over the gas's rejection span, not at the compressor inlet. | S | Fuller 2010 (NASA/CR-2010-215673) cycle spreadsheet | v0.20 |
-| 3 | **Fission shield with separation distance and burial.** The dose, separation, and regolith augmentation are fixed with the reference shield; a separation input would trade shield mass against cable mass. | S | Mason 2025 (NETS 2025): shield 2,700 / 1,370 / 700 kg at 0.5 / 1 / 2 km | v0.21 |
-| 4 | **Fission unit size and radiator economy of scale.** Whole reactors and converters (the step to a second unit, redundancy at a crewed site), and a radiator areal mass that falls with panel size. | M | Mason 2001 (NASA/TM-2001-210593) unit counts; Mason 2025 (NETS 2025) multiple-unit trade | v0.22 |
+| 1 | **Brayton pressure ratio at its optimum, and the radiator at its mean temperature.** Re-optimize the pressure ratio with the temperature ratio, and size the radiator over the gas's rejection span, not at the compressor inlet. | S | Fuller 2010 (NASA/CR-2010-215673) cycle spreadsheet | v0.20 |
+| 2 | **Fission shield with separation distance and burial.** The dose, separation, and regolith augmentation are fixed with the reference shield; a separation input would trade shield mass against cable mass. | S | Mason 2025 (NETS 2025): shield 2,700 / 1,370 / 700 kg at 0.5 / 1 / 2 km | v0.21 |
+| 3 | **Fission unit size, small-reactor fixed masses, and radiator economy of scale.** Whole reactors and converters (the step to a second unit, redundancy at a crewed site); reactor and shield masses that do not shrink with power, which would let Stirling's efficiency pay below 100 kWe as Mason 2001 finds; and a radiator areal mass that falls with panel size. | M | Mason 2001 (NASA/TM-2001-210593) unit counts and 10 kWe systems; Mason 2025 (NETS 2025) multiple-unit trade | v0.22, v0.23 |
+| 4 | **Stirling efficiency with temperature, and thermoelectric conversion.** A Stirling fraction of Carnot that falls as the cold end warms (moving the model's optimum toward Mason's 460–500 K), and Mason 2006's third converter. | S | Mason 2006 (NASA/TM-2006-214120), Table 1 and Fig. 7 | v0.23 |
 
 ## Model depth, larger
 
