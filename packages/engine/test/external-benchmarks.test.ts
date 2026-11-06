@@ -111,11 +111,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
     // v0.25: the shield at its 1 km separation and the cable to the outpost; 2.55 t.
     // v0.27: the cable designed for its power; 2.46 t.
+    // v0.28: the cable's fixed mass refitted to Mason 2025's 3 kVac cable; 2.53 t.
     const modelKg = (kwe: number) => nuclearMassAtKwe(DEFAULTS, kwe);
     const modelMarginal = (modelKg(i.power500Kwe!) - modelKg(i.power100Kwe!)) / (i.power500Kwe! - i.power100Kwe!);
     expectRelative2(modelMarginal, marginal, 0.001);
-    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2463, 0.01);
-    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2463, 0.01);
+    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2532, 0.01);
+    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2532, 0.01);
   });
 
   test("fission economy of scale from NASA's spacecraft Brayton systems, 0.1 to 10 MWe (v0.22)", () => {
@@ -186,8 +187,11 @@ describe("external analytical benchmarks (separate from implementation parity)",
     const exponent = Math.log(i.shield05Kg! / i.shield2Kg!) / Math.log(i.separation2Km! / i.separation05Km!);
     expectRelative2(DEFAULTS.nShieldDistance, exponent, 0.005);
     expect(DEFAULTS.MshieldKg).toBe(i.shield1Kg);
-    const at = (km: number) => ({ ...DEFAULTS, dSeparationKm: km });
+    // v0.28: Mason's own cable, 3 kVac: an AC line whose peak voltage to ground is 3 kV x sqrt(2/3).
+    const masonCable = { cableForm: "ac" as const, VCableMaxV: 2 * i.cableVoltsAc! * Math.sqrt(2 / 3) };
+    const at = (km: number) => ({ ...DEFAULTS, ...masonCable, dSeparationKm: km });
     const cable = (km: number) => cableMassKg(at(km), i.userPowerKwe! / lineEfficiency(at(km)));
+    expectRelative2(cableDesign(at(1), i.userPowerKwe!).voltageV, i.cableVoltsAc!, 1e-9);
     expectRelative2(fissionShieldKg(at(i.separation05Km!), i.reactorThermalKwt!), i.shield05Kg!, 0.01);
     expectRelative2(fissionShieldKg(at(i.separation2Km!), i.reactorThermalKwt!), i.shield2Kg!, 0.01);
     // The cable grows as Mason's user interface pallet does: 385 kg/km by least squares.
@@ -215,6 +219,15 @@ describe("external analytical benchmarks (separate from implementation parity)",
       cableDesign({ ...DEFAULTS, fCableLossPerKm: (1 - efficiency) / km, VCableMaxV: 30000 }, kw);
     const barth = design(i.barthPowerKw!, i.barthLengthKm!, i.barthEfficiency!);
     expectRelative2(barth.voltageV / 2, item.expected as number, 0.02);
+    // v0.28: the three-phase AC line, insulated for its peak voltage, and heavier than the DC line.
+    const barthAc = cableDesign(
+      { ...DEFAULTS, cableForm: "ac", fCableLossPerKm: (1 - i.barthEfficiency!) / i.barthLengthKm!, VCableMaxV: 30000 },
+      i.barthPowerKw!
+    );
+    expectRelative2(barthAc.voltageV / Math.sqrt(3), i.barthAcOptimumVoltsToNeutral!, 0.02);
+    const perKm = (d: { conductorKgPerKm: number; insulationKgPerKm: number; jacketKgPerKm: number }) =>
+      d.conductorKgPerKm + d.insulationKgPerKm + d.jacketKgPerKm;
+    expect(perKm(barthAc)).toBeGreaterThan(perKm(barth));
     const oleson = design(i.olesonPowerKwe!, i.olesonLengthKm!, i.olesonEfficiency!);
     expect(oleson.conductorAreaM2).toBe(PHYSICAL_CONSTANTS.AConductorMinM2.value);
     expectRelative2(oleson.voltageV / 2, i.olesonOptimumVoltsToNeutral!, 0.12);

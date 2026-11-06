@@ -72,7 +72,7 @@ export { payloadPerMissionKg } from "./modules/logistics";
 export { refuelTimeline, sortiePropellantKg } from "./modules/refuel";
 export type { RefuelSource, RefuelTimelinePoint, SortiePropellant } from "./modules/refuel";
 export type { BraytonCycle, CableDesign } from "./modules/power";
-export type { FissionConverter, FissionSiting } from "./types";
+export type { CableForm, FissionConverter, FissionSiting } from "./types";
 export {
   beamedPowerW,
   beamEfficiency,

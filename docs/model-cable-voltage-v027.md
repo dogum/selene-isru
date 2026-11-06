@@ -75,7 +75,7 @@ cable            = d · (kCableKgPerKm + m)                                     
 |---|---|---|---|
 | `VCableMaxV` | 8,000 V | 1–30 kV | Barth & Pike 2022: a 40 kW cable is lightest at ±4,000 VDC; the highest NASA's FSP studies select |
 | `VCableV` (physical) | retired | | was a fixed 3,000 V |
-| `kCableKgPerKm` | **312** kg/km (was 303) | 0–1,000 | Refitted: Mason 2025's 385 kg/km less the 74 kg/km the model designs for 40 kWe |
+| `kCableKgPerKm` | **312** kg/km (was 303) | 0–1,000 | Refitted: Mason 2025's 385 kg/km less the 74 kg/km the model designs for 40 kWe *(v0.28: 243, against Mason's own 3 kVac cable)* |
 | `kReactorKgPerKwt` | **2.16** (was 1.94) | | Recalibrated: Mason 2001's 29.25 kg/kWe |
 | `kConversionKgPerKwe` | **8.14** (was 7.31) | | Recalibrated, as above |
 | `kConversionStirlingKgPerKwe` | **21.96** (was 21.06) | | Recalibrated: Mason 2001's 36.2 kg/kWe Stirling |
@@ -225,8 +225,9 @@ Screenshot: [the voltage cap's evidence over the power panel](screenshots/cable-
 
 ## Left for later
 
-- **AC transmission.** NASA's current design uses 3 kVac with transformers at
-  each end. An AC line needs insulation for its peak voltage and adds a
+- **AC transmission.** *(v0.28: done; see
+  [`model-ac-transmission-v028.md`](model-ac-transmission-v028.md).)* NASA's
+  current design uses 3 kVac with transformers at each end. An AC line needs insulation for its peak voltage and adds a
   converter mass the DC model does not carry.
 - **The converters at each end** of a higher-voltage line, and their losses,
   are inside the conversion and power management mass, not sized with voltage.

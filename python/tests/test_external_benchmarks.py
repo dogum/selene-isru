@@ -102,13 +102,14 @@ def test_fission_slope_from_nasa_surface_brayton_scaling_v019() -> None:
     # v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
     # v0.25: the shield at its 1 km separation and the cable to the outpost; 2.55 t.
     # v0.27: the cable designed for its power; 2.46 t.
+    # v0.28: the cable's fixed mass refitted to Mason 2025's 3 kVac cable; 2.53 t.
     def model_kg(kwe: float) -> float:
         return nuclear_mass_at_kwe(DEFAULTS, kwe)
 
     model_marginal = (model_kg(i["power500Kwe"]) - model_kg(i["power100Kwe"])) / (i["power500Kwe"] - i["power100Kwe"])
     assert model_marginal == pytest.approx(marginal, rel=0.001)
-    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2463, rel=0.01)
-    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2463, rel=0.01)
+    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2532, rel=0.01)
+    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2532, rel=0.01)
 
 
 def test_fission_economy_of_scale_from_nasa_spacecraft_brayton_v022() -> None:
@@ -141,11 +142,16 @@ def test_fission_shield_and_cable_with_separation_v025() -> None:
     assert DEFAULTS["nShieldDistance"] == pytest.approx(exponent, rel=0.005)
     assert DEFAULTS["MshieldKg"] == i["shield1Kg"]
 
+    # v0.28: Mason's own cable, 3 kVac: an AC line whose peak voltage to ground is 3 kV x sqrt(2/3).
+    mason_cable = {"cableForm": "ac", "VCableMaxV": 2 * i["cableVoltsAc"] * math.sqrt(2 / 3)}
+
     def at(km: float) -> dict:
-        return {**DEFAULTS, "dSeparationKm": km}
+        return {**DEFAULTS, **mason_cable, "dSeparationKm": km}
 
     def cable(km: float) -> float:
         return cable_mass_kg(at(km), i["userPowerKwe"] / line_efficiency(at(km)))
+
+    assert cable_design(at(1), i["userPowerKwe"])["voltageV"] == pytest.approx(i["cableVoltsAc"], rel=1e-9)
 
     for km, shield in ((i["separation05Km"], i["shield05Kg"]), (i["separation2Km"], i["shield2Kg"])):
         assert fission_shield_kg(at(km), i["reactorThermalKwt"]) == pytest.approx(shield, rel=0.01)
@@ -176,6 +182,15 @@ def test_cable_voltage_from_nasa_transmission_studies_v027() -> None:
 
     barth = design(i["barthPowerKw"], i["barthLengthKm"], i["barthEfficiency"])
     assert barth["voltageV"] / 2 == pytest.approx(row["expected"], rel=0.02)
+    # v0.28: the three-phase AC line, insulated for its peak voltage, and heavier than the DC line.
+    ac_params = {**DEFAULTS, "cableForm": "ac", "fCableLossPerKm": (1 - i["barthEfficiency"]) / i["barthLengthKm"], "VCableMaxV": 30000}
+    barth_ac = cable_design(ac_params, i["barthPowerKw"])
+    assert barth_ac["voltageV"] / math.sqrt(3) == pytest.approx(i["barthAcOptimumVoltsToNeutral"], rel=0.02)
+
+    def per_km(d: dict[str, float]) -> float:
+        return d["conductorKgPerKm"] + d["insulationKgPerKm"] + d["jacketKgPerKm"]
+
+    assert per_km(barth_ac) > per_km(barth)
     oleson = design(i["olesonPowerKwe"], i["olesonLengthKm"], i["olesonEfficiency"])
     assert oleson["conductorAreaM2"] == c("AConductorMinM2")
     assert oleson["voltageV"] / 2 == pytest.approx(i["olesonOptimumVoltsToNeutral"], rel=0.12)

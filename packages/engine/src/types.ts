@@ -8,6 +8,7 @@ export type EquatorialProcess = "mre" | "ilmenite";
 export type IlmeniteFeed = "soil" | "basalt";
 export type FissionConverter = "brayton" | "stirling";
 export type FissionSiting = "surface" | "buried";
+export type CableForm = "dc" | "ac";
 export type WarningSeverity = "info" | "caution" | "alarm";
 export type StorageStreamSelection = "auto" | "lox" | "water-ice" | "liquid-water" | "lh2" | "lch4" | "co2-feed" | "custom";
 export type ResolvedStorageStream = Exclude<StorageStreamSelection, "auto">;
@@ -355,6 +356,7 @@ export interface SimParams {
   Tenv: number;
   fissionConverter: FissionConverter;
   fissionSiting: FissionSiting;
+  cableForm: CableForm;
   /** Stirling efficiency as a fraction of Carnot [1] */
   fCarnotStirling: number;
   /** [kg/kW] */
@@ -809,7 +811,7 @@ export interface SimResult {
     cableMassKg: number;
     /** power the cable loses between the fission plant and the outpost [W] */
     cableLossW: number;
-    /** the cable's line-to-line voltage: the lightest for its power, capped at VCableMaxV [V] */
+    /** the cable's line-to-line voltage (RMS for AC): the lightest for its power, capped by VCableMaxV [V] */
     cableVoltageV: number;
     /** fission reactor heat for the grid load and the cable's loss: sent electrical output over conversion efficiency [W] */
     fissionThermalW: number;

@@ -26,8 +26,8 @@ afterEach(() => {
 
 describe("fission converter (v0.23)", () => {
   it("offers the converter at both sites, beside the polar illumination profile", () => {
-    expect(railModeParamsForGroup(power, brayton)).toEqual(["fissionConverter", "fissionSiting"]);
-    expect(railModeParamsForGroup(power, { ...brayton, site: "polar" })).toEqual(["polarProfileMode", "fissionConverter", "fissionSiting"]);
+    expect(railModeParamsForGroup(power, brayton)).toEqual(["fissionConverter", "fissionSiting", "cableForm"]);
+    expect(railModeParamsForGroup(power, { ...brayton, site: "polar" })).toEqual(["polarProfileMode", "fissionConverter", "fissionSiting", "cableForm"]);
   });
 
   it("shows only the chosen converter's inputs, and the hidden ones are inert", () => {
@@ -78,6 +78,18 @@ describe("fission converter (v0.23)", () => {
     expect(serializeParams(buried)).toContain("fissionSiting=buried");
     expect(parseParams("fissionSiting=buried")).toEqual({ fissionSiting: "buried" });
     expect(parseParams("fissionSiting=underground")).toEqual({});
+  });
+
+  it("switches the cable to three-phase AC from the rail, and round-trips it (v0.28)", () => {
+    const ac: SimParams = { ...DEFAULTS, cableForm: "ac" };
+    render(<ControlGroups />);
+    fireEvent.click(screen.getByRole("button", { name: /^\W*Power$/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: /TRANSMISSION/ }), { target: { value: "ac" } });
+    expect(useStore.getState().params.cableForm).toBe("ac");
+    expect(useStore.getState().result.power.cableMassKg).toBe(simulate(ac).power.cableMassKg);
+    expect(serializeParams(ac)).toContain("cableForm=ac");
+    expect(parseParams("cableForm=ac")).toEqual({ cableForm: "ac" });
+    expect(parseParams("cableForm=hvdc")).toEqual({});
   });
 
   it("points the analysis tools' conversion-mass lever at the chosen converter", () => {

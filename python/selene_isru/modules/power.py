@@ -41,27 +41,37 @@ CABLE_BISECTIONS = 80
 def cable_design(params: dict[str, Any], sent_kwe: float) -> dict[str, float]:
     """Reactor-to-outpost cable at a sent electrical power: its voltage and its mass per km [V, m^2, m, kg/km].
 
-    Two aluminium conductors (a bipolar line, each at half the line voltage to ground), each insulated with FEP
-    at a fixed design stress, inside one FEP jacket. The conductor is sized so the line loses fCableLossPerKm
-    per km: its area A = 2 rho P / (V^2 f), floored at the 16 AWG minimum. A higher voltage shrinks the
-    conductor as 1/V^2 and thickens the insulation as V; the voltage is the one that minimizes their mass,
-    found by bisection on the sign of the slope, and capped at VCableMaxV."""
+    Aluminium conductors, each insulated with FEP at a fixed design stress, inside one FEP jacket. DC is a
+    bipolar line: two conductors, each at half the line voltage V to ground, A = 2 rho P / (V^2 f). AC is a
+    three-phase line at unity power factor: three conductors, each insulated for its peak voltage to ground
+    V sqrt(2/3), A = rho P / (V^2 f). Areas are floored at the 16 AWG minimum. A higher voltage shrinks the
+    conductor as 1/V^2 and thickens the insulation as V; the voltage (line to line, RMS for AC) is the one
+    that minimizes their mass, found by bisection on the sign of the slope, and capped so the peak voltage to
+    ground stays within VCableMaxV / 2."""
     rho = c("rhoAluminumOhmM")
     rho_m = c("densityAluminumKgPerM3")
     rho_i = c("densityFEPKgPerM3")
     stress = c("EInsulationVPerM")
     jacket = c("tCableJacketM")
     a_min = c("AConductorMinM2")
-    area_coefficient = 2 * rho * max(sent_kwe, 0.0) * 1000 / (params["fCableLossPerKm"] / 1000)
+    ac = params["cableForm"] == "ac"
+    conductors = 3 if ac else 2
+    peak_to_ground = math.sqrt(2 / 3) if ac else 0.5
+    bundle = 1 + 2 / math.sqrt(3) if ac else 2.0
+    loss_per_m = params["fCableLossPerKm"] / 1000
+    area_coefficient = (1 if ac else 2) * rho * max(sent_kwe, 0.0) * 1000 / loss_per_m
+    v_max = params["VCableMaxV"] * 0.5 / peak_to_ground
 
     def slope_sign(v: float) -> float:
         area = area_coefficient / v**2
         radius = math.sqrt(area / math.pi)
-        thickness = v / 2 / stress
-        return -rho_m * area + rho_i * math.pi * (thickness**2 + jacket * (thickness - radius))
+        thickness = peak_to_ground * v / stress
+        return -conductors * rho_m * area + rho_i * math.pi * (
+            conductors * thickness**2 + bundle * jacket * (thickness - radius)
+        )
 
     lo = CABLE_V_MIN
-    hi = max(lo, min(math.sqrt(area_coefficient / a_min), params["VCableMaxV"]))
+    hi = max(lo, min(math.sqrt(area_coefficient / a_min), v_max))
     if hi == lo or slope_sign(hi) < 0:
         voltage = hi
     else:
@@ -74,14 +84,14 @@ def cable_design(params: dict[str, Any], sent_kwe: float) -> dict[str, float]:
         voltage = hi
     area = max(a_min, area_coefficient / voltage**2)
     radius = math.sqrt(area / math.pi)
-    thickness = voltage / 2 / stress
-    bundle_radius = 2 * (radius + thickness)
+    thickness = peak_to_ground * voltage / stress
+    bundle_radius = bundle * (radius + thickness)
     return {
         "voltageV": voltage,
         "conductorAreaM2": area,
         "insulationM": thickness,
-        "conductorKgPerKm": 2 * area * rho_m * 1000,
-        "insulationKgPerKm": 2 * math.pi * (2 * radius * thickness + thickness**2) * rho_i * 1000,
+        "conductorKgPerKm": conductors * area * rho_m * 1000,
+        "insulationKgPerKm": conductors * math.pi * (2 * radius * thickness + thickness**2) * rho_i * 1000,
         "jacketKgPerKm": math.pi * (2 * bundle_radius * jacket + jacket**2) * rho_i * 1000,
     }
 

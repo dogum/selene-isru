@@ -209,7 +209,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -878,7 +879,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -1553,7 +1555,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -1794,15 +1797,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 6910619.0171841,
-          "nuclearMassKg": 23447978673510.0,
+          "nuclearMassKg": 23447978674105.0,
           "solarArrayM2": 591546.50836779,
           "radiatorM2": 2292881763541.0,
           "radiatorMassKg": 23320826666551.0,
           "radiatorEffectiveK": 682.7821445343,
           "shieldMassKg": 2641593.7101476,
-          "cableMassKg": 1806.3250661995,
+          "cableMassKg": 2401.5905239996,
           "cableLossW": 612443.65068358,
-          "cableVoltageV": 19185.86831317,
+          "cableVoltageV": 11748.896909875,
           "fissionThermalW": 1.1692593592839e+16,
           "nuclearSpecificKgPerKw": 2116214685.9494,
           "pCritW": 0,
@@ -2237,7 +2240,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -2953,7 +2957,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -3595,7 +3600,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -4278,7 +4284,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -4995,7 +5002,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -5206,19 +5214,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 869404.34827171,
-          "nuclearMassKg": 532698.38030098,
+          "nuclearMassKg": 537129.20140184,
           "solarArrayM2": 393452.38760346,
           "radiatorM2": 43003.318322949,
           "radiatorMassKg": 383694.96541397,
           "radiatorEffectiveK": 529.13977057779,
           "shieldMassKg": 5277.2769357094,
-          "cableMassKg": 5020.1875251563,
+          "cableMassKg": 9451.0086260154,
           "cableLossW": 182136.72127292,
-          "cableVoltageV": 3295.931477006,
+          "cableVoltageV": 2018.3375864606,
           "fissionThermalW": 85260789.982104,
           "nuclearSpecificKgPerKw": 173.78710648949,
-          "pCritW": 85673.111370575,
-          "pCritDynamicW": 4562.9663087662,
+          "pCritW": 88609.371750293,
+          "pCritDynamicW": 4605.0625361746,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 10677966.428716,
@@ -5266,10 +5274,10 @@
         "logistics": {
           "payloadPerMissionKg": 131837.72521809,
           "productKgPerDay": 11864.966572633,
-          "totalInfraMassKg": 2279982.3675964,
+          "totalInfraMassKg": 2284413.1886973,
           "nMissions": 29,
-          "leverageL": 66.378430765134,
-          "plantMassThroughputDays": 192.16087577147,
+          "leverageL": 66.249683937226,
+          "plantMassThroughputDays": 192.5343130731,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -5281,7 +5289,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 532698.38030098
+              "massKg": 537129.20140184
             },
             {
               "subsystem": "cryo block",
@@ -5297,16 +5305,16 @@
           "deliveredKgPerDay": 7623.3836866312,
           "usedKgPerDay": 7623.3836866312,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 90.916408580958,
+          "resupplyKgPerYear": 91.093091676091,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 41662827.699477,
           "cumulativeUsedKg": 41662827.699477,
-          "landedMassKg": 2281343.65671,
-          "leoMassSpentKg": 43274226.75887,
+          "landedMassKg": 2285777.1232824,
+          "leoMassSpentKg": 43274276.385222,
           "leoMassSavedKg": 97238830.962406,
-          "netLeoMassKg": 53964604.203536,
-          "returnRatio": 2.2470379772291,
-          "paybackDays": 3557.1959939573,
+          "netLeoMassKg": 53964554.577184,
+          "returnRatio": 2.2470354003565,
+          "paybackDays": 3557.1972351385,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -5570,7 +5578,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -6196,7 +6205,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -6929,7 +6939,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -7632,7 +7643,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -8207,7 +8219,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -8439,9 +8452,9 @@
           "radiatorMassKg": 3.9105599776728e+25,
           "radiatorEffectiveK": 234.84365223694,
           "shieldMassKg": 5329.0027950912,
-          "cableMassKg": 36924506663.58,
+          "cableMassKg": 73845851077.983,
           "cableLossW": 84886872967748.0,
-          "cableVoltageV": 22922.641815107,
+          "cableVoltageV": 14037.194000899,
           "fissionThermalW": 4008784915743800.0,
           "nuclearSpecificKgPerKw": 96503220980430.0,
           "pCritW": 0,
@@ -8857,7 +8870,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -9521,7 +9535,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -10211,7 +10226,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -10944,7 +10960,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -11613,7 +11630,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -11877,19 +11895,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 63878736.642016,
-          "nuclearMassKg": 1002204.7876324,
+          "nuclearMassKg": 1004032.8117438,
           "solarArrayM2": 7628929.2749609,
           "radiatorM2": 178771.86411888,
           "radiatorMassKg": 614069.71836483,
           "radiatorEffectiveK": 441.49080235546,
           "shieldMassKg": 52185.992175818,
-          "cableMassKg": 3193.6428115702,
+          "cableMassKg": 5021.6669229665,
           "cableLossW": 818591.2732811,
-          "cableVoltageV": 29369.976263374,
+          "cableVoltageV": 17985.36390073,
           "fissionThermalW": 269777075.54981,
           "nuclearSpecificKgPerKw": 45.03738411545,
-          "pCritW": 2880.4561440273,
-          "pCritDynamicW": 1848.2026568403,
+          "pCritW": 2888.2027475447,
+          "pCritDynamicW": 1852.4890179867,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 54502029.84635,
@@ -11937,10 +11955,10 @@
         "logistics": {
           "payloadPerMissionKg": 203725.27326039,
           "productKgPerDay": 9641.1944275662,
-          "totalInfraMassKg": 3242875.4919574,
+          "totalInfraMassKg": 3244703.5160688,
           "nMissions": 26,
-          "leverageL": 79.574842314798,
-          "plantMassThroughputDays": 336.35619697549,
+          "leverageL": 79.530010874978,
+          "plantMassThroughputDays": 336.54580253994,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -11952,7 +11970,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 1002204.7876324
+              "massKg": 1004032.8117438
             },
             {
               "subsystem": "cryo block",
@@ -11968,16 +11986,16 @@
           "deliveredKgPerDay": 5953.9650532931,
           "usedKgPerDay": 5953.9650532931,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 524559.96242461,
+          "resupplyKgPerYear": 524855.6593336,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 26293784.373756,
           "cumulativeUsedKg": 26293784.373756,
-          "landedMassKg": 9589591.8695482,
-          "leoMassSpentKg": 143998832.27034,
+          "landedMassKg": 9594997.5674232,
+          "leoMassSpentKg": 144052241.36861,
           "leoMassSavedKg": 159360800.04834,
-          "netLeoMassKg": 15361967.777998,
-          "returnRatio": 1.1066811968944,
-          "paybackDays": 4695.9666524163,
+          "netLeoMassKg": 15308558.679728,
+          "returnRatio": 1.1062708815516,
+          "paybackDays": 4698.7514339605,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -12260,7 +12278,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -12927,7 +12946,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -13519,7 +13539,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -14172,7 +14193,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -14905,7 +14927,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -15146,19 +15169,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 74880484.453793,
-          "nuclearMassKg": 550549.82358989,
+          "nuclearMassKg": 580353.74593117,
           "solarArrayM2": 367262.87635752,
           "radiatorM2": 6390.3974117895,
           "radiatorMassKg": 40609.660704122,
           "radiatorEffectiveK": 881.06406009595,
           "shieldMassKg": 1747.3365275978,
-          "cableMassKg": 30918.951492899,
+          "cableMassKg": 60722.873834176,
           "cableLossW": 1897532.1175851,
-          "cableVoltageV": 5897.0886207302,
+          "cableVoltageV": 3611.2145221905,
           "fissionThermalW": 145907355.12952,
           "nuclearSpecificKgPerKw": 11.416568742086,
-          "pCritW": 1372.6745980845,
-          "pCritDynamicW": 1169.5164416462,
+          "pCritW": 1382.4014541692,
+          "pCritDynamicW": 1177.526345346,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 97367570.885591,
@@ -15206,10 +15229,10 @@
         "logistics": {
           "payloadPerMissionKg": 96351.298418634,
           "productKgPerDay": 11322.206255459,
-          "totalInfraMassKg": 1972650.5993129,
+          "totalInfraMassKg": 2002454.5216542,
           "nMissions": 25,
-          "leverageL": 14.147894000787,
-          "plantMassThroughputDays": 174.22846349949,
+          "leverageL": 13.937321061661,
+          "plantMassThroughputDays": 176.86080578939,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -15225,7 +15248,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 550549.82358989
+              "massKg": 580353.74593117
             },
             {
               "subsystem": "cryo block",
@@ -15241,16 +15264,16 @@
           "deliveredKgPerDay": 9954.6549414372,
           "usedKgPerDay": 9954.6549414372,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 58611.510726399,
+          "resupplyKgPerYear": 59497.046621403,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 10752101.581792,
           "cumulativeUsedKg": 10752101.581792,
-          "landedMassKg": 2146093.7680189,
-          "leoMassSpentKg": 30857656.226334,
+          "landedMassKg": 2178518.1679717,
+          "leoMassSpentKg": 30894300.463298,
           "leoMassSavedKg": 24537884.315032,
-          "netLeoMassKg": -6319771.9113023,
-          "returnRatio": 0.79519598426568,
-          "paybackDays": 2698.3058796945,
+          "netLeoMassKg": -6356416.1482658,
+          "returnRatio": 0.79425278925421,
+          "paybackDays": 2700.6111892546,
           "paysBackInCampaign": false
         },
         "refuel": null,
@@ -15587,7 +15610,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -16162,7 +16186,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -16787,7 +16812,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -17478,7 +17504,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -18164,7 +18191,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -18466,15 +18494,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 17908109.632354,
-          "nuclearMassKg": 108819153764880.0,
+          "nuclearMassKg": 108819153765130.0,
           "solarArrayM2": 3947710.2015576,
           "radiatorM2": 610433387232.39,
           "radiatorMassKg": 6059028035067.7,
           "radiatorEffectiveK": 996.22450986824,
           "shieldMassKg": 2877168130.0762,
-          "cableMassKg": 432.86655575612,
+          "cableMassKg": 681.346910652,
           "cableLossW": 260173.63381525,
-          "cableVoltageV": 25461.038935481,
+          "cableVoltageV": 15591.638428266,
           "fissionThermalW": 1.5665364452855e+16,
           "nuclearSpecificKgPerKw": 7063611082.43,
           "pCritW": 0,
@@ -18897,7 +18925,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -19539,7 +19568,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -20186,7 +20216,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -20903,7 +20934,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -21495,7 +21527,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -21721,15 +21754,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 565508148239730.0,
-          "nuclearMassKg": 1.2137452245944e+21,
+          "nuclearMassKg": 1.2137452246221e+21,
           "solarArrayM2": 19017886862026.0,
           "radiatorM2": 1.1846997127933e+20,
           "radiatorMassKg": 1.2134388700202e+21,
           "radiatorEffectiveK": 636.31870329078,
           "shieldMassKg": 1417935255663500.0,
-          "cableMassKg": 27637120173.748,
+          "cableMassKg": 55273874364.797,
           "cableLossW": 4445902551108.9,
-          "cableVoltageV": 8222.0042277202,
+          "cableVoltageV": 5034.9287552302,
           "fissionThermalW": 7.2686264113731e+23,
           "nuclearSpecificKgPerKw": 1680115841.4559,
           "pCritW": 0,
@@ -22120,7 +22153,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -22853,7 +22887,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -23529,7 +23564,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -24129,7 +24165,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -24758,7 +24795,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -25022,15 +25060,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 4141928.8540724,
-          "nuclearMassKg": 3906520722918.6,
+          "nuclearMassKg": 3906520723135.2,
           "solarArrayM2": 391667.0112056,
           "radiatorM2": 427247738408.25,
           "radiatorMassKg": 1528888199479.0,
           "radiatorEffectiveK": 842.09050370335,
           "shieldMassKg": 200317393.46363,
-          "cableMassKg": 514.46083306244,
+          "cableMassKg": 731.02080375865,
           "cableLossW": 236591.3767015,
-          "cableVoltageV": 22853.730918894,
+          "cableVoltageV": 15064.550065112,
           "fissionThermalW": 6838203320298500.0,
           "nuclearSpecificKgPerKw": 591722209.42182,
           "pCritW": 0,
@@ -25422,7 +25460,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -26112,7 +26151,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -26845,7 +26885,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -27506,7 +27547,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -28197,7 +28239,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -28438,19 +28481,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 19469399.655974,
-          "nuclearMassKg": 4500358.8119226,
+          "nuclearMassKg": 4504432.7362262,
           "solarArrayM2": 1270584.8131563,
           "radiatorM2": 19346.141378078,
           "radiatorMassKg": 81671.264860483,
           "radiatorEffectiveK": 936.16544129232,
           "shieldMassKg": 14775.427306047,
-          "cableMassKg": 8180.9591661329,
+          "cableMassKg": 12254.883469705,
           "cableLossW": 3635728.5310297,
-          "cableVoltageV": 19561.939881074,
+          "cableVoltageV": 11979.192771908,
           "fissionThermalW": 734833622.45019,
           "nuclearSpecificKgPerKw": 203.3408671925,
-          "pCritW": 33581.890232509,
-          "pCritDynamicW": 10203.321484359,
+          "pCritW": 33893.1605017,
+          "pCritDynamicW": 10264.919136918,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 86239544.344648,
@@ -28498,10 +28541,10 @@
         "logistics": {
           "payloadPerMissionKg": 76016.452811849,
           "productKgPerDay": 15414.394369377,
-          "totalInfraMassKg": 7198887.2269487,
+          "totalInfraMassKg": 7202961.1512523,
           "nMissions": 112,
-          "leverageL": 130.47006660458,
-          "plantMassThroughputDays": 467.02368282794,
+          "leverageL": 130.39627401233,
+          "plantMassThroughputDays": 467.28797633218,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -28517,7 +28560,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 4500358.8119226
+              "massKg": 4504432.7362262
             },
             {
               "subsystem": "cryo block",
@@ -28533,16 +28576,16 @@
           "deliveredKgPerDay": 12948.073318943,
           "usedKgPerDay": 12948.073318943,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 959820.83785167,
+          "resupplyKgPerYear": 960364.01033307,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 55608716.033216,
           "cumulativeUsedKg": 55608716.033216,
-          "landedMassKg": 18492555.510266,
-          "leoMassSpentKg": 413822269.71449,
+          "landedMassKg": 18503020.637577,
+          "leoMassSpentKg": 413965095.34031,
           "leoMassSavedKg": 788959914.80062,
-          "netLeoMassKg": 375137645.08614,
-          "returnRatio": 1.9065187461877,
-          "paybackDays": 4741.3005442118,
+          "netLeoMassKg": 374994819.46032,
+          "returnRatio": 1.9058609619056,
+          "paybackDays": 4741.6445816052,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -28864,7 +28907,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -29439,7 +29483,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -30064,7 +30109,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -30797,7 +30843,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -31506,7 +31553,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -31717,15 +31765,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 8821720.356117,
-          "nuclearMassKg": 69280299460283.0,
+          "nuclearMassKg": 69280299463423.0,
           "solarArrayM2": 213445.47768429,
           "radiatorM2": 9942932916118.9,
           "radiatorMassKg": 67396077736411.0,
           "radiatorEffectiveK": 410.27017231446,
           "shieldMassKg": 11533846959.904,
-          "cableMassKg": 5474.1069650857,
+          "cableMassKg": 8613.3462026702,
           "cableLossW": 192585.23896057,
-          "cableVoltageV": 11811.207745243,
+          "cableVoltageV": 7232.8580554637,
           "fissionThermalW": 5165985977114500.0,
           "nuclearSpecificKgPerKw": 13927847212.562,
           "pCritW": 0,
@@ -32098,7 +32146,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -32707,7 +32756,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -33371,7 +33421,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -34074,7 +34125,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -34807,7 +34859,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -35033,19 +35086,19 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 3316814.260926,
-          "nuclearMassKg": 6996628.4717146,
+          "nuclearMassKg": 7006419.0121494,
           "solarArrayM2": 25471.926919383,
           "radiatorM2": 439407.05974304,
           "radiatorMassKg": 2151521.3928416,
           "radiatorEffectiveK": 858.43603157544,
           "shieldMassKg": 68971.824544101,
-          "cableMassKg": 10441.013983686,
+          "cableMassKg": 20231.554418435,
           "cableLossW": 148454.32586767,
-          "cableVoltageV": 2213.8771805891,
+          "cableVoltageV": 1355.7173614087,
           "fissionThermalW": 4425799132.4393,
           "nuclearSpecificKgPerKw": 2254.1942917034,
-          "pCritW": 96370875520.877,
-          "pCritDynamicW": 865.91737890436,
+          "pCritW": 102388099381.96,
+          "pCritDynamicW": 867.16004147261,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 6539069.5409911,
@@ -35417,7 +35470,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -36081,7 +36135,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -36779,7 +36834,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -37354,7 +37410,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -37983,7 +38040,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -38285,15 +38343,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 31361884.032709,
-          "nuclearMassKg": 10401932536750.0,
+          "nuclearMassKg": 10401932541224.0,
           "solarArrayM2": 721380.1399209,
           "radiatorM2": 1551364636493.8,
           "radiatorMassKg": 10321710957498.0,
           "radiatorEffectiveK": 736.85453119509,
           "shieldMassKg": 459507.53927669,
-          "cableMassKg": 5799.2101824691,
+          "cableMassKg": 10272.81163528,
           "cableLossW": 488260.15062107,
-          "cableVoltageV": 17711.515366075,
+          "cableVoltageV": 10846.043804587,
           "fissionThermalW": 1.8023233996872e+16,
           "nuclearSpecificKgPerKw": 593210583.75389,
           "pCritW": 0,
@@ -38716,7 +38774,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -39383,7 +39442,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -39975,7 +40035,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -40652,7 +40713,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -41335,7 +41397,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -41582,9 +41645,9 @@
           "radiatorMassKg": 1.7652503889333e+17,
           "radiatorEffectiveK": 286.59511673141,
           "shieldMassKg": 2456.6260432499,
-          "cableMassKg": 1157.2449239303,
+          "cableMassKg": 1788.8447375367,
           "cableLossW": 400937.48403241,
-          "cableVoltageV": 24103.294669673,
+          "cableVoltageV": 15887.038498048,
           "fissionThermalW": 73745423.181982,
           "nuclearSpecificKgPerKw": 30958520648826.0,
           "pCritW": 0,
@@ -42025,7 +42088,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -42758,7 +42822,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -43376,7 +43441,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -44067,7 +44133,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -44770,7 +44837,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -44981,15 +45049,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 3771106.8881566,
-          "nuclearMassKg": 3832086483115.3,
+          "nuclearMassKg": 3832086485456.2,
           "solarArrayM2": 390584.61684003,
           "radiatorM2": 385825119077.5,
           "radiatorMassKg": 3507240972105.3,
           "radiatorEffectiveK": 761.85522253882,
           "shieldMassKg": 7206249708.5191,
-          "cableMassKg": 2656.2338854989,
+          "cableMassKg": 4997.1807950784,
           "cableLossW": 130994.65136307,
-          "cableVoltageV": 4931.6795379501,
+          "cableVoltageV": 3020.0246107256,
           "fissionThermalW": 5764108468283000.0,
           "nuclearSpecificKgPerKw": 678999280.87054,
           "pCritW": 0,
@@ -45362,7 +45430,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -45995,7 +46064,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -46711,7 +46781,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -47403,7 +47474,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -47995,7 +48067,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -48221,15 +48294,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 911712938912200.0,
-          "nuclearMassKg": 6.0158426554365e+20,
+          "nuclearMassKg": 6.0158428346594e+20,
           "solarArrayM2": 12557756635805.0,
           "radiatorM2": 4.8379243129852e+19,
           "radiatorMassKg": 5.6517187289983e+20,
           "radiatorEffectiveK": 768.87021278579,
           "shieldMassKg": 12133741846786.0,
-          "cableMassKg": 17922315121140.0,
+          "cableMassKg": 35844604829148.0,
           "cableLossW": 63302854267315.0,
-          "cableVoltageV": 1074.826374134,
+          "cableVoltageV": 658.19404467855,
           "fissionThermalW": 5.8590270507145e+23,
           "nuclearSpecificKgPerKw": 1151137403.8127,
           "pCritW": 0,
@@ -48620,7 +48693,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -49284,7 +49358,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -49968,7 +50043,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -50701,7 +50777,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -51346,7 +51423,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -51610,15 +51688,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 1820305.090802,
-          "nuclearMassKg": 1302534777529.6,
+          "nuclearMassKg": 1302534789482.8,
           "solarArrayM2": 56360.848086807,
           "radiatorM2": 123978623986.7,
           "radiatorMassKg": 1287637997924.2,
           "radiatorEffectiveK": 826.80165476537,
           "shieldMassKg": 1454376.3472764,
-          "cableMassKg": 15399.33491896,
+          "cableMassKg": 27352.561051032,
           "cableLossW": 188634.86738283,
-          "cableVoltageV": 1494.7723891284,
+          "cableVoltageV": 915.35740874137,
           "fissionThermalW": 1244309729469700.0,
           "nuclearSpecificKgPerKw": 1233839465.6656,
           "pCritW": 0,
@@ -52010,7 +52088,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -52700,7 +52779,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -53300,7 +53380,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -53977,7 +54058,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -54710,7 +54792,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -54951,19 +55034,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 31406255.360401,
-          "nuclearMassKg": 787209.49567395,
+          "nuclearMassKg": 806578.39298558,
           "solarArrayM2": 88990.241521042,
           "radiatorM2": 19357.429592112,
           "radiatorMassKg": 169056.68431635,
           "radiatorEffectiveK": 592.21462590877,
           "shieldMassKg": 7751.8518295008,
-          "cableMassKg": 24059.437762605,
+          "cableMassKg": 43428.335074239,
           "cableLossW": 697307.4564127,
-          "cableVoltageV": 7209.7858329732,
+          "cableVoltageV": 4415.0741113828,
           "fissionThermalW": 53169876.046535,
           "nuclearSpecificKgPerKw": 74.421707091173,
-          "pCritW": 1420.5750585493,
-          "pCritDynamicW": 810.09832083865,
+          "pCritW": 1434.299428579,
+          "pCritDynamicW": 816.83999350599,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 30800599.206331,
@@ -55011,10 +55094,10 @@
         "logistics": {
           "payloadPerMissionKg": 2837.247789645,
           "productKgPerDay": 3261.9959977409,
-          "totalInfraMassKg": 2072455.7323528,
-          "nMissions": 976,
-          "leverageL": 36.705105926235,
-          "plantMassThroughputDays": 635.33362204862,
+          "totalInfraMassKg": 2091824.6296645,
+          "nMissions": 985,
+          "leverageL": 36.365241189289,
+          "plantMassThroughputDays": 641.271366094,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -55030,7 +55113,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 787209.49567395
+              "massKg": 806578.39298558
             },
             {
               "subsystem": "cryo block",
@@ -55040,21 +55123,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 526.01032403732,
-          "deploymentDays": 402638.9882309,
-          "firstProductDay": 402839.17948303,
-          "campaignEndDay": 404529.11756762,
+          "deploymentDays": 406355.65581457,
+          "firstProductDay": 406555.8470667,
+          "campaignEndDay": 408245.78515129,
           "deliveredKgPerDay": 2843.8931383852,
           "usedKgPerDay": 2843.8931383852,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 437273.93236019,
+          "resupplyKgPerYear": 441360.63672773,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 4806003.3230849,
           "cumulativeUsedKg": 4806003.3230849,
-          "landedMassKg": 4097019.7644009,
-          "leoMassSpentKg": 2156039860.2396,
+          "landedMassKg": 4135309.9695241,
+          "leoMassSpentKg": 2176054020.5618,
           "leoMassSavedKg": 66319553.564072,
-          "netLeoMassKg": -2089720306.6755,
-          "returnRatio": 0.03075989214629,
+          "netLeoMassKg": -2109734466.9977,
+          "returnRatio": 0.030476979402814,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -55386,7 +55469,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -55978,7 +56062,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -56604,7 +56689,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -57303,7 +57389,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -58012,7 +58099,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -58314,15 +58402,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 11125705.745816,
-          "nuclearMassKg": 60266230325444.0,
+          "nuclearMassKg": 60266230332941.0,
           "solarArrayM2": 4302478.6876925,
           "radiatorM2": 4044497788967.9,
           "radiatorMassKg": 21508499154524.0,
           "radiatorEffectiveK": 741.65569012616,
           "shieldMassKg": 1874448.4449876,
-          "cableMassKg": 9742.1416497071,
+          "cableMassKg": 17239.251438264,
           "cableLossW": 1142813.7017485,
-          "cableVoltageV": 13734.999579123,
+          "cableVoltageV": 8410.9351465485,
           "fissionThermalW": 2.4923157657201e+16,
           "nuclearSpecificKgPerKw": 2534287500.3889,
           "pCritW": 0,
@@ -58745,7 +58833,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -59379,7 +59468,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -60026,7 +60116,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -60737,7 +60828,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -61312,7 +61404,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -61538,19 +61631,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 81750533123962.0,
-          "nuclearMassKg": 14872781384483.0,
+          "nuclearMassKg": 14873173343139.0,
           "solarArrayM2": 1764785374191.8,
           "radiatorM2": 1542641552413.4,
           "radiatorMassKg": 3385878595576.6,
           "radiatorEffectiveK": 607.01406651973,
           "shieldMassKg": 186867087.59673,
-          "cableMassKg": 392052412.55439,
+          "cableMassKg": 784011068.94203,
           "cableLossW": 1465614923627.2,
-          "cableVoltageV": 27615.997884305,
+          "cableVoltageV": 16911.275888582,
           "fissionThermalW": 7462194811260000.0,
           "nuclearSpecificKgPerKw": 123.00196244305,
-          "pCritW": 304454.48783196,
-          "pCritDynamicW": 1632.8678013571,
+          "pCritW": 304686.16620221,
+          "pCritDynamicW": 1634.6901295944,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 284338812988280.0,
@@ -61598,10 +61691,10 @@
         "logistics": {
           "payloadPerMissionKg": 330136.98140335,
           "productKgPerDay": 3446.134511002,
-          "totalInfraMassKg": 19640531547425.0,
-          "nMissions": 65728134,
-          "leverageL": 9.7686651987913e-06,
-          "plantMassThroughputDays": 5699293363.2513,
+          "totalInfraMassKg": 19640923506081.0,
+          "nMissions": 65729446,
+          "leverageL": 9.7684702531267e-06,
+          "plantMassThroughputDays": 5699407101.8925,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -61613,7 +61706,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 14872781384483.0
+              "massKg": 14873173343139.0
             },
             {
               "subsystem": "cryo block",
@@ -61623,21 +61716,21 @@
         },
         "campaign": {
           "leoMassPerLandedKg": 6.4864828647243,
-          "deploymentDays": 2041282292.0425,
-          "firstProductDay": 2041282605.7129,
-          "campaignEndDay": 2041287540.8734,
+          "deploymentDays": 2041323038.1012,
+          "firstProductDay": 2041323351.7717,
+          "campaignEndDay": 2041328286.9321,
           "deliveredKgPerDay": 3151.2479104955,
           "usedKgPerDay": 3151.2479104955,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 2288908491100.1,
+          "resupplyKgPerYear": 2288954169980.8,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 15551913.989302,
           "cumulativeUsedKg": 15551913.989302,
-          "landedMassKg": 50588834589848.0,
-          "leoMassSpentKg": 328143609064160.0,
+          "landedMassKg": 50589844172077.0,
+          "leoMassSpentKg": 328150158261190.0,
           "leoMassSavedKg": 175444116.295,
-          "netLeoMassKg": -328143433620040.0,
-          "returnRatio": 5.3465650845785e-07,
+          "netLeoMassKg": -328149982817070.0,
+          "returnRatio": 5.3464583782208e-07,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -61938,7 +62031,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -62679,7 +62773,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -63361,7 +63456,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -63953,7 +64049,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -64622,7 +64719,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -64886,19 +64984,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 33201967.544233,
-          "nuclearMassKg": 2858681.4626162,
+          "nuclearMassKg": 2861886.6386427,
           "solarArrayM2": 453415.24032319,
           "radiatorM2": 190220.35132924,
           "radiatorMassKg": 2155290.044299,
           "radiatorEffectiveK": 569.65909835395,
           "shieldMassKg": 8640.8153308087,
-          "cableMassKg": 7329.2474716675,
+          "cableMassKg": 10534.423498165,
           "cableLossW": 5852571.3664411,
-          "cableVoltageV": 19421.343470612,
+          "cableVoltageV": 11893.095405583,
           "fissionThermalW": 460140008.29914,
           "nuclearSpecificKgPerKw": 130.89472997586,
-          "pCritW": 3969.2507594869,
-          "pCritDynamicW": 70.316913824235,
+          "pCritW": 4004.4614007305,
+          "pCritDynamicW": 70.690576823035,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 29449276.040151,
@@ -64946,10 +65044,10 @@
         "logistics": {
           "payloadPerMissionKg": -57028.935720305,
           "productKgPerDay": 9883.3780956185,
-          "totalInfraMassKg": 4482954.1798141,
+          "totalInfraMassKg": 4486159.3558406,
           "nMissions": 0,
-          "leverageL": 219.98082538054,
-          "plantMassThroughputDays": 453.58521514031,
+          "leverageL": 219.82365814418,
+          "plantMassThroughputDays": 453.9095147872,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -64961,7 +65059,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 2858681.4626162
+              "massKg": 2861886.6386427
             },
             {
               "subsystem": "cryo block",
@@ -65278,7 +65376,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -65962,7 +66061,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -66703,7 +66803,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -67364,7 +67465,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -68055,7 +68157,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -68296,19 +68399,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 382591593.4947,
-          "nuclearMassKg": 3226648.5723173,
+          "nuclearMassKg": 3235689.3774883,
           "solarArrayM2": 2671427.1707701,
           "radiatorM2": 125952.34356924,
           "radiatorMassKg": 707319.69553541,
           "radiatorEffectiveK": 794.23387485694,
           "shieldMassKg": 98502.819696947,
-          "cableMassKg": 9648.0064640461,
+          "cableMassKg": 18688.81163497,
           "cableLossW": 528685.75483142,
-          "cableVoltageV": 16749.569295017,
+          "cableVoltageV": 10256.974546045,
           "fissionThermalW": 1876200923.9631,
           "nuclearSpecificKgPerKw": 26.373222319641,
-          "pCritW": 2994.664086182,
-          "pCritDynamicW": 314.87243445435,
+          "pCritW": 2997.5378496249,
+          "pCritDynamicW": 315.02914609235,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 313438032.72909,
@@ -68356,10 +68459,10 @@
         "logistics": {
           "payloadPerMissionKg": 237252.15195734,
           "productKgPerDay": 11092.041501391,
-          "totalInfraMassKg": 90300136.436378,
+          "totalInfraMassKg": 90309177.241549,
           "nMissions": 608,
-          "leverageL": 10.598520045639,
-          "plantMassThroughputDays": 8140.9843647858,
+          "leverageL": 10.597459033262,
+          "plantMassThroughputDays": 8141.7994361295,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -68375,7 +68478,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 3226648.5723173
+              "massKg": 3235689.3774883
             },
             {
               "subsystem": "cryo block",
@@ -68391,15 +68494,15 @@
           "deliveredKgPerDay": 9761.839804744,
           "usedKgPerDay": 9761.839804744,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 23549980.53005,
+          "resupplyKgPerYear": 23552338.342498,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 60440196.527315,
           "cumulativeUsedKg": 60440196.527315,
-          "landedMassKg": 489777228.03363,
-          "leoMassSpentKg": 6160615805.7478,
+          "landedMassKg": 489826264.28839,
+          "leoMassSpentKg": 6161118810.3401,
           "leoMassSavedKg": 842274829.92167,
-          "netLeoMassKg": -5318340975.8261,
-          "returnRatio": 0.13671925932077,
+          "netLeoMassKg": -5318843980.4184,
+          "returnRatio": 0.13670809731961,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -68728,7 +68831,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -69320,7 +69424,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -69953,7 +70058,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -70686,7 +70792,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -71372,7 +71479,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -71583,19 +71691,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 2085560.9228062,
-          "nuclearMassKg": 435010.78039356,
+          "nuclearMassKg": 436345.41243352,
           "solarArrayM2": 280654.22961293,
           "radiatorM2": 55584.51558843,
           "radiatorMassKg": 285821.42384767,
           "radiatorEffectiveK": 379.18289839947,
           "shieldMassKg": 3937.28177385,
-          "cableMassKg": 4036.5894036931,
+          "cableMassKg": 5371.2214436565,
           "cableLossW": 51045.519465905,
-          "cableVoltageV": 18418.776849367,
+          "cableVoltageV": 11279.151241784,
           "fissionThermalW": 34472360.424762,
           "nuclearSpecificKgPerKw": 305.01899167063,
-          "pCritW": 4226.6868402063,
-          "pCritDynamicW": 80.021765020771,
+          "pCritW": 4297.6758095306,
+          "pCritDynamicW": 80.494289886135,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2861414.558365,
@@ -71643,10 +71751,10 @@
         "logistics": {
           "payloadPerMissionKg": 38417.486905722,
           "productKgPerDay": 8395.5873972161,
-          "totalInfraMassKg": 823520.95864217,
+          "totalInfraMassKg": 824855.59068213,
           "nMissions": 28,
-          "leverageL": 229.3327255874,
-          "plantMassThroughputDays": 98.089736867637,
+          "leverageL": 228.96166087397,
+          "plantMassThroughputDays": 98.2487051419,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -71658,7 +71766,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 435010.78039356
+              "massKg": 436345.41243352
             },
             {
               "subsystem": "cryo block",
@@ -71674,16 +71782,16 @@
           "deliveredKgPerDay": 7496.744120442,
           "usedKgPerDay": 7496.744120442,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 166907.52210286,
+          "resupplyKgPerYear": 167178.01931896,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 50349659.696065,
           "cumulativeUsedKg": 50349659.696065,
-          "landedMassKg": 3894712.4583334,
-          "leoMassSpentKg": 135734489.75231,
+          "landedMassKg": 3901024.3900199,
+          "leoMassSpentKg": 135906883.619,
           "leoMassSavedKg": 168640658.69149,
-          "netLeoMassKg": 32906168.939184,
-          "returnRatio": 1.2424304169061,
-          "paybackDays": 4226.3628186468,
+          "netLeoMassKg": 32733775.072493,
+          "returnRatio": 1.2408544306281,
+          "paybackDays": 4235.1551090069,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -71947,7 +72055,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -72589,7 +72698,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -73253,7 +73363,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -73970,7 +74081,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -74703,7 +74815,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -74929,19 +75042,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 25351039.786525,
-          "nuclearMassKg": 860552.8885354,
+          "nuclearMassKg": 862995.70107805,
           "solarArrayM2": 183963.8171461,
           "radiatorM2": 5172.8143942111,
           "radiatorMassKg": 54744.333732873,
           "radiatorEffectiveK": 674.28569269014,
           "shieldMassKg": 1252.478656571,
-          "cableMassKg": 6684.6912727259,
+          "cableMassKg": 9127.5038153726,
           "cableLossW": 4621059.7164224,
-          "cableVoltageV": 29943.359391357,
+          "cableVoltageV": 18336.4879234,
           "fissionThermalW": 72420487.351512,
           "nuclearSpecificKgPerKw": 45.83658183399,
-          "pCritW": 3694.8578211442,
-          "pCritDynamicW": 1830.635885448,
+          "pCritW": 3734.7677997843,
+          "pCritDynamicW": 1847.3084431047,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 41032827.085886,
@@ -74989,10 +75102,10 @@
         "logistics": {
           "payloadPerMissionKg": 231613.04597251,
           "productKgPerDay": 6933.3107005538,
-          "totalInfraMassKg": 1024283.2475,
+          "totalInfraMassKg": 1026726.0600426,
           "nMissions": 6,
-          "leverageL": 111.3286550037,
-          "plantMassThroughputDays": 147.73364295042,
+          "leverageL": 111.0637790593,
+          "plantMassThroughputDays": 148.08597283266,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -75004,7 +75117,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 860552.8885354
+              "massKg": 862995.70107805
             },
             {
               "subsystem": "cryo block",
@@ -75020,16 +75133,16 @@
           "deliveredKgPerDay": 5606.2979000702,
           "usedKgPerDay": 5606.2979000702,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 160076.18256752,
+          "resupplyKgPerYear": 160457.94816557,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 8766476.7822295,
           "cumulativeUsedKg": 8766476.7822295,
-          "landedMassKg": 1710060.018445,
-          "leoMassSpentKg": 14828287.639294,
+          "landedMassKg": 1714138.3396241,
+          "leoMassSpentKg": 14841051.943154,
           "leoMassSavedKg": 92206712.988844,
-          "netLeoMassKg": 77378425.34955,
-          "returnRatio": 6.2182981091155,
-          "paybackDays": 724.64213378344,
+          "netLeoMassKg": 77365661.045691,
+          "returnRatio": 6.2129499540887,
+          "paybackDays": 724.66720968156,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -75321,7 +75434,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -75985,7 +76099,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -76669,7 +76784,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -77269,7 +77385,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -77922,7 +78039,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -78224,15 +78342,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 10041615.534936,
-          "nuclearMassKg": 282238817384020.0,
+          "nuclearMassKg": 282238817385940.0,
           "solarArrayM2": 367483.74376955,
           "radiatorM2": 39579675827939.0,
           "radiatorMassKg": 281950082776400.0,
           "radiatorEffectiveK": 368.02642544517,
           "shieldMassKg": 113260363.61419,
-          "cableMassKg": 3166.4540015171,
+          "cableMassKg": 5084.7283887796,
           "cableLossW": 964269.60414379,
-          "cableVoltageV": 15471.306553004,
+          "cableVoltageV": 9474.2016772596,
           "fissionThermalW": 1.5722082412444e+16,
           "nuclearSpecificKgPerKw": 19124697391.591,
           "pCritW": 0,
@@ -78655,7 +78773,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -79337,7 +79456,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -79929,7 +80049,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -80598,7 +80719,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -81273,7 +81395,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -81514,15 +81637,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 2333004.3617871,
-          "nuclearMassKg": 13340767835810.0,
+          "nuclearMassKg": 13340767836525.0,
           "solarArrayM2": 26359.931500393,
           "radiatorM2": 1374636529441.3,
           "radiatorMassKg": 12305902801160.0,
           "radiatorEffectiveK": 581.55904871362,
           "shieldMassKg": 251824.14275901,
-          "cableMassKg": 2668.8960121531,
+          "cableMassKg": 3383.8288102548,
           "cableLossW": 106954.060388,
-          "cableVoltageV": 24326.599359979,
+          "cableVoltageV": 14896.938902266,
           "fissionThermalW": 3963316609819400.0,
           "nuclearSpecificKgPerKw": 3459417368.1321,
           "pCritW": 0,
@@ -81957,7 +82080,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -82698,7 +82822,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -83324,7 +83449,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -84015,7 +84141,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -84732,7 +84859,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -84943,15 +85071,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 1198214.5518261,
-          "nuclearMassKg": 3684596819154.3,
+          "nuclearMassKg": 3684596819404.5,
           "solarArrayM2": 78064.498978819,
           "radiatorM2": 453535376904.01,
           "radiatorMassKg": 3671782910217.0,
           "radiatorEffectiveK": 655.99937502751,
           "shieldMassKg": 5409279.3624708,
-          "cableMassKg": 993.161306324,
+          "cableMassKg": 1243.4302506417,
           "cableLossW": 71810.87057619,
-          "cableVoltageV": 22550.9306656,
+          "cableVoltageV": 13809.568338901,
           "fissionThermalW": 3719951314736800.0,
           "nuclearSpecificKgPerKw": 1009991656.0996,
           "pCritW": 0,
@@ -85324,7 +85452,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -85958,7 +86087,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -86691,7 +86821,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -87394,7 +87525,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -87986,7 +88118,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -88212,15 +88345,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 10235196.914971,
-          "nuclearMassKg": 1602280221738.6,
+          "nuclearMassKg": 1602280225025.8,
           "solarArrayM2": 28532.415294911,
           "radiatorM2": 205521620675.48,
           "radiatorMassKg": 1316011314155.2,
           "radiatorEffectiveK": 787.16679495385,
           "shieldMassKg": 39133.245840173,
-          "cableMassKg": 5080.8144265807,
+          "cableMassKg": 8368.0809922293,
           "cableLossW": 134185.31881693,
-          "cableVoltageV": 13519.024399916,
+          "cableVoltageV": 8278.6779000071,
           "fissionThermalW": 3129149221293000.0,
           "nuclearSpecificKgPerKw": 534991482.2679,
           "pCritW": 0,
@@ -88612,7 +88745,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -89276,7 +89410,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -89966,7 +90101,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -90707,7 +90843,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -91376,7 +91513,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -91640,15 +91778,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 2492240.9379623,
-          "nuclearMassKg": 23092142515082.0,
+          "nuclearMassKg": 23092142524072.0,
           "solarArrayM2": 194464.48985815,
           "radiatorM2": 4196645638704.5,
           "radiatorMassKg": 18950377327161.0,
           "radiatorEffectiveK": 559.26234055798,
           "shieldMassKg": 405091701.81821,
-          "cableMassKg": 12122.75830343,
+          "cableMassKg": 21112.316058042,
           "cableLossW": 994490.99764919,
-          "cableVoltageV": 5375.9260655652,
+          "cableVoltageV": 3292.0689388907,
           "fissionThermalW": 1.0152620915575e+16,
           "nuclearSpecificKgPerKw": 2521446803.9003,
           "pCritW": 0,
@@ -92040,7 +92178,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -92724,7 +92863,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -93316,7 +93456,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -93961,7 +94102,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -94694,7 +94836,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -94935,19 +95078,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 13125737.974281,
-          "nuclearMassKg": 772660.69716722,
+          "nuclearMassKg": 774547.5094127,
           "solarArrayM2": 67663.887518746,
           "radiatorM2": 24598.612528576,
           "radiatorMassKg": 180640.52498661,
           "radiatorEffectiveK": 478.31314095473,
           "shieldMassKg": 1614.8626273657,
-          "cableMassKg": 4805.1846081947,
+          "cableMassKg": 6691.9968536789,
           "cableLossW": 1224382.9558602,
-          "cableVoltageV": 13235.850531935,
+          "cableVoltageV": 8105.2700287462,
           "fissionThermalW": 38700089.290617,
           "nuclearSpecificKgPerKw": 69.725687967028,
-          "pCritW": 3490.1974886208,
-          "pCritDynamicW": 2374.5372009815,
+          "pCritW": 3513.2261874472,
+          "pCritDynamicW": 2388.7518565692,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 23243810.422063,
@@ -94995,10 +95138,10 @@
         "logistics": {
           "payloadPerMissionKg": 172557.80698418,
           "productKgPerDay": 6629.5933547928,
-          "totalInfraMassKg": 1797922.1068678,
+          "totalInfraMassKg": 1799808.9191133,
           "nMissions": 13,
-          "leverageL": 55.510303061458,
-          "plantMassThroughputDays": 271.196438552,
+          "leverageL": 55.452109372976,
+          "plantMassThroughputDays": 271.48104307365,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -95014,7 +95157,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 772660.69716722
+              "massKg": 774547.5094127
             },
             {
               "subsystem": "cryo block",
@@ -95030,16 +95173,16 @@
           "deliveredKgPerDay": 6192.5146433286,
           "usedKgPerDay": 6192.5146433286,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 326995.51300084,
+          "resupplyKgPerYear": 327338.67533018,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 12708561.236749,
           "cumulativeUsedKg": 12708561.236749,
-          "landedMassKg": 3636484.0767009,
-          "leoMassSpentKg": 35308958.619968,
+          "landedMassKg": 3640300.3503093,
+          "leoMassSpentKg": 35326974.782617,
           "leoMassSavedKg": 93223332.227746,
-          "netLeoMassKg": 57914373.607778,
-          "returnRatio": 2.6402175502006,
-          "paybackDays": 2300.7644863929,
+          "netLeoMassKg": 57896357.44513,
+          "returnRatio": 2.6388710836802,
+          "paybackDays": 2300.8804716947,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -95376,7 +95519,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -95951,7 +96095,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -96577,7 +96722,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -97276,7 +97422,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -97962,7 +98109,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -98264,15 +98412,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 5012358.4141576,
-          "nuclearMassKg": 9410605053874.5,
+          "nuclearMassKg": 9410605063343.1,
           "solarArrayM2": 692685.39926246,
           "radiatorM2": 1746474465882.9,
           "radiatorMassKg": 7996189492727.4,
           "radiatorEffectiveK": 774.59857146877,
           "shieldMassKg": 4804147.9897046,
-          "cableMassKg": 11547.706760652,
+          "cableMassKg": 21016.351095857,
           "cableLossW": 1791418.9690168,
-          "cableVoltageV": 7911.1871256113,
+          "cableVoltageV": 4844.5929293558,
           "fissionThermalW": 1.9389976933867e+16,
           "nuclearSpecificKgPerKw": 534737008.39435,
           "pCritW": 0,
@@ -98695,7 +98843,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -99320,7 +99469,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -99992,7 +100142,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -100701,7 +100852,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -101276,7 +101428,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -101502,15 +101655,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 67191134309518.0,
-          "nuclearMassKg": 3.4569418704773e+19,
+          "nuclearMassKg": 3.4569418707456e+19,
           "solarArrayM2": 4122660301063.0,
           "radiatorM2": 6.3112433988001e+18,
           "radiatorMassKg": 3.4565662972495e+19,
           "radiatorEffectiveK": 832.81868622287,
           "shieldMassKg": 57715164164.297,
-          "cableMassKg": 2683390085.1429,
+          "cableMassKg": 5366374918.9166,
           "cableLossW": 5926621716884.9,
-          "cableVoltageV": 18320.636502915,
+          "cableVoltageV": 11219.052798787,
           "fissionThermalW": 9.5441429327851e+22,
           "nuclearSpecificKgPerKw": 386186593.78249,
           "pCritW": 0,
@@ -101893,7 +102046,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -102626,7 +102780,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -103302,7 +103457,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -103877,7 +104033,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -104546,7 +104703,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -104810,15 +104968,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 2448493.3561122,
-          "nuclearMassKg": 808451640980.17,
+          "nuclearMassKg": 808451641025.49,
           "solarArrayM2": 148308.11724052,
           "radiatorM2": 230092225681.22,
           "radiatorMassKg": 564917825975.7,
           "radiatorEffectiveK": 676.22492218552,
           "shieldMassKg": 561123734.41775,
-          "cableMassKg": 147.65937453095,
+          "cableMassKg": 192.97659388278,
           "cableLossW": 14685.851328904,
-          "cableVoltageV": 18522.518565024,
+          "cableVoltageV": 12213.456157937,
           "fissionThermalW": 2000486097722300.0,
           "nuclearSpecificKgPerKw": 406833727.89653,
           "pCritW": 0,
@@ -105210,7 +105368,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -105900,7 +106059,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -106641,7 +106801,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -107286,7 +107447,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -107969,7 +108131,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -108210,15 +108373,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 7575926.5267323,
-          "nuclearMassKg": 16094331589490.0,
+          "nuclearMassKg": 16094331589593.0,
           "solarArrayM2": 54932.326857212,
           "radiatorM2": 456474357409.57,
           "radiatorMassKg": 4586946230988.4,
           "radiatorEffectiveK": 722.15651360908,
           "shieldMassKg": 182766.99572889,
-          "cableMassKg": 290.20180890709,
+          "cableMassKg": 392.8573521114,
           "cableLossW": 23831.557145275,
-          "cableVoltageV": 22859.585089682,
+          "cableVoltageV": 13998.579800364,
           "fissionThermalW": 4612211885090700.0,
           "nuclearSpecificKgPerKw": 3507628020.3737,
           "pCritW": 0,
@@ -108653,7 +108816,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -109228,7 +109392,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -109870,7 +110035,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -110603,7 +110769,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -111304,7 +111471,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -111515,15 +111683,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 310961.44257989,
-          "nuclearMassKg": 30723073111147.0,
+          "nuclearMassKg": 30723073111535.0,
           "solarArrayM2": 127475.1109014,
           "radiatorM2": 4112798409523.6,
           "radiatorMassKg": 30720793719793.0,
           "radiatorEffectiveK": 428.64344327817,
           "shieldMassKg": 412195.02634063,
-          "cableMassKg": 1007.5890370492,
+          "cableMassKg": 1396.0135089075,
           "cableLossW": 209525.77906989,
-          "cableVoltageV": 14567.638673722,
+          "cableVoltageV": 8920.8203769637,
           "fissionThermalW": 2301740011063100.0,
           "nuclearSpecificKgPerKw": 14684477444.107,
           "pCritW": 0,
@@ -111896,7 +112064,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -112521,7 +112690,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -113168,7 +113338,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -113863,7 +114034,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -114604,7 +114776,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -114830,19 +115003,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 32202805.442036,
-          "nuclearMassKg": 1826894.6969156,
+          "nuclearMassKg": 1854058.6303822,
           "solarArrayM2": 245468.61252779,
           "radiatorM2": 63734.910893145,
           "radiatorMassKg": 689766.19987269,
           "radiatorEffectiveK": 371.49434444256,
           "shieldMassKg": 2118.5863078039,
-          "cableMassKg": 27842.176712527,
+          "cableMassKg": 55006.110179117,
           "cableLossW": 510366.68554941,
-          "cableVoltageV": 1880.4617893092,
+          "cableVoltageV": 1151.5429661522,
           "fissionThermalW": 52134707.029564,
           "nuclearSpecificKgPerKw": 86.572752214093,
-          "pCritW": 1452.153843402,
-          "pCritDynamicW": 130.0440541911,
+          "pCritW": 1455.1407062555,
+          "pCritDynamicW": 130.23991248405,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 57009943.119182,
@@ -114890,10 +115063,10 @@
         "logistics": {
           "payloadPerMissionKg": 161915.30872823,
           "productKgPerDay": 14822.705048786,
-          "totalInfraMassKg": 2640280.5261713,
+          "totalInfraMassKg": 2667444.4596379,
           "nMissions": 26,
-          "leverageL": 103.70478028046,
-          "plantMassThroughputDays": 178.12406827778,
+          "leverageL": 102.64870215238,
+          "plantMassThroughputDays": 179.95665776649,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -114905,7 +115078,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 1826894.6969156
+              "massKg": 1854058.6303822
             },
             {
               "subsystem": "cryo block",
@@ -114921,16 +115094,16 @@
           "deliveredKgPerDay": 8894.4287310218,
           "usedKgPerDay": 8894.4287310218,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 384218.49161762,
+          "resupplyKgPerYear": 388171.43731391,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 41328534.76343,
           "cumulativeUsedKg": 41328534.76343,
-          "landedMassKg": 7531502.2135115,
-          "leoMassSpentKg": 131655048.19962,
+          "landedMassKg": 7608988.3832587,
+          "leoMassSpentKg": 132527802.54768,
           "leoMassSavedKg": 164300710.28566,
-          "netLeoMassKg": 32645662.086034,
-          "returnRatio": 1.2479636180493,
-          "paybackDays": 4402.5080653497,
+          "netLeoMassKg": 31772907.737983,
+          "returnRatio": 1.2397452242261,
+          "paybackDays": 4432.9087837231,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -115205,7 +115378,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -115869,7 +116043,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -116559,7 +116734,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -117134,7 +117310,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -117795,7 +117972,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -118097,15 +118275,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 2246646.2261581,
-          "nuclearMassKg": 2766567965526.8,
+          "nuclearMassKg": 2766567970627.6,
           "solarArrayM2": 224441.50163225,
           "radiatorM2": 252390016924.84,
           "radiatorMassKg": 835379261043.56,
           "radiatorEffectiveK": 809.43432585916,
           "shieldMassKg": 440.2484123915,
-          "cableMassKg": 8725.4839885055,
+          "cableMassKg": 13826.290527532,
           "cableLossW": 604901.24778349,
-          "cableVoltageV": 4540.8285019196,
+          "cableVoltageV": 2780.6782097974,
           "fissionThermalW": 3578436551570600.0,
           "nuclearSpecificKgPerKw": 930396875.67778,
           "pCritW": 0,
@@ -118528,7 +118706,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -119195,7 +119374,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -119787,7 +119967,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -120440,7 +120621,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -121115,7 +121297,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -121356,15 +121539,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 97131045.001572,
-          "nuclearMassKg": 192291008772990.0,
+          "nuclearMassKg": 192291008780500.0,
           "solarArrayM2": 2511831.4064292,
           "radiatorM2": 22520394629679.0,
           "radiatorMassKg": 190751681142800.0,
           "radiatorEffectiveK": 678.95444130375,
           "shieldMassKg": 5762096.5401356,
-          "cableMassKg": 10530.014555906,
+          "cableMassKg": 18043.308719538,
           "cableLossW": 18407861.394711,
-          "cableVoltageV": 25338.426971896,
+          "cableVoltageV": 15516.55424148,
           "fissionThermalW": 1.079275974015e+17,
           "nuclearSpecificKgPerKw": 2148029156.2274,
           "pCritW": 0,
@@ -121805,7 +121988,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -122530,7 +122714,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -123148,7 +123333,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -123839,7 +124025,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -124550,7 +124737,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -124761,15 +124949,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 23268.163257874,
-          "nuclearMassKg": 220176183234.84,
+          "nuclearMassKg": 220176183323.17,
           "solarArrayM2": 1224.4585893921,
           "radiatorM2": 2221975383.3549,
           "radiatorMassKg": 18923176233.557,
           "radiatorEffectiveK": 753.32207762722,
           "shieldMassKg": 126052.44056305,
-          "cableMassKg": 1139.907309865,
+          "cableMassKg": 1228.2384096234,
           "cableLossW": 3001.1564472303,
-          "cableVoltageV": 6196.7681870491,
+          "cableVoltageV": 4095.0064405876,
           "fissionThermalW": 26320822655881.0,
           "nuclearSpecificKgPerKw": 9441646980.3851,
           "pCritW": 0,
@@ -125142,7 +125330,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -125792,7 +125981,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -126525,7 +126715,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -127226,7 +127417,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -127818,7 +128010,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "ac"
       },
       "result": {
         "site": "equatorial",
@@ -128044,15 +128237,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 193800115289780.0,
-          "nuclearMassKg": 3.0662387185943e+20,
+          "nuclearMassKg": 3.0662387190371e+20,
           "solarArrayM2": 6688021392783.5,
           "radiatorM2": 4.6366087865863e+19,
           "radiatorMassKg": 1.6438123682269e+20,
           "radiatorEffectiveK": 724.55472377106,
           "shieldMassKg": 18866973.680205,
-          "cableMassKg": 44287708440.61,
+          "cableMassKg": 88572771465.434,
           "cableLossW": 11177190772350.0,
-          "cableVoltageV": 20541.418755539,
+          "cableVoltageV": 12578.998635977,
           "fissionThermalW": 2.6294382077727e+23,
           "nuclearSpecificKgPerKw": 1217889248.5042,
           "pCritW": 0,
@@ -128468,7 +128661,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -129132,7 +129326,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -129799,7 +129994,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -130515,7 +130711,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "stirling",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -131159,7 +131356,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "ac"
       },
       "result": {
         "site": "polar",
@@ -131423,15 +131621,15 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 5276918.1780899,
-          "nuclearMassKg": 8706183447667.0,
+          "nuclearMassKg": 8706183447806.0,
           "solarArrayM2": 708069.95012588,
           "radiatorM2": 757855348014.73,
           "radiatorMassKg": 8642444801369.4,
           "radiatorEffectiveK": 798.00195151678,
           "shieldMassKg": 14219.743632037,
-          "cableMassKg": 534.21497333792,
+          "cableMassKg": 673.18617481472,
           "cableLossW": 52202.331434122,
-          "cableVoltageV": 25306.697322306,
+          "cableVoltageV": 16679.123948371,
           "fissionThermalW": 5424007971959200.0,
           "nuclearSpecificKgPerKw": 1620718249.2295,
           "pCritW": 0,
@@ -131823,7 +132021,8 @@
         "equatorialProcess": "ilmenite",
         "ilmFeed": "basalt",
         "fissionConverter": "brayton",
-        "fissionSiting": "surface"
+        "fissionSiting": "surface",
+        "cableForm": "dc"
       },
       "result": {
         "site": "equatorial",
@@ -132496,7 +132695,8 @@
         "equatorialProcess": "mre",
         "ilmFeed": "soil",
         "fissionConverter": "brayton",
-        "fissionSiting": "buried"
+        "fissionSiting": "buried",
+        "cableForm": "dc"
       },
       "result": {
         "site": "polar",
@@ -133111,19 +133311,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 824093.49268988,
-          "nuclearMassKg": 29789.290737524,
+          "nuclearMassKg": 29720.290737524,
           "solarArrayM2": 8289.7516786033,
           "radiatorM2": 2534.3835785355,
           "radiatorMassKg": 9808.0644489325,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3792.1489319812,
-          "cableMassKg": 794.88217946283,
+          "cableMassKg": 725.88217946283,
           "cableLossW": 16813.013268721,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3827643.1094468,
           "nuclearSpecificKgPerKw": 25.458004416427,
-          "pCritW": 2136.2329230673,
-          "pCritDynamicW": 1640.2279182613,
+          "pCritW": 2049.9667714426,
+          "pCritDynamicW": 1573.9544046796,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2639877.9955503,
@@ -133171,10 +133371,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 50421.290737524,
+          "totalInfraMassKg": 50352.290737524,
           "nMissions": 1,
-          "leverageL": 217.17016442522,
-          "plantMassThroughputDays": 50.421290737524,
+          "leverageL": 217.4677624317,
+          "plantMassThroughputDays": 50.352290737524,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -133186,7 +133386,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 29789.290737524
+              "massKg": 29720.290737524
             },
             {
               "subsystem": "cryo block",
@@ -133202,16 +133402,16 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 900.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 5042.1290737524,
+          "resupplyKgPerYear": 5035.2290737524,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 1642500.0,
-          "landedMassKg": 75631.936106286,
-          "leoMassSpentKg": 1423149.8630192,
+          "landedMassKg": 75528.436106286,
+          "leoMassSpentKg": 1422707.6422782,
           "leoMassSavedKg": 9855000.0,
-          "netLeoMassKg": 8431850.1369808,
-          "returnRatio": 6.924780204871,
-          "paybackDays": 240.60968974024,
+          "netLeoMassKg": 8432292.3577218,
+          "returnRatio": 6.9269326368549,
+          "paybackDays": 240.5999191657,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -135426,19 +135626,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 244903.03517271,
-          "nuclearMassKg": 19782.823305958,
+          "nuclearMassKg": 19713.823305958,
           "solarArrayM2": 12986.907203062,
           "radiatorM2": 1574.8597359172,
           "radiatorMassKg": 6094.7071779994,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3241.1365734301,
-          "cableMassKg": 650.77047766606,
+          "cableMassKg": 581.77047766606,
           "cableLossW": 10447.565183345,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 2378488.0345586,
           "nuclearSpecificKgPerKw": 25.832371723933,
-          "pCritW": 4668.5918453519,
-          "pCritDynamicW": 3555.207993179,
+          "pCritW": 4480.5672079536,
+          "pCritDynamicW": 3411.8799004459,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 1033922.7242508,
@@ -135486,10 +135686,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1105.5555555556,
-          "totalInfraMassKg": 54482.601083735,
+          "totalInfraMassKg": 54413.601083735,
           "nMissions": 1,
-          "leverageL": 222.19631758637,
-          "plantMassThroughputDays": 49.280744698856,
+          "leverageL": 222.47807702901,
+          "plantMassThroughputDays": 49.218332638555,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -135501,7 +135701,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 19782.823305958
+              "massKg": 19713.823305958
             },
             {
               "subsystem": "cryo block",
@@ -135517,15 +135717,15 @@
           "deliveredKgPerDay": 995.0,
           "usedKgPerDay": 995.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 5448.2601083735,
+          "resupplyKgPerYear": 5441.3601083735,
           "feedKgPerYear": 190712.5,
           "cumulativeProductKg": 1815875.0,
           "cumulativeUsedKg": 1815875.0,
-          "landedMassKg": 1035286.4016256,
-          "leoMassSpentKg": 13671935.750066,
+          "landedMassKg": 1035182.9016256,
+          "leoMassSpentKg": 13671493.529325,
           "leoMassSavedKg": 10895250.0,
-          "netLeoMassKg": -2776685.750066,
-          "returnRatio": 0.79690617328621,
+          "netLeoMassKg": -2776243.529325,
+          "returnRatio": 0.7969319501655,
           "paybackDays": null,
           "paysBackInCampaign": false
         },
@@ -137889,19 +138089,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 51010.157957381,
-          "nuclearMassKg": 10100.288909741,
+          "nuclearMassKg": 10031.288909741,
           "solarArrayM2": 7138.5785195848,
           "radiatorM2": 688.48424509445,
           "radiatorMassKg": 2664.4340285155,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 2466.678414474,
-          "cableMassKg": 505.65563407616,
+          "cableMassKg": 436.65563407616,
           "cableLossW": 4567.3807414612,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 1039807.8645306,
           "nuclearSpecificKgPerKw": 26.505021231497,
-          "pCritW": 10776.491673823,
-          "pCritDynamicW": 8053.9452159278,
+          "pCritW": 10344.76517815,
+          "pCritDynamicW": 7730.6390445256,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 568321.49755465,
@@ -137943,10 +138143,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 22022.288909741,
+          "totalInfraMassKg": 21953.288909741,
           "nMissions": 1,
-          "leverageL": 497.22351953871,
-          "plantMassThroughputDays": 22.022288909741,
+          "leverageL": 498.78631147341,
+          "plantMassThroughputDays": 21.953288909741,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -137958,7 +138158,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 10100.288909741
+              "massKg": 10031.288909741
             },
             {
               "subsystem": "cryo block",
@@ -137974,16 +138174,16 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 900.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 2202.2288909741,
+          "resupplyKgPerYear": 2195.3288909741,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 1642500.0,
-          "landedMassKg": 33033.433364612,
-          "leoMassSpentKg": 1241140.7669351,
+          "landedMassKg": 32929.933364612,
+          "leoMassSpentKg": 1240698.5461942,
           "leoMassSavedKg": 9855000.0,
-          "netLeoMassKg": 8613859.2330649,
-          "returnRatio": 7.9402758031518,
-          "paybackDays": 236.66348480393,
+          "netLeoMassKg": 8614301.4538058,
+          "returnRatio": 7.9431059464284,
+          "paybackDays": 236.65407693453,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -138270,19 +138470,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 8222245.6444458,
-          "nuclearMassKg": 246597.17299533,
+          "nuclearMassKg": 246528.17299533,
           "solarArrayM2": 82709.516866168,
           "radiatorM2": 25286.359526941,
           "radiatorMassKg": 97858.211369261,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 8101.398459356,
-          "cableMassKg": 3732.2657685096,
+          "cableMassKg": 3663.2657685096,
           "cableLossW": 167748.8371708,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 38189625.527095,
           "nuclearSpecificKgPerKw": 23.768485259962,
-          "pCritW": 2136.2329230673,
-          "pCritDynamicW": 1640.2279182613,
+          "pCritW": 2049.9667714426,
+          "pCritDynamicW": 1573.9544046796,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 26338911.231944,
@@ -138330,10 +138530,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 10000.0,
-          "totalInfraMassKg": 452719.17299533,
+          "totalInfraMassKg": 452650.17299533,
           "nMissions": 6,
-          "leverageL": 241.87179720159,
-          "plantMassThroughputDays": 45.271917299533,
+          "leverageL": 241.90866707374,
+          "plantMassThroughputDays": 45.265017299533,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -138345,7 +138545,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 246597.17299533
+              "massKg": 246528.17299533
             },
             {
               "subsystem": "cryo block",
@@ -138361,16 +138561,16 @@
           "deliveredKgPerDay": 9000.0,
           "usedKgPerDay": 9000.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 45271.917299533,
+          "resupplyKgPerYear": 45265.017299533,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 16425000.0,
           "cumulativeUsedKg": 16425000.0,
-          "landedMassKg": 679078.759493,
-          "leoMassSpentKg": 9501475.4798951,
+          "landedMassKg": 678975.259493,
+          "leoMassSpentKg": 9501033.2591542,
           "leoMassSavedKg": 98550000.0,
-          "netLeoMassKg": 89048524.520105,
-          "returnRatio": 10.372073285726,
-          "paybackDays": 1068.4298045676,
+          "netLeoMassKg": 89048966.740846,
+          "returnRatio": 10.37255604858,
+          "paybackDays": 1068.4292223473,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -138637,19 +138837,19 @@
         "power": {
           "architecture": "solar",
           "solarMassKg": 1117.7092960195,
-          "nuclearMassKg": 1799.9861346119,
+          "nuclearMassKg": 1730.9861346119,
           "solarArrayM2": 59.270751369694,
           "radiatorM2": 7.1874787730584,
           "radiatorMassKg": 27.815542851736,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 1370.0,
-          "cableMassKg": 343.63419223211,
+          "cableMassKg": 274.63419223211,
           "cableLossW": 47.68148633993,
           "cableVoltageV": 2713.0782855583,
           "fissionThermalW": 10855.14593489,
           "nuclearSpecificKgPerKw": 30.757622192517,
-          "pCritW": 4668.5918453519,
-          "pCritDynamicW": 3555.207993179,
+          "pCritW": 4480.5672079536,
+          "pCritDynamicW": 3411.8799004459,
           "beamedFloorPowerW": 4718.7044433564,
           "beamDeliveryMarginW": 1911.207106946,
           "solarDeliveredCapacityW": 4718.7044433564,
@@ -139063,19 +139263,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 24461.447472611,
-          "nuclearMassKg": 3621.9883230233,
+          "nuclearMassKg": 3552.9883230233,
           "solarArrayM2": 1297.1605196944,
           "radiatorM2": 157.30041352774,
           "radiatorMassKg": 608.75260035237,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 1515.4037808709,
-          "cableMassKg": 399.90957897922,
+          "cableMassKg": 330.90957897922,
           "cableLossW": 1043.5255192687,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 237568.55475702,
           "nuclearSpecificKgPerKw": 27.776541833221,
-          "pCritW": 4668.5918453519,
-          "pCritDynamicW": 3555.207993179,
+          "pCritW": 4480.5672079536,
+          "pCritDynamicW": 3411.8799004459,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 103270.44902552,
@@ -139123,10 +139323,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 52.313333333333,
-          "totalInfraMassKg": 6872.9092563566,
+          "totalInfraMassKg": 6803.9092563566,
           "nMissions": 1,
-          "leverageL": 83.346218993099,
-          "plantMassThroughputDays": 131.37968503294,
+          "leverageL": 84.19145206336,
+          "plantMassThroughputDays": 130.06070962833,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -139138,7 +139338,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 3621.9883230233
+              "massKg": 3552.9883230233
             },
             {
               "subsystem": "cryo block",
@@ -139154,16 +139354,16 @@
           "deliveredKgPerDay": 47.082,
           "usedKgPerDay": 47.082,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 687.29092563566,
+          "resupplyKgPerYear": 680.39092563566,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 85924.65,
           "cumulativeUsedKg": 85924.65,
-          "landedMassKg": 10309.363884535,
-          "leoMassSpentKg": 1144048.4496182,
+          "landedMassKg": 10205.863884535,
+          "leoMassSpentKg": 1143606.2288772,
           "leoMassSavedKg": 515547.9,
-          "netLeoMassKg": -628500.54961817,
-          "returnRatio": 0.45063467388297,
-          "paybackDays": 4287.6931921644,
+          "netLeoMassKg": -628058.32887724,
+          "returnRatio": 0.45080892966642,
+          "paybackDays": 4283.7036308409,
           "paysBackInCampaign": false
         },
         "refuel": null,
@@ -139509,19 +139709,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 430621.74318728,
-          "nuclearMassKg": 32195.983773744,
+          "nuclearMassKg": 32126.983773744,
           "solarArrayM2": 22835.342217993,
           "radiatorM2": 2769.1320537447,
           "radiatorMassKg": 10716.541047992,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3904.6393013145,
-          "cableMassKg": 829.04802399334,
+          "cableMassKg": 760.04802399334,
           "cableLossW": 18370.3265586,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 4182180.3591344,
           "nuclearSpecificKgPerKw": 25.389281239592,
-          "pCritW": 4668.5918453519,
-          "pCritDynamicW": 3555.207993179,
+          "pCritW": 4480.5672079536,
+          "pCritDynamicW": 3411.8799004459,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 1817983.2092479,
@@ -139569,10 +139769,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 722.22222222222,
-          "totalInfraMassKg": 88473.094884855,
+          "totalInfraMassKg": 88404.094884855,
           "nMissions": 2,
-          "leverageL": 89.386873417572,
-          "plantMassThroughputDays": 122.50120830211,
+          "leverageL": 89.456640482931,
+          "plantMassThroughputDays": 122.40566984057,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -139584,7 +139784,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 32195.983773744
+              "massKg": 32126.983773744
             },
             {
               "subsystem": "cryo block",
@@ -139600,16 +139800,16 @@
           "deliveredKgPerDay": 650.0,
           "usedKgPerDay": 650.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 8847.3094884855,
+          "resupplyKgPerYear": 8840.4094884855,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1186250.0,
           "cumulativeUsedKg": 1186250.0,
-          "landedMassKg": 132709.64232728,
-          "leoMassSpentKg": 2767023.7329257,
+          "landedMassKg": 132606.14232728,
+          "leoMassSpentKg": 2766581.5121848,
           "leoMassSavedKg": 7117500.0,
-          "netLeoMassKg": 4350476.2670743,
-          "returnRatio": 2.5722583855377,
-          "paybackDays": 764.59919802797,
+          "netLeoMassKg": 4350918.4878152,
+          "returnRatio": 2.572669544943,
+          "paybackDays": 764.55782192496,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -139914,19 +140114,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 824561.68267482,
-          "nuclearMassKg": 29804.092849075,
+          "nuclearMassKg": 29735.092849075,
           "solarArrayM2": 8294.4613125805,
           "radiatorM2": 2535.8234309552,
           "radiatorMassKg": 9813.6366777965,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3792.859756373,
-          "cableMassKg": 795.09278678986,
+          "cableMassKg": 726.09278678986,
           "cableLossW": 16822.565200024,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3829817.6978712,
           "nuclearSpecificKgPerKw": 25.45756281751,
-          "pCritW": 2136.2329230673,
-          "pCritDynamicW": 1640.2279182613,
+          "pCritW": 2049.9667714426,
+          "pCritDynamicW": 1573.9544046796,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2641377.7822249,
@@ -139974,10 +140174,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 51738.170516726,
+          "totalInfraMassKg": 51669.170516726,
           "nMissions": 1,
-          "leverageL": 211.64258207507,
-          "plantMassThroughputDays": 51.738170516726,
+          "leverageL": 211.92521363306,
+          "plantMassThroughputDays": 51.669170516726,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -139989,7 +140189,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 29804.092849075
+              "massKg": 29735.092849075
             },
             {
               "subsystem": "cryo block",
@@ -140005,15 +140205,15 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 100.0284612007,
           "sortieIntervalDays": 365.0,
-          "resupplyKgPerYear": 5173.8170516726,
+          "resupplyKgPerYear": 5166.9170516726,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 182551.94169127,
-          "landedMassKg": 77607.255775089,
-          "leoMassSpentKg": 1431589.7405796,
+          "landedMassKg": 77503.755775089,
+          "leoMassSpentKg": 1431147.5198386,
           "leoMassSavedKg": 1095311.6501476,
-          "netLeoMassKg": -336278.09043191,
-          "returnRatio": 0.7651016342882,
+          "netLeoMassKg": -335835.86969099,
+          "returnRatio": 0.76533804863886,
           "paybackDays": 2950.0,
           "paysBackInCampaign": false
         },
@@ -140358,19 +140558,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 329361.97509057,
-          "nuclearMassKg": 25484.838751966,
+          "nuclearMassKg": 25415.838751966,
           "solarArrayM2": 17465.661067459,
           "radiatorM2": 2117.9766626677,
           "radiatorMassKg": 8196.5696845241,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3574.0571893345,
-          "cableMassKg": 733.35469437012,
+          "cableMassKg": 664.35469437012,
           "cableLossW": 14050.584147508,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3198749.7265563,
           "nuclearSpecificKgPerKw": 25.598189066934,
-          "pCritW": 4668.5918453519,
-          "pCritDynamicW": 3555.207993179,
+          "pCritW": 4480.5672079536,
+          "pCritDynamicW": 3411.8799004459,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 1390488.404156,
@@ -140418,10 +140618,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 777.77777777778,
-          "totalInfraMassKg": 73156.089745369,
+          "totalInfraMassKg": 73087.089745369,
           "nMissions": 1,
-          "leverageL": 116.41774042749,
-          "plantMassThroughputDays": 94.057829672618,
+          "leverageL": 116.5276479928,
+          "plantMassThroughputDays": 93.969115386903,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -140433,7 +140633,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 25484.838751966
+              "massKg": 25415.838751966
             },
             {
               "subsystem": "cryo block",
@@ -140449,15 +140649,15 @@
           "deliveredKgPerDay": 780.39700569567,
           "usedKgPerDay": 600.38105247367,
           "sortieIntervalDays": 45.625,
-          "resupplyKgPerYear": 7315.6089745369,
+          "resupplyKgPerYear": 7308.7089745369,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1424224.5353946,
           "cumulativeUsedKg": 1095695.4207644,
-          "landedMassKg": 109734.13461805,
-          "leoMassSpentKg": 1568857.1044977,
+          "landedMassKg": 109630.63461805,
+          "leoMassSpentKg": 1568414.8837568,
           "leoMassSavedKg": 6574172.5245866,
-          "netLeoMassKg": 5005315.4200889,
-          "returnRatio": 4.1904214894647,
+          "netLeoMassKg": 5005757.6408298,
+          "returnRatio": 4.1916029952736,
           "paybackDays": 395.0,
           "paysBackInCampaign": true
         },
@@ -140797,19 +140997,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 710571.13766735,
-          "nuclearMassKg": 26183.795592011,
+          "nuclearMassKg": 26114.795592011,
           "solarArrayM2": 7147.8034148993,
           "radiatorM2": 2185.2615493994,
           "radiatorMassKg": 8456.9621961757,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3611.1343070787,
-          "cableMassKg": 743.38671959416,
+          "cableMassKg": 674.38671959416,
           "cableLossW": 14496.94976595,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3300369.1243656,
           "nuclearSpecificKgPerKw": 25.573672624778,
-          "pCritW": 2136.2329230673,
-          "pCritDynamicW": 1640.2279182613,
+          "pCritW": 2049.9667714426,
+          "pCritDynamicW": 1573.9544046796,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2276223.6654465,
@@ -140857,10 +141057,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 93675.149072064,
+          "totalInfraMassKg": 93606.149072064,
           "nMissions": 2,
-          "leverageL": 116.89332879072,
-          "plantMassThroughputDays": 93.675149072064,
+          "leverageL": 116.97949449421,
+          "plantMassThroughputDays": 93.606149072064,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -140876,7 +141076,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 26183.795592011
+              "massKg": 26114.795592011
             },
             {
               "subsystem": "cryo block",
@@ -140892,16 +141092,16 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 900.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 9367.5149072064,
+          "resupplyKgPerYear": 9360.6149072064,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 1642500.0,
-          "landedMassKg": 140512.7236081,
-          "leoMassSpentKg": 2800363.6786793,
+          "landedMassKg": 140409.2236081,
+          "leoMassSpentKg": 2799921.4579383,
           "leoMassSavedKg": 9855000.0,
-          "netLeoMassKg": 7054636.3213207,
-          "returnRatio": 3.5191857668458,
-          "paybackDays": 585.50327143419,
+          "netLeoMassKg": 7055078.5420617,
+          "returnRatio": 3.519741588486,
+          "paybackDays": 585.4825421077,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -141261,19 +141461,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 586564.19001555,
-          "nuclearMassKg": 22201.701168072,
+          "nuclearMassKg": 22132.701168072,
           "solarArrayM2": 5900.388150037,
           "radiatorM2": 1803.8956309194,
           "radiatorMassKg": 6981.0760916581,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3389.6688741001,
-          "cableMassKg": 685.98126327245,
+          "cableMassKg": 616.98126327245,
           "cableLossW": 11966.981413114,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 2724397.6564273,
           "nuclearSpecificKgPerKw": 25.724622705692,
-          "pCritW": 2136.2329230673,
-          "pCritDynamicW": 1640.2279182613,
+          "pCritW": 2049.9667714426,
+          "pCritDynamicW": 1573.9544046796,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 1878983.2851921,
@@ -141321,10 +141521,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 84606.626337992,
+          "totalInfraMassKg": 84537.626337992,
           "nMissions": 1,
-          "leverageL": 129.42248703141,
-          "plantMassThroughputDays": 84.606626337992,
+          "leverageL": 129.52812226145,
+          "plantMassThroughputDays": 84.537626337992,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -141340,7 +141540,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 22201.701168072
+              "massKg": 22132.701168072
             },
             {
               "subsystem": "cryo block",
@@ -141356,16 +141556,16 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 900.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 8460.6626337992,
+          "resupplyKgPerYear": 8453.7626337992,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 1642500.0,
-          "landedMassKg": 126909.93950699,
-          "leoMassSpentKg": 1642243.5505263,
+          "landedMassKg": 126806.43950699,
+          "leoMassSpentKg": 1641801.3297854,
           "leoMassSavedKg": 9855000.0,
-          "netLeoMassKg": 8212756.4494737,
-          "returnRatio": 6.0009369480194,
-          "paybackDays": 245.56453353974,
+          "netLeoMassKg": 8213198.6702146,
+          "returnRatio": 6.0025533060618,
+          "paybackDays": 245.55429783973,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -141717,19 +141917,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 824093.49268988,
-          "nuclearMassKg": 36760.956498519,
+          "nuclearMassKg": 36691.956498519,
           "solarArrayM2": 8289.7516786033,
           "radiatorM2": 937.67200615312,
           "radiatorMassKg": 3628.7906638126,
           "radiatorEffectiveK": 500.0,
           "shieldMassKg": 3595.6401919822,
-          "cableMassKg": 794.88217946283,
+          "cableMassKg": 725.88217946283,
           "cableLossW": 16813.013268721,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3257644.4520188,
           "nuclearSpecificKgPerKw": 32.698919350704,
-          "pCritW": 2147.1434700552,
-          "pCritDynamicW": 1646.7110548522,
+          "pCritW": 2060.3735577329,
+          "pCritDynamicW": 1580.1358803987,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2639877.9955503,
@@ -141777,10 +141977,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 57392.956498519,
+          "totalInfraMassKg": 57323.956498519,
           "nMissions": 1,
-          "leverageL": 190.78996218434,
-          "plantMassThroughputDays": 57.392956498519,
+          "leverageL": 191.01961324465,
+          "plantMassThroughputDays": 57.323956498519,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -141792,7 +141992,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 36760.956498519
+              "massKg": 36691.956498519
             },
             {
               "subsystem": "cryo block",
@@ -141808,16 +142008,16 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 900.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 5739.2956498519,
+          "resupplyKgPerYear": 5732.3956498519,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 1642500.0,
-          "landedMassKg": 86089.434747778,
-          "leoMassSpentKg": 1467831.2427047,
+          "landedMassKg": 85985.934747778,
+          "leoMassSpentKg": 1467389.0219638,
           "leoMassSavedKg": 9855000.0,
-          "netLeoMassKg": 8387168.7572953,
-          "returnRatio": 6.7139870805859,
-          "paybackDays": 241.60159067017,
+          "netLeoMassKg": 8387610.9780362,
+          "returnRatio": 6.716010446099,
+          "paybackDays": 241.59172784881,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -142098,19 +142298,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 824093.49268988,
-          "nuclearMassKg": 29529.259427936,
+          "nuclearMassKg": 29522.359427936,
           "solarArrayM2": 8289.7516786033,
           "radiatorM2": 2496.228073657,
           "radiatorMassKg": 9660.4026450525,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 4615.9889998721,
-          "cableMassKg": 78.929620510853,
+          "cableMassKg": 72.029620510853,
           "cableLossW": 1655.9890965045,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3770017.3985747,
           "nuclearSpecificKgPerKw": 25.086352070728,
-          "pCritW": 2132.775809913,
-          "pCritDynamicW": 1638.905089089,
+          "pCritW": 2124.1792400226,
+          "pCritDynamicW": 1632.2973864085,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2639877.9955503,
@@ -142158,10 +142358,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 50161.259427936,
+          "totalInfraMassKg": 50154.359427936,
           "nMissions": 1,
-          "leverageL": 218.2959543855,
-          "plantMassThroughputDays": 50.161259427936,
+          "leverageL": 218.32598651237,
+          "plantMassThroughputDays": 50.154359427936,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -142173,7 +142373,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 29529.259427936
+              "massKg": 29522.359427936
             },
             {
               "subsystem": "cryo block",
@@ -142189,16 +142389,396 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 900.0,
           "sortieIntervalDays": null,
-          "resupplyKgPerYear": 5016.1259427936,
+          "resupplyKgPerYear": 5015.4359427936,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 1642500.0,
-          "landedMassKg": 75241.889141905,
-          "leoMassSpentKg": 1421483.3233324,
+          "landedMassKg": 75231.539141905,
+          "leoMassSpentKg": 1421439.1012583,
           "leoMassSavedKg": 9855000.0,
-          "netLeoMassKg": 8433516.6766676,
-          "returnRatio": 6.9328987813217,
-          "paybackDays": 240.57287337769,
+          "netLeoMassKg": 8433560.8987417,
+          "returnRatio": 6.9331144691857,
+          "paybackDays": 240.57189662102,
+          "paysBackInCampaign": true
+        },
+        "refuel": null,
+        "ilmenite": null,
+        "materials": {
+          "flows": [
+            {
+              "material": "regolith",
+              "from": "terrain",
+              "to": "mre",
+              "kgPerDay": 4444.4444444444
+            },
+            {
+              "material": "oxygen",
+              "from": "mre",
+              "to": "product-storage",
+              "kgPerDay": 1000
+            },
+            {
+              "material": "deoxygenated-regolith",
+              "from": "mre",
+              "to": "construction",
+              "kgPerDay": 3444.4444444444
+            }
+          ],
+          "balances": [
+            {
+              "id": "mre-separation",
+              "label": "MRE aggregate material split",
+              "massInKgPerDay": 4444.4444444444,
+              "massOutKgPerDay": 4444.4444444444,
+              "residualKgPerDay": 0
+            }
+          ],
+          "maxAbsResidualKgPerDay": 0
+        },
+        "construction": {
+          "slagPerYearT": 1257.2222222222,
+          "shieldFullBalanceM": 20.848765432099,
+          "shieldDesignM": 2.5,
+          "maxSafeCoolingDeltaK": 40.178571428571,
+          "padShearPa": 225.0,
+          "padJointUtilization": 2.25e-05,
+          "padsPerYear": 1.9762284566088,
+          "daysToShieldHabitat": 435.48387096774,
+          "warnings": []
+        },
+        "warnings": []
+      }
+    },
+    {
+      "name": "fission-cable-ac",
+      "params": {
+        "cableForm": "ac"
+      },
+      "result": {
+        "site": "equatorial",
+        "production": {
+          "targetKgPerDay": 1000,
+          "regolithKgPerDay": 4444.4444444444,
+          "slagKgPerDay": 3444.4444444444,
+          "o2KgPerDay": 1000,
+          "waterKgPerDay": 0,
+          "grossH2KgPerDay": 0,
+          "h2KgPerDay": 0,
+          "co2ImportedKgPerDay": 0,
+          "ch4KgPerDay": 0,
+          "waterRecycleKgPerDay": 0,
+          "propellantKgPerDay": 0,
+          "excessO2KgPerDay": 0
+        },
+        "energy": {
+          "secTotal_kWhPerKg": 23.758901959953,
+          "flows": [
+            {
+              "from": "mine",
+              "to": "melt",
+              "kWhPerKg": 0.012469135802469
+            },
+            {
+              "from": "melt",
+              "to": "electrolysis",
+              "kWhPerKg": 2.5923518518519
+            },
+            {
+              "from": "electrolysis",
+              "to": "product",
+              "kWhPerKg": 15.634196990741
+            },
+            {
+              "from": "electrolysis",
+              "to": "parasitic",
+              "kWhPerKg": 4.1009734895833
+            },
+            {
+              "from": "cryo",
+              "to": "product",
+              "kWhPerKg": 1.4189104919742
+            }
+          ],
+          "gridPowerW": 989954.24833136,
+          "balances": [
+            {
+              "id": "excavation-energy",
+              "label": "Excavation drive",
+              "electricalInputW": 519.54732510288,
+              "coupledInputW": 0,
+              "usefulOutputW": 151.13194583333,
+              "rejectedHeatW": 368.41537926955,
+              "accumulationW": 0,
+              "residualW": 0
+            },
+            {
+              "id": "mre-melt-energy",
+              "label": "Regolith melt duty",
+              "electricalInputW": 108014.66049383,
+              "coupledInputW": 0,
+              "usefulOutputW": 0,
+              "rejectedHeatW": 0,
+              "accumulationW": 108014.66049383,
+              "residualW": 0
+            },
+            {
+              "id": "mre-electrolysis-energy",
+              "label": "MRE voltage and reaction",
+              "electricalInputW": 651424.8746142,
+              "coupledInputW": 0,
+              "usefulOutputW": 281949.71946527,
+              "rejectedHeatW": 369475.15514892,
+              "accumulationW": 0,
+              "residualW": 0
+            },
+            {
+              "id": "mre-aux-energy",
+              "label": "MRE radiation and auxiliaries",
+              "electricalInputW": 170873.89539931,
+              "coupledInputW": 0,
+              "usefulOutputW": 0,
+              "rejectedHeatW": 170873.89539931,
+              "accumulationW": 0,
+              "residualW": 0
+            },
+            {
+              "id": "storage-conditioning-energy",
+              "label": "Product conditioning",
+              "electricalInputW": 55000.0,
+              "coupledInputW": 0,
+              "usefulOutputW": 0,
+              "rejectedHeatW": 0,
+              "accumulationW": 55000.0,
+              "residualW": 0
+            },
+            {
+              "id": "storage-cooling-energy",
+              "label": "Storage heat lift",
+              "electricalInputW": 4121.2704989263,
+              "coupledInputW": 204.29601899962,
+              "usefulOutputW": 0,
+              "rejectedHeatW": 4325.5665179259,
+              "accumulationW": 0,
+              "residualW": 0
+            }
+          ],
+          "maxAbsResidualW": 0,
+          "gridAllocationResidualW": 0
+        },
+        "excavation": {
+          "cuttingForceN": 1813.58335,
+          "mechPowerW": 151.13194583333,
+          "fleetMassKg": 132,
+          "excavatorCount": 2,
+          "excavatorTripsPerDay": 34,
+          "excavatorKgPerDay": 2720,
+          "initialStripDays": 0.0,
+          "soilMovedKgPerDay": 4444.4444444444,
+          "overburdenKgPerDay": 0
+        },
+        "electrolysis": {
+          "secElec_JPerKg": 56283109.166667,
+          "secThermal_JPerKg": 9332466.6666667,
+          "currentA": 155101.16062243,
+          "cellVoltageV": 4.2,
+          "jLimit_APerM2": 1929.7066,
+          "jOperating_APerM2": 1200,
+          "meltViscosityPaS": 40.189729359022,
+          "drainVelocityMPerS": 0.41450440269939,
+          "xO2Effective": 0.225,
+          "oxideYield": [
+            {
+              "oxide": "SiO2",
+              "o2KgPerKg": 0.12715282342645,
+              "decomposed": true
+            },
+            {
+              "oxide": "TiO2",
+              "o2KgPerKg": 0.0085030074136424,
+              "decomposed": true
+            },
+            {
+              "oxide": "Al2O3",
+              "o2KgPerKg": 0.032469361431519,
+              "decomposed": true
+            },
+            {
+              "oxide": "FeO",
+              "o2KgPerKg": 0.021267992841718,
+              "decomposed": true
+            },
+            {
+              "oxide": "MgO",
+              "o2KgPerKg": 0.018955469845977,
+              "decomposed": true
+            },
+            {
+              "oxide": "CaO",
+              "o2KgPerKg": 0.016651345040688,
+              "decomposed": true
+            }
+          ],
+          "reversibleVoltageV": 2.0198267041673,
+          "activationOverpotentialV": 0.45,
+          "ohmicOverpotentialV": 0.6,
+          "concentrationOverpotentialV": 0.039240230074704,
+          "unallocatedVoltageV": 1.090933065758,
+          "voltageMarginV": 1.090933065758,
+          "electrodeAreaM2": 129.25096718536,
+          "currentUtilization": 0.62185619306064,
+          "electricalInputW": 651424.8746142,
+          "chemicalPowerW": 281949.71946527,
+          "modeledLossPowerW": 369475.15514892
+        },
+        "thermal": {
+          "secSub_JPerKg": null,
+          "heaterLoss_JPerKg": null,
+          "extractorMassKg": 0.0,
+          "knudsenD_M2PerS": 0.0019801140319875,
+          "conductivity_WPerMK": 0.00174
+        },
+        "cryo": {
+          "stream": "lox",
+          "controlMode": "zero-boiloff",
+          "densityKgPerM3": 1141.0,
+          "storageTemperatureK": 90.2,
+          "conditioningSecKWhPerKg": 1.32,
+          "qLeakW": 204.29601899962,
+          "qRemovedW": 204.29601899962,
+          "qResidualW": 0,
+          "unmitigatedBoiloffKgPerDay": 82.869371087168,
+          "boiloffKgPerDay": 0.0,
+          "cryocoolerPowerW": 4121.2704989263,
+          "mliFlux_WPerM2": 4.6607673570772,
+          "inventories": [
+            {
+              "id": "oxygen-product",
+              "stream": "lox",
+              "role": "product",
+              "rateKgPerDay": 1000,
+              "reserveInventoryKg": 30000,
+              "volumeM3": 26.292725679229,
+              "storageMassKg": 6000,
+              "liquefierMassKg": 2500.0,
+              "densityKgPerM3": 1141.0,
+              "storageTemperatureK": 90.2,
+              "conditioningSecKWhPerKg": 1.32,
+              "conditioningPowerW": 55000.0,
+              "qLeakW": 204.29601899962,
+              "qRemovedW": 204.29601899962,
+              "qResidualW": 0,
+              "unmitigatedLossKgPerDay": 82.869371087168,
+              "actualLossKgPerDay": 0.0
+            }
+          ],
+          "totalStorageMassKg": 8500.0,
+          "totalReserveVolumeM3": 26.292725679229,
+          "totalConditioningPowerW": 55000.0
+        },
+        "power": {
+          "architecture": "nuclear",
+          "solarMassKg": 824093.49268988,
+          "nuclearMassKg": 30104.102724594,
+          "solarArrayM2": 8289.7516786033,
+          "radiatorM2": 2534.3835785355,
+          "radiatorMassKg": 9808.0644489325,
+          "radiatorEffectiveK": 419.8567367776,
+          "shieldMassKg": 3792.1489319812,
+          "cableMassKg": 1109.694166533,
+          "cableLossW": 16813.013268721,
+          "cableVoltageV": 4898.9794855664,
+          "fissionThermalW": 3827643.1094468,
+          "nuclearSpecificKgPerKw": 25.458004416427,
+          "pCritW": 2062.1066535218,
+          "pCritDynamicW": 1582.5438034572,
+          "beamedFloorPowerW": null,
+          "beamDeliveryMarginW": null,
+          "solarDeliveredCapacityW": 2639877.9955503,
+          "siteDayHours": 354.0,
+          "siteNightHours": 354.0,
+          "siteProfile": {
+            "mode": "scalar",
+            "name": "Equatorial lunar day/night cycle",
+            "cycleHours": 708.0,
+            "averageIllumination": 0.5,
+            "averageReceiverVisibility": 1,
+            "averageDeliveredFraction": 0.5,
+            "longestShadowHours": 354.0,
+            "longestReceiverOutageHours": 354.0,
+            "minimumSurfaceTemperatureK": 40,
+            "maximumSurfaceTemperatureK": 400,
+            "points": [
+              {
+                "hour": 0,
+                "illumination": 1,
+                "receiverVisibility": 1,
+                "surfaceTemperatureK": 400
+              },
+              {
+                "hour": 354.0,
+                "illumination": 1,
+                "receiverVisibility": 1,
+                "surfaceTemperatureK": 400
+              },
+              {
+                "hour": 354.000001,
+                "illumination": 0,
+                "receiverVisibility": 1,
+                "surfaceTemperatureK": 40
+              },
+              {
+                "hour": 708.0,
+                "illumination": 0,
+                "receiverVisibility": 1,
+                "surfaceTemperatureK": 40
+              }
+            ]
+          }
+        },
+        "logistics": {
+          "payloadPerMissionKg": 100961.02396776,
+          "productKgPerDay": 1000,
+          "totalInfraMassKg": 50736.102724594,
+          "nMissions": 1,
+          "leverageL": 215.82264722694,
+          "plantMassThroughputDays": 50.736102724594,
+          "manifest": [
+            {
+              "subsystem": "excavation fleet",
+              "massKg": 132
+            },
+            {
+              "subsystem": "reactor/plant",
+              "massKg": 12000.0
+            },
+            {
+              "subsystem": "power system",
+              "massKg": 30104.102724594
+            },
+            {
+              "subsystem": "cryo block",
+              "massKg": 8500.0
+            }
+          ]
+        },
+        "campaign": {
+          "leoMassPerLandedKg": 12.817992490568,
+          "deploymentDays": 0.0,
+          "firstProductDay": 30.0,
+          "campaignEndDay": 1855.0,
+          "deliveredKgPerDay": 900.0,
+          "usedKgPerDay": 900.0,
+          "sortieIntervalDays": null,
+          "resupplyKgPerYear": 5073.6102724594,
+          "feedKgPerYear": 0.0,
+          "cumulativeProductKg": 1642500.0,
+          "cumulativeUsedKg": 1642500.0,
+          "landedMassKg": 76104.154086892,
+          "leoMassSpentKg": 1425167.4918623,
+          "leoMassSavedKg": 9855000.0,
+          "netLeoMassKg": 8429832.5081377,
+          "returnRatio": 6.9149767001228,
+          "paybackDays": 240.65427942052,
           "paysBackInCampaign": true
         },
         "refuel": null,
@@ -142496,19 +143076,19 @@
         "power": {
           "architecture": "nuclear",
           "solarMassKg": 789975.7214995,
-          "nuclearMassKg": 28709.20947878,
+          "nuclearMassKg": 28640.20947878,
           "solarArrayM2": 7946.5529353728,
           "radiatorM2": 2429.4591739526,
           "radiatorMassKg": 9402.0070031967,
           "radiatorEffectiveK": 419.8567367776,
           "shieldMassKg": 3739.6045626338,
-          "cableMassKg": 779.49770009427,
+          "cableMassKg": 710.49770009427,
           "cableLossW": 16116.948386749,
-          "cableVoltageV": 8000,
+          "cableVoltageV": 8000.0,
           "fissionThermalW": 3669177.2885601,
           "nuclearSpecificKgPerKw": 25.490914137874,
-          "pCritW": 2136.2329230673,
-          "pCritDynamicW": 1640.2279182613,
+          "pCritW": 2049.9667714426,
+          "pCritDynamicW": 1573.9544046796,
           "beamedFloorPowerW": null,
           "beamDeliveryMarginW": null,
           "solarDeliveredCapacityW": 2530586.0836233,
@@ -142556,10 +143136,10 @@
         "logistics": {
           "payloadPerMissionKg": 100961.02396776,
           "productKgPerDay": 1000,
-          "totalInfraMassKg": 77126.622953128,
+          "totalInfraMassKg": 77057.622953128,
           "nMissions": 1,
-          "leverageL": 141.97432197511,
-          "plantMassThroughputDays": 77.126622953128,
+          "leverageL": 142.10145058148,
+          "plantMassThroughputDays": 77.057622953128,
           "manifest": [
             {
               "subsystem": "excavation fleet",
@@ -142575,7 +143155,7 @@
             },
             {
               "subsystem": "power system",
-              "massKg": 28709.20947878
+              "massKg": 28640.20947878
             },
             {
               "subsystem": "cryo block",
@@ -142591,15 +143171,15 @@
           "deliveredKgPerDay": 900.0,
           "usedKgPerDay": 100.0284612007,
           "sortieIntervalDays": 365.0,
-          "resupplyKgPerYear": 7712.6622953128,
+          "resupplyKgPerYear": 7705.7622953128,
           "feedKgPerYear": 0.0,
           "cumulativeProductKg": 1642500.0,
           "cumulativeUsedKg": 182551.94169127,
-          "landedMassKg": 115689.93442969,
-          "leoMassSpentKg": 1594304.236918,
+          "landedMassKg": 115586.43442969,
+          "leoMassSpentKg": 1593862.0161771,
           "leoMassSavedKg": 1095311.6501476,
-          "netLeoMassKg": -498992.58677038,
-          "returnRatio": 0.6870154546318,
+          "netLeoMassKg": -498550.36602945,
+          "returnRatio": 0.68720606867511,
           "paybackDays": 3680.0,
           "paysBackInCampaign": false
         },

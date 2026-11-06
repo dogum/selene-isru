@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from selene_isru import (
@@ -69,7 +71,7 @@ def test_regression_anchors() -> None:
     assert result["logistics"]["nMissions"] == 1
     assert result["logistics"]["totalInfraMassKg"] / 1000 == result["logistics"]["plantMassThroughputDays"]
     # v0.9 moved this from 60.4: the excavation fleet is sized on soil moved (8.5 t -> 108 kg).
-    assert_rel(result["logistics"]["plantMassThroughputDays"], 50.40, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost
+    assert_rel(result["logistics"]["plantMassThroughputDays"], 50.35, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(shield_full_balance_m(101325, 3000), 20.85, 0.005)
     assert 95_000 <= payload_per_mission_kg(DEFAULTS) <= 107_000
     assert 1.8 <= result["construction"]["padsPerYear"] <= 2.2
@@ -85,7 +87,7 @@ def test_polar_chain_charges_capture_heater_and_extractor_v04() -> None:
     assert_rel(polar["thermal"]["secSub_JPerKg"] / J_PER_KWH, 1.78 / 0.75, 0.01)
     assert_rel(polar["energy"]["secTotal_kWhPerKg"], 6.478, 0.001)
     # v0.12: 17 whole RASSORs, 1,122 kg against 1,085, move landed mass from 21.48 t.
-    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 22.05, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(polar["logistics"]["totalInfraMassKg"] / 1000, 21.98, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert polar["materials"]["maxAbsResidualKgPerDay"] == 0
 
 
@@ -123,7 +125,7 @@ def test_polar_propellant_mode_v06() -> None:
     assert_rel(result["logistics"]["leverageL"], 115.4, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost
     sabatier = simulate({"site": "polar", "enableSabatier": True})
     # v0.13: no longer borrows the MRE reactor mass, so leverage moves from 213.4x.
-    assert_rel(sabatier["logistics"]["leverageL"], 222.2, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.27: cable voltage designed for its power
+    assert_rel(sabatier["logistics"]["leverageL"], 222.5, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
 
 
 def test_refuelling_demand_v07() -> None:
@@ -238,7 +240,7 @@ def test_fixed_seed_uncertainty_anchor() -> None:
     # v0.12: whole excavators.
     # v0.17: the radiator charged by its area; alphaSpecific 30 -> 28 kg/kW rounds off 0.02 kg/kW.
     # v0.18: alphaSpecific split into reactor per kWt and conversion per kWe (28.003 kg/kWe at defaults).
-    assert_rel(result["plantMassThroughputDays"]["p50"], 50.34594150330118, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(result["plantMassThroughputDays"]["p50"], 50.27825260507181, 1e-12)  # v0.19: fission calibrated to Mason and FSP; v0.20: Brayton cycle efficiency; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(result["secTotal"]["p50"], 23.758063285514478, 1e-12)
 
 
@@ -268,7 +270,7 @@ def test_whole_excavators_from_rassor_kinematics_v012() -> None:
     assert equatorial["excavation"]["excavatorTripsPerDay"] == 34
     assert equatorial["excavation"]["excavatorKgPerDay"] == 2720
     assert equatorial["excavation"]["excavatorCount"] == 2
-    assert_rel(equatorial["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost
+    assert_rel(equatorial["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     small = simulate({"targetKgPerDay": 100})
     assert small["excavation"]["excavatorCount"] == 1
     assert small["excavation"]["fleetMassKg"] == 66
@@ -290,18 +292,18 @@ def test_sabatier_plant_mass_on_methane_v013() -> None:
     plant = next(row["massKg"] for row in result["logistics"]["manifest"] if row["subsystem"] == "reactor/plant")
     assert_rel(result["production"]["ch4KgPerDay"], 211.1, 0.001)
     assert_rel(plant / 1000, 13.23, 0.001)
-    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.48, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.27: cable voltage designed for its power
-    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost
+    assert_rel(result["logistics"]["totalInfraMassKg"] / 1000, 54.41, 0.001)  # v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
 
 
 def test_stirling_converter_v023() -> None:
     # New and deliberate: a Stirling converter at 0.59 of Carnot with its own conversion mass.
     # Brayton stays the default, and the default plant does not move.
-    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)  # v0.25: shield at its separation, cable to the outpost
+    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     lithium = simulate({"fissionConverter": "stirling", "Tsource": 1050, "Tsink": 500})
     assert_rel(lithium["power"]["fissionThermalW"] / (lithium["energy"]["gridPowerW"] + lithium["power"]["cableLossW"]), 1 / 0.3090, 0.001)
     assert_rel(lithium["power"]["radiatorM2"], 938, 0.002)  # v0.25: shield at its separation, cable to the outpost
-    assert_rel(lithium["power"]["nuclearMassKg"] / 1000, 36.73, 0.001)  # v0.25: shield at its separation, cable to the outpost
+    assert_rel(lithium["power"]["nuclearMassKg"] / 1000, 36.69, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(lithium["logistics"]["totalInfraMassKg"] / 1000, 57.36, 0.001)  # v0.25: shield at its separation, cable to the outpost
     assert lithium["logistics"]["nMissions"] == 1
     assert "stirling-hot-end" not in warning_ids(lithium)
@@ -324,9 +326,9 @@ def test_fission_economy_of_scale_v022() -> None:
     # (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.
     assert fission_scale_factor(DEFAULTS, DEFAULTS["QscaleRefKwt"]) == 1
     base = simulate({})
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.77, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.72, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(base["power"]["nuclearSpecificKgPerKw"], 25.46, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert base["logistics"]["nMissions"] == 1
     # The engine's fission mass is the curve the power chart draws.
     kw = base["energy"]["gridPowerW"] / 1000
@@ -335,14 +337,14 @@ def test_fission_economy_of_scale_v022() -> None:
     p_crit = base["power"]["pCritW"] / 1000
     beta = base["power"]["solarMassKg"] / kw
     assert_rel(beta * p_crit, nuclear_mass_at_kwe(DEFAULTS, p_crit), 1e-9)
-    assert_rel(p_crit, 2.136, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(p_crit, 2.050, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     # A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
     big = simulate({"targetKgPerDay": 10000})
     assert_rel(big["power"]["nuclearMassKg"] / 1000, 246.6, 0.001)  # v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     assert big["logistics"]["nMissions"] == 6
     # A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model
     # (since v0.24, with the v0.24 cycle and radiator).
-    assert_rel(simulate(V021_FISSION)["logistics"]["totalInfraMassKg"] / 1000, 49.20, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(simulate(V021_FISSION)["logistics"]["totalInfraMassKg"] / 1000, 49.13, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
 
 
 def test_fission_shield_scales_with_power_v021() -> None:
@@ -355,9 +357,9 @@ def test_fission_shield_scales_with_power_v021() -> None:
     # landed mass from 50.46 t, and the crossover from 2.077 kW.
     base = simulate(V021_FISSION)
     assert_rel(base["power"]["shieldMassKg"] / 1000, 4.639, 0.001)  # v0.25: shield at its separation, cable to the outpost
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 28.57, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 28.50, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(base["power"]["nuclearSpecificKgPerKw"], 23.37, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 49.20, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 49.13, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert base["logistics"]["nMissions"] == 1
     # The crossover satisfies the scaled shield (and, since v0.25, the cable's fixed mass).
     kw = base["power"]["pCritW"] / 1000
@@ -367,10 +369,33 @@ def test_fission_shield_scales_with_power_v021() -> None:
     # v0.27: the whole cable, designed for the crossover's power.
     cable = cable_mass_kg(pinned, kw / line_efficiency(pinned))
     assert_rel(beta * kw, shield + cable + base["power"]["nuclearSpecificKgPerKw"] * kw, 1e-9)
-    assert_rel(kw, 2.495, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(kw, 2.410, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     # A fixed shield (nShield 0) is the v0.20 model's.
     fixed = simulate({**V021_FISSION, "nShield": 0})
     assert fixed["power"]["shieldMassKg"] == V021_FISSION["MshieldKg"]
+
+
+def test_ac_transmission_v028() -> None:
+    # New and deliberate: a three-phase AC cable, insulated for its peak voltage to ground, held to the same
+    # peak as the DC line. DC stays the default; the fixed mass per km is refitted to Mason's 3 kVac cable.
+    assert DEFAULTS["cableForm"] == "dc"
+    dc = simulate({})
+    ac = simulate({"cableForm": "ac"})
+    assert_rel(ac["power"]["cableVoltageV"], DEFAULTS["VCableMaxV"] * 0.5 / math.sqrt(2 / 3), 1e-12)
+    assert_rel(ac["power"]["cableVoltageV"], 4899, 0.001)
+    assert_rel(ac["power"]["cableMassKg"], 1110, 0.001)
+    assert ac["power"]["cableLossW"] == pytest.approx(dc["power"]["cableLossW"], rel=1e-12)
+    assert_rel(ac["logistics"]["totalInfraMassKg"] / 1000, 50.74, 0.001)
+    # The same peak voltage to ground means the same insulation thickness on both lines.
+    sent_kw = (dc["energy"]["gridPowerW"] + dc["power"]["cableLossW"]) / 1000
+    assert_rel(
+        cable_design({**DEFAULTS, "cableForm": "ac"}, sent_kw)["insulationM"], cable_design(DEFAULTS, sent_kw)["insulationM"], 1e-12
+    )
+    assert_rel(simulate({"cableForm": "ac", "targetKgPerDay": 10000})["logistics"]["totalInfraMassKg"] / 1000, 455.8, 0.001)
+    # An unsupported form resets to DC and says so.
+    reset = simulate({"cableForm": "hvdc"})
+    assert reset["power"]["cableMassKg"] == dc["power"]["cableMassKg"]
+    assert "param-clamped" in warning_ids(reset)
 
 
 def test_cable_voltage_designed_for_its_power_v027() -> None:
@@ -379,7 +404,7 @@ def test_cable_voltage_designed_for_its_power_v027() -> None:
     base = simulate({})
     power = base["power"]
     assert power["cableVoltageV"] == DEFAULTS["VCableMaxV"] == 8000
-    assert_rel(power["cableMassKg"], 795, 0.001)
+    assert_rel(power["cableMassKg"], 726, 0.001)  # v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     sent_kw = (base["energy"]["gridPowerW"] + power["cableLossW"]) / 1000
     design = cable_design(DEFAULTS, sent_kw)
     assert_rel(design["conductorKgPerKm"], 286.9, 0.001)
@@ -387,25 +412,25 @@ def test_cable_voltage_designed_for_its_power_v027() -> None:
     assert_rel(design["jacketKgPerKm"], 83.8, 0.001)
     designed = design["conductorKgPerKm"] + design["insulationKgPerKm"] + design["jacketKgPerKm"]
     assert_rel(power["cableMassKg"], DEFAULTS["dSeparationKm"] * (DEFAULTS["kCableKgPerKm"] + designed), 1e-12)
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.42, 0.001)
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     # Below the cap a small plant's cable runs at its own optimum.
     assert cable_design(DEFAULTS, 40)["voltageV"] < DEFAULTS["VCableMaxV"]
     # The cap binds a megawatt plant: uncapped it would run near 18 kV; at v0.25's 3 kV it is 3.3 times heavier.
     uncapped = simulate({"VCableMaxV": 30000})["power"]
     assert_rel(uncapped["cableVoltageV"], 17887, 0.001)
     assert uncapped["cableMassKg"] < power["cableMassKg"]
-    assert_rel(simulate({"VCableMaxV": 3000})["power"]["cableMassKg"], 2640, 0.001)
+    assert_rel(simulate({"VCableMaxV": 3000})["power"]["cableMassKg"], 2571, 0.001)  # v0.28: cable fixed mass refitted to Mason's 3 kVac cable
 
 
 def test_buried_fission_reactor_v026() -> None:
     # New and deliberate: a buried reactor's shield is FSP 2008's 1,676 kg emplaced shield, grown with
     # heat and independent of separation. Surface siting stays the default, and the default plant does not move.
-    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)
+    assert_rel(simulate({})["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     buried = {"fissionSiting": "buried", "dSeparationKm": 0.1}
     base = simulate(buried)
     power = base["power"]
     assert_rel(power["shieldMassKg"], 4616, 0.001)
-    assert_rel(power["cableMassKg"], 79, 0.002)  # v0.27: cable voltage designed for its power
+    assert_rel(power["cableMassKg"], 72, 0.002)  # v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(power["cableLossW"] / 1000, 1.65, 0.01)
     assert_rel(power["nuclearMassKg"] / 1000, 29.53, 0.001)  # v0.27: cable voltage designed for its power
     assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.16, 0.001)  # v0.27: cable voltage designed for its power
@@ -428,15 +453,15 @@ def test_fission_shield_and_cable_with_separation_v025() -> None:
     base = simulate({})
     power = base["power"]
     assert_rel(power["shieldMassKg"], 3792, 0.001)
-    assert_rel(power["cableMassKg"], 795, 0.001)  # v0.27: cable voltage designed for its power
+    assert_rel(power["cableMassKg"], 726, 0.001)  # v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     # v0.27 retired v0.25's fixed 3 kV conductor (2.026 kg per kW and km): the cable is designed at 8 kV.
     sent_kw = (base["energy"]["gridPowerW"] + base["power"]["cableLossW"]) / 1000
     assert cable_design(DEFAULTS, sent_kw)["voltageV"] == DEFAULTS["VCableMaxV"] == base["power"]["cableVoltageV"]
     sent_w = base["energy"]["gridPowerW"] / line_efficiency(DEFAULTS)
     assert_rel(power["cableLossW"], sent_w - base["energy"]["gridPowerW"], 1e-12)
     assert_rel(power["cableLossW"] / sent_w, 0.0167, 1e-12)
-    assert_rel(power["nuclearMassKg"] / 1000, 29.77, 0.001)
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.40, 0.001)
+    assert_rel(power["nuclearMassKg"] / 1000, 29.72, 0.001)  # v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.35, 0.001)  # v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     # Half the separation nearly doubles the shield; the cable halves.
     near = simulate({"dSeparationKm": 0.5})["power"]
     assert_rel(near["shieldMassKg"] / power["shieldMassKg"], 2**0.97, 0.005)
@@ -496,8 +521,8 @@ def test_fission_defaults_calibrated_to_nasa_surface_brayton_v019() -> None:
     assert_rel(base["power"]["radiatorM2"], 2534, 0.001)  # v0.25: shield at its separation, cable to the outpost
     assert_rel(base["power"]["radiatorMassKg"] / 1000, 9.808, 0.001)  # v0.25: shield at its separation, cable to the outpost
     assert_rel(base["power"]["nuclearSpecificKgPerKw"], 27.22, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.42, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 50.05, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 29.35, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 49.98, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert base["logistics"]["nMissions"] == 1
 
     # v0.19's disclosed 570 K optimum belonged to the fixed fraction of Carnot;
@@ -520,7 +545,7 @@ def test_fission_efficiency_from_the_brayton_cycle_v020() -> None:
     assert at(410) < at(400)
     assert at(410) < at(430)
     assert at(570) > 1.8 * at(410)
-    assert_rel(at(420) / 1000, 29.30, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(at(420) / 1000, 29.23, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     dead = simulate({**V020_FISSION, "Tsink": 650})
     assert dead["power"]["architecture"] == "solar"
     assert [w["severity"] for w in dead["warnings"] if w["id"] == "fission-no-net-work"] == ["caution"]
@@ -552,8 +577,8 @@ def test_fission_radiator_charged_by_its_area_v017() -> None:
     assert_rel(base["power"]["radiatorM2"], 515.4, 0.001)  # v0.25: shield at its separation, cable to the outpost
     assert_rel(base["power"]["radiatorMassKg"] / 1000, 1.995, 0.001)  # v0.25: shield at its separation, cable to the outpost
     assert_rel(base["power"]["nuclearSpecificKgPerKw"], 30.49, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 32.48, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
-    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 53.11, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 32.41, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    assert_rel(base["logistics"]["totalInfraMassKg"] / 1000, 53.04, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     # The 400 K case's 7.4 t radiator and 33.18 t fission system belonged to the
     # fixed fraction of Carnot; v0.20 retired them. A colder radiator is still charged by its area.
     cold = simulate({**V018_FISSION, "Tsink": 400})
@@ -566,7 +591,7 @@ def test_fission_reactor_charged_on_its_heat_v018() -> None:
     base = simulate(V018_FISSION)
     assert_rel(base["power"]["fissionThermalW"] / 1e6, 3.661, 0.001)  # v0.25: shield at its separation, cable to the outpost
     assert_rel(V018_FISSION["kReactorKgPerKwt"] * base["power"]["fissionThermalW"] / 1e6, 14.17, 0.001)  # v0.25: shield at its separation, cable to the outpost
-    assert_rel(base["power"]["nuclearMassKg"] / 1000, 32.48, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(base["power"]["nuclearMassKg"] / 1000, 32.41, 0.001)  # v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     for run in (base, simulate({**V018_FISSION, "Tsink": 400})):
         kw = run["energy"]["gridPowerW"] / 1000
         # v0.25: conversion on the sent power, which covers the cable's loss.
@@ -589,7 +614,7 @@ def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
     crew_size = size_to_demand(crew)
     assert_rel(crew_size["targetKgPerDay"], 111.14, 0.001)
     crew_sized = simulate({**crew, "targetKgPerDay": crew_size["targetKgPerDay"]})
-    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 14.38, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(crew_sized["logistics"]["totalInfraMassKg"] / 1000, 14.31, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(crew_sized["campaign"]["returnRatio"], 0.9190, 0.001)  # v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert crew_sized["campaign"]["paysBackInCampaign"] is False
     polar = {"site": "polar", "polarProduct": "propellant", "refuelDemand": "lander"}
@@ -597,7 +622,7 @@ def test_sizing_the_plant_to_its_refuelling_demand_v016() -> None:
     assert polar_size["limitedBy"] == "hydrogen"
     assert_rel(polar_size["targetKgPerDay"], 166.71, 0.001)
     polar_sized = simulate({**polar, "targetKgPerDay": polar_size["targetKgPerDay"]})
-    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.97, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    assert_rel(polar_sized["logistics"]["totalInfraMassKg"] / 1000, 22.90, 0.001)  # v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     assert_rel(polar_sized["campaign"]["returnRatio"], 1.0247, 0.001)  # v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     assert polar_sized["campaign"]["paybackDays"] == polar_sized["campaign"]["campaignEndDay"]
     assert simulate(polar)["campaign"]["paysBackInCampaign"] is False
