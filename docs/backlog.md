@@ -2,7 +2,7 @@
 
 Open items gathered from every "left for later" and "remaining" section in the
 audit trail ([`model-audit-v02.md`](model-audit-v02.md) through
-[`model-shield-burial-v026.md`](model-shield-burial-v026.md)), plus the
+[`model-cable-voltage-v027.md`](model-cable-voltage-v027.md)), plus the
 visual and Custom Site notes. Each item names the doc it came from. When an item
 ships, delete it here and annotate the source doc, as the audit trail already
 does.
@@ -20,7 +20,7 @@ Size: **S** a day or less, **M** a phase like v0.9, **L** more than one phase.
 
 | # | Item | Size | Source in hand | From |
 |---|---|---|---|---|
-| 1 | **Fission transmission voltage, topography, and the reactor's excavation.** A cable voltage that rises with plant power, trading insulation against conductor; terrain between reactor and outpost; and the buried reactor's hole and berm charged to the excavation fleet. | M | Barth & Pike 2022 (NETS 2022) voltage trade; Mason 2001 5,000 Vac separations; Mason 2006 (NASA/TM-2006-214120) 2 m by 4 m excavation | v0.25, v0.26 |
+| 1 | **Fission transmission as AC, topography, and the reactor's excavation.** An AC line with insulation for its peak voltage and transformers at each end, as NASA's current 3 kVac design uses; terrain between reactor and outpost; and the buried reactor's hole and berm charged to the excavation fleet. | M | Barth & Pike 2022 (NETS 2022) AC cable sweep; Mason 2025 (NETS 2025) 3 kVac PMAD; Mason 2006 (NASA/TM-2006-214120) 2 m by 4 m excavation | v0.25–v0.27 |
 | 2 | **Fission unit size, small-reactor fixed masses, and radiator economy of scale.** Whole reactors and converters (the step to a second unit, redundancy at a crewed site); reactor and shield masses that do not shrink with power, which would let Stirling's efficiency pay below 100 kWe as Mason 2001 finds; and a radiator areal mass that falls with panel size. | M | Mason 2001 (NASA/TM-2001-210593) unit counts and 10 kWe systems; Mason 2025 (NETS 2025) multiple-unit trade | v0.22, v0.23 |
 | 3 | **Stirling efficiency with temperature, and thermoelectric conversion.** A Stirling fraction of Carnot that falls as the cold end warms (moving the model's optimum toward Mason's 460–500 K), and Mason 2006's third converter. | S | Mason 2006 (NASA/TM-2006-214120), Table 1 and Fig. 7 | v0.23 |
 | 4 | **A Brayton converter designed once, and the gas cooler and radiator by temperature.** A design-point pressure ratio the converter then runs off-design from; a gas cooler sized by its effectiveness and mass in place of the fitted 50 K approach; and a radiator areal mass that rises above about 400 K, where heat pipes change working fluid. | M | Fuller 2010 (NASA/CR-2010-215673) off-design maps; Mason 2006 (NASA/TM-2006-214120) | v0.24 |

@@ -258,7 +258,8 @@ Screenshot: [the separation's evidence over the power panel](screenshots/shield-
   - Mason 2025's 1,370 kg above-ground shield is for 1 km.
   - On this model's distance law, an above-ground shield for 100 m would weigh
     about 13 t, so burial would save most of a close-in shield's mass.
-- **Transmission voltage with power.** The cable runs at a fixed 3 kV, which
+- **Transmission voltage with power.** *(v0.27: done; see
+  [`model-cable-voltage-v027.md`](model-cable-voltage-v027.md).)* The cable runs at a fixed 3 kV, which
   Barth & Pike find lightest for 40 kW. A megawatt plant's optimum is higher, at
   the cost of insulation mass, which would move its optimum separation outward.
 - **Topography.** A crater rim or ridge between reactor and outpost attenuates

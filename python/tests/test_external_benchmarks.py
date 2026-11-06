@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from selene_isru import (
+    cable_design,
     cable_mass_kg,
     fission_efficiency,
     fission_shield_kg,
@@ -100,13 +101,14 @@ def test_fission_slope_from_nasa_surface_brayton_scaling_v019() -> None:
     # conversion's economy of scale; the model lands 2.55 t lighter at both.
     # v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
     # v0.25: the shield at its 1 km separation and the cable to the outpost; 2.55 t.
+    # v0.27: the cable designed for its power; 2.46 t.
     def model_kg(kwe: float) -> float:
         return nuclear_mass_at_kwe(DEFAULTS, kwe)
 
     model_marginal = (model_kg(i["power500Kwe"]) - model_kg(i["power100Kwe"])) / (i["power500Kwe"] - i["power100Kwe"])
     assert model_marginal == pytest.approx(marginal, rel=0.001)
-    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2554, rel=0.01)
-    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2554, rel=0.01)
+    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2463, rel=0.01)
+    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2463, rel=0.01)
 
 
 def test_fission_economy_of_scale_from_nasa_spacecraft_brayton_v022() -> None:
@@ -161,6 +163,24 @@ def test_fission_shield_and_cable_with_separation_v025() -> None:
 
     best = min((k / 100 for k in range(20, 500)), key=system)
     assert best == pytest.approx(i["optimumSeparationKm"], rel=0.05)
+
+
+def test_cable_voltage_from_nasa_transmission_studies_v027() -> None:
+    row = item("barth-pike-2022-cable-voltage")
+    assert row["kind"] == "documentation-only"
+    i = row["inputs"]
+
+    def design(kw: float, km: float, efficiency: float) -> dict[str, float]:
+        params = {**DEFAULTS, "fCableLossPerKm": (1 - efficiency) / km, "VCableMaxV": 30000}
+        return cable_design(params, kw)
+
+    barth = design(i["barthPowerKw"], i["barthLengthKm"], i["barthEfficiency"])
+    assert barth["voltageV"] / 2 == pytest.approx(row["expected"], rel=0.02)
+    oleson = design(i["olesonPowerKwe"], i["olesonLengthKm"], i["olesonEfficiency"])
+    assert oleson["conductorAreaM2"] == c("AConductorMinM2")
+    assert oleson["voltageV"] / 2 == pytest.approx(i["olesonOptimumVoltsToNeutral"], rel=0.12)
+    mass = (oleson["conductorKgPerKm"] + oleson["insulationKgPerKm"] + oleson["jacketKgPerKm"]) * i["olesonLengthKm"]
+    assert mass == pytest.approx(i["olesonCableMassKg"], rel=0.15)
 
 
 def test_buried_fission_shield_from_nasa_fsp_v026() -> None:
@@ -383,8 +403,8 @@ def test_stirling_mass_from_nasa_stirling_scaling_v023() -> None:
     assert DEFAULTS["bStirlingScale"] == pytest.approx(exponent, rel=0.005)
     # Not used in calibration: NASA FSP's Stirling conversion and power management per kWe.
     fsp = (i["fspConversionKg"] + i["fspPowerManagementKg"]) / i["fspUserPowerKwe"]
-    # v0.25: 21.06 kg/kWe, 7% under FSP's 22.6, once the cable's conductor is charged on its own:
-    # FSP's power management may carry its own cable.
-    assert DEFAULTS["kConversionStirlingKgPerKwe"] == pytest.approx(fsp, rel=0.08)
+    # v0.25: 21.06 kg/kWe, 7% under FSP's 22.6, with v0.25's heavy 3 kV conductor charged on its own.
+    # v0.27: the cable designed for its power is lighter, so 21.96 kg/kWe, back within 5%.
+    assert DEFAULTS["kConversionStirlingKgPerKwe"] == pytest.approx(fsp, rel=0.05)
     # Stirling is heavier than Brayton at megawatt scale, as Mason 2001 finds above 50 kWe.
     assert nuclear_mass_at_kwe(stirling, 500) / nuclear_mass_at_kwe(DEFAULTS, 500) == pytest.approx(1.20, rel=0.01)

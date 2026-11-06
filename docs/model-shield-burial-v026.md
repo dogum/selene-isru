@@ -138,6 +138,11 @@ What the table shows:
   a tenth as much power.
   - **Default plant:** lands 1.6 t lighter.
   - **10 t/day plant:** lands 20 t lighter, still in six landings.
+
+  *(v0.27: with the cable designed for its voltage, a surface reactor at its
+  best separation beats a buried one at 100 m up to 1 t/day, and burial saves
+  5 t at 10 t/day; see
+  [`model-cable-voltage-v027.md`](model-cable-voltage-v027.md).)*
 - **A buried reactor at 1 km** is heavier than a surface one (51.25 t at
   1 t/day): burial only pays if the reactor moves in.
 

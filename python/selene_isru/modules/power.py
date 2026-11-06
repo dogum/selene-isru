@@ -34,20 +34,63 @@ def line_efficiency(params: dict[str, Any]) -> float:
     return 1 - params["fCableLossPerKm"] * params["dSeparationKm"]
 
 
-def cable_conductor_kg_per_kw_km(params: dict[str, Any]) -> float:
-    """Aluminium conductor per kW sent per km of route, sized to lose fCableLossPerKm [kg/(kW km)].
+CABLE_V_MIN = 10.0
+CABLE_BISECTIONS = 80
 
-    Two conductors at the line voltage: loss fraction 2 rho L P / (V^2 A) held at fCableLossPerKm per km,
-    so conductor mass 2 A L rho_m = 4 rho rho_m P L / (V^2 f), with P in kW and L in km."""
-    return (
-        4 * c("rhoAluminumOhmM") * c("densityAluminumKgPerM3") * 1e9
-        / (c("VCableV") ** 2 * params["fCableLossPerKm"])
-    )
+
+def cable_design(params: dict[str, Any], sent_kwe: float) -> dict[str, float]:
+    """Reactor-to-outpost cable at a sent electrical power: its voltage and its mass per km [V, m^2, m, kg/km].
+
+    Two aluminium conductors (a bipolar line, each at half the line voltage to ground), each insulated with FEP
+    at a fixed design stress, inside one FEP jacket. The conductor is sized so the line loses fCableLossPerKm
+    per km: its area A = 2 rho P / (V^2 f), floored at the 16 AWG minimum. A higher voltage shrinks the
+    conductor as 1/V^2 and thickens the insulation as V; the voltage is the one that minimizes their mass,
+    found by bisection on the sign of the slope, and capped at VCableMaxV."""
+    rho = c("rhoAluminumOhmM")
+    rho_m = c("densityAluminumKgPerM3")
+    rho_i = c("densityFEPKgPerM3")
+    stress = c("EInsulationVPerM")
+    jacket = c("tCableJacketM")
+    a_min = c("AConductorMinM2")
+    area_coefficient = 2 * rho * max(sent_kwe, 0.0) * 1000 / (params["fCableLossPerKm"] / 1000)
+
+    def slope_sign(v: float) -> float:
+        area = area_coefficient / v**2
+        radius = math.sqrt(area / math.pi)
+        thickness = v / 2 / stress
+        return -rho_m * area + rho_i * math.pi * (thickness**2 + jacket * (thickness - radius))
+
+    lo = CABLE_V_MIN
+    hi = max(lo, min(math.sqrt(area_coefficient / a_min), params["VCableMaxV"]))
+    if hi == lo or slope_sign(hi) < 0:
+        voltage = hi
+    else:
+        for _ in range(CABLE_BISECTIONS):
+            mid = math.sqrt(lo * hi)
+            if slope_sign(mid) < 0:
+                lo = mid
+            else:
+                hi = mid
+        voltage = hi
+    area = max(a_min, area_coefficient / voltage**2)
+    radius = math.sqrt(area / math.pi)
+    thickness = voltage / 2 / stress
+    bundle_radius = 2 * (radius + thickness)
+    return {
+        "voltageV": voltage,
+        "conductorAreaM2": area,
+        "insulationM": thickness,
+        "conductorKgPerKm": 2 * area * rho_m * 1000,
+        "insulationKgPerKm": 2 * math.pi * (2 * radius * thickness + thickness**2) * rho_i * 1000,
+        "jacketKgPerKm": math.pi * (2 * bundle_radius * jacket + jacket**2) * rho_i * 1000,
+    }
 
 
 def cable_mass_kg(params: dict[str, Any], sent_kwe: float) -> float:
-    """Reactor-to-outpost cable mass at a sent electrical power [kg]: a fixed mass per km plus the conductor."""
-    return params["dSeparationKm"] * (params["kCableKgPerKm"] + cable_conductor_kg_per_kw_km(params) * sent_kwe)
+    """Reactor-to-outpost cable mass at a sent electrical power [kg]: the fixed mass per km plus the designed cable."""
+    design = cable_design(params, sent_kwe)
+    per_km = params["kCableKgPerKm"] + design["conductorKgPerKm"] + design["insulationKgPerKm"] + design["jacketKgPerKm"]
+    return params["dSeparationKm"] * per_km
 
 
 def shield_ref_kwe(params: dict[str, Any]) -> float:
@@ -244,20 +287,19 @@ def conversion_kg_per_kwe(params: dict[str, Any], thermal_kw: float) -> float:
 
 
 def _specific_kg_per_kwe(params: dict[str, Any], eta: float, radiator_kg_per_kwe: float, kwe: float) -> float:
-    """Per delivered kW: reactor, conversion, radiator, and cable conductor, all sized on the sent power."""
+    """Per delivered kW: reactor, conversion, and radiator, all sized on the sent power."""
     line = line_efficiency(params)
     heat_kw = kwe / line / eta
     per_sent_kwe = (
         params["kReactorKgPerKwt"] / eta * fission_scale_factor(params, heat_kw)
         + conversion_kg_per_kwe(params, heat_kw)
         + radiator_kg_per_kwe
-        + params["dSeparationKm"] * cable_conductor_kg_per_kw_km(params)
     )
     return per_sent_kwe / line
 
 
 def nuclear_specific_kg_per_kw(params: dict[str, Any], kwe: float | None = None) -> float:
-    """Fission specific mass per kW delivered at an output, excluding the shield and the cable's fixed mass [kg/kW].
+    """Fission specific mass per kW delivered at an output, excluding the shield and the cable [kg/kW].
 
     Defaults to the output at the scaling reference heat."""
     eta = fission_efficiency(params)
@@ -270,12 +312,12 @@ def _mass_curve(params: dict[str, Any]):
     eta = fission_efficiency(params)
     line = line_efficiency(params)
     radiator_kg_per_kwe = params["kRadiatorKgPerM2"] * _radiator_m2_per_kw_at(params, eta)
-    cable_fixed_kg = params["dSeparationKm"] * params["kCableKgPerKm"]
 
     def mass(kwe: float, t_years: float) -> float:
         shield = fission_shield_kg(params, kwe / line / eta)
+        cable = cable_mass_kg(params, kwe / line)
         specific = _specific_kg_per_kwe(params, eta, radiator_kg_per_kwe, kwe)
-        return shield + cable_fixed_kg + nuclear_slope_at_year(specific, params["dNuclear"], t_years) * kwe
+        return shield + cable + nuclear_slope_at_year(specific, params["dNuclear"], t_years) * kwe
 
     return mass
 
@@ -357,6 +399,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
     shield_kg = fission_shield_kg(params, q_fission / 1000)
     cable_kg = cable_mass_kg(params, p_sent / 1000)
+    cable_voltage_v = cable_design(params, p_sent / 1000)["voltageV"]
     scale = fission_scale_factor(params, q_fission / 1000)
     nuclear_mass_kg = (
         shield_kg
@@ -399,6 +442,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "shieldMassKg": shield_kg,
         "cableMassKg": cable_kg,
         "cableLossW": p_sent - p_grid,
+        "cableVoltageV": cable_voltage_v,
         "fissionThermalW": q_fission,
         "nuclearSpecificKgPerKw": alpha_with_radiator,
         "pCritW": 0 if p_crit is None else p_crit * 1000,
