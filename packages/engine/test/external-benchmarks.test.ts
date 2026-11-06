@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { cableMassKg, conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionShieldKg, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
+import { cableDesign, cableMassKg, conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionShieldKg, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -110,11 +110,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // conversion's economy of scale; the model lands 2.55 t lighter at both.
     // v0.24: the radiator spans the gas cooler, so the refit lands 2.52 t lighter.
     // v0.25: the shield at its 1 km separation and the cable to the outpost; 2.55 t.
+    // v0.27: the cable designed for its power; 2.46 t.
     const modelKg = (kwe: number) => nuclearMassAtKwe(DEFAULTS, kwe);
     const modelMarginal = (modelKg(i.power500Kwe!) - modelKg(i.power100Kwe!)) / (i.power500Kwe! - i.power100Kwe!);
     expectRelative2(modelMarginal, marginal, 0.001);
-    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2554, 0.01);
-    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2554, 0.01);
+    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2463, 0.01);
+    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2463, 0.01);
   });
 
   test("fission economy of scale from NASA's spacecraft Brayton systems, 0.1 to 10 MWe (v0.22)", () => {
@@ -171,9 +172,9 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(DEFAULTS.bStirlingScale, exponent, 0.005);
     // Not used in calibration: NASA FSP's Stirling conversion and power management per kWe.
     const fsp = (i.fspConversionKg! + i.fspPowerManagementKg!) / i.fspUserPowerKwe!;
-    // v0.25: 21.06 kg/kWe, 7% under FSP's 22.6, once the cable's conductor is charged on its own:
-    // FSP's power management may carry its own cable.
-    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.08);
+    // v0.25: 21.06 kg/kWe, 7% under FSP's 22.6, with v0.25's heavy 3 kV conductor charged on its own.
+    // v0.27: the cable designed for its power is lighter, so 21.96 kg/kWe, back within 5%.
+    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.05);
     // Stirling is heavier than Brayton at megawatt scale, as Mason 2001 finds above 50 kWe.
     expectRelative2(nuclearMassAtKwe(stirling, 500) / nuclearMassAtKwe(DEFAULTS, 500), 1.2, 0.01);
   });
@@ -204,6 +205,21 @@ describe("external analytical benchmarks (separate from implementation parity)",
       if (system(k / 100) < system(best)) best = k / 100;
     }
     expectRelative2(best, i.optimumSeparationKm!, 0.05);
+  });
+
+  test("cable voltage and mass, from NASA's lunar transmission studies (v0.27)", () => {
+    const item = benchmark("barth-pike-2022-cable-voltage");
+    expect(item.kind).toBe("documentation-only");
+    const i = item.inputs as Record<string, number>;
+    const design = (kw: number, km: number, efficiency: number) =>
+      cableDesign({ ...DEFAULTS, fCableLossPerKm: (1 - efficiency) / km, VCableMaxV: 30000 }, kw);
+    const barth = design(i.barthPowerKw!, i.barthLengthKm!, i.barthEfficiency!);
+    expectRelative2(barth.voltageV / 2, item.expected as number, 0.02);
+    const oleson = design(i.olesonPowerKwe!, i.olesonLengthKm!, i.olesonEfficiency!);
+    expect(oleson.conductorAreaM2).toBe(PHYSICAL_CONSTANTS.AConductorMinM2.value);
+    expectRelative2(oleson.voltageV / 2, i.olesonOptimumVoltsToNeutral!, 0.12);
+    const mass = (oleson.conductorKgPerKm + oleson.insulationKgPerKm + oleson.jacketKgPerKm) * i.olesonLengthKm!;
+    expectRelative2(mass, i.olesonCableMassKg!, 0.15);
   });
 
   test("buried fission shield, from NASA FSP's emplaced reactor (v0.26)", () => {

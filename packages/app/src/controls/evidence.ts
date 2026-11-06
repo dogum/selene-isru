@@ -235,7 +235,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · nuclear architecture"
   },
   fissionSiting: {
-    validity: "Surface: the reactor stands on the regolith behind its own directional shield, which must shadow the outpost, so it shrinks with separation (Mason 2025, NASA's current design). Buried: the reactor sits in an excavated hole, the regolith shields the outpost, and an Earth-delivered plug shield protects the converters and radiator above it, so separation no longer sizes the shield and the reactor can sit 100 m away (FSP 2008's emplaced design). Burial pays through the shorter cable: about 1.6 t for the default 1 MWe plant and 20 t at 10 t/day, while a 40 kWe system is lighter on the surface at its best separation. Digging the hole (about 20 t of regolith, a few days of the plant's own mining) and crew-assisted installation are not charged.",
+    validity: "Surface: the reactor stands on the regolith behind its own directional shield, which must shadow the outpost, so it shrinks with separation (Mason 2025, NASA's current design). Buried: the reactor sits in an excavated hole, the regolith shields the outpost, and an Earth-delivered plug shield protects the converters and radiator above it, so separation no longer sizes the shield and the reactor can sit 100 m away (FSP 2008's emplaced design). Burial pays only through the shorter cable. Since v0.27 the cable is designed for its voltage and is light, so a surface reactor at its best separation beats a buried one at 100 m for a 40 kWe system and for the default 1 MWe plant (49.8 t against 50.2 t); only a 10 t/day plant gains from burial, about 5 t. Digging the hole (about 20 t of regolith, a few days of the plant's own mining) and crew-assisted installation are not charged.",
     applicability: "Both sites · nuclear architecture"
   },
   fCarnotStirling: {
@@ -590,23 +590,30 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   dSeparationKm: {
     rangeRationale: "From 100 m, Mason 2001's optimized separation for a 500 kWe low-voltage system, to 5 km, past the lunar horizon at 2.4 km that NASA notes a 3 km separation clears.",
-    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.9 km for a 40 kWe system (Mason finds about 1.8 km), about 1.15 km for the default 1 MWe plant, and about 0.6 km at 10 t/day, since the cable's conductor grows with power. The cable runs at a fixed 3 kV; a megawatt plant would raise its voltage and move farther away. A buried reactor's shield does not depend on separation, so its lightest separation is the 100 m minimum.",
+    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.9 km for a 40 kWe system (Mason finds about 1.8 km), about 1.75 km for the default 1 MWe plant, and about 1 km at 10 t/day, since the cable's conductor grows with power once its voltage reaches VCableMaxV. A buried reactor's shield does not depend on separation, so its lightest separation is the 100 m minimum.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
   kCableKgPerKm: {
     maturity: "SIMPLIFIED CORRELATION",
     rangeRationale: "From a bare conductor to a heavily armoured, redundant cable; NASA's 40 kWe FSP cable and spool weigh 325 kg for 1 km.",
-    validity: "The cable mass that does not grow with power: insulation, jacket, data fibre, spool, and conductors at their minimum gauge. Fitted so the model's 40 kWe cable grows as Mason 2025's user interface pallet does with cable length (670, 872, and 1,250 kg at 0.5, 1, and 2 km: 385 kg/km), less the conductor this model sizes for 40 kWe. NASA's four redundant 3 kVac feeds use 14 AWG wire, far above what 40 kWe needs.",
+    validity: "The cable mass beyond what the model designs: data fibre, spool, redundant feeds, and protection. Fitted so the model's 40 kWe cable grows as Mason 2025's user interface pallet does with cable length (670, 872, and 1,250 kg at 0.5, 1, and 2 km: 385 kg/km), less the 74 kg/km of conductor, insulation, and jacket the model designs for 40 kWe. NASA's four redundant 3 kVac feeds use 14 AWG wire, far above what 40 kWe needs.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
   fCableLossPerKm: {
     maturity: "DESIGN ASSUMPTION",
     rangeRationale: "From 0.2% per km, a heavy conductor, to 5% per km, a light one that wastes power.",
-    validity: "The conduction loss per km the cable's aluminium conductor is sized for, at a fixed 3 kV. A lower loss needs proportionally more conductor; the loss is charged to the fission plant, which sends enough to cover it. The default 1.67% per km is NASA's design choice of 5% at 3 km (Barth & Pike 2022). The optimum trades conductor mass against the fission mass the loss costs, about 25 kg per kW.",
+    validity: "The conduction loss per km the cable's aluminium conductor is sized for, at the cable's voltage. A lower loss needs proportionally more conductor; the loss is charged to the fission plant, which sends enough to cover it. The default 1.67% per km is NASA's design choice of 5% at 3 km (Barth & Pike 2022). The optimum trades conductor mass against the fission mass the loss costs, about 25 kg per kW.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
+  },
+  VCableMaxV: {
+    maturity: "DESIGN ASSUMPTION",
+    rangeRationale: "From 1 kV, low-voltage practice, to 30 kV, terrestrial medium-voltage cable; NASA's FSP studies select ±2.8 kV to ±4 kV DC, and 3 to 5 kVac.",
+    validity: "The cable runs at the voltage that minimizes its conductor, insulation, and jacket mass for the power it carries: conductor falls as 1/V², FEP insulation at 4.4 kV/mm thickens as V. Below about 50 kW that optimum sits under the cap (±3,969 V for Barth & Pike's 40 kW cable, against their ±4,000 V); a megawatt plant's would be near 18 kV, so the cap sets its voltage. The default 8 kV line to line is Barth & Pike's ±4 kV optimum, the highest NASA's FSP studies select: vacuum-rated high-voltage cable that avoids partial discharge is an open design challenge. The line is modelled as bipolar DC; an AC line's peak voltage needs thicker insulation.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.5
   },
   QscaleRefKwt: {
     maturity: "DESIGN ASSUMPTION",

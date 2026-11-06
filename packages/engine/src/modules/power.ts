@@ -18,6 +18,7 @@ export interface PowerOutput {
   shieldMassKg: number;
   cableMassKg: number;
   cableLossW: number;
+  cableVoltageV: number;
   fissionThermalW: number;
   nuclearSpecificKgPerKw: number;
   pCritW: number;
@@ -68,22 +69,83 @@ export function lineEfficiency(params: SimParams): number {
   return 1 - params.fCableLossPerKm * params.dSeparationKm;
 }
 
-/**
- * Aluminium conductor per kW sent per km of route, sized to lose
- * fCableLossPerKm [kg/(kW km)]. Two conductors at the line voltage: the loss
- * fraction 2 rho L P / (V^2 A) is held at fCableLossPerKm per km, so the
- * conductor mass 2 A L rho_m = 4 rho rho_m P L / (V^2 f), with P in kW and L in km.
- */
-export function cableConductorKgPerKwKm(params: SimParams): number {
-  return (
-    (4 * PHYSICAL_CONSTANTS.rhoAluminumOhmM.value * PHYSICAL_CONSTANTS.densityAluminumKgPerM3.value * 1e9) /
-    (PHYSICAL_CONSTANTS.VCableV.value ** 2 * params.fCableLossPerKm)
-  );
+const CABLE_V_MIN = 10;
+const CABLE_BISECTIONS = 80;
+
+export interface CableDesign {
+  /** line-to-line voltage [V] */
+  voltageV: number;
+  /** each conductor's cross-section [m^2] */
+  conductorAreaM2: number;
+  /** each conductor's insulation thickness [m] */
+  insulationM: number;
+  /** both conductors [kg/km] */
+  conductorKgPerKm: number;
+  /** both conductors' insulation [kg/km] */
+  insulationKgPerKm: number;
+  /** the outer jacket [kg/km] */
+  jacketKgPerKm: number;
 }
 
-/** Reactor-to-outpost cable mass at a sent electrical power [kg]: a fixed mass per km plus the conductor. */
+/**
+ * Reactor-to-outpost cable at a sent electrical power. Two aluminium
+ * conductors (a bipolar line, each at half the line voltage to ground), each
+ * insulated with FEP at a fixed design stress, inside one FEP jacket. The
+ * conductor is sized so the line loses fCableLossPerKm per km: its area
+ * A = 2 rho P / (V^2 f), floored at the 16 AWG minimum. A higher voltage
+ * shrinks the conductor as 1/V^2 and thickens the insulation as V; the voltage
+ * is the one that minimizes their mass, found by bisection on the sign of the
+ * slope, and capped at VCableMaxV.
+ */
+export function cableDesign(params: SimParams, sentKwe: number): CableDesign {
+  const rho = PHYSICAL_CONSTANTS.rhoAluminumOhmM.value;
+  const rhoM = PHYSICAL_CONSTANTS.densityAluminumKgPerM3.value;
+  const rhoI = PHYSICAL_CONSTANTS.densityFEPKgPerM3.value;
+  const stress = PHYSICAL_CONSTANTS.EInsulationVPerM.value;
+  const jacket = PHYSICAL_CONSTANTS.tCableJacketM.value;
+  const aMin = PHYSICAL_CONSTANTS.AConductorMinM2.value;
+  const areaCoefficient = (2 * rho * Math.max(sentKwe, 0) * 1000) / (params.fCableLossPerKm / 1000);
+  const slopeSign = (v: number): number => {
+    const area = areaCoefficient / v ** 2;
+    const radius = Math.sqrt(area / Math.PI);
+    const thickness = v / 2 / stress;
+    return -rhoM * area + rhoI * Math.PI * (thickness ** 2 + jacket * (thickness - radius));
+  };
+  let lo = CABLE_V_MIN;
+  let hi = Math.max(lo, Math.min(Math.sqrt(areaCoefficient / aMin), params.VCableMaxV));
+  let voltage: number;
+  if (hi === lo || slopeSign(hi) < 0) {
+    voltage = hi;
+  } else {
+    for (let i = 0; i < CABLE_BISECTIONS; i++) {
+      const mid = Math.sqrt(lo * hi);
+      if (slopeSign(mid) < 0) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    voltage = hi;
+  }
+  const area = Math.max(aMin, areaCoefficient / voltage ** 2);
+  const radius = Math.sqrt(area / Math.PI);
+  const thickness = voltage / 2 / stress;
+  const bundleRadius = 2 * (radius + thickness);
+  return {
+    voltageV: voltage,
+    conductorAreaM2: area,
+    insulationM: thickness,
+    conductorKgPerKm: 2 * area * rhoM * 1000,
+    insulationKgPerKm: 2 * Math.PI * (2 * radius * thickness + thickness ** 2) * rhoI * 1000,
+    jacketKgPerKm: Math.PI * (2 * bundleRadius * jacket + jacket ** 2) * rhoI * 1000
+  };
+}
+
+/** Reactor-to-outpost cable mass at a sent electrical power [kg]: the fixed mass per km plus the designed cable. */
 export function cableMassKg(params: SimParams, sentKwe: number): number {
-  return params.dSeparationKm * (params.kCableKgPerKm + cableConductorKgPerKwKm(params) * sentKwe);
+  const design = cableDesign(params, sentKwe);
+  const perKm = params.kCableKgPerKm + design.conductorKgPerKm + design.insulationKgPerKm + design.jacketKgPerKm;
+  return params.dSeparationKm * perKm;
 }
 
 /** Delivered output at which the shield reaches its reference heat [kW]. */
@@ -335,24 +397,22 @@ export function conversionKgPerKwe(params: SimParams, thermalKw: number): number
   return params.kConversionKgPerKwe * fissionScaleFactor(params, thermalKw);
 }
 
-/** Per delivered kW: reactor, conversion, radiator, and cable conductor, all sized on the sent power. */
+/** Per delivered kW: reactor, conversion, and radiator, all sized on the sent power. */
 function specificKgPerKwe(params: SimParams, eta: number, radiatorKgPerKwe: number, kwe: number): number {
   const line = lineEfficiency(params);
   const heatKw = kwe / line / eta;
   const perSentKwe =
     (params.kReactorKgPerKwt / eta) * fissionScaleFactor(params, heatKw) +
     conversionKgPerKwe(params, heatKw) +
-    radiatorKgPerKwe +
-    params.dSeparationKm * cableConductorKgPerKwKm(params);
+    radiatorKgPerKwe;
   return perSentKwe / line;
 }
 
 /**
  * Fission specific mass per kW delivered at an output, excluding the shield
- * and the cable's fixed mass [kg/kW]: the reactor on the heat it makes and
- * conversion and power management on the sent output, both scaled with size,
- * the radiator on its area, and the cable conductor, all grossed up for the
- * cable's loss. Defaults to the output at the scaling reference heat.
+ * and the cable [kg/kW]: the reactor on the heat it makes and conversion and
+ * power management on the sent output, both scaled with size, and the radiator
+ * on its area, all grossed up for the cable's loss. Defaults to the output at the scaling reference heat.
  */
 export function nuclearSpecificKgPerKw(params: SimParams, kwe?: number): number {
   const eta = fissionEfficiency(params);
@@ -365,17 +425,17 @@ function massCurve(params: SimParams): (kwe: number, tYears: number) => number {
   const eta = fissionEfficiency(params);
   const line = lineEfficiency(params);
   const radiatorKgPerKwe = params.kRadiatorKgPerM2 * radiatorM2PerKwAt(params, eta);
-  const cableFixedKg = params.dSeparationKm * params.kCableKgPerKm;
   return (kwe, tYears) => {
     const shield = fissionShieldKg(params, kwe / line / eta);
+    const cable = cableMassKg(params, kwe / line);
     const specific = specificKgPerKwe(params, eta, radiatorKgPerKwe, kwe);
-    return shield + cableFixedKg + nuclearSlopeAtYear(specific, params.dNuclear, tYears) * kwe;
+    return shield + cable + nuclearSlopeAtYear(specific, params.dNuclear, tYears) * kwe;
   };
 }
 
 /**
  * Fission system mass at a delivered electrical output after `tYears` of
- * derating [kg]: the shield and the cable's fixed mass plus the aged rest. The power chart draws this curve, so it
+ * derating [kg]: the shield and the cable plus the aged rest. The power chart draws this curve, so it
  * and the crossover come from the same mass.
  */
 export function nuclearMassAtKwe(params: SimParams, kwe: number, tYears = 0): number {
@@ -474,6 +534,7 @@ export function simulatePower(
   const radiatorMassKg = params.kRadiatorKgPerM2 * radiatorM2;
   const shieldKg = fissionShieldKg(params, Qfission / 1000);
   const cableKg = cableMassKg(params, Psent / 1000);
+  const cableVoltageV = cableDesign(params, Psent / 1000).voltageV;
   const scale = fissionScaleFactor(params, Qfission / 1000);
   const nuclearMassKg =
     shieldKg +
@@ -579,6 +640,7 @@ export function simulatePower(
     shieldMassKg: shieldKg,
     cableMassKg: cableKg,
     cableLossW: Psent - Pgrid,
+    cableVoltageV,
     fissionThermalW: Qfission,
     nuclearSpecificKgPerKw: alphaWithRadiator,
     pCritW: pCrit === null ? 0 : pCrit * 1000,

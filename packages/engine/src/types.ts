@@ -381,6 +381,7 @@ export interface SimParams {
   MshieldBuriedKg: number;
   dSeparationKm: number;
   kCableKgPerKm: number;
+  VCableMaxV: number;
   fCableLossPerKm: number;
   /** [kg/kW] */
   kReactorKgPerKwt: number;
@@ -808,6 +809,8 @@ export interface SimResult {
     cableMassKg: number;
     /** power the cable loses between the fission plant and the outpost [W] */
     cableLossW: number;
+    /** the cable's line-to-line voltage: the lightest for its power, capped at VCableMaxV [V] */
+    cableVoltageV: number;
     /** fission reactor heat for the grid load and the cable's loss: sent electrical output over conversion efficiency [W] */
     fissionThermalW: number;
     /** fission specific mass per delivered kW at the grid power, excluding the shield and the cable's fixed mass; radiator and conductor included [kg/kW] */

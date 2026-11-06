@@ -1612,14 +1612,14 @@
     "source": "Mason 2006, NASA/TM-2006-214120, Table 1: Stirling converters at 25.9% between 850 and 460 K and 32.1% between 1050 and 500 K, 0.565 and 0.613 of Carnot"
   },
   "kConversionStirlingKgPerKwe": {
-    "value": 21.06,
+    "value": 21.96,
     "min": 2,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Stirling power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, shield, and 1 km cable at Mason 2006's 1050/500 K Stirling design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, shield, and 1 km cable at its designed voltage at Mason 2006's 1050/500 K Stirling design point"
   },
   "bStirlingScale": {
     "value": 1,
@@ -1772,14 +1772,14 @@
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.B and VI: crew habitat boundary 1 km from the reactor, connected by a 1 km cable"
   },
   "kCableKgPerKm": {
-    "value": 303,
+    "value": 312,
     "min": 0,
     "max": 1000,
     "unit": "kg/km",
     "kind": "parameter",
     "group": "power",
-    "description": "Fixed cable mass per km: jacket, data fibre, spool, and minimum-gauge conductors",
-    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the conductor this model sizes for 40 kWe"
+    "description": "Fixed cable mass per km: data fibre, spool, redundancy, and protection beyond the designed conductors, insulation, and jacket",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the cable this model designs for 40 kWe (74 kg/km)"
   },
   "fCableLossPerKm": {
     "value": 0.0167,
@@ -1798,12 +1798,43 @@
     "description": "Separation at which MshieldKg is quoted",
     "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.B: crew habitat boundary 1 km from the reactor"
   },
-  "VCableV": {
-    "value": 3000,
+  "VCableMaxV": {
+    "value": 8000,
+    "min": 1000,
+    "max": 30000,
     "unit": "V",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Highest reactor-to-outpost cable voltage, line to line",
+    "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: a 40 kW, 3 km aluminium cable is lightest at ±4,000 VDC (8,000 V line to line); vacuum-rated high-voltage cable that avoids partial discharge is an open design challenge"
+  },
+  "densityFEPKgPerM3": {
+    "value": 2150,
+    "unit": "kg/m^3",
     "kind": "physical",
-    "description": "Reactor-to-outpost transmission voltage",
-    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. IV.D: 3 kVac, 1 kHz transmission; Barth & Pike 2022, NETS 2022, Sec. III.D: AC cable mass minimized at 3,000 Vrms line-to-neutral for 40 kW"
+    "description": "Fluorinated ethylene propylene (FEP) cable insulation density",
+    "source": "Chemours Teflon FEP properties: specific gravity 2.12-2.17"
+  },
+  "EInsulationVPerM": {
+    "value": 4400000.0,
+    "unit": "V/m",
+    "kind": "physical",
+    "description": "Cable insulation design stress: voltage to ground per thickness",
+    "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: FEP at 4.4 kV/mm, five times its minimum breakdown thickness"
+  },
+  "tCableJacketM": {
+    "value": 0.0006,
+    "unit": "m",
+    "kind": "physical",
+    "description": "Cable outer jacket thickness",
+    "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: a 0.6 mm FEP case around the cable assembly"
+  },
+  "AConductorMinM2": {
+    "value": 1.31e-06,
+    "unit": "m^2",
+    "kind": "physical",
+    "description": "Smallest cable conductor cross-section, for mechanical strength (16 AWG)",
+    "source": "Oleson et al. 2022, NASA/TM-20220012395, Sec. 4.1.7: the minimum wire gauge is capped at 16 AWG for mechanical strength"
   },
   "rhoAluminumOhmM": {
     "value": 2.82e-08,
@@ -1820,24 +1851,24 @@
     "source": "CRC Handbook of Chemistry and Physics"
   },
   "kReactorKgPerKwt": {
-    "value": 1.94,
+    "value": 2.16,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
     "kind": "parameter",
     "group": "power",
     "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable at its designed voltage, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kConversionKgPerKwe": {
-    "value": 7.31,
+    "value": 8.14,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Fission power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable at its designed voltage, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "QscaleRefKwt": {
     "value": 1000,

@@ -27,7 +27,12 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 // the reactor/conversion split, the megawatt calibration, the recuperated
 // Brayton cycle with its six cited Fuller 2010 inputs, and the shield that
 // scales with power. Still zero runtime dependencies.
-const limitBytes = 224 * 1024;
+// 224 -> 240 KiB (v0.22-v0.27 fission siting and transmission): the economy
+// of scale, the Stirling converter, the optimum Brayton pressure ratio and
+// radiator span, the shield against separation and burial, and the cable to
+// the outpost designed for its voltage, each with its cited inputs. Still zero
+// runtime dependencies.
+const limitBytes = 240 * 1024;
 
 function jsSize(dir) {
   let total = 0;

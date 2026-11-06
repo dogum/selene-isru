@@ -290,6 +290,10 @@ The v0.26 buried reactor (a siting choice that puts the reactor in an excavated
 hole, where regolith shields the outpost and NASA FSP's plug shield protects the
 converters) is in
 [`docs/model-shield-burial-v026.md`](docs/model-shield-burial-v026.md).
+The v0.27 cable voltage (the cable to the outpost designed for the power it
+carries, trading conductor against insulation up to an 8 kV cap, checked against
+NASA's lunar transmission studies) is in
+[`docs/model-cable-voltage-v027.md`](docs/model-cable-voltage-v027.md).
 
 ## Architecture
 

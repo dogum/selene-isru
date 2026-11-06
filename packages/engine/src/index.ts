@@ -71,7 +71,7 @@ export type { CampaignFlows, CampaignPoint, CampaignSource, CampaignTimelinePoin
 export { payloadPerMissionKg } from "./modules/logistics";
 export { refuelTimeline, sortiePropellantKg } from "./modules/refuel";
 export type { RefuelSource, RefuelTimelinePoint, SortiePropellant } from "./modules/refuel";
-export type { BraytonCycle } from "./modules/power";
+export type { BraytonCycle, CableDesign } from "./modules/power";
 export type { FissionConverter, FissionSiting } from "./types";
 export {
   beamedPowerW,
@@ -92,7 +92,7 @@ export {
   radiatorTemperaturesK,
   shieldMassKg,
   shieldRefKwe,
-  cableConductorKgPerKwKm,
+  cableDesign,
   cableMassKg,
   fissionShieldKg,
   lineEfficiency,
@@ -444,6 +444,7 @@ export function simulate(
       shieldMassKg: power.shieldMassKg,
       cableMassKg: power.cableMassKg,
       cableLossW: power.cableLossW,
+      cableVoltageV: power.cableVoltageV,
       fissionThermalW: power.fissionThermalW,
       nuclearSpecificKgPerKw: power.nuclearSpecificKgPerKw,
       pCritW: power.pCritW,

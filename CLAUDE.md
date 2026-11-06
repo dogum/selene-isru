@@ -31,7 +31,7 @@ packages/engine              TypeScript physics engine (zero runtime deps, pure 
   src/site-design/             Custom Site: schema, catalog, connections, placement,
                                validate, evaluate (TS-only screening layer)
   scripts/gen-constants.ts     codegen + `--check` mode used by CI
-  scripts/check-size.mjs       224 KiB ratchet on built JS output (see below)
+  scripts/check-size.mjs       240 KiB ratchet on built JS output (see below)
   test/                        parity, conservation, regression, benchmarks, site-design
 packages/app                 React 18 + Three.js frontend (Vite)
   src/state/store.ts           zustand store: setParam → simulate() → render + URL sync
@@ -179,7 +179,7 @@ from parity vectors — parity agreeing does not mean the physics is right.
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `campaignTimeline`, `refuelTimeline`, `sizeToDemand`, `DEFAULTS`,
 `PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
 helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
-`beamEfficiency`, `braytonCycle`, `braytonCycleAt`, `radiatorTemperaturesK`, `radiatorFluxWPerM2`, `fissionEfficiency`, `fissionShieldKg`, `shieldDistanceFactor`, `lineEfficiency`, `cableConductorKgPerKwKm`, `cableMassKg`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `shieldMassKg`, `shieldRefKwe`, `fissionScaleFactor`, `nuclearMassAtKwe`, `fissionCrossoverKw`, `conversionKgPerKwe`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
+`beamEfficiency`, `braytonCycle`, `braytonCycleAt`, `radiatorTemperaturesK`, `radiatorFluxWPerM2`, `fissionEfficiency`, `fissionShieldKg`, `shieldDistanceFactor`, `lineEfficiency`, `cableDesign`, `cableMassKg`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `shieldMassKg`, `shieldRefKwe`, `fissionScaleFactor`, `nuclearMassAtKwe`, `fissionCrossoverKw`, `conversionKgPerKwe`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
@@ -220,7 +220,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 
 - Zero runtime dependencies, pure ESM, strict TS (`exactOptionalPropertyTypes`,
   `noUncheckedIndexedAccess`).
-- `scripts/check-size.mjs` enforces a **224 KiB** comment/whitespace-stripped JS
+- `scripts/check-size.mjs` enforces a **240 KiB** comment/whitespace-stripped JS
   budget. See [Size budget](#the-size-budget-is-a-ratchet-not-a-ceiling) — it is
   a tripwire against accidental bulk, not a load-time target.
 - **Units are mixed and explicitly annotated — there is no SI invariant, not
@@ -249,7 +249,7 @@ consume it, test the agreement — over duplicating an expression into the UI.
 #### The size budget is a ratchet, not a ceiling
 
 `limitBytes` in `check-size.mjs` is not derived from a load-time target or any
-measurement. It has been raised nine times — 50 → 96 → 112 → 128 → 144 → 160 → 176 → 192 → 208 → 224 KiB —
+measurement. It has been raised ten times — 50 → 96 → 112 → 128 → 144 → 160 → 176 → 192 → 208 → 224 → 240 KiB —
 each time to a round number just above what the engine then weighed, with a
 comment naming the feature that caused the growth. Nothing breaks one KiB over;
 `three.js` alone is roughly 9× the whole engine, so the engine has never been
@@ -260,7 +260,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~228 KB of ~229 KB. A ratchet
+The current build sits at ~230 KB of ~246 KB. A ratchet
 normally reads nearly full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -469,6 +469,7 @@ in `assets/ASSET_LICENSES.md`.
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
+| Cable voltage designed for its power: conductor, insulation, jacket, 8 kV cap, NASA transmission cross-checks | v0.27 anchors in `regression.test.ts` / `test_regression.py`, `barth-pike-2022-cable-voltage` in `external-benchmarks.test.ts` |
 | Buried fission reactor: siting switch, FSP 2008 plug shield, shield independent of separation, rail select | v0.26 anchors in `regression.test.ts` / `test_regression.py`, `mason-2008-fsp-emplaced-shield` in `external-benchmarks.test.ts`, `fission-converter.test.tsx` |
 | Fission shield with separation, cable to the outpost and its loss, Mason 2025 separation sweep | v0.25 anchors in `regression.test.ts` / `test_regression.py`, `mason-2025-fsp-separation` in `external-benchmarks.test.ts` |
 | Brayton cycle at its best pressure ratio, radiator over the gas cooler span, Mason 2006 radiator flux, retired `rpBrayton` | v0.24 anchors in `regression.test.ts` / `test_regression.py`, `mason-2006-lunar-brayton-50kwe` in `external-benchmarks.test.ts`, `legacy-params.test.ts`, `fission-converter.test.tsx` |
@@ -544,7 +545,8 @@ script run on a clean checkout at all.
   `model-fission-calibration-v019.md` → `model-brayton-cycle-v020.md` →
   `model-shield-power-v021.md` → `model-economy-of-scale-v022.md` →
   `model-stirling-v023.md` → `model-brayton-optimum-v024.md` →
-  `model-shield-separation-v025.md` → `model-shield-burial-v026.md`) is
+  `model-shield-separation-v025.md` → `model-shield-burial-v026.md` →
+  `model-cable-voltage-v027.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -636,6 +638,10 @@ script run on a clean checkout at all.
 - [`docs/model-shield-burial-v026.md`](docs/model-shield-burial-v026.md) — a
   buried reactor whose regolith shields the outpost, FSP 2008's plug shield,
   and why burial pays through a shorter cable rather than a lighter shield.
+- [`docs/model-cable-voltage-v027.md`](docs/model-cable-voltage-v027.md) —
+  the cable to the outpost designed for its voltage, conductor against
+  insulation, checked against NASA's transmission studies, and what that does
+  to the best separation and to burial.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

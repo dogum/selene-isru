@@ -296,6 +296,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "shieldMassKg": power["shieldMassKg"],
             "cableMassKg": power["cableMassKg"],
             "cableLossW": power["cableLossW"],
+            "cableVoltageV": power["cableVoltageV"],
             "fissionThermalW": power["fissionThermalW"],
             "nuclearSpecificKgPerKw": power["nuclearSpecificKgPerKw"],
             "pCritW": power["pCritW"],

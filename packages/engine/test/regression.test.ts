@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   braytonCycle,
-  cableConductorKgPerKwKm,
+  cableDesign,
+  cableMassKg,
   fissionShieldKg,
   braytonCycleAt,
   DEFAULTS,
@@ -110,7 +111,7 @@ describe("regression anchors", () => {
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
     expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.95, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 22.05, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
@@ -163,7 +164,7 @@ describe("regression anchors", () => {
     const p = sabatier.production;
     expect(sabatier.logistics.productKgPerDay).toBe(p.o2KgPerDay + p.ch4KgPerDay + p.h2KgPerDay);
     // v0.13 moved it from 213.4x: the loop no longer borrows the MRE reactor mass.
-    expectRel(sabatier.logistics.leverageL, 222.7, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP
+    expectRel(sabatier.logistics.leverageL, 222.2, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.27: cable voltage designed for its power
     expect(propellant.materials.maxAbsResidualKgPerDay).toBe(0);
     expect(energy.maxAbsResidualW).toBe(0);
   });
@@ -258,7 +259,7 @@ describe("regression anchors", () => {
     const plant = sabatier.logistics.manifest.find((row) => row.subsystem === "reactor/plant")!.massKg;
     expectRel(sabatier.production.ch4KgPerDay, 211.1, 0.001);
     expectRel(plant / 1000, 13.23, 0.001);
-    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.38, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale
+    expectRel(sabatier.logistics.totalInfraMassKg / 1000, 54.48, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.27: cable voltage designed for its power
     // MRE and polar water plants do not move.
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.40, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.25: shield at its separation, cable to the outpost
   });
@@ -291,7 +292,7 @@ describe("regression anchors", () => {
     expect(fissionScaleFactor(DEFAULTS, DEFAULTS.QscaleRefKwt)).toBe(1);
     const base = simulate({});
     expectRel(base.power.nuclearMassKg / 1000, 29.77, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearSpecificKgPerKw, 25.93, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    expectRel(base.power.nuclearSpecificKgPerKw, 25.46, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     expectRel(base.logistics.totalInfraMassKg / 1000, 50.40, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
     expect(base.logistics.nMissions).toBe(1);
     // The engine's fission mass is the curve the power chart draws.
@@ -301,14 +302,14 @@ describe("regression anchors", () => {
     const pCrit = base.power.pCritW / 1000;
     const beta = base.power.solarMassKg / kw;
     expectRel(beta * pCrit, nuclearMassAtKwe(DEFAULTS, pCrit), 1e-9);
-    expectRel(pCrit, 2.087, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    expectRel(pCrit, 2.136, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     // A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
     const big = simulate({ targetKgPerDay: 10000 });
-    expectRel(big.power.nuclearMassKg / 1000, 249.6, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    expectRel(big.power.nuclearMassKg / 1000, 246.6, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     expect(big.logistics.nMissions).toBe(6);
     // A linear scale (bFissionScale 1) with v0.21's masses is the v0.21 model
     // (since v0.24, with the v0.24 cycle and radiator).
-    expectRel(simulate(V021_FISSION).logistics.totalInfraMassKg / 1000, 50.75, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    expectRel(simulate(V021_FISSION).logistics.totalInfraMassKg / 1000, 49.20, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
   });
 
   test("the fission shield scales with power (v0.21)", () => {
@@ -321,20 +322,45 @@ describe("regression anchors", () => {
     // landed mass from 50.46 t, and the crossover from 2.077 kW.
     const base = simulate(V021_FISSION);
     expectRel(base.power.shieldMassKg / 1000, 4.639, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearMassKg / 1000, 30.11, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearSpecificKgPerKw, 25.43, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.logistics.totalInfraMassKg / 1000, 50.75, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    expectRel(base.power.nuclearMassKg / 1000, 28.57, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.power.nuclearSpecificKgPerKw, 23.37, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.logistics.totalInfraMassKg / 1000, 49.20, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     expect(base.logistics.nMissions).toBe(1);
     // The crossover satisfies the scaled shield (and, since v0.25, the cable's fixed mass).
     const kw = base.power.pCritW / 1000;
     const beta = base.power.solarMassKg / (base.energy.gridPowerW / 1000);
     const pinned = { ...DEFAULTS, ...V021_FISSION };
     const shield = shieldMassKg(pinned.MshieldKg, shieldRefKwe(pinned), pinned.nShield, kw);
-    const cableFixed = pinned.dSeparationKm * pinned.kCableKgPerKm;
-    expectRel(beta * kw, shield + cableFixed + base.power.nuclearSpecificKgPerKw * kw, 1e-9);
-    expectRel(kw, 2.452, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    // v0.27: the whole cable, designed for the crossover's power.
+    const cable = cableMassKg(pinned, kw / lineEfficiency(pinned));
+    expectRel(beta * kw, shield + cable + base.power.nuclearSpecificKgPerKw * kw, 1e-9);
+    expectRel(kw, 2.495, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     // A fixed shield (nShield 0) is the v0.20 model's.
     expect(simulate({ ...V021_FISSION, nShield: 0 }).power.shieldMassKg).toBe(V021_FISSION.MshieldKg);
+  });
+
+  test("the cable's voltage designed for its power (v0.27)", () => {
+    // New and deliberate: the cable's voltage minimizes conductor, insulation, and jacket mass for the
+    // power it carries, capped at VCableMaxV, in place of v0.25's fixed 3 kV conductor.
+    const base = simulate({});
+    expect(base.power.cableVoltageV).toBe(DEFAULTS.VCableMaxV);
+    expect(DEFAULTS.VCableMaxV).toBe(8000);
+    expectRel(base.power.cableMassKg, 795, 0.001);
+    const sentKw = (base.energy.gridPowerW + base.power.cableLossW) / 1000;
+    const design = cableDesign(DEFAULTS, sentKw);
+    expectRel(design.conductorKgPerKm, 286.9, 0.001);
+    expectRel(design.insulationKgPerKm, 112.2, 0.001);
+    expectRel(design.jacketKgPerKm, 83.8, 0.001);
+    const designed = design.conductorKgPerKm + design.insulationKgPerKm + design.jacketKgPerKm;
+    expectRel(base.power.cableMassKg, DEFAULTS.dSeparationKm * (DEFAULTS.kCableKgPerKm + designed), 1e-12);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.42, 0.001);
+    // Below the cap a small plant's cable runs at its own optimum.
+    expect(cableDesign(DEFAULTS, 40).voltageV).toBeLessThan(DEFAULTS.VCableMaxV);
+    // The cap binds a megawatt plant: uncapped it would run near 18 kV; at v0.25's 3 kV it is 3.3 times heavier.
+    const uncapped = simulate({ VCableMaxV: 30000 }).power;
+    expectRel(uncapped.cableVoltageV, 17887, 0.001);
+    expect(uncapped.cableMassKg).toBeLessThan(base.power.cableMassKg);
+    expectRel(simulate({ VCableMaxV: 3000 }).power.cableMassKg, 2640, 0.001);
   });
 
   test("a buried fission reactor (v0.26)", () => {
@@ -344,16 +370,16 @@ describe("regression anchors", () => {
     const buried = { fissionSiting: "buried" as const, dSeparationKm: 0.1 };
     const base = simulate(buried);
     expectRel(base.power.shieldMassKg, 4616, 0.001);
-    expectRel(base.power.cableMassKg, 231, 0.002);
+    expectRel(base.power.cableMassKg, 79, 0.002);  // v0.27: cable voltage designed for its power
     expectRel(base.power.cableLossW / 1000, 1.65, 0.01);
-    expectRel(base.power.nuclearMassKg / 1000, 28.14, 0.001);
-    expectRel(base.logistics.totalInfraMassKg / 1000, 48.77, 0.001);
+    expectRel(base.power.nuclearMassKg / 1000, 29.53, 0.001);  // v0.27: cable voltage designed for its power
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.16, 0.001);  // v0.27: cable voltage designed for its power
     // Separation no longer sizes the shield, so a buried reactor is lightest next to the outpost.
     const heatKw = base.power.fissionThermalW / 1000;
     expect(fissionShieldKg({ ...DEFAULTS, ...buried, dSeparationKm: 2 }, heatKw)).toBe(fissionShieldKg({ ...DEFAULTS, ...buried }, heatKw));
     expect(base.logistics.totalInfraMassKg).toBeLessThan(simulate({ ...buried, dSeparationKm: 0.5 }).logistics.totalInfraMassKg);
-    // A 10 t/day plant saves most of its 20.7 t cable.
-    expectRel(simulate({ ...buried, targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 435.6, 0.001);
+    // A 10 t/day plant saves most of its cable (20.7 t at v0.26's 3 kV; 3.7 t since v0.27).
+    expectRel(simulate({ ...buried, targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 447.7, 0.001);  // v0.27: cable voltage designed for its power
     // An unsupported siting resets to the surface and says so.
     const reset = simulate({ fissionSiting: "underground" } as unknown as Partial<SimParams>);
     expect(reset.power.shieldMassKg).toBe(simulate({}).power.shieldMassKg);
@@ -365,8 +391,11 @@ describe("regression anchors", () => {
     // and a cable to the outpost is charged by its length, with a conductor sized for its loss.
     const base = simulate({});
     expectRel(base.power.shieldMassKg, 3792, 0.001);
-    expectRel(base.power.cableMassKg, 2343, 0.001);
-    expectRel(cableConductorKgPerKwKm(DEFAULTS), 2.026, 0.001);
+    expectRel(base.power.cableMassKg, 795, 0.001);  // v0.27: cable voltage designed for its power
+    // v0.27 retired v0.25's fixed 3 kV conductor (2.026 kg per kW and km): the cable is designed at 8 kV.
+    const sentKw = (base.energy.gridPowerW + base.power.cableLossW) / 1000;
+    expect(cableDesign(DEFAULTS, sentKw).voltageV).toBe(DEFAULTS.VCableMaxV);
+    expect(base.power.cableVoltageV).toBe(DEFAULTS.VCableMaxV);
     const sentW = base.energy.gridPowerW / lineEfficiency(DEFAULTS);
     expectRel(base.power.cableLossW, sentW - base.energy.gridPowerW, 1e-12);
     expectRel(base.power.cableLossW / sentW, 0.0167, 1e-12);
@@ -377,12 +406,14 @@ describe("regression anchors", () => {
     expectRel(near.shieldMassKg / base.power.shieldMassKg, 2 ** 0.97, 0.005);
     expect(near.cableMassKg).toBeLessThan(base.power.cableMassKg / 2);
     // The lightest separation falls with plant size, as Mason 2001's optimized separations do.
+    // v0.27: with the cable designed for its power, about 1.75 km for the default plant (1.15 km at
+    // v0.25's 3 kV), 1 km at 10 t/day (0.6 km), and 2 km at the pole (1.5 km).
     const landed = (params: Partial<SimParams>, km: number) => simulate({ ...params, dSeparationKm: km }).logistics.totalInfraMassKg;
-    expect(landed({}, 1.15)).toBeLessThan(Math.min(landed({}, 0.6), landed({}, 1.5)));
+    expect(landed({}, 1.75)).toBeLessThan(Math.min(landed({}, 1.25), landed({}, 2.25)));
     const big = { targetKgPerDay: 10000 };
-    expect(landed(big, 0.6)).toBeLessThan(Math.min(landed(big, 0.5), landed(big, 1)));
+    expect(landed(big, 1)).toBeLessThan(Math.min(landed(big, 0.7), landed(big, 1.4)));
     const polar = { site: "polar" as const };
-    expect(landed(polar, 1.5)).toBeLessThan(Math.min(landed(polar, 1), landed(polar, 2)));
+    expect(landed(polar, 2)).toBeLessThan(Math.min(landed(polar, 1.5), landed(polar, 2.5)));
   });
 
   test("the Brayton cycle at its best pressure ratio, and the radiator over the gas span (v0.24)", () => {
@@ -424,9 +455,9 @@ describe("regression anchors", () => {
     expectRel(base.power.fissionThermalW / (base.energy.gridPowerW + base.power.cableLossW), 1 / 0.2630, 0.001);
     expectRel(base.power.radiatorM2, 2534, 0.001);  // v0.25: shield at its separation, cable to the outpost
     expectRel(base.power.radiatorMassKg / 1000, 9.808, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearSpecificKgPerKw, 29.28, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearMassKg / 1000, 30.97, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.logistics.totalInfraMassKg / 1000, 51.60, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    expectRel(base.power.nuclearSpecificKgPerKw, 27.22, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.power.nuclearMassKg / 1000, 29.42, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.05, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     expect(base.logistics.nMissions).toBe(1);
     // v0.19's disclosed 570 K optimum belonged to the fixed fraction of Carnot;
     // v0.20 replaced it with the Brayton cycle (see the v0.20 test).
@@ -447,7 +478,7 @@ describe("regression anchors", () => {
     expect(at(410)).toBeLessThan(at(400));
     expect(at(410)).toBeLessThan(at(430));
     expect(at(570)).toBeGreaterThan(1.8 * at(410));
-    expectRel(at(420) / 1000, 30.85, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    expectRel(at(420) / 1000, 29.30, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     // Above about 600 K the default cycle makes no net work, and says so.
     // An alarm only when the plant runs on fission; with solar selected it is a caution.
     const dead = simulate({ ...V020_FISSION, Tsink: 650 });
@@ -466,9 +497,9 @@ describe("regression anchors", () => {
     const base = simulate(V018_FISSION);
     expectRel(base.power.radiatorM2, 515.4, 0.001);  // v0.25: shield at its separation, cable to the outpost
     expectRel(base.power.radiatorMassKg / 1000, 1.995, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearSpecificKgPerKw, 32.55, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearMassKg / 1000, 34.03, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.logistics.totalInfraMassKg / 1000, 54.66, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    expectRel(base.power.nuclearSpecificKgPerKw, 30.49, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.power.nuclearMassKg / 1000, 32.48, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.logistics.totalInfraMassKg / 1000, 53.11, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     // The 400 K case's 7.4 t radiator and 33.18 t fission system (v0.18) belonged to the
     // fixed-fraction-of-Carnot efficiency; v0.20 retired them with it. A colder radiator
     // is still charged by its area.
@@ -484,16 +515,16 @@ describe("regression anchors", () => {
     const base = simulate(V018_FISSION);
     expectRel(base.power.fissionThermalW / 1e6, 3.661, 0.001);  // v0.25: shield at its separation, cable to the outpost
     expectRel(V018_FISSION.kReactorKgPerKwt * (base.power.fissionThermalW / 1000) / 1000, 14.17, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.nuclearMassKg / 1000, 34.03, 0.001);  // v0.25: shield at its separation, cable to the outpost
+    expectRel(base.power.nuclearMassKg / 1000, 32.48, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     // The power trade's slope: reactor on the heat, conversion on the output, radiator on its area.
     for (const run of [base, simulate({ ...V018_FISSION, Tsink: 400 })]) {
       const kw = run.energy.gridPowerW / 1000;
-      // v0.25: conversion and the cable's conductor on the sent power, which covers the cable's loss.
+      // v0.25: conversion on the sent power, which covers the cable's loss.
+      // v0.27: the cable leaves the slope and is charged on its own.
       const sentKw = kw + run.power.cableLossW / 1000;
-      const conductor = DEFAULTS.dSeparationKm * cableConductorKgPerKwKm(DEFAULTS);
       const slope =
         V018_FISSION.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) / kw +
-        (V018_FISSION.kConversionKgPerKwe + conductor) * sentKw / kw +
+        V018_FISSION.kConversionKgPerKwe * sentKw / kw +
         DEFAULTS.kRadiatorKgPerM2 * run.power.radiatorM2 / kw;
       expectRel(run.power.nuclearSpecificKgPerKw, slope, 1e-9);
     }
@@ -509,7 +540,7 @@ describe("regression anchors", () => {
     const crewSize = sizeToDemand(crew)!;
     expectRel(crewSize.targetKgPerDay, 111.14, 0.001);
     const crewSized = simulate({ ...crew, targetKgPerDay: crewSize.targetKgPerDay });
-    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.29, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.38, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     // A right-sized plant for one crewed sortie a year still does not pay back.
     expectRel(crewSized.campaign.returnRatio, 0.9190, 0.001);  // v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(crewSized.campaign.paysBackInCampaign).toBe(false);
@@ -520,7 +551,7 @@ describe("regression anchors", () => {
     expect(polarSize.limitedBy).toBe("hydrogen");
     expectRel(polarSize.targetKgPerDay, 166.71, 0.001);
     const polarSized = simulate({ ...polar, targetKgPerDay: polarSize.targetKgPerDay });
-    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.87, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost
+    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.97, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
     expectRel(polarSized.campaign.returnRatio, 1.0247, 0.001);  // v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(polarSized.campaign.paybackDays).toBe(polarSized.campaign.campaignEndDay);
     expect(simulate(polar).campaign.paysBackInCampaign).toBe(false);
@@ -585,7 +616,7 @@ describe("regression anchors", () => {
     expectRel(basalt.excavation.overburdenKgPerDay, 1.1 * ilmenite.soilKgPerDay, 1e-12);
     expectRel(basalt.energy.secTotal_kWhPerKg, 16.91, 0.001);  // v0.14: electrolysis balance of plant
     expectRel(basalt.energy.gridPowerW / 1000, 704.6, 0.001);
-    expectRel(basalt.logistics.totalInfraMassKg / 1000, 84.47, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power
+    expectRel(basalt.logistics.totalInfraMassKg / 1000, 84.61, 0.001);  // v0.14: electrolysis balance of plant; v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.27: cable voltage designed for its power
     // It fits one lander where the soil plant needs two: payback day 586 -> 246.
     expect(basalt.logistics.nMissions).toBe(1);
     expectRel(basalt.campaign.paybackDays!, 245.6, 0.001);  // v0.14: electrolysis balance of plant
