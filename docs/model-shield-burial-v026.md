@@ -198,3 +198,5 @@ Screenshots: [the siting select under buried, with its note](screenshots/shield-
 - **A shield sized by depth.** A deeper hole needs less plug shield; the model
   holds FSP 2008's design.
 - **Transmission voltage with power,** and **topography,** from v0.25.
+  *(v0.29: topography reduced to a disclosed horizon check; see
+  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md).)*

@@ -198,3 +198,5 @@ Screenshot: [the transmission select under AC, with the power panel's CABLE line
   megawatt AC conductor's 4.8 mm radius, so its resistance would rise by
   roughly a fifth, and its conductor with it.
 - **Topography,** and **the buried reactor's excavation,** from v0.25 and v0.26.
+  *(v0.29: topography reduced to a disclosed horizon check; see
+  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md).)*

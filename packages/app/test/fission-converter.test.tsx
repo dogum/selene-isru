@@ -92,6 +92,27 @@ describe("fission converter (v0.23)", () => {
     expect(parseParams("cableForm=hvdc")).toEqual({});
   });
 
+  it("shows the line-of-sight horizon's heights, a check that moves no mass (v0.29)", () => {
+    const buried: SimParams = { ...DEFAULTS, fissionSiting: "buried" };
+    expect(shown(brayton)).toEqual(expect.arrayContaining(["hOutpostM", "hReactorM"]));
+    // A buried reactor's core sits below the surface, so its height is hidden and inert.
+    expect(shown(buried)).toContain("hOutpostM");
+    expect(shown(buried)).not.toContain("hReactorM");
+    expect(inputActivity(buried, "hReactorM").activity).toBe("no-effect");
+    // Either height moves only the horizon: a check, not a result.
+    for (const key of ["hOutpostM", "hReactorM"] as const) {
+      const report = inputActivity(brayton, key);
+      expect(report.activity).toBe("checks-only");
+      expect(report.changed).toContain("power.horizonKm");
+    }
+    for (const key of ["hOutpostM", "hReactorM"] as const) {
+      const meta = PARAM_META[key];
+      const evidence = evidenceForParam({ key, group: meta.group, source: meta.source, min: meta.min, max: meta.max, unit: meta.unit });
+      expect(evidence.sourceUrl).toBe("https://ntrs.nasa.gov/citations/20220002315");
+      expect(evidence.sourceSection).toContain("2.4 km lunar horizon");
+    }
+  });
+
   it("points the analysis tools' conversion-mass lever at the chosen converter", () => {
     // The frontier (and the uncertainty panel, through the same filter) offers
     // only the conversion mass the case's converter reads.

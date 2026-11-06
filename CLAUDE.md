@@ -179,7 +179,7 @@ from parity vectors — parity agreeing does not mean the physics is right.
 `simulateTimeseries`, `evaluateSiteDesign`, `sampleUncertainty`, `campaignTimeline`, `refuelTimeline`, `sizeToDemand`, `DEFAULTS`,
 `PARAM_META`, `PHYSICAL_CONSTANTS`, `normalizeParams`, and the exported pure
 helpers (e.g. `pCritKw`, `solarSlopeAtYear`, `nuclearSlopeAtYear`,
-`beamEfficiency`, `braytonCycle`, `braytonCycleAt`, `radiatorTemperaturesK`, `radiatorFluxWPerM2`, `fissionEfficiency`, `fissionShieldKg`, `shieldDistanceFactor`, `lineEfficiency`, `cableDesign`, `cableMassKg`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `shieldMassKg`, `shieldRefKwe`, `fissionScaleFactor`, `nuclearMassAtKwe`, `fissionCrossoverKw`, `conversionKgPerKwe`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
+`beamEfficiency`, `braytonCycle`, `braytonCycleAt`, `radiatorTemperaturesK`, `radiatorFluxWPerM2`, `fissionEfficiency`, `fissionShieldKg`, `shieldDistanceFactor`, `lineEfficiency`, `cableDesign`, `cableMassKg`, `horizonKm`, `nuclearSpecificKgPerKw`, `radiatorM2PerKw`, `shieldMassKg`, `shieldRefKwe`, `fissionScaleFactor`, `nuclearMassAtKwe`, `fissionCrossoverKw`, `conversionKgPerKwe`, `payloadPerMissionKg`, `sortiePropellantKg`, `ilmeniteSoilPerKgO2`, `oxideModelYield`). If a UI
 component needs a number, add it to a `SimResult` field or export a pure helper
 from the engine — do not re-implement an equation in a component.
 
@@ -260,7 +260,7 @@ because the build fails and getting past it requires editing `limitBytes` and
 writing a line explaining why — that line is the artifact the check is really
 for.
 
-The current build sits at ~231 KB of ~246 KB. A ratchet
+The current build sits at ~233 KB of ~246 KB. A ratchet
 normally reads nearly full. Don't treat that as a crisis, and don't
 contort engine code to avoid a raise. Judge the *reason* instead:
 
@@ -469,6 +469,7 @@ in `assets/ASSET_LICENSES.md`.
 | Sabatier plant mass on methane, NASA Mars block calibration, reactor-alone cross-check | v0.13 anchors in `regression.test.ts` / `test_regression.py`, `kleinhenz-paz-2017-sabatier-block` in `external-benchmarks.test.ts` |
 | Electrolysis balance of plant, NASA electrolyzer calibration, DOE PEM cross-check | v0.14 anchors in `regression.test.ts` / `test_regression.py`, `doe-pem-electrolysis-bop` in `external-benchmarks.test.ts` |
 | Initial overburden strip, start-day delay, strip input visibility | v0.15 anchors in `regression.test.ts` / `test_regression.py`, `campaign-panel.test.tsx` |
+| Reactor's line-of-sight horizon: outpost and core heights, info note beyond it, no mass moves | v0.29 anchors in `regression.test.ts` / `test_regression.py`, `barth-pike-2022-lunar-horizon` in `external-benchmarks.test.ts`, `fission-converter.test.tsx` |
 | AC transmission: three-phase cable at its peak voltage, cable form switch, fixed mass refitted to Mason 2025's 3 kVac cable | v0.28 anchors in `regression.test.ts` / `test_regression.py`, `barth-pike-2022-cable-voltage` and `mason-2025-fsp-separation` in `external-benchmarks.test.ts`, `fission-converter.test.tsx` |
 | Cable voltage designed for its power: conductor, insulation, jacket, 8 kV cap, NASA transmission cross-checks | v0.27 anchors in `regression.test.ts` / `test_regression.py`, `barth-pike-2022-cable-voltage` in `external-benchmarks.test.ts` |
 | Buried fission reactor: siting switch, FSP 2008 plug shield, shield independent of separation, rail select | v0.26 anchors in `regression.test.ts` / `test_regression.py`, `mason-2008-fsp-emplaced-shield` in `external-benchmarks.test.ts`, `fission-converter.test.tsx` |
@@ -547,7 +548,8 @@ script run on a clean checkout at all.
   `model-shield-power-v021.md` → `model-economy-of-scale-v022.md` →
   `model-stirling-v023.md` → `model-brayton-optimum-v024.md` →
   `model-shield-separation-v025.md` → `model-shield-burial-v026.md` →
-  `model-cable-voltage-v027.md` → `model-ac-transmission-v028.md`) is
+  `model-cable-voltage-v027.md` → `model-ac-transmission-v028.md` →
+  `model-siting-horizon-v029.md`) is
   intentionally historical —
   annotate superseded sections rather than rewriting history.
 
@@ -646,6 +648,9 @@ script run on a clean checkout at all.
 - [`docs/model-ac-transmission-v028.md`](docs/model-ac-transmission-v028.md) —
   a three-phase AC cable beside the DC line, both held to one peak voltage to
   ground, and the cable's fixed mass refitted to NASA's own 3 kVac cable.
+- [`docs/model-siting-horizon-v029.md`](docs/model-siting-horizon-v029.md) —
+  the reactor's line-of-sight horizon from the outpost, Barth & Pike's 2.4 km,
+  noted when the outpost is beyond it, with terrain shielding left uncredited.
 - [`docs/custom-site-sandbox-spec.md`](docs/custom-site-sandbox-spec.md)
 - [`docs/vertical-slice-mre.md`](docs/vertical-slice-mre.md),
   [`docs/equatorial-asset-overhaul.md`](docs/equatorial-asset-overhaul.md),

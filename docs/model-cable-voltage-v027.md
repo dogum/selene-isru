@@ -232,3 +232,5 @@ Screenshot: [the voltage cap's evidence over the power panel](screenshots/cable-
 - **The converters at each end** of a higher-voltage line, and their losses,
   are inside the conversion and power management mass, not sized with voltage.
 - **Topography,** and **the buried reactor's excavation,** from v0.25 and v0.26.
+  *(v0.29: topography reduced to a disclosed horizon check; see
+  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md).)*

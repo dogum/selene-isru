@@ -11,6 +11,7 @@ from selene_isru import (
     cable_mass_kg,
     fission_efficiency,
     fission_shield_kg,
+    horizon_km,
     line_efficiency,
     nuclear_mass_at_kwe,
     radiator_flux_w_per_m2,
@@ -196,6 +197,21 @@ def test_cable_voltage_from_nasa_transmission_studies_v027() -> None:
     assert oleson["voltageV"] / 2 == pytest.approx(i["olesonOptimumVoltsToNeutral"], rel=0.12)
     mass = (oleson["conductorKgPerKm"] + oleson["insulationKgPerKm"] + oleson["jacketKgPerKm"]) * i["olesonLengthKm"]
     assert mass == pytest.approx(i["olesonCableMassKg"], rel=0.15)
+
+
+def test_lunar_horizon_from_nasa_transmission_study_v029() -> None:
+    row = item("barth-pike-2022-lunar-horizon")
+    assert row["kind"] == "documentation-only"
+    i = row["inputs"]
+    assert DEFAULTS["hOutpostM"] == i["eyeHeightM"]
+    assert DEFAULTS["hReactorM"] == 0
+    # A crew member's eyes see 2.4 km over a smooth Moon; 3 km puts the reactor beyond it.
+    assert horizon_km(DEFAULTS) == pytest.approx(i["horizonKm"], rel=0.02)
+    far = simulate({"dSeparationKm": i["separationKm"]})
+    assert any(w["id"] == "outpost-beyond-horizon" for w in far["warnings"])
+    # Disclosed: terrain shielding is not credited; the shield is the same as without the note.
+    far_params = {**DEFAULTS, "dSeparationKm": i["separationKm"]}
+    assert far["power"]["shieldMassKg"] == fission_shield_kg(far_params, far["power"]["fissionThermalW"] / 1000)
 
 
 def test_buried_fission_shield_from_nasa_fsp_v026() -> None:

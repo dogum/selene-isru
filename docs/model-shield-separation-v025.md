@@ -263,4 +263,7 @@ Screenshot: [the separation's evidence over the power panel](screenshots/shield-
   Barth & Pike find lightest for 40 kW. A megawatt plant's optimum is higher, at
   the cost of insulation mass, which would move its optimum separation outward.
 - **Topography.** A crater rim or ridge between reactor and outpost attenuates
-  dose; the model's outpost is in line of sight.
+  dose; the model's outpost is in line of sight. *(v0.29: the line-of-sight
+  horizon is computed and noted, but terrain attenuation stays uncredited for
+  want of a source; see
+  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md).)*

@@ -8,6 +8,7 @@ from selene_isru import (
     cable_design,
     cable_mass_kg,
     fission_shield_kg,
+    horizon_km,
     line_efficiency,
     fission_scale_factor,
     nuclear_mass_at_kwe,
@@ -373,6 +374,30 @@ def test_fission_shield_scales_with_power_v021() -> None:
     # A fixed shield (nShield 0) is the v0.20 model's.
     fixed = simulate({**V021_FISSION, "nShield": 0})
     assert fixed["power"]["shieldMassKg"] == V021_FISSION["MshieldKg"]
+
+
+def test_reactor_line_of_sight_horizon_v029() -> None:
+    # New and deliberate: a diagnostic only. The horizon between the reactor's core and the outpost over a
+    # smooth Moon, Barth & Pike's 2.4 km for a crew member's eyes; no mass depends on it.
+    base = simulate({})
+    assert_rel(base["power"]["horizonKm"], math.sqrt(2 * 1_737_400 * 1.7) / 1000, 1e-12)
+    assert_rel(base["power"]["horizonKm"], 2.430, 0.001)
+    assert horizon_km(DEFAULTS) == base["power"]["horizonKm"]
+    assert "outpost-beyond-horizon" not in warning_ids(base)
+    # Beyond it the shield is still charged in full, and the plant is told so.
+    far = simulate({"dSeparationKm": 3})
+    beyond = [w for w in far["warnings"] if w["id"] == "outpost-beyond-horizon"]
+    assert [w["severity"] for w in beyond] == ["info"]
+    assert far["power"]["shieldMassKg"] == fission_shield_kg({**DEFAULTS, "dSeparationKm": 3}, far["power"]["fissionThermalW"] / 1000)
+    # A reactor raised on its lander deck sees farther; a buried one sits at the surface whatever its height.
+    assert_rel(simulate({"hReactorM": 4})["power"]["horizonKm"], 6.158, 0.001)
+    assert simulate({"fissionSiting": "buried", "hReactorM": 4})["power"]["horizonKm"] == base["power"]["horizonKm"]
+    # No mass moves with either height.
+    raised = simulate({"hReactorM": 10, "hOutpostM": 20})
+    assert raised["logistics"]["totalInfraMassKg"] == base["logistics"]["totalInfraMassKg"]
+    # A solar plant has no reactor to see.
+    assert simulate({"site": "polar", "targetKgPerDay": 10})["power"]["architecture"] == "solar"
+    assert "outpost-beyond-horizon" not in warning_ids(simulate({"site": "polar", "targetKgPerDay": 10, "dSeparationKm": 3}))
 
 
 def test_ac_transmission_v028() -> None:

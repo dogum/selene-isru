@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { cableDesign, cableMassKg, conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionShieldKg, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
+import { cableDesign, cableMassKg, conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionShieldKg, horizonKm, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -209,6 +209,20 @@ describe("external analytical benchmarks (separate from implementation parity)",
       if (system(k / 100) < system(best)) best = k / 100;
     }
     expectRelative2(best, i.optimumSeparationKm!, 0.05);
+  });
+
+  test("the lunar horizon a surface reactor hides behind, from NASA's transmission study (v0.29)", () => {
+    const item = benchmark("barth-pike-2022-lunar-horizon");
+    expect(item.kind).toBe("documentation-only");
+    const i = item.inputs as Record<string, number>;
+    expect(DEFAULTS.hOutpostM).toBe(i.eyeHeightM);
+    expect(DEFAULTS.hReactorM).toBe(0);
+    // A crew member's eyes see 2.4 km over a smooth Moon; 3 km puts the reactor beyond it.
+    expectRelative2(horizonKm(DEFAULTS), i.horizonKm!, 0.02);
+    const far = simulate({ dSeparationKm: i.separationKm! });
+    expect(far.warnings.some((w) => w.id === "outpost-beyond-horizon")).toBe(true);
+    // Disclosed: terrain shielding is not credited; the shield is the same as without the note.
+    expect(far.power.shieldMassKg).toBe(fissionShieldKg({ ...DEFAULTS, dSeparationKm: i.separationKm! }, far.power.fissionThermalW / 1000));
   });
 
   test("cable voltage and mass, from NASA's lunar transmission studies (v0.27)", () => {
