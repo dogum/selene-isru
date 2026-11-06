@@ -14,6 +14,7 @@ export interface PowerOutput {
   solarArrayM2: number;
   radiatorM2: number;
   radiatorMassKg: number;
+  shieldMassKg: number;
   fissionThermalW: number;
   nuclearSpecificKgPerKw: number;
   pCritW: number;
@@ -28,11 +29,35 @@ export interface PowerOutput {
   warnings: Warning[];
 }
 
-export function pCritKw(MshieldKg: number, beta: number, alpha: number): number | null {
+/**
+ * Shield mass at a power [kg]: MshieldKg up to its reference power refKw, then
+ * times (kw / refKw)^nShield above it. A smaller reactor keeps the reference
+ * shield. The engine calls it on reactor heat; the power chart calls it on
+ * electrical output with `shieldRefKwe`.
+ */
+export function shieldMassKg(MshieldKg: number, refKw: number, nShield: number, kw: number): number {
+  return MshieldKg * Math.max(1, kw / refKw) ** nShield;
+}
+
+/** Electrical output at which the shield weighs MshieldKg [kW]: its reference heat times the efficiency. */
+export function shieldRefKwe(params: SimParams): number {
+  return params.QshieldRefKwt * fissionEfficiency(params);
+}
+
+/**
+ * Solar/nuclear crossover [kW]: beta P = Mshield max(1, P / Pref)^n + alpha P.
+ * Below the shield's reference power the shield is fixed and this is
+ * Mshield / (beta - alpha); above it the closed form of the power law.
+ */
+export function pCritKw(MshieldKg: number, beta: number, alpha: number, shieldRefKw = 1, nShield = 0): number | null {
   if (beta <= alpha) {
     return null;
   }
-  return MshieldKg / (beta - alpha);
+  const fixed = MshieldKg / (beta - alpha);
+  if (fixed <= shieldRefKw || nShield === 0) {
+    return fixed;
+  }
+  return (MshieldKg / ((beta - alpha) * shieldRefKw ** nShield)) ** (1 / (1 - nShield));
 }
 
 /**
@@ -57,13 +82,17 @@ export function pCritDynamicKw(
   alpha: number,
   dSolar: number,
   dNuclear: number,
-  tYears: number
+  tYears: number,
+  shieldRefKw = 1,
+  nShield = 0
 ): number | null {
-  const denominator = solarSlopeAtYear(beta, dSolar, tYears) - nuclearSlopeAtYear(alpha, dNuclear, tYears);
-  if (denominator <= 0) {
-    return null;
-  }
-  return MshieldKg / denominator;
+  return pCritKw(
+    MshieldKg,
+    solarSlopeAtYear(beta, dSolar, tYears),
+    nuclearSlopeAtYear(alpha, dNuclear, tYears),
+    shieldRefKw,
+    nShield
+  );
 }
 
 /** Temperatures and per-unit-flow work and heat of a recuperated Brayton cycle [K]. */
@@ -200,8 +229,9 @@ export function simulatePower(
   // so both follow the cycle's efficiency and temperatures; conversion and
   // power management scale with electrical output.
   const radiatorMassKg = params.kRadiatorKgPerM2 * radiatorM2;
+  const shieldKg = shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, Qfission / 1000);
   const nuclearMassKg =
-    params.MshieldKg +
+    shieldKg +
     params.kReactorKgPerKwt * (Qfission / 1000) +
     params.kConversionKgPerKwe * (Pgrid / 1000) +
     radiatorMassKg;
@@ -210,14 +240,17 @@ export function simulatePower(
     ? solarMassKg <= nuclearMassKg ? "solar" : "nuclear"
     : strategy;
   const selectedPowerMassKg = architecture === "solar" ? solarMassKg : nuclearMassKg;
-  const pCrit = pCritKw(params.MshieldKg, betaSolar, alphaWithRadiator);
+  const refKwe = shieldRefKwe(params);
+  const pCrit = pCritKw(params.MshieldKg, betaSolar, alphaWithRadiator, refKwe, params.nShield);
   const pCritDynamic = pCritDynamicKw(
     params.MshieldKg,
     betaSolar,
     alphaWithRadiator,
     params.dSolar,
     params.dNuclear,
-    params.missionYears
+    params.missionYears,
+    refKwe,
+    params.nShield
   );
   const warnings: Warning[] = [];
 
@@ -296,6 +329,7 @@ export function simulatePower(
     solarArrayM2,
     radiatorM2,
     radiatorMassKg,
+    shieldMassKg: shieldKg,
     fissionThermalW: Qfission,
     nuclearSpecificKgPerKw: alphaWithRadiator,
     pCritW: pCrit === null ? 0 : pCrit * 1000,

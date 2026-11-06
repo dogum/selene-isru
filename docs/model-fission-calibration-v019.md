@@ -179,7 +179,8 @@ Screenshot: [the radiator temperature's evidence over the power panel](screensho
   about 420 K, and Stirling stays on the backlog. See
   [`model-brayton-cycle-v020.md`](model-brayton-cycle-v020.md).)*
 - **Shield mass with power.** One shield mass serves every power level; a
-  megawatt reactor needs a thicker shield at the same dose and distance.
+  megawatt reactor needs a thicker shield at the same dose and distance. *(v0.21: done; the shield grows as
+  power^0.33 above 175 kWt. See [`model-shield-power-v021.md`](model-shield-power-v021.md).)*
 - **Economy of scale.** The slope is linear. Mason 2001 shows specific mass
   falling from 74 to 38 kg/kWe between 100 and 500 kWe, mostly through the
   shield and fixed hardware; a power law would follow it.

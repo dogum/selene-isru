@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from selene_isru import fission_efficiency, nuclear_specific_kg_per_kw, radiator_m2_per_kw, simulate
+from selene_isru import fission_efficiency, nuclear_specific_kg_per_kw, radiator_m2_per_kw, shield_mass_kg, simulate
 from selene_isru.constants import DEFAULTS, PARAM_META, c
 from selene_isru.modules.electrolysis import sec_elec_j_per_kg
 from selene_isru.modules.thermal import sec_sub_j_per_kg
@@ -85,9 +85,17 @@ def test_fission_slope_from_nasa_surface_brayton_scaling_v019() -> None:
     mass_500 = i["power500Kwe"] * i["specificMass500KgPerKwe"]
     marginal = (mass_500 - mass_100) / (i["power500Kwe"] - i["power100Kwe"])
     assert marginal == pytest.approx(row["expected"], rel=1e-9)
-    assert nuclear_specific_kg_per_kw(DEFAULTS) == pytest.approx(marginal, rel=0.001)
-    intercept = mass_100 - marginal * i["power100Kwe"]
-    assert intercept - DEFAULTS["MshieldKg"] == pytest.approx(2799, rel=0.01)
+    # v0.21: the shield grows with power, so the model's marginal mass between the
+    # two systems, shield included, is Mason's; and it lands 2.7 t lighter at both.
+    def model_kg(kwe: float) -> float:
+        heat_kw = kwe / fission_efficiency(DEFAULTS)
+        shield = shield_mass_kg(DEFAULTS["MshieldKg"], DEFAULTS["QshieldRefKwt"], DEFAULTS["nShield"], heat_kw)
+        return shield + nuclear_specific_kg_per_kw(DEFAULTS) * kwe
+
+    model_marginal = (model_kg(i["power500Kwe"]) - model_kg(i["power100Kwe"])) / (i["power500Kwe"] - i["power100Kwe"])
+    assert model_marginal == pytest.approx(marginal, rel=0.001)
+    assert mass_100 - model_kg(i["power100Kwe"]) == pytest.approx(2688, rel=0.01)
+    assert mass_500 - model_kg(i["power500Kwe"]) == pytest.approx(2688, rel=0.01)
 
 
 def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
@@ -99,9 +107,12 @@ def test_fission_design_point_and_50_kwe_cross_check_v019() -> None:
     assert fission_efficiency(DEFAULTS) == pytest.approx(i["converterEfficiency"], rel=0.002)
     area_m2 = radiator_m2_per_kw(DEFAULTS) * i["outputKwe"]
     assert area_m2 == pytest.approx(i["radiatorAreaWithMarginM2"] / (1 + i["areaMargin"]), rel=0.15)
-    mass_kg = DEFAULTS["MshieldKg"] + nuclear_specific_kg_per_kw(DEFAULTS) * i["outputKwe"]
+    heat_kw = i["outputKwe"] / fission_efficiency(DEFAULTS)
+    shield = shield_mass_kg(DEFAULTS["MshieldKg"], DEFAULTS["QshieldRefKwt"], DEFAULTS["nShield"], heat_kw)
+    mass_kg = shield + nuclear_specific_kg_per_kw(DEFAULTS) * i["outputKwe"]
     assert i["systemMassWithMarginKg"] / (1 + i["massMargin"]) == pytest.approx(row["expected"], rel=0.001)
-    assert mass_kg == pytest.approx(row["expected"], rel=0.12)
+    # v0.21: 3.0 t against 3.49 t, 14% light (10% before the shield scaled with power).
+    assert mass_kg == pytest.approx(row["expected"], rel=0.15)
     assert mass_kg < row["expected"]
 
 

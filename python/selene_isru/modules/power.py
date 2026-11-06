@@ -7,8 +7,24 @@ from ..constants import c
 from .site_profile import resolve_polar_profile
 
 
-def p_crit_kw(m_shield_kg: float, beta: float, alpha: float) -> float | None:
-    return None if beta <= alpha else m_shield_kg / (beta - alpha)
+def shield_mass_kg(m_shield_kg: float, ref_kw: float, n_shield: float, kw: float) -> float:
+    """Shield mass at a power [kg]: MshieldKg up to its reference power, then a power law above it."""
+    return m_shield_kg * max(1.0, kw / ref_kw) ** n_shield
+
+
+def shield_ref_kwe(params: dict[str, Any]) -> float:
+    """Electrical output at which the shield weighs MshieldKg [kW]: its reference heat times the efficiency."""
+    return params["QshieldRefKwt"] * fission_efficiency(params)
+
+
+def p_crit_kw(m_shield_kg: float, beta: float, alpha: float, shield_ref_kw: float = 1.0, n_shield: float = 0.0) -> float | None:
+    """Solar/nuclear crossover [kW]: beta P = Mshield max(1, P / Pref)^n + alpha P."""
+    if beta <= alpha:
+        return None
+    fixed = m_shield_kg / (beta - alpha)
+    if fixed <= shield_ref_kw or n_shield == 0:
+        return fixed
+    return (m_shield_kg / ((beta - alpha) * shield_ref_kw**n_shield)) ** (1 / (1 - n_shield))
 
 
 def solar_slope_at_year(beta: float, d_solar: float, t_years: float) -> float:
@@ -19,9 +35,23 @@ def nuclear_slope_at_year(alpha: float, d_nuclear: float, t_years: float) -> flo
     return alpha * (1 + d_nuclear * t_years)
 
 
-def p_crit_dynamic_kw(m_shield_kg: float, beta: float, alpha: float, d_solar: float, d_nuclear: float, t_years: float) -> float | None:
-    denominator = solar_slope_at_year(beta, d_solar, t_years) - nuclear_slope_at_year(alpha, d_nuclear, t_years)
-    return None if denominator <= 0 else m_shield_kg / denominator
+def p_crit_dynamic_kw(
+    m_shield_kg: float,
+    beta: float,
+    alpha: float,
+    d_solar: float,
+    d_nuclear: float,
+    t_years: float,
+    shield_ref_kw: float = 1.0,
+    n_shield: float = 0.0,
+) -> float | None:
+    return p_crit_kw(
+        m_shield_kg,
+        solar_slope_at_year(beta, d_solar, t_years),
+        nuclear_slope_at_year(alpha, d_nuclear, t_years),
+        shield_ref_kw,
+        n_shield,
+    )
 
 
 def brayton_cycle(params: dict[str, Any]) -> dict[str, float]:
@@ -112,8 +142,9 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     radiator_denominator = params["etaRad"] * params["epsRad"] * c("sigma") * (params["Tsink"] ** 4 - params["Tenv"] ** 4)
     radiator_m2 = q_reject / max(1e-9, radiator_denominator)
     radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
+    shield_kg = shield_mass_kg(params["MshieldKg"], params["QshieldRefKwt"], params["nShield"], q_fission / 1000)
     nuclear_mass_kg = (
-        params["MshieldKg"]
+        shield_kg
         + params["kReactorKgPerKwt"] * (q_fission / 1000)
         + params["kConversionKgPerKwe"] * (p_grid / 1000)
         + radiator_mass_kg
@@ -121,9 +152,17 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     alpha_with_radiator = nuclear_specific_kg_per_kw(params)
     architecture = "solar" if solar_mass_kg <= nuclear_mass_kg else "nuclear"
     selected_power_mass_kg = solar_mass_kg if architecture == "solar" else nuclear_mass_kg
-    p_crit = p_crit_kw(params["MshieldKg"], beta_solar, alpha_with_radiator)
+    ref_kwe = shield_ref_kwe(params)
+    p_crit = p_crit_kw(params["MshieldKg"], beta_solar, alpha_with_radiator, ref_kwe, params["nShield"])
     p_crit_dynamic = p_crit_dynamic_kw(
-        params["MshieldKg"], beta_solar, alpha_with_radiator, params["dSolar"], params["dNuclear"], params["missionYears"]
+        params["MshieldKg"],
+        beta_solar,
+        alpha_with_radiator,
+        params["dSolar"],
+        params["dNuclear"],
+        params["missionYears"],
+        ref_kwe,
+        params["nShield"],
     )
     warnings: list[dict[str, Any]] = []
     if p_crit is None:
@@ -148,6 +187,7 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "solarArrayM2": solar_array_m2,
         "radiatorM2": radiator_m2,
         "radiatorMassKg": radiator_mass_kg,
+        "shieldMassKg": shield_kg,
         "fissionThermalW": q_fission,
         "nuclearSpecificKgPerKw": alpha_with_radiator,
         "pCritW": 0 if p_crit is None else p_crit * 1000,

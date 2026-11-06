@@ -1668,25 +1668,45 @@
     "description": "Nuclear shielding mass",
     "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: 1676 kg shield for an emplaced reactor with lunar regolith augmentation, <5 rem/yr at 100 m"
   },
+  "QshieldRefKwt": {
+    "value": 175,
+    "min": 10,
+    "max": 5000,
+    "unit": "kW",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Reactor thermal power the shield mass is quoted at",
+    "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: the 1,676 kg shield is sized for the 175 kWt reactor"
+  },
+  "nShield": {
+    "value": 0.33,
+    "min": 0,
+    "max": 0.67,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Exponent of shield mass with reactor thermal power",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Table IV: 1,500 kg shield for the 230 kWt gas-cooled reactor against 1,370 kg for the 175 kWt heat-pipe reactor, ln(1500/1370)/ln(230/175) = 0.33"
+  },
   "kReactorKgPerKwt": {
-    "value": 2.25,
+    "value": 1.75,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
     "kind": "parameter",
     "group": "power",
     "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; split as NASA FSP's (Mason, Poston & Qualls 2008, Table II: the reactor is 913 of 1,816 kg) at the 26.3% design point, after the radiator"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator and the shield's growth with power, split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kConversionKgPerKwe": {
-    "value": 8.47,
+    "value": 6.58,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Fission power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; split as NASA FSP's (Mason, Poston & Qualls 2008, Table II: the reactor is 913 of 1,816 kg) at the 26.3% design point, after the radiator"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator and the shield's growth with power, split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kRadiatorKgPerM2": {
     "value": 3.87,
