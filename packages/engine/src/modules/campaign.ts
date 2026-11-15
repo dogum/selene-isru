@@ -68,6 +68,8 @@ export interface CampaignFlows {
   sortieIntervalDays: number | null;
   /** the fleet's initial overburden strip, run alongside commissioning [day] */
   initialStripDays: number;
+  /** the fleet digging a buried reactor's hole, before the strip; 0 when absent [day] */
+  reactorHoleDays?: number;
 }
 
 function capacityKg(params: SimParams, basis: CampaignBasis): number {
@@ -90,9 +92,10 @@ export function simulateCampaign(params: SimParams, basis: CampaignBasis, flows:
   const deployable = capacity > 0;
   const leoMassPerLandedKg = deployable ? params.M0leo / capacity : 0;
   const deploymentDays = Math.max(0, basis.nMissions - 1) * landingIntervalDays(params);
-  // The fleet strips the first overburden while the plant is commissioned;
-  // production waits for whichever finishes last.
-  const firstProductDay = deploymentDays + Math.max(params.commissioningDays, flows.initialStripDays);
+  // The fleet digs a buried reactor's hole and strips the first overburden while
+  // the plant is commissioned; production waits for whichever finishes last.
+  const firstProductDay =
+    deploymentDays + Math.max(params.commissioningDays, flows.initialStripDays + (flows.reactorHoleDays ?? 0));
   const operatingDays = params.missionYears * DAYS_PER_YEAR;
   const campaignEndDay = firstProductDay + operatingDays;
   const deliveredKgPerDay = deployable ? flows.productKgPerDay * params.plantAvailability : 0;

@@ -18,6 +18,9 @@ export interface PowerOutput {
   shieldMassKg: number;
   cableMassKg: number;
   cableLossW: number;
+  converterLossW: number;
+  cableRadiusToSkinDepth: number;
+  reactorHoleKg: number;
   cableVoltageV: number;
   horizonKm: number;
   fissionThermalW: number;
@@ -65,9 +68,55 @@ export function fissionShieldKg(params: SimParams, thermalKw: number): number {
   return shieldMassKg(params.MshieldKg, params.QshieldRefKwt, params.nShield, thermalKw) * shieldDistanceFactor(params);
 }
 
-/** Fraction of the fission plant's electrical output the cable delivers to the outpost [1]. */
-export function lineEfficiency(params: SimParams): number {
+/**
+ * Efficiencies of the power conversion at the reactor's end and the outpost's
+ * end of the cable [1]. Sending: a Brayton alternator's high-frequency
+ * three-phase output feeds an AC line through a step-up transformer alone; a
+ * Stirling, or any converter feeding a DC line, needs an active rectifier to a
+ * DC link and one switching stage with a transformer (an inverter for AC, a
+ * DC-DC converter for DC). Receiving: an AC line steps down through a
+ * transformer and a DC line through a DC-DC converter, then the power
+ * distribution unit.
+ */
+export function converterEfficiencies(params: SimParams): { sending: number; receiving: number } {
+  const ac = params.cableForm === "ac";
+  const sending =
+    ac && params.fissionConverter === "brayton" ? params.etaTransformer : params.etaRectifier * params.etaDcDcConverter;
+  const receiving = (ac ? params.etaTransformer : params.etaDcDcConverter) * params.etaPowerDistribution;
+  return { sending, receiving };
+}
+
+/** Fraction of the power entering the cable that leaves it at the outpost [1]. */
+export function cableEfficiency(params: SimParams): number {
   return 1 - params.fCableLossPerKm * params.dSeparationKm;
+}
+
+/**
+ * Fraction of the fission plant's electrical output delivered to the outpost's
+ * loads [1]: the converters at both ends and the cable between them.
+ */
+export function lineEfficiency(params: SimParams): number {
+  const { sending, receiving } = converterEfficiencies(params);
+  return sending * cableEfficiency(params) * receiving;
+}
+
+/** Power entering the cable for a delivered output [kW]: grossed up for the cable and the outpost's converter. */
+export function cableInputKw(params: SimParams, deliveredKwe: number): number {
+  return deliveredKwe / (cableEfficiency(params) * converterEfficiencies(params).receiving);
+}
+
+/**
+ * Regolith dug for a buried reactor's hole [kg]; 0 on the surface. Mason
+ * 2006's 2 m wide, 4 m deep excavation, its cross-section grown with reactor
+ * heat as the plug shield that covers it (max(1, Q / QshieldRefKwt)^nShield).
+ */
+export function reactorHoleKg(params: SimParams, thermalKw: number): number {
+  if (params.fissionSiting !== "buried") {
+    return 0;
+  }
+  const area =
+    Math.PI * (params.dReactorHoleM / 2) ** 2 * Math.max(1, thermalKw / params.QshieldRefKwt) ** params.nShield;
+  return params.rhoReg * area * params.zReactorHoleM;
 }
 
 const CABLE_V_MIN = 10;
@@ -86,6 +135,8 @@ export interface CableDesign {
   insulationKgPerKm: number;
   /** the outer jacket [kg/km] */
   jacketKgPerKm: number;
+  /** an AC conductor's radius over its skin depth at fAcHz; 0 for DC [1] */
+  radiusToSkinDepth: number;
 }
 
 /**
@@ -140,8 +191,10 @@ export function cableDesign(params: SimParams, sentKwe: number): CableDesign {
   const radius = Math.sqrt(area / Math.PI);
   const thickness = (peakToGround * voltage) / stress;
   const bundleRadius = bundle * (radius + thickness);
+  const skinDepth = Math.sqrt(rho / (Math.PI * params.fAcHz * PHYSICAL_CONSTANTS.mu0.value));
   return {
     voltageV: voltage,
+    radiusToSkinDepth: ac ? radius / skinDepth : 0,
     conductorAreaM2: area,
     insulationM: thickness,
     conductorKgPerKm: conductors * area * rhoM * 1000,
@@ -447,7 +500,7 @@ function massCurve(params: SimParams): (kwe: number, tYears: number) => number {
   const radiatorKgPerKwe = params.kRadiatorKgPerM2 * radiatorM2PerKwAt(params, eta);
   return (kwe, tYears) => {
     const shield = fissionShieldKg(params, kwe / line / eta);
-    const cable = cableMassKg(params, kwe / line);
+    const cable = cableMassKg(params, cableInputKw(params, kwe));
     const specific = specificKgPerKwe(params, eta, radiatorKgPerKwe, kwe);
     return shield + cable + nuclearSlopeAtYear(specific, params.dNuclear, tYears) * kwe;
   };
@@ -553,8 +606,12 @@ export function simulatePower(
   // power management scale with electrical output.
   const radiatorMassKg = params.kRadiatorKgPerM2 * radiatorM2;
   const shieldKg = fissionShieldKg(params, Qfission / 1000);
-  const cableKg = cableMassKg(params, Psent / 1000);
-  const cableVoltageV = cableDesign(params, Psent / 1000).voltageV;
+  // The cable carries what the reactor's converter sends; the outpost's converter takes what it delivers.
+  const Pcable = cableInputKw(params, Pgrid / 1000) * 1000;
+  const PcableOut = Pcable * cableEfficiency(params);
+  const cableKg = cableMassKg(params, Pcable / 1000);
+  const design = cableDesign(params, Pcable / 1000);
+  const cableVoltageV = design.voltageV;
   const scale = fissionScaleFactor(params, Qfission / 1000);
   const nuclearMassKg =
     shieldKg +
@@ -611,6 +668,17 @@ export function simulatePower(
       message: "The Brayton cycle makes no net work at these temperatures and component efficiencies.",
       value: params.Tsource / params.Tsink,
       limit: cycle.netWorkK
+    });
+  }
+  if (architecture === "nuclear" && design.radiusToSkinDepth > 1) {
+    warnings.push({
+      id: "cable-skin-effect",
+      severity: "info",
+      module: "power",
+      message:
+        "The AC conductor is thicker than its skin depth; it is taken as stranded (Litz wire or parallel feeds) at no extra mass, so its resistance stays its DC value.",
+      value: design.radiusToSkinDepth,
+      limit: 1
     });
   }
   const horizon = horizonKm(params);
@@ -671,7 +739,10 @@ export function simulatePower(
     radiatorEffectiveK,
     shieldMassKg: shieldKg,
     cableMassKg: cableKg,
-    cableLossW: Psent - Pgrid,
+    cableLossW: Pcable - PcableOut,
+    converterLossW: Psent - Pcable + (PcableOut - Pgrid),
+    cableRadiusToSkinDepth: design.radiusToSkinDepth,
+    reactorHoleKg: reactorHoleKg(params, Qfission / 1000),
     cableVoltageV,
     horizonKm: horizon,
     fissionThermalW: Qfission,

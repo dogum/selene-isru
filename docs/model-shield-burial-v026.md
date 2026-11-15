@@ -195,6 +195,9 @@ Screenshots: [the siting select under buried, with its note](screenshots/shield-
     days of the default plant's 4.4 t/day of mining.
   - **What is not charged:** its time, energy, and the crew-assisted
     installation; a berm would add more.
+  *(v0.30: the fleet's time is charged: the hole, widened with the plug shield,
+  is 63 t for the default plant and dug before the first product; see
+  [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*
 - **A shield sized by depth.** A deeper hole needs less plug shield; the model
   holds FSP 2008's design.
 - **Transmission voltage with power,** and **topography,** from v0.25.

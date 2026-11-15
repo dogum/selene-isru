@@ -75,6 +75,12 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
         params, grid_power_w, energy_lines, excavation["mechPowerW"], electrolysis, cryo, water_electrolysis, ilmenite
     )
     power = simulate_power(params, grid_power_w, site_profile["profile"])
+    # Before the first product, the fleet digs a buried reactor's hole, then strips the first overburden.
+    reactor_hole_days = (
+        power["reactorHoleKg"] / (excavation["excavatorCount"] * excavation["excavatorKgPerDay"])
+        if power["architecture"] == "nuclear"
+        else 0.0
+    )
     # Propellant mode and the Sabatier loop add the water electrolyzer, and the
     # loop its reactor and gas handling, sized on the methane it makes.
     # Equatorial plants are the MRE reactor, or the ilmenite reactor and its
@@ -197,6 +203,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "usedKgPerDay": None if refuel is None else refuel["usedKgPerDay"],
             "sortieIntervalDays": None if refuel is None else refuel["sortieIntervalDays"],
             "initialStripDays": excavation["initialStripDays"],
+            "reactorHoleDays": reactor_hole_days,
         },
     )
     campaign_warnings = campaign.pop("warnings")
@@ -240,6 +247,7 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "excavatorTripsPerDay": excavation["excavatorTripsPerDay"],
             "excavatorKgPerDay": excavation["excavatorKgPerDay"],
             "initialStripDays": excavation["initialStripDays"],
+            "reactorHoleDays": reactor_hole_days,
             "soilMovedKgPerDay": excavation["soilMovedKgPerDay"],
             "overburdenKgPerDay": excavation["overburdenKgPerDay"],
         },
@@ -296,7 +304,10 @@ def simulate(input_params: dict[str, Any] | None = None) -> dict[str, Any]:
             "shieldMassKg": power["shieldMassKg"],
             "cableMassKg": power["cableMassKg"],
             "cableLossW": power["cableLossW"],
+            "converterLossW": power["converterLossW"],
             "cableVoltageV": power["cableVoltageV"],
+            "cableRadiusToSkinDepth": power["cableRadiusToSkinDepth"],
+            "reactorHoleKg": power["reactorHoleKg"],
             "horizonKm": power["horizonKm"],
             "fissionThermalW": power["fissionThermalW"],
             "nuclearSpecificKgPerKw": power["nuclearSpecificKgPerKw"],

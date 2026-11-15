@@ -80,16 +80,43 @@ describe("fission converter (v0.23)", () => {
     expect(parseParams("fissionSiting=underground")).toEqual({});
   });
 
-  it("switches the cable to three-phase AC from the rail, and round-trips it (v0.28)", () => {
-    const ac: SimParams = { ...DEFAULTS, cableForm: "ac" };
+  it("switches the cable between AC and DC from the rail, and round-trips it (v0.28, AC default since v0.30)", () => {
+    expect(DEFAULTS.cableForm).toBe("ac");
+    const dc: SimParams = { ...DEFAULTS, cableForm: "dc" };
     render(<ControlGroups />);
     fireEvent.click(screen.getByRole("button", { name: /^\W*Power$/ }));
-    fireEvent.change(screen.getByRole("combobox", { name: /TRANSMISSION/ }), { target: { value: "ac" } });
-    expect(useStore.getState().params.cableForm).toBe("ac");
-    expect(useStore.getState().result.power.cableMassKg).toBe(simulate(ac).power.cableMassKg);
-    expect(serializeParams(ac)).toContain("cableForm=ac");
-    expect(parseParams("cableForm=ac")).toEqual({ cableForm: "ac" });
+    fireEvent.change(screen.getByRole("combobox", { name: /TRANSMISSION/ }), { target: { value: "dc" } });
+    expect(useStore.getState().params.cableForm).toBe("dc");
+    expect(useStore.getState().result.power.cableMassKg).toBe(simulate(dc).power.cableMassKg);
+    expect(serializeParams(dc)).toContain("cableForm=dc");
+    expect(serializeParams(DEFAULTS)).not.toContain("cableForm");
+    expect(parseParams("cableForm=dc")).toEqual({ cableForm: "dc" });
     expect(parseParams("cableForm=hvdc")).toEqual({});
+  });
+
+  it("shows each transmission and siting input only where it acts (v0.30)", () => {
+    const dc: SimParams = { ...DEFAULTS, cableForm: "dc" };
+    const buried: SimParams = { ...DEFAULTS, fissionSiting: "buried" };
+    // The skin depth's frequency acts only on an AC line; the hole only under a buried reactor.
+    expect(shown(brayton)).toContain("fAcHz");
+    expect(shown(dc)).not.toContain("fAcHz");
+    expect(inputActivity(dc, "fAcHz").activity).toBe("no-effect");
+    for (const key of ["dReactorHoleM", "zReactorHoleM"] as const) {
+      expect(shown(brayton)).not.toContain(key);
+      expect(shown(buried)).toContain(key);
+      expect(inputActivity(brayton, key).activity).toBe("no-effect");
+    }
+    // The converters' efficiencies drive the result; the hole's size only the campaign's first-product check.
+    expect(shown(brayton)).toEqual(expect.arrayContaining(["etaTransformer", "etaRectifier", "etaDcDcConverter", "etaPowerDistribution"]));
+    expect(inputActivity(brayton, "etaTransformer").activity).toBe("drives-results");
+    expect(inputActivity(dc, "etaDcDcConverter").activity).toBe("drives-results");
+    expect(inputActivity(brayton, "fAcHz").changed).toContain("power.cableRadiusToSkinDepth");
+    for (const key of ["etaTransformer", "etaRectifier", "etaDcDcConverter", "etaPowerDistribution", "fAcHz", "dReactorHoleM", "zReactorHoleM"] as const) {
+      const meta = PARAM_META[key];
+      const evidence = evidenceForParam({ key, group: meta.group, source: meta.source, min: meta.min, max: meta.max, unit: meta.unit });
+      expect(evidence.validity.length).toBeGreaterThan(100);
+      expect(evidence.sourceUrl).toContain("ntrs.nasa.gov");
+    }
   });
 
   it("shows the line-of-sight horizon's heights, a check that moves no mass (v0.29)", () => {

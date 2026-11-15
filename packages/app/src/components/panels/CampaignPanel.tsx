@@ -56,11 +56,25 @@ export function CampaignPanel(): React.JSX.Element {
     };
   }, [timeline, campaign.campaignEndDay, width, margin.left, margin.right, margin.top, margin.bottom]);
 
+  // The fleet digs a buried reactor's hole, then strips the first overburden; production
+  // waits for that groundwork when it outlasts commissioning (the engine's firstProductDay).
+  const { initialStripDays, reactorHoleDays } = result.excavation;
+  const groundworkDays = campaign.firstProductDay - campaign.deploymentDays;
+  const groundworkSets = groundworkDays > params.commissioningDays;
+  const groundworkLabel =
+    reactorHoleDays > 0 && initialStripDays > 0 ? "DIG AND STRIP" : reactorHoleDays > 0 ? "DIG REACTOR HOLE" : "STRIP OVERBURDEN";
+  const groundworkProse =
+    reactorHoleDays > 0 && initialStripDays > 0
+      ? `${Math.round(groundworkDays)} days digging the reactor's hole and stripping the first overburden`
+      : reactorHoleDays > 0
+        ? `${Math.round(groundworkDays)} days digging the reactor's hole`
+        : `a ${Math.round(groundworkDays)}-day initial overburden strip`;
+
   const phases = [
     { id: "deploy", label: "DEPLOY", from: 0, to: campaign.deploymentDays },
     {
       id: "commission",
-      label: result.excavation.initialStripDays > params.commissioningDays ? "STRIP OVERBURDEN" : "COMMISSION",
+      label: groundworkSets ? groundworkLabel : "COMMISSION",
       from: campaign.deploymentDays,
       to: campaign.firstProductDay
     },
@@ -173,8 +187,8 @@ export function CampaignPanel(): React.JSX.Element {
           plus spares at {formatQtyProse(campaign.leoMassPerLandedKg, "kg/kg", 4)} per kg landed. Saved is{" "}
           {refuel === null ? "product delivered" : "the product the refuelled lander burns"} × gear ratio {params.gearRatio}. Production
           starts on day {Math.round(campaign.firstProductDay)}, after the last landing and{" "}
-          {result.excavation.initialStripDays > params.commissioningDays
-            ? `a ${Math.round(result.excavation.initialStripDays)}-day initial overburden strip, which outlasts ${params.commissioningDays} days of commissioning,`
+          {groundworkSets
+            ? `${groundworkProse}, which outlasts ${params.commissioningDays} days of commissioning,`
             : `${params.commissioningDays} days of commissioning`}{" "}
           and averages {formatQtyProse(campaign.deliveredKgPerDay, "kg/day")} at{" "}
           {Math.round(params.plantAvailability * 100)}% availability

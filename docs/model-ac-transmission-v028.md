@@ -194,9 +194,15 @@ Screenshot: [the transmission select under AC, with the power panel's CABLE line
   - **What the model does:** both sit in the conversion and power management
     mass per kWe, unchanged with voltage or form; Mason 2006 found the form did
     not significantly change PMAD mass.
+  *(v0.30: done for their efficiency, which makes AC the default; their mass
+  stays in the conversion mass per kWe; see
+  [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*
 - **Skin effect.** At 1 kHz the skin depth in aluminium is 2.7 mm, against a
   megawatt AC conductor's 4.8 mm radius, so its resistance would rise by
   roughly a fifth, and its conductor with it.
+  *(v0.30: noted when an AC conductor is thicker than its skin depth, and taken
+  as stranded at no extra mass; see [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*
 - **Topography,** and **the buried reactor's excavation,** from v0.25 and v0.26.
   *(v0.29: topography reduced to a disclosed horizon check; see
-  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md).)*
+  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md). v0.30: the
+  excavation charged in fleet time; see [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*
