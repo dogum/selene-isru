@@ -97,6 +97,10 @@ export {
   fissionShieldKg,
   horizonKm,
   lineEfficiency,
+  cableEfficiency,
+  cableInputKw,
+  converterEfficiencies,
+  reactorHoleKg,
   shieldDistanceFactor,
   siteCycleHours,
   solarSlopeAtYear
@@ -223,6 +227,11 @@ export function simulate(
     siteProfile.profile,
     options.powerStrategy ?? "auto"
   );
+  // Before the first product, the fleet digs a buried reactor's hole, then strips the first overburden.
+  const reactorHoleDays =
+    power.architecture === "nuclear"
+      ? power.reactorHoleKg / (excavation.excavatorCount * excavation.excavatorKgPerDay)
+      : 0;
   // Polar plants always carry the water extractor; propellant mode and the
   // Sabatier loop add the water electrolyzer, and the loop its reactor and gas
   // handling, sized on the methane it makes. Equatorial plants are the MRE
@@ -319,7 +328,8 @@ export function simulate(
     importedFeedKgPerDay: production.co2ImportedKgPerDay * loopThroughput + storageLossKgPerDay(isFeed),
     usedKgPerDay: refuelOutput === null ? null : refuelOutput.refuel.usedKgPerDay,
     sortieIntervalDays: refuelOutput === null ? null : refuelOutput.refuel.sortieIntervalDays,
-    initialStripDays: excavation.initialStripDays
+    initialStripDays: excavation.initialStripDays,
+    reactorHoleDays
   });
   const construction = simulateConstruction(params, production.slagKgPerDay);
   const materials = materialLedger(params, production, ilmenite);
@@ -389,6 +399,7 @@ export function simulate(
       excavatorTripsPerDay: excavation.excavatorTripsPerDay,
       excavatorKgPerDay: excavation.excavatorKgPerDay,
       initialStripDays: excavation.initialStripDays,
+      reactorHoleDays,
       soilMovedKgPerDay: excavation.soilMovedKgPerDay,
       overburdenKgPerDay: excavation.overburdenKgPerDay
     },
@@ -446,6 +457,9 @@ export function simulate(
       cableMassKg: power.cableMassKg,
       cableLossW: power.cableLossW,
       cableVoltageV: power.cableVoltageV,
+      converterLossW: power.converterLossW,
+      cableRadiusToSkinDepth: power.cableRadiusToSkinDepth,
+      reactorHoleKg: power.reactorHoleKg,
       horizonKm: power.horizonKm,
       fissionThermalW: power.fissionThermalW,
       nuclearSpecificKgPerKw: power.nuclearSpecificKgPerKw,

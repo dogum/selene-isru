@@ -2,9 +2,12 @@ import { describe, expect, test } from "vitest";
 import {
   braytonCycle,
   cableDesign,
+  cableInputKw,
   cableMassKg,
+  converterEfficiencies,
   fissionShieldKg,
   horizonKm,
+  reactorHoleKg,
   braytonCycleAt,
   DEFAULTS,
   fissionEfficiency,
@@ -40,6 +43,16 @@ function warningIds(result: { warnings: Array<{ id: string }> }): Set<string> {
   return new Set(result.warnings.map((warning) => warning.id));
 }
 
+// v0.30 adds the converters at each end of the cable and makes AC the default form; the pinned
+// fission inputs below keep the lossless converters and the DC line they were written for.
+const PRE_V030_TRANSMISSION = {
+  cableForm: "dc" as const,
+  etaTransformer: 1,
+  etaRectifier: 1,
+  etaDcDcConverter: 1,
+  etaPowerDistribution: 1
+};
+
 // v0.19 calibrated the fission defaults to Mason 2006/2001 and NASA FSP. The v0.17
 // and v0.18 anchors pin the fission inputs they were written for, so what they test holds.
 // Their model was 27.5% of efficiency, a fixed 0.55 of Carnot at 1200/600 K, with the radiator
@@ -55,15 +68,16 @@ const V018_FISSION = {
   kConversionStirlingKgPerKwe: 13.93,
   nShield: 0,
   bFissionScale: 1,
-  bStirlingScale: 1
+  bStirlingScale: 1,
+  ...PRE_V030_TRANSMISSION
 };
 
 // v0.21 scales the shield with power and recalibrates the reactor and conversion
 // masses; the v0.19 and v0.20 anchors pin the fission inputs they were written for.
 // v0.25 rebases the shield on Mason 2025 at 1 km; the pins keep the 1,676 kg FSP shield they were written for.
-const V020_FISSION = { kReactorKgPerKwt: 2.25, kConversionKgPerKwe: 8.47, nShield: 0, bFissionScale: 1, MshieldKg: 1676 };
+const V020_FISSION = { kReactorKgPerKwt: 2.25, kConversionKgPerKwe: 8.47, nShield: 0, bFissionScale: 1, MshieldKg: 1676, ...PRE_V030_TRANSMISSION };
 // v0.22 scales the reactor and conversion with size; the v0.21 anchors pin the linear ones.
-const V021_FISSION = { kReactorKgPerKwt: 1.75, kConversionKgPerKwe: 6.58, bFissionScale: 1, MshieldKg: 1676 };
+const V021_FISSION = { kReactorKgPerKwt: 1.75, kConversionKgPerKwe: 6.58, bFissionScale: 1, MshieldKg: 1676, ...PRE_V030_TRANSMISSION };
 
 describe("regression anchors", () => {
   test("matches the research-derived headline values", () => {
@@ -112,7 +126,7 @@ describe("regression anchors", () => {
     expectRel(polar.thermal.extractorMassKg, 4800, 1e-9);
     expectRel(polar.thermal.secSub_JPerKg! / J_PER_KWH, 1.78 / 0.75, 0.01);
     expectRel(polar.energy.secTotal_kWhPerKg, 6.478, 0.001);
-    expectRel(polar.logistics.totalInfraMassKg / 1000, 21.98, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(polar.logistics.totalInfraMassKg / 1000, 22.03, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     expect(polar.materials.maxAbsResidualKgPerDay).toBe(0);
   });
 
@@ -270,9 +284,10 @@ describe("regression anchors", () => {
     // Brayton stays the default, and the default plant does not move.
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.35, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     const lithium = simulate({ fissionConverter: "stirling", Tsource: 1050, Tsink: 500 });
-    expectRel(lithium.power.fissionThermalW / (lithium.energy.gridPowerW + lithium.power.cableLossW), 1 / 0.309, 0.001);
-    expectRel(lithium.power.radiatorM2, 938, 0.002);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(lithium.power.nuclearMassKg / 1000, 36.69, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    const sentW = lithium.energy.gridPowerW + lithium.power.cableLossW + lithium.power.converterLossW;
+    expectRel(lithium.power.fissionThermalW / sentW, 1 / 0.309, 0.001);
+    expectRel(lithium.power.radiatorM2, 1093, 0.002);  // v0.25: shield at its separation, cable to the outpost; v0.30: converters at each end of the cable, AC by default
+    expectRel(lithium.power.nuclearMassKg / 1000, 36.74, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     expectRel(lithium.logistics.totalInfraMassKg / 1000, 57.36, 0.001);  // v0.25: shield at its separation, cable to the outpost
     expect(lithium.logistics.nMissions).toBe(1);
     expect(warningIds(lithium)).not.toContain("stirling-hot-end");
@@ -292,8 +307,8 @@ describe("regression anchors", () => {
     // (Mason 2001, Table 4), recalibrated so Mason 2001's surface marginal mass holds.
     expect(fissionScaleFactor(DEFAULTS, DEFAULTS.QscaleRefKwt)).toBe(1);
     const base = simulate({});
-    expectRel(base.power.nuclearMassKg / 1000, 29.72, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
-    expectRel(base.power.nuclearSpecificKgPerKw, 25.46, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
+    expectRel(base.power.nuclearMassKg / 1000, 29.75, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
+    expectRel(base.power.nuclearSpecificKgPerKw, 25.01, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.30: converters at each end of the cable, AC by default
     expectRel(base.logistics.totalInfraMassKg / 1000, 50.35, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     expect(base.logistics.nMissions).toBe(1);
     // The engine's fission mass is the curve the power chart draws.
@@ -303,7 +318,7 @@ describe("regression anchors", () => {
     const pCrit = base.power.pCritW / 1000;
     const beta = base.power.solarMassKg / kw;
     expectRel(beta * pCrit, nuclearMassAtKwe(DEFAULTS, pCrit), 1e-9);
-    expectRel(pCrit, 2.050, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(pCrit, 2.055, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     // A 10 t/day plant gains most: 261.4 t of fission system becomes 245.5 t.
     const big = simulate({ targetKgPerDay: 10000 });
     expectRel(big.power.nuclearMassKg / 1000, 246.6, 0.001);  // v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power
@@ -335,9 +350,59 @@ describe("regression anchors", () => {
     // v0.27: the whole cable, designed for the crossover's power.
     const cable = cableMassKg(pinned, kw / lineEfficiency(pinned));
     expectRel(beta * kw, shield + cable + base.power.nuclearSpecificKgPerKw * kw, 1e-9);
-    expectRel(kw, 2.410, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(kw, 2.405, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     // A fixed shield (nShield 0) is the v0.20 model's.
     expect(simulate({ ...V021_FISSION, nShield: 0 }).power.shieldMassKg).toBe(V021_FISSION.MshieldKg);
+  });
+
+  test("the reactor's excavation and the transmission converters (v0.30)", () => {
+    // New and deliberate: the converters at each end of the cable (Mason 2006, Oleson 2022) are charged,
+    // AC becomes the default, the fission masses are refit to keep Mason 2001's marginal masses, and a
+    // buried reactor's hole is dug by the fleet before the first product.
+    const { sending, receiving } = converterEfficiencies(DEFAULTS);
+    expect(sending).toBe(DEFAULTS.etaTransformer);
+    expectRel(receiving, DEFAULTS.etaTransformer * DEFAULTS.etaPowerDistribution, 1e-12);
+    expectRel(lineEfficiency(DEFAULTS), sending * (1 - 0.0167) * receiving, 1e-12);
+    expectRel(lineEfficiency(DEFAULTS), 0.9293, 0.001);
+    // A Stirling, or a DC line, needs a rectifier and a switching stage at the reactor.
+    const rectified = DEFAULTS.etaRectifier * DEFAULTS.etaDcDcConverter;
+    expect(converterEfficiencies({ ...DEFAULTS, fissionConverter: "stirling" }).sending).toBe(rectified);
+    const dcEnds = converterEfficiencies({ ...DEFAULTS, cableForm: "dc" });
+    expect(dcEnds.sending).toBe(rectified);
+    expectRel(dcEnds.receiving, DEFAULTS.etaDcDcConverter * DEFAULTS.etaPowerDistribution, 1e-12);
+    const base = simulate({});
+    expectRel(base.power.converterLossW / 1000, 57.93, 0.001);
+    const sentW = base.energy.gridPowerW / lineEfficiency(DEFAULTS);
+    expectRel(base.power.cableLossW + base.power.converterLossW, sentW - base.energy.gridPowerW, 1e-9);
+    expectRel(base.logistics.totalInfraMassKg / 1000, 50.38, 0.001);
+    // DC now costs the default plant 2.7 t: its converters lose three times as much.
+    const dc = simulate({ cableForm: "dc" });
+    expectRel(dc.power.converterLossW / 1000, 188.7, 0.001);
+    expectRel(dc.logistics.totalInfraMassKg / 1000, 53.1, 0.001);
+    // The 1 kHz AC conductor is thicker than its 2.7 mm skin depth; it is noted, not charged.
+    expectRel(base.power.cableRadiusToSkinDepth, 1.809, 0.001);
+    expect(base.warnings.filter((w) => w.id === "cable-skin-effect").map((w) => w.severity)).toEqual(["info"]);
+    expect(dc.power.cableRadiusToSkinDepth).toBe(0);
+    expect(warningIds(simulate({ site: "polar" })).has("cable-skin-effect")).toBe(false);
+    // Mason 2006's 2 m by 4 m hole at the shield's reference heat, grown with the plug shield above it.
+    const holeRef = reactorHoleKg({ ...DEFAULTS, fissionSiting: "buried" }, DEFAULTS.QshieldRefKwt);
+    expectRel(holeRef, DEFAULTS.rhoReg * Math.PI * 4, 1e-12);
+    expect(reactorHoleKg(DEFAULTS, 1000)).toBe(0);
+    const buried = simulate({ fissionSiting: "buried", dSeparationKm: 0.1 });
+    expectRel(buried.power.reactorHoleKg / 1000, 63.47, 0.001);
+    expectRel(buried.excavation.reactorHoleDays, 11.67, 0.001);
+    // The default fleet digs it inside commissioning; with a two-day commissioning it sets the first product.
+    expect(buried.campaign.firstProductDay).toBe(DEFAULTS.commissioningDays);
+    const short = simulate({ fissionSiting: "buried", dSeparationKm: 0.1, commissioningDays: 2 });
+    expect(short.campaign.firstProductDay).toBe(short.excavation.reactorHoleDays);
+    // At the pole the fleet digs the hole, then strips the first overburden.
+    const polar = simulate({ site: "polar", fissionSiting: "buried", dSeparationKm: 0.1, commissioningDays: 2 });
+    expectRel(polar.campaign.firstProductDay, polar.excavation.reactorHoleDays + polar.excavation.initialStripDays, 1e-12);
+    // A solar plant digs no hole, and a surface reactor needs none.
+    const solar = simulate({ site: "polar", targetKgPerDay: 10, fissionSiting: "buried" });
+    expect(solar.power.architecture).toBe("solar");
+    expect(solar.excavation.reactorHoleDays).toBe(0);
+    expect(base.excavation.reactorHoleDays).toBe(0);
   });
 
   test("the reactor's line-of-sight horizon (v0.29)", () => {
@@ -366,47 +431,55 @@ describe("regression anchors", () => {
 
   test("AC transmission (v0.28)", () => {
     // New and deliberate: a three-phase AC cable, insulated for its peak voltage to ground, held to the same
-    // peak as the DC line. DC stays the default; the fixed mass per km is refitted to Mason's 3 kVac cable.
-    expect(DEFAULTS.cableForm).toBe("dc");
-    const dc = simulate({});
-    const ac = simulate({ cableForm: "ac" });
+    // peak as the DC line. The fixed mass per km is refitted to Mason's 3 kVac cable.
+    // v0.30: with the converters at each end charged, AC is the default and DC the alternative.
+    expect(DEFAULTS.cableForm).toBe("ac");
+    const dc = simulate({ cableForm: "dc" });
+    const ac = simulate({});
     expectRel(ac.power.cableVoltageV, (DEFAULTS.VCableMaxV * 0.5) / Math.sqrt(2 / 3), 1e-12);
     expectRel(ac.power.cableVoltageV, 4899, 0.001);
-    expectRel(ac.power.cableMassKg, 1110, 0.001);
-    expectRel(ac.power.cableLossW, dc.power.cableLossW, 1e-12);
-    expectRel(ac.logistics.totalInfraMassKg / 1000, 50.74, 0.001);
+    expectRel(ac.power.cableMassKg, 1132, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    // Both lines lose the same share of the power they carry.
+    for (const [run, form] of [[ac, "ac"], [dc, "dc"]] as const) {
+      const carriedW = cableInputKw({ ...DEFAULTS, cableForm: form }, run.energy.gridPowerW / 1000) * 1000;
+      expectRel(run.power.cableLossW / carriedW, DEFAULTS.fCableLossPerKm * DEFAULTS.dSeparationKm, 1e-12);
+    }
+    expectRel(ac.logistics.totalInfraMassKg / 1000, 50.39, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    expectRel(dc.logistics.totalInfraMassKg / 1000, 53.10, 0.001);  // v0.30: converters at each end of the cable, AC by default
     // The same peak voltage to ground means the same insulation thickness on both lines.
     const sentKw = (dc.energy.gridPowerW + dc.power.cableLossW) / 1000;
-    expectRel(cableDesign({ ...DEFAULTS, cableForm: "ac" }, sentKw).insulationM, cableDesign(DEFAULTS, sentKw).insulationM, 1e-12);
-    expectRel(simulate({ cableForm: "ac", targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 455.8, 0.001);
-    // An unsupported form resets to DC and says so.
+    expectRel(cableDesign({ ...DEFAULTS, cableForm: "ac" }, sentKw).insulationM, cableDesign({ ...DEFAULTS, cableForm: "dc" }, sentKw).insulationM, 1e-12);
+    expectRel(simulate({ targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 452.8, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    // An unsupported form resets to the default and says so.
     const reset = simulate({ cableForm: "hvdc" } as unknown as Partial<SimParams>);
-    expect(reset.power.cableMassKg).toBe(dc.power.cableMassKg);
+    expect(reset.power.cableMassKg).toBe(ac.power.cableMassKg);
     expect(reset.warnings.some((w) => w.id === "param-clamped")).toBe(true);
   });
 
   test("the cable's voltage designed for its power (v0.27)", () => {
     // New and deliberate: the cable's voltage minimizes conductor, insulation, and jacket mass for the
     // power it carries, capped at VCableMaxV, in place of v0.25's fixed 3 kV conductor.
-    const base = simulate({});
+    // v0.30: written for the DC line, which is no longer the default.
+    const dc = { ...DEFAULTS, cableForm: "dc" as const };
+    const base = simulate(dc);
     expect(base.power.cableVoltageV).toBe(DEFAULTS.VCableMaxV);
     expect(DEFAULTS.VCableMaxV).toBe(8000);
-    expectRel(base.power.cableMassKg, 726, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable
-    const sentKw = (base.energy.gridPowerW + base.power.cableLossW) / 1000;
-    const design = cableDesign(DEFAULTS, sentKw);
-    expectRel(design.conductorKgPerKm, 286.9, 0.001);
-    expectRel(design.insulationKgPerKm, 112.2, 0.001);
-    expectRel(design.jacketKgPerKm, 83.8, 0.001);
+    expectRel(base.power.cableMassKg, 743, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
+    const sentKw = cableInputKw(dc, base.energy.gridPowerW / 1000);
+    const design = cableDesign(dc, sentKw);
+    expectRel(design.conductorKgPerKm, 303.4, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    expectRel(design.insulationKgPerKm, 115.0, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    expectRel(design.jacketKgPerKm, 85.7, 0.001);  // v0.30: converters at each end of the cable, AC by default
     const designed = design.conductorKgPerKm + design.insulationKgPerKm + design.jacketKgPerKm;
     expectRel(base.power.cableMassKg, DEFAULTS.dSeparationKm * (DEFAULTS.kCableKgPerKm + designed), 1e-12);
-    expectRel(base.logistics.totalInfraMassKg / 1000, 50.35, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(base.logistics.totalInfraMassKg / 1000, 53.10, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     // Below the cap a small plant's cable runs at its own optimum.
-    expect(cableDesign(DEFAULTS, 40).voltageV).toBeLessThan(DEFAULTS.VCableMaxV);
+    expect(cableDesign(dc, 40).voltageV).toBeLessThan(DEFAULTS.VCableMaxV);
     // The cap binds a megawatt plant: uncapped it would run near 18 kV; at v0.25's 3 kV it is 3.3 times heavier.
-    const uncapped = simulate({ VCableMaxV: 30000 }).power;
-    expectRel(uncapped.cableVoltageV, 17887, 0.001);
+    const uncapped = simulate({ ...dc, VCableMaxV: 30000 }).power;
+    expectRel(uncapped.cableVoltageV, 18141, 0.001);  // v0.30: converters at each end of the cable, AC by default
     expect(uncapped.cableMassKg).toBeLessThan(base.power.cableMassKg);
-    expectRel(simulate({ VCableMaxV: 3000 }).power.cableMassKg, 2571, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(simulate({ ...dc, VCableMaxV: 3000 }).power.cableMassKg, 2693, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
   });
 
   test("a buried fission reactor (v0.26)", () => {
@@ -415,17 +488,17 @@ describe("regression anchors", () => {
     expectRel(simulate({}).logistics.totalInfraMassKg / 1000, 50.35, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     const buried = { fissionSiting: "buried" as const, dSeparationKm: 0.1 };
     const base = simulate(buried);
-    expectRel(base.power.shieldMassKg, 4616, 0.001);
-    expectRel(base.power.cableMassKg, 72, 0.002);  // v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
-    expectRel(base.power.cableLossW / 1000, 1.65, 0.01);
-    expectRel(base.power.nuclearMassKg / 1000, 29.53, 0.001);  // v0.27: cable voltage designed for its power
-    expectRel(base.logistics.totalInfraMassKg / 1000, 50.16, 0.001);  // v0.27: cable voltage designed for its power
+    expectRel(base.power.shieldMassKg, 4703, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    expectRel(base.power.cableMassKg, 112.1, 0.002);  // v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
+    expectRel(base.power.cableLossW / 1000, 1.72, 0.01);  // v0.30: converters at each end of the cable, AC by default
+    expectRel(base.power.nuclearMassKg / 1000, 29.21, 0.001);  // v0.27: cable voltage designed for its power; v0.30: converters at each end of the cable, AC by default
+    expectRel(base.logistics.totalInfraMassKg / 1000, 49.84, 0.001);  // v0.27: cable voltage designed for its power; v0.30: converters at each end of the cable, AC by default
     // Separation no longer sizes the shield, so a buried reactor is lightest next to the outpost.
     const heatKw = base.power.fissionThermalW / 1000;
     expect(fissionShieldKg({ ...DEFAULTS, ...buried, dSeparationKm: 2 }, heatKw)).toBe(fissionShieldKg({ ...DEFAULTS, ...buried }, heatKw));
     expect(base.logistics.totalInfraMassKg).toBeLessThan(simulate({ ...buried, dSeparationKm: 0.5 }).logistics.totalInfraMassKg);
     // A 10 t/day plant saves most of its cable (20.7 t at v0.26's 3 kV; 3.7 t since v0.27).
-    expectRel(simulate({ ...buried, targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 447.7, 0.001);  // v0.27: cable voltage designed for its power
+    expectRel(simulate({ ...buried, targetKgPerDay: 10000 }).logistics.totalInfraMassKg / 1000, 444.9, 0.001);  // v0.27: cable voltage designed for its power; v0.30: converters at each end of the cable, AC by default
     // An unsupported siting resets to the surface and says so.
     const reset = simulate({ fissionSiting: "underground" } as unknown as Partial<SimParams>);
     expect(reset.power.shieldMassKg).toBe(simulate({}).power.shieldMassKg);
@@ -436,16 +509,14 @@ describe("regression anchors", () => {
     // New and deliberate: the shield is Mason 2025's 1,370 kg at 1 km and goes as separation^-0.97,
     // and a cable to the outpost is charged by its length, with a conductor sized for its loss.
     const base = simulate({});
-    expectRel(base.power.shieldMassKg, 3792, 0.001);
-    expectRel(base.power.cableMassKg, 726, 0.001);  // v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
-    // v0.27 retired v0.25's fixed 3 kV conductor (2.026 kg per kW and km): the cable is designed at 8 kV.
-    const sentKw = (base.energy.gridPowerW + base.power.cableLossW) / 1000;
-    expect(cableDesign(DEFAULTS, sentKw).voltageV).toBe(DEFAULTS.VCableMaxV);
-    expect(base.power.cableVoltageV).toBe(DEFAULTS.VCableMaxV);
-    const sentW = base.energy.gridPowerW / lineEfficiency(DEFAULTS);
-    expectRel(base.power.cableLossW, sentW - base.energy.gridPowerW, 1e-12);
-    expectRel(base.power.cableLossW / sentW, 0.0167, 1e-12);
-    expectRel(base.power.nuclearMassKg / 1000, 29.72, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(base.power.shieldMassKg, 3864, 0.001);  // v0.30: converters at each end of the cable, AC by default
+    expectRel(base.power.cableMassKg, 1132, 0.001);  // v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
+    // v0.27 retired v0.25's fixed 3 kV conductor (2.026 kg per kW and km): the cable is designed at its cap.
+    // v0.30: the cable carries what the reactor's converter sends, and loses 1.67% of it per km.
+    const sentKw = cableInputKw(DEFAULTS, base.energy.gridPowerW / 1000);
+    expect(cableDesign(DEFAULTS, sentKw).voltageV).toBe(base.power.cableVoltageV);
+    expectRel(base.power.cableLossW / (sentKw * 1000), 0.0167, 1e-12);
+    expectRel(base.power.nuclearMassKg / 1000, 29.75, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     expectRel(base.logistics.totalInfraMassKg / 1000, 50.35, 0.001);  // v0.28: cable fixed mass refitted to Mason's 3 kVac cable
     // Half the separation nearly doubles the shield; the cable halves.
     const near = simulate({ dSeparationKm: 0.5 }).power;
@@ -475,13 +546,15 @@ describe("regression anchors", () => {
     expectRel(span.hotK, 526.0, 0.001);
     const base = simulate({});
     expectRel(base.power.radiatorEffectiveK, 419.9, 0.001);
-    expectRel(base.power.radiatorM2, 2534, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    expectRel(base.power.radiatorMassKg / 1000, 9.808, 0.001);  // v0.25: shield at its separation, cable to the outpost
-    const rejectedW = base.power.fissionThermalW - base.energy.gridPowerW - base.power.cableLossW;
+    expectRel(base.power.radiatorM2, 2682, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.30: converters at each end of the cable, AC by default
+    expectRel(base.power.radiatorMassKg / 1000, 10.379, 0.001);  // v0.25: shield at its separation, cable to the outpost; v0.30: converters at each end of the cable, AC by default
+    const rejectedW =
+      base.power.fissionThermalW - base.energy.gridPowerW - base.power.cableLossW - base.power.converterLossW;
     expectRel(base.power.radiatorM2 * radiatorFluxWPerM2(DEFAULTS), rejectedW, 1e-9);
     // The lightest radiator cold end, against Mason 2006's 400 K and 380 K.
     const at = (params: Partial<SimParams>) => simulate(params).power.nuclearMassKg;
-    expect(at({ Tsink: 410 })).toBeLessThan(Math.min(at({ Tsink: 400 }), at({ Tsink: 430 })));
+    // v0.30: the refit's lighter reactor moves the optimum from near 414 K to near 420 K.
+    expect(at({ Tsink: 420 })).toBeLessThan(Math.min(at({ Tsink: 410 }), at({ Tsink: 430 })));
     expect(at({ Tsource: 900, Tsink: 374 })).toBeLessThan(Math.min(at({ Tsource: 900, Tsink: 360 }), at({ Tsource: 900, Tsink: 390 })));
     // A Stirling radiator still sits at its cold end.
     expect(simulate({ fissionConverter: "stirling" }).power.radiatorEffectiveK).toBe(DEFAULTS.Tsink);
@@ -586,7 +659,7 @@ describe("regression anchors", () => {
     const crewSize = sizeToDemand(crew)!;
     expectRel(crewSize.targetKgPerDay, 111.14, 0.001);
     const crewSized = simulate({ ...crew, targetKgPerDay: crewSize.targetKgPerDay });
-    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.31, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(crewSized.logistics.totalInfraMassKg / 1000, 14.36, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     // A right-sized plant for one crewed sortie a year still does not pay back.
     expectRel(crewSized.campaign.returnRatio, 0.9190, 0.001);  // v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(crewSized.campaign.paysBackInCampaign).toBe(false);
@@ -597,7 +670,7 @@ describe("regression anchors", () => {
     expect(polarSize.limitedBy).toBe("hydrogen");
     expectRel(polarSize.targetKgPerDay, 166.71, 0.001);
     const polarSized = simulate({ ...polar, targetKgPerDay: polarSize.targetKgPerDay });
-    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.90, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable
+    expectRel(polarSized.logistics.totalInfraMassKg / 1000, 22.95, 0.001);  // v0.19: fission calibrated to Mason and FSP; v0.21: shield scales with power; v0.22: fission economy of scale; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span; v0.25: shield at its separation, cable to the outpost; v0.27: cable voltage designed for its power; v0.28: cable fixed mass refitted to Mason's 3 kVac cable; v0.30: converters at each end of the cable, AC by default
     expectRel(polarSized.campaign.returnRatio, 1.0247, 0.001);  // v0.21: shield scales with power; v0.24: Brayton pressure ratio at its optimum, radiator over the gas span
     expect(polarSized.campaign.paybackDays).toBe(polarSized.campaign.campaignEndDay);
     expect(simulate(polar).campaign.paysBackInCampaign).toBe(false);

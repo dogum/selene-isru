@@ -75,6 +75,11 @@ const SOURCE_LINKS: Array<{ match: RegExp; url: string; section: string }> = [
     section: "Barth & Pike 2022, Lunar Power Transmission for Fission Surface Power (NETS 2022), Sec. III.D, metallic conductors"
   },
   {
+    match: /^Oleson et al\. 2022/,
+    url: "https://ntrs.nasa.gov/citations/20220012395",
+    section: "Oleson et al. 2022, 40 kW Fission Surface Power System (FSPS) Deployability (NASA/TM-20220012395), Figs. 4.1 and 4.2, the electrical power system's component efficiencies"
+  },
+  {
     match: /^Mason 2006/,
     url: "https://ntrs.nasa.gov/citations/20060011236",
     section: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Table 1"
@@ -235,11 +240,11 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     applicability: "Both sites · nuclear architecture"
   },
   cableForm: {
-    validity: "DC: a bipolar line of two conductors, each at half the line voltage to ground. AC: a three-phase line of three conductors at unity power factor, each insulated for its peak voltage to ground, which NASA's current 3 kVac design uses. Both are held to the same peak voltage to ground (VCableMaxV / 2) and the same loss per km, so the AC line runs at 4.9 kVrms where DC runs at 8 kV, and carries about 1.5 times the cable mass: 1,110 kg against 726 kg at the default plant. Barth & Pike find the AC cable heavier for the same reason and lightest at 3,000 Vrms line to neutral; the model gives 3,027 V. AC lets transformers step the voltage up and down; the converters at each end and the skin effect at 1 kHz are not modelled for either form.",
+    validity: "DC: a bipolar line of two conductors, each at half the line voltage to ground. AC: a three-phase line of three conductors at unity power factor, each insulated for its peak voltage to ground, which NASA's current 3 kVac design uses. Both are held to the same peak voltage to ground (VCableMaxV / 2) and the same loss per km, so the AC line runs at 4.9 kVrms where DC runs at 8 kV, and its cable is about 1.5 times heavier: 1,132 kg against 743 kg at the default plant. Barth & Pike find the AC cable heavier for the same reason and lightest at 3,000 Vrms line to neutral; the model gives 3,027 V. Since v0.30 the converters at each end are charged, and they decide the trade: a Brayton feeds an AC line through one transformer, where a DC line needs a rectifier and a DC-DC converter at the reactor and another DC-DC converter at the outpost. DC then loses 189 kW in conversion against AC's 58 kW and lands the default plant 2.7 t heavier, so AC, NASA's current design, is the default. The 1 kHz skin effect is noted, not charged: an AC conductor thicker than its skin depth is taken as stranded.",
     applicability: "Both sites · nuclear architecture"
   },
   fissionSiting: {
-    validity: "Surface: the reactor stands on the regolith behind its own directional shield, which must shadow the outpost, so it shrinks with separation (Mason 2025, NASA's current design). Buried: the reactor sits in an excavated hole, the regolith shields the outpost, and an Earth-delivered plug shield protects the converters and radiator above it, so separation no longer sizes the shield and the reactor can sit 100 m away (FSP 2008's emplaced design). Burial pays only through the shorter cable. Since v0.27 the cable is designed for its voltage and is light, so a surface reactor at its best separation beats a buried one at 100 m for a 40 kWe system and for the default 1 MWe plant (49.6 t at 1.8 km against 50.2 t); only a 10 t/day plant gains from burial, about 5 t. Digging the hole (about 20 t of regolith, a few days of the plant's own mining) and crew-assisted installation are not charged.",
+    validity: "Surface: the reactor stands on the regolith behind its own directional shield, which must shadow the outpost, so it shrinks with separation (Mason 2025, NASA's current design). Buried: the reactor sits in an excavated hole, the regolith shields the outpost, and an Earth-delivered plug shield protects the converters and radiator above it, so separation no longer sizes the shield and the reactor can sit 100 m away (FSP 2008's emplaced design). Burial pays only through the shorter cable. On the AC default (v0.30) a buried reactor at 100 m and a surface reactor at its best separation land within 0.1 t of each other for the default 1 MWe plant (49.84 t against 49.91 t at 1.55 km); a 40 kWe system and the polar plant stay lighter on the surface, and a 10 t/day plant saves about 8 t buried. The plant's own excavation fleet digs the hole (Mason 2006's 2 m by 4 m, widened with the plug shield: 63 t for the default plant, 12 days) before the first product; the energy to dig it and crew-assisted installation are not charged.",
     applicability: "Both sites · nuclear architecture"
   },
   fCarnotStirling: {
@@ -531,7 +536,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   Tsink: {
     rangeRationale: "From a cold radiator near 300 K to 900 K; NASA's lunar studies put the Brayton cold end at 380–400 K and Stirling at 415–460 K.",
-    validity: "The converter cold end: the Brayton compressor inlet, or the Stirling cold end. The default is Mason 2006's minimum-mass Brayton design point, 400 K. Since v0.20 the Brayton cycle loses efficiency as its cold end warms; since v0.24, at its best pressure ratio, the model's own lightest radiator runs near 414 K, and with the default 1,150 K hot end the cycle makes no net work above about 625 K. Since v0.24 a Brayton radiator spans the gas cooler, from the recuperator exit down to this temperature, less the gas cooler approach (dTGasCoolerK); a Stirling radiator still sits at this temperature.",
+    validity: "The converter cold end: the Brayton compressor inlet, or the Stirling cold end. The default is Mason 2006's minimum-mass Brayton design point, 400 K. Since v0.20 the Brayton cycle loses efficiency as its cold end warms; since v0.24, at its best pressure ratio, the model's own lightest radiator runs near 414 K (near 420 K since v0.30's refit), and with the default 1,150 K hot end the cycle makes no net work above about 625 K. Since v0.24 a Brayton radiator spans the gas cooler, from the recuperator exit down to this temperature, less the gas cooler approach (dTGasCoolerK); a Stirling radiator still sits at this temperature.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.1
   },
@@ -594,7 +599,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   },
   dSeparationKm: {
     rangeRationale: "From 100 m, Mason 2001's optimized separation for a 500 kWe low-voltage system, to 5 km, past the lunar horizon at 2.4 km that NASA notes a 3 km separation clears.",
-    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.9 km for a 40 kWe system (Mason finds about 1.8 km), about 1.8 km for the default 1 MWe plant, and about 1 km at 10 t/day, since the cable's conductor grows with power once its voltage reaches VCableMaxV. A buried reactor's shield does not depend on separation, so its lightest separation is the 100 m minimum.",
+    validity: "How far the outpost sits from the reactor, and the length of the cable between them. Closer needs a heavier shield; farther needs more cable and loses more power in it. The default is NASA FSP's 1 km (Mason 2025). The model's lightest separation falls with plant size: about 1.85 km for a 40 kWe system (Mason finds about 1.8 km), about 1.55 km for the default 1 MWe plant on its AC line, and about 0.85 km at 10 t/day, since the cable's conductor grows with power once its voltage reaches VCableMaxV. A buried reactor's shield does not depend on separation, so its lightest separation is the 100 m minimum.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
@@ -619,7 +624,7 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   kCableKgPerKm: {
     maturity: "SIMPLIFIED CORRELATION",
     rangeRationale: "From a bare conductor to a heavily armoured, redundant cable; NASA's 40 kWe FSP cable and spool weigh 325 kg for 1 km.",
-    validity: "The cable mass beyond what the model designs: data fibre, spool, redundant feeds, and protection. Fitted so the model's 40 kWe cable grows as Mason 2025's user interface pallet does with cable length (670, 872, and 1,250 kg at 0.5, 1, and 2 km: 385 kg/km), less the 143 kg/km of conductor, insulation, and jacket the model designs for 40 kWe as Mason's own 3 kVac three-phase cable (since v0.28; v0.27 subtracted a DC line's 74 kg/km). NASA's four redundant 3 kVac feeds use 14 AWG wire, far above what 40 kWe needs.",
+    validity: "The cable mass beyond what the model designs: data fibre, spool, redundant feeds, and protection. Fitted so the model's 40 kWe cable grows as Mason 2025's user interface pallet does with cable length (670, 872, and 1,250 kg at 0.5, 1, and 2 km: 385 kg/km), less the 146 kg/km of conductor, insulation, and jacket the model designs for 40 kWe delivered through the outpost's converter as Mason's own 3 kVac three-phase cable (since v0.30; v0.28 sized it without the converter, 143 kg/km; v0.27 subtracted a DC line's 74 kg/km). NASA's four redundant 3 kVac feeds use 14 AWG wire, far above what 40 kWe needs.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.3
   },
@@ -633,9 +638,40 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
   VCableMaxV: {
     maturity: "DESIGN ASSUMPTION",
     rangeRationale: "From 1 kV, low-voltage practice, to 30 kV, terrestrial medium-voltage cable; NASA's FSP studies select ±2.8 kV to ±4 kV DC, and 3 to 5 kVac.",
-    validity: "The cable runs at the voltage that minimizes its conductor, insulation, and jacket mass for the power it carries: conductor falls as 1/V², FEP insulation at 4.4 kV/mm thickens as V. Below about 50 kW that optimum sits under the cap (±3,969 V for Barth & Pike's 40 kW cable, against their ±4,000 V); a megawatt plant's would be near 18 kV, so the cap sets its voltage. The default 8 kV line to line is Barth & Pike's ±4 kV optimum, the highest NASA's FSP studies select: vacuum-rated high-voltage cable that avoids partial discharge is an open design challenge. The cap applies to the peak voltage to ground, VCableMaxV / 2: a bipolar DC line runs at up to 8 kV line to line, a three-phase AC line at up to 4.9 kVrms, Mason 2006's 5,000 Vac cable.",
+    validity: "The cable runs at the voltage that minimizes its conductor, insulation, and jacket mass for the power it carries: conductor falls as 1/V², FEP insulation at 4.4 kV/mm thickens as V. Below about 50 kW that optimum sits under the cap (±3,969 V for Barth & Pike's 40 kW cable, against their ±4,000 V); a megawatt plant's would be near 18 kV, so the cap sets its voltage. The default 8 kV line to line is Barth & Pike's ±4 kV optimum, the highest NASA's FSP studies select: vacuum-rated high-voltage cable that avoids partial discharge is an open design challenge. The cap applies to the peak voltage to ground, VCableMaxV / 2: a three-phase AC line, the default, runs at up to 4.9 kVrms, Mason 2006's 5,000 Vac cable; a bipolar DC line at up to 8 kV line to line.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.5
+  },
+  etaTransformer: {
+    sourceSection: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Power Management and Distribution Concept",
+    rangeRationale: "From a lossy 90% to an ideal transformer.",
+    validity: "One transformer stage. A Brayton alternator's high-frequency three-phase output feeds an AC line through a step-up transformer alone (Mason 2006's 98% boost transformer; Mason 2025's direct coupling to the 3 kVac transformer), and the outpost steps an AC line down through another before the distribution unit. Together with the 98.4% distribution unit the outpost's end is 96.4%, against Mason 2006's 97% Power Distribution Module. A DC line uses no line-frequency transformer, so this has no effect there.",
+    applicability: "Both sites · nuclear architecture · AC line",
+    defaultUncertainty: 0.01
+  },
+  etaRectifier: {
+    rangeRationale: "From 80%, an early-design controller, to an ideal rectifier.",
+    validity: "The active rectifier that turns an alternator's AC into a DC link: a Stirling's controller, which also corrects the linear alternator's power factor (Oleson 2022's 92.6%), or a Brayton feeding a DC line, taken at the same efficiency. With one switching stage after it, a Stirling's reactor end is 89%, against a Brayton's 98% on an AC line; Mason 2025 finds 83% against 90% for the whole PMAD. A Brayton on an AC line needs no rectifier, so this has no effect there.",
+    applicability: "Both sites · nuclear architecture · Stirling or DC line",
+    defaultUncertainty: 0.03
+  },
+  etaDcDcConverter: {
+    rangeRationale: "From 80% to an ideal converter.",
+    validity: "One switching conversion stage with a transformer: the DC-DC converter that boosts a DC link onto a DC line, or steps a DC line down at the outpost (Oleson 2022's 96.1%, each end), and the inverter that feeds a Stirling's DC link into an AC line, taken at the same efficiency. Barth & Pike note a DC line's converters also need stacked H-bridges built from radiation-tolerant devices limited to about 160 V. A Brayton on an AC line needs no switching stage, so this has no effect there.",
+    applicability: "Both sites · nuclear architecture · Stirling or DC line",
+    defaultUncertainty: 0.03
+  },
+  etaPowerDistribution: {
+    rangeRationale: "From 90% to an ideal distribution unit.",
+    validity: "The power distribution unit at the outpost, after the step-down stage (Oleson 2022's 98.4%). Its control power (Mason 2006's 500 W) and auxiliary loads are not charged.",
+    applicability: "Both sites · nuclear architecture",
+    defaultUncertainty: 0.01
+  },
+  fAcHz: {
+    rangeRationale: "From 50 Hz, a Stirling alternator's frequency, to 5 kHz, above the 0.8–2.25 kHz Brayton alternators NASA has studied.",
+    validity: "Sets only the skin depth of an AC line's aluminium conductors, sqrt(rho / (pi f mu0)): 2.7 mm at Mason 2025's 1 kHz. When a conductor's radius exceeds it, the plant notes it and the conductor is taken as stranded (Litz wire or parallel feeds, as Barth & Pike suggest), at no extra mass, so its resistance stays its DC value. The default 1 MWe plant's 4.8 mm conductor is 1.8 skin depths thick; a 40 kWe or polar plant's is inside its skin depth. No mass depends on it. A DC line has no skin effect, so the rail hides this under DC.",
+    applicability: "Both sites · nuclear architecture · AC line",
+    defaultUncertainty: 0.3
   },
   QscaleRefKwt: {
     maturity: "DESIGN ASSUMPTION",
@@ -650,6 +686,20 @@ const KEY_OVERRIDES: Partial<Record<keyof SimParams, Partial<ParamEvidence>>> = 
     validity: "Reactor and conversion mass grow as reactor heat to this power, so a larger reactor costs less per kW. The default 0.95 fits NASA's Brayton systems at 0.1, 1 and 10 MWe exactly as a fixed 1.3 t plus mass growing as power^0.95 (Mason 2001, Table 4). Those are spacecraft systems, with a lighter shield and a shared radiator; the model applies the exponent to its reactor and conversion only, so its radiator stays linear. The power law extends below 100 kWe, where a small reactor costs more per kW.",
     applicability: "Both sites · nuclear architecture",
     defaultUncertainty: 0.03
+  },
+  dReactorHoleM: {
+    sourceSection: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Reactor Shielding Options",
+    rangeRationale: "From a 1 m shaft to 6 m, a wide pit for a megawatt reactor and its plug shield.",
+    validity: "The diameter of the hole a buried reactor is emplaced in, at the shield's reference heat: Mason 2006's 2 m vertical excavation. Its cross-section grows with reactor heat as the plug shield that covers it, max(1, Q / QshieldRefKwt)^nShield, so the default 4 MWt plant digs a 3.4 m hole, 63 t of regolith at the bulk density. The plant's own excavation fleet digs it before it strips the first overburden, and the first product waits if digging and stripping outlast commissioning. The energy to dig it, a berm, and the crew-assisted installation are not charged.",
+    applicability: "Both sites · nuclear architecture · buried",
+    defaultUncertainty: 0.3
+  },
+  zReactorHoleM: {
+    sourceSection: "Mason 2006, A Comparison of Fission Power System Options for Lunar and Mars Surface Applications (NASA/TM-2006-214120), Reactor Shielding Options",
+    rangeRationale: "From FSP 2008's 2 m excavation and shallower, to 10 m.",
+    validity: "The depth of the hole a buried reactor is emplaced in: Mason 2006's 4 m vertical excavation; FSP 2008 places its reactor at the bottom of a 2 m excavation. The plug shield is held at FSP 2008's design whatever the depth (a deeper hole would need less plug shield; the model does not credit it).",
+    applicability: "Both sites · nuclear architecture · buried",
+    defaultUncertainty: 0.3
   },
   QshieldRefKwt: {
     rangeRationale: "From a kilowatt-class reactor to a multi-megawatt one; set it to the reactor heat of whichever design MshieldKg is taken from.",

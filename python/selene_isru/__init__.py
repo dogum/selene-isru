@@ -38,6 +38,10 @@ from .modules.power import (
     cable_mass_kg,
     fission_shield_kg,
     line_efficiency,
+    cable_efficiency,
+    cable_input_kw,
+    converter_efficiencies,
+    reactor_hole_kg,
     shield_distance_factor,
 )
 from .modules.refuel import refuel_timeline, sortie_propellant_kg
@@ -74,6 +78,10 @@ __all__ = [
     "cable_mass_kg",
     "fission_shield_kg",
     "line_efficiency",
+    "cable_efficiency",
+    "cable_input_kw",
+    "converter_efficiencies",
+    "reactor_hole_kg",
     "shield_distance_factor",
     "refuel_timeline",
     "ilmenite_conversion",

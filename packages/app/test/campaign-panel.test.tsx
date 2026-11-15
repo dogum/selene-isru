@@ -124,6 +124,19 @@ describe("campaign panel", () => {
     act(() => useStore.getState().applyPatch({ ...DEFAULTS }));
   });
 
+  it("names the buried reactor's hole when the groundwork outlasts commissioning (v0.30)", () => {
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS, fissionSiting: "buried", dSeparationKm: 0.1, commissioningDays: 2 }));
+    render(<CampaignPanel />);
+    // The default plant's 63 t hole takes its fleet 11.7 days.
+    expect(screen.getByText(/12 days digging the reactor's hole, which outlasts 2 days of commissioning/)).toBeTruthy();
+    cleanup();
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS, site: "polar", fissionSiting: "buried", dSeparationKm: 0.1, commissioningDays: 2 }));
+    render(<CampaignPanel />);
+    expect(screen.getByText(/12 days digging the reactor's hole and stripping the first overburden/)).toBeTruthy();
+    cleanup();
+    act(() => useStore.getState().applyPatch({ ...DEFAULTS }));
+  });
+
   it("shows the strip input only where a mine strips overburden", () => {
     const shown = (patch: Partial<SimParams>) =>
       railParamsForGroup(GROUPS.find((group) => group.id === "excavation")!, { ...DEFAULTS, ...patch }).map((def) => def.key);

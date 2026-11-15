@@ -1602,7 +1602,7 @@
     "source": "model switch; Mason, Poston & Qualls 2008, NASA/TM-2008-215166: emplaced and landed configurations; Mason 2006, NASA/TM-2006-214120: excavation and on-board shields"
   },
   "cableForm": {
-    "value": "dc",
+    "value": "ac",
     "unit": "mode",
     "kind": "parameter",
     "group": "power",
@@ -1620,14 +1620,14 @@
     "source": "Mason 2006, NASA/TM-2006-214120, Table 1: Stirling converters at 25.9% between 850 and 460 K and 32.1% between 1050 and 500 K, 0.565 and 0.613 of Carnot"
   },
   "kConversionStirlingKgPerKwe": {
-    "value": 21.96,
+    "value": 17.74,
     "min": 2,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Stirling power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, shield, and 1 km cable at its designed voltage at Mason 2006's 1050/500 K Stirling design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Stirling systems add 36.2 kg per kWe from 100 to 500 kWe (74.7 and 43.9 kg/kWe); after the reactor, radiator, shield, and 1 km cable at its designed voltage with the converters at each end, at Mason 2006's 1050/500 K Stirling design point"
   },
   "bStirlingScale": {
     "value": 1,
@@ -1739,6 +1739,26 @@
     "description": "Nuclear shielding mass for a buried reactor at its reference heat",
     "source": "Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: 1676 kg shield for a reactor emplaced in an excavated hole with lunar regolith augmentation, <2 Mrad at the Stirling converters and <5 rem/yr at 100 m in all directions"
   },
+  "dReactorHoleM": {
+    "value": 2,
+    "min": 1,
+    "max": 6,
+    "unit": "m",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Diameter of the hole a buried reactor is emplaced in, at the shield's reference heat",
+    "source": "Mason 2006, NASA/TM-2006-214120, Reactor Shielding Options: the reactor would be installed in a vertical excavation approximately 2 meters in diameter and 4 meters tall"
+  },
+  "zReactorHoleM": {
+    "value": 4,
+    "min": 1,
+    "max": 10,
+    "unit": "m",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Depth of the hole a buried reactor is emplaced in",
+    "source": "Mason 2006, NASA/TM-2006-214120, Reactor Shielding Options: a vertical excavation approximately 2 meters in diameter and 4 meters tall; FSP 2008 (NASA/TM-2008-215166) places its reactor at the bottom of a 2 m excavation"
+  },
   "QshieldRefKwt": {
     "value": 175,
     "min": 10,
@@ -1806,15 +1826,22 @@
     "description": "Mean lunar radius",
     "source": "IAU WG on Cartographic Coordinates and Rotational Elements: mean radius 1,737.4 km"
   },
+  "mu0": {
+    "value": 1.25663706212e-06,
+    "unit": "H/m",
+    "kind": "physical",
+    "description": "Vacuum magnetic permeability, taken for aluminium's",
+    "source": "CODATA 2018"
+  },
   "kCableKgPerKm": {
-    "value": 243,
+    "value": 239,
     "min": 0,
     "max": 1000,
     "unit": "kg/km",
     "kind": "parameter",
     "group": "power",
     "description": "Fixed cable mass per km: data fibre, spool, redundancy, and protection beyond the designed conductors, insulation, and jacket",
-    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the 3 kVac cable this model designs for 40 kWe (143 kg/km)"
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System, Sec. VII: user interface pallet 670, 872, and 1,250 kg at 0.5, 1, and 2 km (385 kg/km), less the 3 kVac cable this model designs for 40 kWe delivered through the outpost's converter (146 kg/km)"
   },
   "fCableLossPerKm": {
     "value": 0.0167,
@@ -1842,6 +1869,56 @@
     "group": "power",
     "description": "Highest cable voltage, line to line on a DC line; an AC line is held to the same peak voltage to ground",
     "source": "Barth & Pike 2022, NETS 2022, Lunar Power Transmission for Fission Surface Power, Sec. III.D: a 40 kW, 3 km aluminium cable is lightest at ±4,000 VDC (8,000 V line to line); vacuum-rated high-voltage cable that avoids partial discharge is an open design challenge"
+  },
+  "etaTransformer": {
+    "value": 0.98,
+    "min": 0.9,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Efficiency of a transformer that steps an AC line's voltage up at the reactor or down at the outpost",
+    "source": "Mason 2006, NASA/TM-2006-214120, Power Management and Distribution Concept: a simple boost transformer, estimated at 98 percent efficiency, raises the Brayton alternator's output for the 5,000 Vac cable"
+  },
+  "etaRectifier": {
+    "value": 0.926,
+    "min": 0.8,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Efficiency of the active rectifier that turns an alternator's AC into a DC link: a Stirling controller, or a Brayton feeding a DC line",
+    "source": "Oleson et al. 2022, NASA/TM-20220012395, Sec. 4.1.6.3, Fig. 4.1: Stirling controllers 92.6% efficient, from 240 Vac to the 400 Vdc bus"
+  },
+  "etaDcDcConverter": {
+    "value": 0.961,
+    "min": 0.8,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Efficiency of one switching conversion stage with a transformer: a DC-DC converter at either end of a DC line, or the inverter that feeds a Stirling's DC link into an AC line",
+    "source": "Oleson et al. 2022, NASA/TM-20220012395, Figs. 4.1 and 4.2: the DC-DC converters boosting 400 Vdc to ±2,800 Vdc and stepping it down to 120 Vdc are each 96.1% efficient"
+  },
+  "etaPowerDistribution": {
+    "value": 0.984,
+    "min": 0.9,
+    "max": 1,
+    "unit": "1",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Efficiency of the power distribution unit at the outpost",
+    "source": "Oleson et al. 2022, NASA/TM-20220012395, Fig. 4.2: the 40 kW power distribution unit is 98.4% efficient"
+  },
+  "fAcHz": {
+    "value": 1000,
+    "min": 50,
+    "max": 5000,
+    "unit": "Hz",
+    "kind": "parameter",
+    "group": "power",
+    "description": "Frequency of an AC line, for the conductor's skin depth",
+    "source": "Mason 2025, NETS 2025, Key Design Trades for a Near-term Lunar Fission Surface Power System: 3 kVac, 1 kHz long-distance power transmission"
   },
   "densityFEPKgPerM3": {
     "value": 2150,
@@ -1886,24 +1963,24 @@
     "source": "CRC Handbook of Chemistry and Physics"
   },
   "kReactorKgPerKwt": {
-    "value": 2.16,
+    "value": 1.91,
     "min": 1,
     "max": 15,
     "unit": "kg/kWt",
     "kind": "parameter",
     "group": "power",
     "description": "Fission reactor mass per kW of reactor heat, excluding the shield",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable at its designed voltage, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable at its designed voltage with the converters at each end, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "kConversionKgPerKwe": {
-    "value": 8.14,
+    "value": 7.21,
     "min": 3,
     "max": 60,
     "unit": "kg/kW",
     "kind": "parameter",
     "group": "power",
     "description": "Fission power conversion and power management mass per kW of electrical output",
-    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable at its designed voltage, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
+    "source": "Mason 2001, NASA/TM-2001-210593, Table 3: surface Brayton systems add 29.25 kg per kWe from 100 to 500 kWe; after the radiator, the shield's growth, the 1 km cable at its designed voltage with the converters at each end, and the power^0.95 scale, quoted at 1 MWt and split as NASA FSP's (Mason, Poston & Qualls 2008, NASA/TM-2008-215166, Table II: reactor 913 of 1,816 kg) at the 26.3% design point"
   },
   "QscaleRefKwt": {
     "value": 1000,

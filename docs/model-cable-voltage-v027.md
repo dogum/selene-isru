@@ -231,6 +231,9 @@ Screenshot: [the voltage cap's evidence over the power panel](screenshots/cable-
   converter mass the DC model does not carry.
 - **The converters at each end** of a higher-voltage line, and their losses,
   are inside the conversion and power management mass, not sized with voltage.
+  *(v0.30: their losses are charged by form and converter; see
+  [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*
 - **Topography,** and **the buried reactor's excavation,** from v0.25 and v0.26.
   *(v0.29: topography reduced to a disclosed horizon check; see
-  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md).)*
+  [`model-siting-horizon-v029.md`](model-siting-horizon-v029.md). v0.30: the
+  excavation charged in fleet time; see [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*

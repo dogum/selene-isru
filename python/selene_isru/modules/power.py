@@ -29,9 +29,49 @@ def fission_shield_kg(params: dict[str, Any], thermal_kw: float) -> float:
     return shield * shield_distance_factor(params)
 
 
-def line_efficiency(params: dict[str, Any]) -> float:
-    """Fraction of the fission plant's electrical output the cable delivers to the outpost [1]."""
+def converter_efficiencies(params: dict[str, Any]) -> tuple[float, float]:
+    """Efficiencies of the power conversion at the reactor's end and the outpost's end of the cable [1].
+
+    Sending: a Brayton alternator's high-frequency three-phase output feeds an AC line through a step-up
+    transformer alone; a Stirling, or any converter feeding a DC line, needs an active rectifier to a DC link
+    and one switching stage with a transformer (an inverter for AC, a DC-DC converter for DC). Receiving: an
+    AC line steps down through a transformer and a DC line through a DC-DC converter, then the power
+    distribution unit."""
+    ac = params["cableForm"] == "ac"
+    if ac and params["fissionConverter"] == "brayton":
+        sending = params["etaTransformer"]
+    else:
+        sending = params["etaRectifier"] * params["etaDcDcConverter"]
+    receiving = (params["etaTransformer"] if ac else params["etaDcDcConverter"]) * params["etaPowerDistribution"]
+    return sending, receiving
+
+
+def cable_efficiency(params: dict[str, Any]) -> float:
+    """Fraction of the power entering the cable that leaves it at the outpost [1]."""
     return 1 - params["fCableLossPerKm"] * params["dSeparationKm"]
+
+
+def line_efficiency(params: dict[str, Any]) -> float:
+    """Fraction of the fission plant's electrical output delivered to the outpost's loads [1]: the converters
+    at both ends and the cable between them."""
+    sending, receiving = converter_efficiencies(params)
+    return sending * cable_efficiency(params) * receiving
+
+
+def cable_input_kw(params: dict[str, Any], delivered_kwe: float) -> float:
+    """Power entering the cable for a delivered output [kW]: grossed up for the cable and the outpost's converter."""
+    return delivered_kwe / (cable_efficiency(params) * converter_efficiencies(params)[1])
+
+
+def reactor_hole_kg(params: dict[str, Any], thermal_kw: float) -> float:
+    """Regolith dug for a buried reactor's hole [kg]; 0 on the surface.
+
+    Mason 2006's 2 m wide, 4 m deep excavation, its cross-section grown with reactor heat as the plug shield
+    that covers it (max(1, Q / QshieldRefKwt)^nShield)."""
+    if params["fissionSiting"] != "buried":
+        return 0.0
+    area = math.pi * (params["dReactorHoleM"] / 2) ** 2 * max(1.0, thermal_kw / params["QshieldRefKwt"]) ** params["nShield"]
+    return params["rhoReg"] * area * params["zReactorHoleM"]
 
 
 CABLE_V_MIN = 10.0
@@ -86,8 +126,10 @@ def cable_design(params: dict[str, Any], sent_kwe: float) -> dict[str, float]:
     radius = math.sqrt(area / math.pi)
     thickness = peak_to_ground * voltage / stress
     bundle_radius = bundle * (radius + thickness)
+    skin_depth = math.sqrt(rho / (math.pi * params["fAcHz"] * c("mu0")))
     return {
         "voltageV": voltage,
+        "radiusToSkinDepth": radius / skin_depth if ac else 0.0,
         "conductorAreaM2": area,
         "insulationM": thickness,
         "conductorKgPerKm": conductors * area * rho_m * 1000,
@@ -334,7 +376,7 @@ def _mass_curve(params: dict[str, Any]):
 
     def mass(kwe: float, t_years: float) -> float:
         shield = fission_shield_kg(params, kwe / line / eta)
-        cable = cable_mass_kg(params, kwe / line)
+        cable = cable_mass_kg(params, cable_input_kw(params, kwe))
         specific = _specific_kg_per_kwe(params, eta, radiator_kg_per_kwe, kwe)
         return shield + cable + nuclear_slope_at_year(specific, params["dNuclear"], t_years) * kwe
 
@@ -417,8 +459,12 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
     )
     radiator_mass_kg = params["kRadiatorKgPerM2"] * radiator_m2
     shield_kg = fission_shield_kg(params, q_fission / 1000)
-    cable_kg = cable_mass_kg(params, p_sent / 1000)
-    cable_voltage_v = cable_design(params, p_sent / 1000)["voltageV"]
+    # The cable carries what the reactor's converter sends; the outpost's converter takes what it delivers.
+    p_cable = cable_input_kw(params, p_grid / 1000) * 1000
+    p_cable_out = p_cable * cable_efficiency(params)
+    cable_kg = cable_mass_kg(params, p_cable / 1000)
+    design = cable_design(params, p_cable / 1000)
+    cable_voltage_v = design["voltageV"]
     scale = fission_scale_factor(params, q_fission / 1000)
     nuclear_mass_kg = (
         shield_kg
@@ -442,6 +488,8 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         warnings.append({"id": "stirling-hot-end", "severity": "caution", "module": "power", "message": "Stirling hot end is above NASA's 1,050 K refractory Stirling design.", "value": params["Tsource"], "limit": c("TStirlingMaxK")})
     if params["fissionConverter"] == "brayton" and params["Tsource"] > params["Tsink"] and (cycle["netWorkK"] <= 0 or cycle["heatInK"] <= 0):
         warnings.append({"id": "fission-no-net-work", "severity": "alarm" if architecture == "nuclear" else "caution", "module": "power", "message": "The Brayton cycle makes no net work at these temperatures and component efficiencies.", "value": params["Tsource"] / params["Tsink"], "limit": cycle["netWorkK"]})
+    if architecture == "nuclear" and design["radiusToSkinDepth"] > 1:
+        warnings.append({"id": "cable-skin-effect", "severity": "info", "module": "power", "message": "The AC conductor is thicker than its skin depth; it is taken as stranded (Litz wire or parallel feeds) at no extra mass, so its resistance stays its DC value.", "value": design["radiusToSkinDepth"], "limit": 1})
     horizon = horizon_km(params)
     if architecture == "nuclear" and params["dSeparationKm"] > horizon:
         warnings.append({"id": "outpost-beyond-horizon", "severity": "info", "module": "power", "message": "The outpost is beyond the reactor's line-of-sight horizon; terrain blocks direct radiation, which the shield, sized for line of sight, does not credit.", "value": params["dSeparationKm"], "limit": horizon})
@@ -463,8 +511,11 @@ def simulate_power(params: dict[str, Any], grid_power_w: float, profile: dict[st
         "radiatorEffectiveK": radiator_effective_k,
         "shieldMassKg": shield_kg,
         "cableMassKg": cable_kg,
-        "cableLossW": p_sent - p_grid,
+        "cableLossW": p_cable - p_cable_out,
+        "converterLossW": (p_sent - p_cable) + (p_cable_out - p_grid),
         "cableVoltageV": cable_voltage_v,
+        "cableRadiusToSkinDepth": design["radiusToSkinDepth"],
+        "reactorHoleKg": reactor_hole_kg(params, q_fission / 1000),
         "horizonKm": horizon,
         "fissionThermalW": q_fission,
         "nuclearSpecificKgPerKw": alpha_with_radiator,

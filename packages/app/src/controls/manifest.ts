@@ -238,11 +238,19 @@ export function readsFissionConverter(key: keyof SimParams, params: Pick<SimPara
 
 /** Shield inputs that only act on one siting; the other siting hides them. */
 const SURFACE_SHIELD_ONLY = new Set<keyof SimParams>(["MshieldKg", "nShieldDistance", "hReactorM"]);
-const BURIED_SHIELD_ONLY = new Set<keyof SimParams>(["MshieldBuriedKg"]);
+const BURIED_SHIELD_ONLY = new Set<keyof SimParams>(["MshieldBuriedKg", "dReactorHoleM", "zReactorHoleM"]);
 
 /** Whether a shield input belongs to this case's siting; the other siting's shield inputs are inert. */
 export function readsFissionSiting(key: keyof SimParams, params: Pick<SimParams, "fissionSiting">): boolean {
   return !(params.fissionSiting === "buried" ? SURFACE_SHIELD_ONLY : BURIED_SHIELD_ONLY).has(key);
+}
+
+/** Transmission inputs that only act on an AC line; a DC line hides them. */
+const AC_LINE_ONLY = new Set<keyof SimParams>(["fAcHz"]);
+
+/** Whether a transmission input applies to this case's cable form. */
+export function readsCableForm(key: keyof SimParams, params: Pick<SimParams, "cableForm">): boolean {
+  return params.cableForm === "ac" || !AC_LINE_ONLY.has(key);
 }
 
 /** Ilmenite inputs that only act on one feed; the other feed hides them. */
@@ -326,7 +334,9 @@ export function railParamsForGroup(
     return [...all, ...mixture];
   }
   if (group.id === "power") {
-    const converter = all.filter((def) => readsFissionConverter(def.key, params) && readsFissionSiting(def.key, params));
+    const converter = all.filter(
+      (def) => readsFissionConverter(def.key, params) && readsFissionSiting(def.key, params) && readsCableForm(def.key, params)
+    );
     if (params.site === "polar" && params.polarProfileMode === "profile") {
       return converter.filter((def) => def.key !== "polarIlluminationFraction" && def.key !== "polarLongestShadowHours");
     }

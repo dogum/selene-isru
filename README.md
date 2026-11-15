@@ -302,6 +302,10 @@ The v0.29 siting horizon (the line-of-sight horizon between reactor and outpost,
 Barth & Pike's 2.4 km, with a note when the outpost is beyond it and terrain
 shielding disclosed as uncredited) is in
 [`docs/model-siting-horizon-v029.md`](docs/model-siting-horizon-v029.md).
+The v0.30 excavation and converters (the transformers and DC converters at each
+end of the cable, which make AC the lighter default as in NASA's current design,
+and the buried reactor's hole dug by the plant's own fleet) are in
+[`docs/model-excavation-converters-v030.md`](docs/model-excavation-converters-v030.md).
 
 ## Architecture
 

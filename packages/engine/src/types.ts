@@ -381,6 +381,10 @@ export interface SimParams {
   nShield: number;
   nShieldDistance: number;
   MshieldBuriedKg: number;
+  /** [m] */
+  dReactorHoleM: number;
+  /** [m] */
+  zReactorHoleM: number;
   dSeparationKm: number;
   /** [m] */
   hOutpostM: number;
@@ -388,6 +392,16 @@ export interface SimParams {
   hReactorM: number;
   kCableKgPerKm: number;
   VCableMaxV: number;
+  /** [1] */
+  etaTransformer: number;
+  /** [1] */
+  etaRectifier: number;
+  /** [1] */
+  etaDcDcConverter: number;
+  /** [1] */
+  etaPowerDistribution: number;
+  /** [Hz] */
+  fAcHz: number;
   fCableLossPerKm: number;
   /** [kg/kW] */
   kReactorKgPerKwt: number;
@@ -704,6 +718,8 @@ export interface SimResult {
     excavatorKgPerDay: number;
     /** [day] the whole fleet stripping the first stripAheadDays of overburden; 0 without overburden */
     initialStripDays: number;
+    /** [day] the whole fleet digging a buried reactor's hole before the strip; 0 on the surface or without fission */
+    reactorHoleDays: number;
     /** [kg/day] soil the fleet moves: the plant's feed plus any overburden */
     soilMovedKgPerDay: number;
     /** [kg/day] overburden stripped: polar dry regolith over the ice, or the soil over an ilmenite plant's basalt; 0 otherwise */
@@ -813,8 +829,14 @@ export interface SimResult {
     shieldMassKg: number;
     /** reactor-to-outpost cable mass, part of nuclearMassKg [kg] */
     cableMassKg: number;
-    /** power the cable loses between the fission plant and the outpost [W] */
+    /** power the cable's conductors lose between the reactor's converter and the outpost's [W] */
     cableLossW: number;
+    /** power the converters at both ends of the cable lose [W] */
+    converterLossW: number;
+    /** an AC conductor's radius over its skin depth at fAcHz; 0 for DC [1] */
+    cableRadiusToSkinDepth: number;
+    /** regolith dug for a buried reactor's hole; 0 on the surface [kg] */
+    reactorHoleKg: number;
     /** the cable's line-to-line voltage (RMS for AC): the lightest for its power, capped by VCableMaxV [V] */
     cableVoltageV: number;
     /** line-of-sight horizon between the reactor's core and the outpost over a smooth Moon [km] */

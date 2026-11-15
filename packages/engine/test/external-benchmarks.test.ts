@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { cableDesign, cableMassKg, conversionKgPerKwe, DEFAULTS, fissionEfficiency, fissionShieldKg, horizonKm, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
+import { cableDesign, cableMassKg, converterEfficiencies, conversionKgPerKwe, DEFAULTS, fissionEfficiency, cableInputKw, fissionShieldKg, horizonKm, lineEfficiency, fissionScaleFactor, nuclearMassAtKwe, PARAM_META, PHYSICAL_CONSTANTS, radiatorFluxWPerM2, radiatorM2PerKw, reactorHoleKg, secElecJPerKg, secSubJPerKg, shieldMassKg, simulate } from "../src/index";
 
 const J_PER_KWH = 3_600_000;
 const suite = JSON.parse(
@@ -112,11 +112,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // v0.25: the shield at its 1 km separation and the cable to the outpost; 2.55 t.
     // v0.27: the cable designed for its power; 2.46 t.
     // v0.28: the cable's fixed mass refitted to Mason 2025's 3 kVac cable; 2.53 t.
+    // v0.30: the converters at each end of the cable, and AC by default; 2.49 t.
     const modelKg = (kwe: number) => nuclearMassAtKwe(DEFAULTS, kwe);
     const modelMarginal = (modelKg(i.power500Kwe!) - modelKg(i.power100Kwe!)) / (i.power500Kwe! - i.power100Kwe!);
     expectRelative2(modelMarginal, marginal, 0.001);
-    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2532, 0.01);
-    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2532, 0.01);
+    expectRelative2(mass100 - modelKg(i.power100Kwe!), 2496, 0.01);
+    expectRelative2(mass500 - modelKg(i.power500Kwe!), 2496, 0.01);
   });
 
   test("fission economy of scale from NASA's spacecraft Brayton systems, 0.1 to 10 MWe (v0.22)", () => {
@@ -172,10 +173,12 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expectRelative2(exponent, 0.996, 0.001);
     expectRelative2(DEFAULTS.bStirlingScale, exponent, 0.005);
     // Not used in calibration: NASA FSP's Stirling conversion and power management per kWe.
-    const fsp = (i.fspConversionKg! + i.fspPowerManagementKg!) / i.fspUserPowerKwe!;
-    // v0.25: 21.06 kg/kWe, 7% under FSP's 22.6, with v0.25's heavy 3 kV conductor charged on its own.
+    // v0.25: 21.06 kg/kWe, 7% under FSP's 22.6 per user kWe, with v0.25's heavy 3 kV conductor charged on its own.
     // v0.27: the cable designed for its power is lighter, so 21.96 kg/kWe, back within 5%.
-    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.05);
+    // v0.30: the model charges conversion on the generated output, so it compares with FSP's mass per gross
+    // kWe, 18.81 kg/kWe; with the converters' losses charged, the refit is 17.74 kg/kWe, 6% under.
+    const fsp = (i.fspConversionKg! + i.fspPowerManagementKg!) / i.fspGrossPowerKwe!;
+    expectRelative2(DEFAULTS.kConversionStirlingKgPerKwe, fsp, 0.06);
     // Stirling is heavier than Brayton at megawatt scale, as Mason 2001 finds above 50 kWe.
     expectRelative2(nuclearMassAtKwe(stirling, 500) / nuclearMassAtKwe(DEFAULTS, 500), 1.2, 0.01);
   });
@@ -190,7 +193,8 @@ describe("external analytical benchmarks (separate from implementation parity)",
     // v0.28: Mason's own cable, 3 kVac: an AC line whose peak voltage to ground is 3 kV x sqrt(2/3).
     const masonCable = { cableForm: "ac" as const, VCableMaxV: 2 * i.cableVoltsAc! * Math.sqrt(2 / 3) };
     const at = (km: number) => ({ ...DEFAULTS, ...masonCable, dSeparationKm: km });
-    const cable = (km: number) => cableMassKg(at(km), i.userPowerKwe! / lineEfficiency(at(km)));
+    // v0.30: the cable carries Mason's 40 kWe grossed up for its loss and the outpost's converter.
+    const cable = (km: number) => cableMassKg(at(km), cableInputKw(at(km), i.userPowerKwe!));
     expectRelative2(cableDesign(at(1), i.userPowerKwe!).voltageV, i.cableVoltsAc!, 1e-9);
     expectRelative2(fissionShieldKg(at(i.separation05Km!), i.reactorThermalKwt!), i.shield05Kg!, 0.01);
     expectRelative2(fissionShieldKg(at(i.separation2Km!), i.reactorThermalKwt!), i.shield2Kg!, 0.01);
@@ -209,6 +213,60 @@ describe("external analytical benchmarks (separate from implementation parity)",
       if (system(k / 100) < system(best)) best = k / 100;
     }
     expectRelative2(best, i.optimumSeparationKm!, 0.05);
+  });
+
+  test("the converters at each end of the cable, from NASA's surface power designs (v0.30)", () => {
+    const item = benchmark("nasa-fsp-pmad-chain");
+    expect(item.kind).toBe("calibration");
+    const i = item.inputs as Record<string, number>;
+    expect(DEFAULTS.etaTransformer).toBe(i.transformerEfficiency);
+    expect(DEFAULTS.etaRectifier).toBe(i.olesonRectifierEfficiency);
+    expect(DEFAULTS.etaDcDcConverter).toBe(i.olesonDcDcEfficiency);
+    expect(DEFAULTS.etaPowerDistribution).toBe(i.olesonDistributionEfficiency);
+    // The AC outpost end, a buck transformer and the distribution unit, against Mason 2006's 97% module.
+    expectRelative2(converterEfficiencies(DEFAULTS).receiving, i.mason2006DistributionModuleEfficiency!, 0.01);
+    // Mason 2006, Table 1: conversion output for 50 kWe over a 500 m AC cable at 98%, plus auxiliary loads.
+    const mason2006 = (converter: "brayton" | "stirling") => ({
+      ...DEFAULTS,
+      fissionConverter: converter,
+      cableForm: "ac" as const,
+      dSeparationKm: i.mason2006CableKm!,
+      fCableLossPerKm: (1 - i.mason2006CableEfficiency!) / i.mason2006CableKm!
+    });
+    const output = (converter: "brayton" | "stirling", aux: number) => i.mason2006DeliveredKwe! / lineEfficiency(mason2006(converter)) + aux;
+    expectRelative2(output("brayton", i.mason2006BraytonAuxKwe!), i.mason2006BraytonOutputKwe!, 0.01);
+    expectRelative2(output("stirling", i.mason2006StirlingAuxKwe!), i.mason2006StirlingOutputKwe!, 0.025);
+    // FSP 2008: a DC Stirling about 100 m from the outpost generates 48 kWe for 40.
+    const fsp = { ...DEFAULTS, fissionConverter: "stirling" as const, cableForm: "dc" as const, dSeparationKm: i.fspSeparationKm! };
+    expectRelative2(i.fspUserKwe! / lineEfficiency(fsp), i.fspGrossKwe!, 0.01);
+    // Oleson et al. 2022: a DC Stirling over 1 km at 95%, about 78% from the Stirling terminals to the user.
+    const oleson = {
+      ...DEFAULTS,
+      fissionConverter: "stirling" as const,
+      cableForm: "dc" as const,
+      dSeparationKm: i.olesonCableKm!,
+      fCableLossPerKm: (1 - i.olesonCableEfficiency!) / i.olesonCableKm!
+    };
+    expectRelative2(lineEfficiency(oleson) * i.olesonStirlingCableEfficiency!, i.olesonEndToEndEfficiency!, 0.03);
+    // Mason 2025: the Stirling's extra converter stage, against the Brayton's direct transformer.
+    const ratio = converterEfficiencies({ ...DEFAULTS, fissionConverter: "stirling" }).sending / converterEfficiencies(DEFAULTS).sending;
+    expectRelative2(ratio, i.mason2025StirlingPmadEfficiency! / i.mason2025BraytonPmadEfficiency!, 0.02);
+  });
+
+  test("the hole a buried reactor is emplaced in, from NASA's lunar fission study (v0.30)", () => {
+    const item = benchmark("mason-2006-reactor-excavation");
+    expect(item.kind).toBe("documentation-only");
+    const i = item.inputs as Record<string, number>;
+    expect(DEFAULTS.dReactorHoleM).toBe(i.holeDiameterM);
+    expect(DEFAULTS.zReactorHoleM).toBe(i.holeDepthM);
+    const volume = Math.PI * (i.holeDiameterM! / 2) ** 2 * i.holeDepthM!;
+    expectRelative2(volume, item.expected as number, 0.001);
+    const buried = { ...DEFAULTS, fissionSiting: "buried" as const };
+    expectRelative2(reactorHoleKg(buried, i.referenceThermalKwt!), DEFAULTS.rhoReg * volume, 1e-12);
+    // The default plant's fleet digs its larger hole well inside commissioning.
+    const run = simulate({ fissionSiting: "buried", dSeparationKm: 0.1 });
+    expect(run.excavation.reactorHoleDays).toBeLessThan(DEFAULTS.commissioningDays);
+    expect(run.campaign.firstProductDay).toBe(DEFAULTS.commissioningDays);
   });
 
   test("the lunar horizon a surface reactor hides behind, from NASA's transmission study (v0.29)", () => {
@@ -230,7 +288,7 @@ describe("external analytical benchmarks (separate from implementation parity)",
     expect(item.kind).toBe("documentation-only");
     const i = item.inputs as Record<string, number>;
     const design = (kw: number, km: number, efficiency: number) =>
-      cableDesign({ ...DEFAULTS, fCableLossPerKm: (1 - efficiency) / km, VCableMaxV: 30000 }, kw);
+      cableDesign({ ...DEFAULTS, cableForm: "dc", fCableLossPerKm: (1 - efficiency) / km, VCableMaxV: 30000 }, kw);
     const barth = design(i.barthPowerKw!, i.barthLengthKm!, i.barthEfficiency!);
     expectRelative2(barth.voltageV / 2, item.expected as number, 0.02);
     // v0.28: the three-phase AC line, insulated for its peak voltage, and heavier than the DC line.
@@ -320,7 +378,8 @@ describe("external analytical benchmarks (separate from implementation parity)",
       run.power.nuclearMassKg,
       run.power.shieldMassKg +
         DEFAULTS.kReactorKgPerKwt * (run.power.fissionThermalW / 1000) * fissionScaleFactor(DEFAULTS, run.power.fissionThermalW / 1000) +
-        conversionKgPerKwe({ ...DEFAULTS, ...fsp }, run.power.fissionThermalW / 1000) * ((run.energy.gridPowerW + run.power.cableLossW) / 1000) +
+        conversionKgPerKwe({ ...DEFAULTS, ...fsp }, run.power.fissionThermalW / 1000) *
+          ((run.energy.gridPowerW + run.power.cableLossW + run.power.converterLossW) / 1000) +
         run.power.radiatorMassKg +
         run.power.cableMassKg,
       1e-12

@@ -346,15 +346,15 @@ function FissionConverterControls({
       {showSiting && siting === "buried" && (
         <p className="rail-mode-note">
           Regolith shields the outpost, so separation no longer sizes the shield and the reactor can sit 100 m away, as
-          in NASA&apos;s 2008 emplaced design. Digging the hole (about 20 t of regolith) and crew-assisted
-          installation are not charged.
+          in NASA&apos;s 2008 emplaced design. The excavation fleet digs the hole before the first product; the
+          energy to dig it and the crew-assisted installation are not charged.
         </p>
       )}
       {showCable && <label>
         <span>TRANSMISSION</span>
         <select value={cableForm} onChange={(event) => setParam("cableForm", event.target.value as typeof cableForm)}>
-          <option value="dc">BIPOLAR DC</option>
           <option value="ac">THREE-PHASE AC</option>
+          <option value="dc">BIPOLAR DC</option>
         </select>
       </label>}
     </div>

@@ -29,9 +29,11 @@ def simulate_campaign(params: dict[str, Any], basis: dict[str, Any], flows: dict
     deployable = capacity > 0
     leo_mass_per_landed_kg = params["M0leo"] / capacity if deployable else 0
     deployment_days = max(0, basis["nMissions"] - 1) * _landing_interval_days(params)
-    # The fleet strips the first overburden while the plant is commissioned;
-    # production waits for whichever finishes last.
-    first_product_day = deployment_days + max(params["commissioningDays"], flows["initialStripDays"])
+    # The fleet digs a buried reactor's hole and strips the first overburden while the plant is
+    # commissioned; production waits for whichever finishes last.
+    first_product_day = deployment_days + max(
+        params["commissioningDays"], flows["initialStripDays"] + flows.get("reactorHoleDays", 0.0)
+    )
     operating_days = params["missionYears"] * DAYS_PER_YEAR
     campaign_end_day = first_product_day + operating_days
     delivered_kg_per_day = flows["productKgPerDay"] * params["plantAvailability"] if deployable else 0

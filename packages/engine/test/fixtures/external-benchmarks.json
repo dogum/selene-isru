@@ -200,13 +200,14 @@
         "spacecraft10000SpecificKgPerKwe": 20.7,
         "fspConversionKg": 344,
         "fspPowerManagementKg": 559,
-        "fspUserPowerKwe": 40
+        "fspUserPowerKwe": 40,
+        "fspGrossPowerKwe": 48
       },
       "expected": 36.2,
       "unit": "kg/kW",
       "source": "Mason 2001, A Comparison of Brayton and Stirling Space Nuclear Power Systems for Power Levels from 1 Kilowatt to 10 Megawatts, NASA/TM-2001-210593",
       "sourceUrl": "https://ntrs.nasa.gov/citations/20010016863",
-      "sourceLocator": "Table 3 (surface outposts and bases), substitute 1300 K Stirling: 74.7 kg/kWe at 100 kWe and 43.9 kg/kWe at 500 kWe; Table 4 (spacecraft), substitute 1300 K Stirling: 31.0, 21.8 and 20.7 kg/kWe at 0.1, 1 and 10 MWe; cross-check: Mason, Poston & Qualls 2008 (NASA/TM-2008-215166), Table II, Stirling conversion 344 kg and power management 559 kg for 40 kWe",
+      "sourceLocator": "Table 3 (surface outposts and bases), substitute 1300 K Stirling: 74.7 kg/kWe at 100 kWe and 43.9 kg/kWe at 500 kWe; Table 4 (spacecraft), substitute 1300 K Stirling: 31.0, 21.8 and 20.7 kg/kWe at 0.1, 1 and 10 MWe; cross-check: Mason, Poston & Qualls 2008 (NASA/TM-2008-215166), Table II, Stirling conversion 344 kg and power management 559 kg for 40 kWe of user loads, 48 kWe gross",
       "modelSimplification": "The model's Stirling conversion and power management mass, 23.31 kg/kWe, is set so its Stirling marginal mass between 100 and 500 kWe, shield and radiator included, is Mason's 36.2 kg/kWe at Mason 2006's 1050/500 K lithium Stirling design point. Table 4's Stirling systems fit a fixed 1.0 t plus mass growing as power^0.996, so the model scales Stirling conversion linearly: modular convertors gain no economy of scale. Not used in calibration: NASA FSP's Stirling design carries 22.6 kg/kWe of conversion and power management. The model's Stirling is heavier than its Brayton at every power (1.03 at 10 kWe to 1.20 at 500 kWe); Mason 2001 finds Stirling lighter below about 100 kWe (0.86 at 10 kWe), which the model's per-kW reactor misses."
     },
     {
@@ -247,6 +248,58 @@
       "sourceUrl": "https://ntrs.nasa.gov/citations/20220002315",
       "sourceLocator": "Sec. I: \"Although the distance to the horizon is very dependent on topography, a 3 km separation places the reactor over the 2.4 km lunar horizon from the crew and shields them from radiation.\"",
       "modelSimplification": "A diagnostic only: horizonKm is sqrt(2 R h) for the reactor's core and the outpost over a smooth sphere of the Moon's mean radius, the reactor taken at the surface by default and a buried one always. The source does not state the eye height; 1.7 m reproduces its 2.4 km. Beyond the horizon the model raises an info note and still charges the shield in full, since no source quantifies how much terrain attenuates: the shield stays sized for line of sight, and real topography can put the horizon nearer or farther."
+    },
+    {
+      "id": "nasa-fsp-pmad-chain",
+      "kind": "calibration",
+      "quantity": "Efficiency of the power conversion at each end of the reactor-to-outpost cable, by converter and transmission form",
+      "inputs": {
+        "transformerEfficiency": 0.98,
+        "mason2006StirlingModuleEfficiency": 0.92,
+        "mason2006DistributionModuleEfficiency": 0.97,
+        "olesonRectifierEfficiency": 0.926,
+        "olesonDcDcEfficiency": 0.961,
+        "olesonDistributionEfficiency": 0.984,
+        "olesonStirlingCableEfficiency": 0.992,
+        "olesonCableEfficiency": 0.95,
+        "olesonCableKm": 1,
+        "olesonEndToEndEfficiency": 0.78,
+        "mason2006DeliveredKwe": 50,
+        "mason2006CableKm": 0.5,
+        "mason2006CableEfficiency": 0.98,
+        "mason2006BraytonOutputKwe": 54.6,
+        "mason2006BraytonAuxKwe": 0.3,
+        "mason2006StirlingOutputKwe": 61.7,
+        "mason2006StirlingAuxKwe": 3.4,
+        "fspUserKwe": 40,
+        "fspGrossKwe": 48,
+        "fspSeparationKm": 0.1,
+        "mason2025BraytonPmadEfficiency": 0.9,
+        "mason2025StirlingPmadEfficiency": 0.83
+      },
+      "expected": 0.98,
+      "unit": "1",
+      "source": "Mason 2006, NASA/TM-2006-214120; Oleson et al. 2022, NASA/TM-20220012395; Mason, Poston & Qualls 2008, NASA/TM-2008-215166; Mason 2025, NETS 2025",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20220012395",
+      "sourceLocator": "Mason 2006, Power Management and Distribution Concept: a simple boost transformer at 98% for the Brayton's 5,000 Vac line, the Stirling's rectifier, inverter, and transformer at 92%, the Power Distribution Module at 97%; Table 1: 54.6 kWe of Brayton and 61.7 kWe of NaK Stirling conversion output, with 0.3 and 3.4 kWe of auxiliary loads, for 50 kWe over a 500 m cable sized at 98%. Oleson et al. 2022, Figs. 4.1 and 4.2: Stirling cables 99.2%, Stirling controllers 92.6%, DC-DC converters 96.1% at each end, a 95% cable, the power distribution unit 98.4%; Sec. 4.1.6: about 78% from the Stirling terminals to the user. FSP 2008: 48 kWe gross for 40 kWe of user loads, the reactor about 100 m from the outpost, the PCAD converting to DC for transmission. Mason 2025: overall PMAD efficiency about 90% for the Brayton option, directly coupled to the 3 kVac step-up transformer, against 83% for the Stirling's extra converter stage",
+      "modelSimplification": "Four stage efficiencies, each read from a source: a transformer (Mason 2006), an active rectifier and a DC-DC converter (Oleson's Stirling controller and DC-DC converter), and the power distribution unit (Oleson). A Brayton feeding an AC line needs only the transformer at the reactor; a Stirling, or any converter feeding a DC line, needs the rectifier and one switching stage (the Stirling's inverter for AC is taken at the DC-DC converter's efficiency). The outpost steps an AC line down through a transformer and a DC line through a DC-DC converter, then the distribution unit. Cross-checks, not fitted: Mason 2006's Brayton and Stirling conversion outputs within 0.6% and 1.9%, FSP 2008's 48 kWe gross within 0.8%, Oleson's end-to-end efficiency within 1.7%, and Mason 2025's Stirling-to-Brayton PMAD ratio within 1.5%. Auxiliary loads, the distribution module's 500 W of control power, and the electronics' own radiators are not charged; the converters' masses stay in the conversion and power management mass per kWe, which Mason 2006 found does not change significantly between AC and DC."
+    },
+    {
+      "id": "mason-2006-reactor-excavation",
+      "kind": "documentation-only",
+      "quantity": "Regolith dug for a buried fission reactor's hole",
+      "inputs": {
+        "holeDiameterM": 2,
+        "holeDepthM": 4,
+        "fspExcavationDepthM": 2,
+        "referenceThermalKwt": 175
+      },
+      "expected": 12.57,
+      "unit": "m^3",
+      "source": "Mason 2006, NASA/TM-2006-214120; Mason, Poston & Qualls 2008, NASA/TM-2008-215166",
+      "sourceUrl": "https://ntrs.nasa.gov/citations/20060011236",
+      "sourceLocator": "Mason 2006, Reactor Shielding Options: the reactor would be installed in a vertical excavation approximately 2 meters in diameter and 4 meters tall, and the availability of regolith-moving equipment is anticipated based on plans to mine resources from the local terrain. FSP 2008, Preliminary Reference Concept: the reactor is located at the bottom of a 2 m excavation with an upper plug shield",
+      "modelSimplification": "The hole is a cylinder of Mason 2006's size at the shield's reference heat, its cross-section grown as the plug shield that covers it, max(1, Q / QshieldRefKwt)^nShield, at a fixed depth, and dug at the regolith's bulk density by the plant's own excavation fleet before it strips the first overburden. It delays the first product only if digging and stripping outlast commissioning. Not charged: the energy to dig it, a berm, the crew-assisted installation, and the hole's spoil as feedstock. FSP 2008's shallower 2 m hole is the alternative the depth input covers."
     },
     {
       "id": "mason-2008-fsp-emplaced-shield",

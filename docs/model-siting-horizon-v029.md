@@ -136,3 +136,4 @@ Screenshot: [the outpost height's evidence at 3 km, with the power panel's HORIZ
   outpost needs a ground profile and a dose model; no source in hand sizes it.
 - **The buried reactor's excavation,** from v0.26.
 - **The converters at each end, and skin effect,** from v0.28.
+  *(v0.30: both done; see [`model-excavation-converters-v030.md`](model-excavation-converters-v030.md).)*
